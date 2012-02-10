@@ -1,0 +1,3930 @@
+---
+title: Joyent CloudAPI
+mediaroot: ./media
+apisections: Keys, Datacenters, Datasets, Packages, Machines, Analytics
+markdown2extras: wiki-tables, code-friendly
+---
+
+# Joyent CloudAPI
+
+This is the reference documentation for the CloudAPI that is part of Joyent's
+SmartDataCenter 6 product.  This guide provides descriptions of the APIs
+available, as well as supporting information such as how to use the SDK(s), 
+command line interface (CLI),
+and where to find more information.
+
+For more information about this product visit
+[Joyent SmartDataCenter](http://www.joyent.com/software/smartdatacenter).
+
+This document refers to SmartDataCenter 6.5.
+
+
+## Conventions
+
+Any content formatted like this:
+
+    $ sdc-listmachines
+
+is a command-line example that you can run from a shell.  All other examples
+and information is formatted like this:
+
+    GET /my/machines HTTP/1.1
+
+
+
+# Introduction to CloudAPI
+
+## What is CloudAPI?
+
+CloudAPI is the API you use to interact with the SmartDataCenter product. Using
+CloudAPI, you can:
+
+* Provision new machines (both SmartMachines and traditional Virtual Machines)
+* Manage your account credentials
+* Create custom analytics for monitoring your infrastructure
+
+## How do I access CloudAPI?
+
+CloudAPI is available as a REST API, and you can use access it using:
+
+* SmartDataCenter Customer Portal
+* [Command line interface](https://github.com/joyent/node-smartdc) (CLI)
+* [node.js SDK](https://github.com/joyent/node-smartdc)
+* REST API
+
+If you don't want to write any code, you can use the CloudAPI CLI. The CLI
+allows you to perform every action available in the SDK, or via the REST API.
+
+The next section will get you up and running with the most common tasks for
+using SmartDataCenter.
+
+
+
+# Getting Started
+
+The CloudAPI command line interface requires Node.js and NPM to run. If you need to install them, see the [Node.js installation instructions](https://github.com/joyent/node/wiki/Installation) and the [NPM installation instructions](http://npmjs.org/).
+
+Once Node.js and NPM are installed,  install the CloudAPI CLI as an NPM module like this:
+
+    $ npm install smartdc -g
+
+That will install the CLI globally, which is almost certainly what you want.
+
+You will also want to install [json](https://github.com/trentm/json), a tool that
+makes it easier to work with JSON-formatted output. You can install it like this:
+
+    $ npm install jsontool -g
+
+## Generate an SSH key
+
+The CloudAPI CLI does not allow you to use HTTP Basic Authentication, as it is
+a weak security mechanism.  Additionally, to interact with provisioned machines,
+you need an SSH key to login.
+
+If you haven't already generated an SSH key (required to use both
+SSH and HTTP Signing), run the following command:
+
+    $ ssh-keygen -b 2048 -t rsa
+
+This will prompt you with a place to save the key. You should probably just
+accept the defaults, as many programs (SSH and SDC CLI) will first look for a
+file called ~/.ssh/id_rsa.
+
+## Set Up your CLI
+
+This step is optional if you've already uploaded an SSH key to your account.
+Otherwise, this step will 'bootstrap' your account using your SmartDataCenter
+username and password so you can leverage the rest of the CLI.
+
+    $ sdc-setup https://api.example.com
+    Username (login): demo
+    Password:
+    SSH public key: (/Users/demo/.ssh/id_rsa.pub)
+
+The URL is the URL of the CloudAPI endpoint. For example, one of the CloudAPI
+endpoints for the JoyentCloud is `https://us-west-1.api.joyentcloud.com`.
+(Each datacenter in a cloud has its own CloudAPI endpoint.)
+A different cloud that uses SmartDataCenter
+would have a different endpoint. In this document, we'll use
+`api.example.com` as the endpoint.
+
+Note that CloudAPI always uses secure HTTP, which means that the endpoint URL
+must begin with `https`.
+
+Use the login for your SmartDataCenter account, and the password that goes with
+it.  For the SSH public key, the default is ~/.ssh/id_rsa.pub; if you're using
+a different key with SmartDataCenter, enter the path to the *public* key.
+
+If you get an error message that says `This ssh key is in use`, it means that the key is already associated with your SmartDataCenter account. Go ahead an set up the environment variables described next.
+
+`sdc-setup` will print some messages about setting environment variables.
+While these are optional, we recommend you set them so you don't need to enter
+additional parameters to the CLI for future requests.
+
+## Working with the CLI
+
+For a complete list of CloudAPI CLI commands available see [Appendix D: CloudAPI CLI Commands](#appendix-d-cloudapi-cli-commands).
+
+To get help on command, use the `--help` flag. For example:
+
+    $ sdc-listdatacenters --help
+    sdc-listdatacenters [--account string] [--debug boolean] [--help boolean]
+    [--identity path] [--keyId string] [--url url] 
+
+You can set environment variables for the following flags so that you don't have
+to type them for each request:
+
+|| **CLI Flag** || **Description** || **Environment Variable** ||
+||--account||login name (account)||SDC\_CLI\_ACCOUNT||
+||--keyId||name of the key to use for signing||SDC\_CLI\_KEY\_ID||
+||--url||URL of the CloudAPI endpoint||SDC\_CLI\_URL||
+
+Note that you can use the short form of flags as well. For instance, you 
+can use the `-a` or the `--account` flag.
+
+
+## Provision a new SmartMachine
+
+To provision a new SmartMachine with the default settings, you can simply run:
+
+    $ sdc-createmachine -n getting-started
+
+You can use the `-n` flag to name your machine.
+If you do not specify a name, SmartDataCenter will generate a name for you.  You
+can retrieve the status of your SmartMachine like:
+
+    $ sdc-listmachines -n getting-started
+
+    [
+      {
+        "id": "0b97c186-05a5-4113-b05f-3e597e3cf038",
+        "name": getting-started",
+        "owner": demo",
+        "type": "smartmachine",
+        "state": "running",
+        "dataset": "smartos-1.3.13",
+        "ips": [
+          "10.88.88.50"
+        ],
+        "memory": 128,
+        "disk": 5120,
+        "metadata": {},
+        "created": "2011-06-27T19:52:40+00:00",
+        "updated": "2011-06-27T20:08:55+00:00"
+      }
+    ]
+
+
+Once the state is "running", you can login to your new machine (assuming it's
+a Unix-based machine), with the following:
+
+    $ ssh-add
+    $ ssh -A admin@10.88.88.50
+
+Those two commands set up your SSH Agent (which has some magical properties,
+such as the ability for the CLI to work on your SmartMachine without keys), and
+logs you in as the `admin` user on that machine.  Note that the `admin` user has
+password-less sudo capabilities, so you may want to set up some less priviledged
+users.  The SSH keys on your account will allow you to login as any OS user on
+a SmartMachine.
+
+Now that we've done some basics with a SmartMachine, let's introduce a few
+concepts in case you want to be cooler than the defaults.
+
+<a name="dataset-description"></a>
+### Datasets
+
+Datasets can be any image available in your SmartDataCenter cloud.  By
+default, you can use SmartOS or node.js datasets (the node.js dataset being a
+superset of SmartOS).  Your SmartDataCenter cloud may have other datasets
+available, such as Linux or Windows datasets.  To list what datasets are
+available in your datacenter, run:
+
+    $ sdc-listdatasets
+
+Datasets are the SmartDataCenter name for the "image" of your machine. To
+specify a dataset, use the special dataset urn syntax recognized by
+SmartDataCenter.  The urn syntax is specified as: `cloud:vendor:name:version`.
+
+For example, to provision a node.js machine, use:
+
+    $ sdc-createmachine -e sdc:sdc:nodejs:1.2.0 -n getting-started-nodejs
+
+<a name="packages-description"></a>
+### Packages
+
+You can list packages available in your cloud with:
+
+    $ sdc-listpackages
+
+Packages are the SmartDataCenter name for the "size" of your machine.  Packages
+are provided so that you do not need to select individual settings, such as
+memory or disk.  To provision a new SmartMachine with more memory, for example,
+try:
+
+    $ sdc-createmachine -e sdc:sdc:nodejs:1.2.0 -n big-nodejs -p regular_1024
+
+## Managing SSH keys
+
+For machines of type `smartmachine`, you can manage the SSH keys that allow
+login to the OS from Cloud API (Virtual Machines are static, and whatever keys
+are in your account at machine creation time are used).  To rotate keys, for
+example, run:
+
+    $ sdc-createkey -n my_other_rsa_key ~/.ssh/my_other_rsa_key.pub
+
+Now the default environment varaible you set up for the CloudAPI CLI is no
+longer valid, so try listing your keys with:
+
+    $ sdc-listkeys -k my_other_rsa_key
+
+You can of course set the necessary environment variable again with:
+
+    $ export SDC_CLI_KEY_ID=my_other_rsa_key
+
+Note that by default the name generated for your SSH keys is the same as the SSH
+public key fingerprint, minus the separating ':' characters.
+
+At this point you could delete your other key from the system; see Cleaning Up
+for a quick example.
+
+## Creating Analytics
+
+Now that you've got a SmartMachine up and running, and you logged in and did
+whatever it is you thought was awesome, let's create an instrumentation to
+monitor performance.  Analytics are one of the most powerful features of
+SmartDataCenter, so for more information, be sure to read
+[Appendix B: Cloud Analytics](#appendix-b-cloud-analytics) on Analytics in this document.
+Anyway, let's instrument something!
+
+To get started for now, let's create an instrumentation on our network bytes:
+
+    $ sdc-createinstrumentation -m nic -s vnic_bytes
+
+Great, now ssh back into your machine, and do something silly like:
+
+    $ wget joyent.com
+    $ ping -I 1 joyent.com
+
+Now, go ahead and run:
+
+    $ sdc-getinstrumentation -v 1
+
+Where `1` is the id you got back from `sdc-createinstrumentation`.  You should
+be able to run this a few times and see the changes.  This is just a starting
+point, for a full discssion of analytics, be sure to read
+[Appendix B: Cloud Analytics](#appendix-b-cloud-analytics).
+
+## Cleaning up
+
+After going through the Getting Started section, you should now have at least
+one SSH key, one machine and one instrumentation.  The rest of the commands
+assume you have the `jsontool` NPM module installed.  If not, check it out, as
+it's very handy; you can install with `npm install jsontool`.
+
+### Deleting Instrumentations
+
+Before cleaning up your machines, let's get rid of the instrumentation we
+created:
+
+    $ sdc-deleteinstrumentation 1
+
+### Deleting Machines
+
+Machines need to be shutdown before you can delete them, so let's do some fancy
+shell work to do that:
+
+    $ sdc-listmachines -n getting-started | json 0.id | xargs sdc-stopmachine
+
+Now, go ahead and check the state a few times until it's `stopped`.  Then go
+ahead and run `sdc-deletemachine`.
+
+    $ sdc-listmachines -n getting-started | json 0.state
+    $ sdc-listmachines -n getting-started | json 0.id | xargs sdc-deletemachine
+
+### Deleting keys
+
+Finally, you probably have two SSH keys uploaded to SmartDataCenter after going
+through the guide, so go ahead and delete the one we setup:
+
+    $ sdc-deletekey id_rsa
+
+
+
+# API Introduction
+
+CloudAPI is available as an HTTP standard REST API.  You can work with the REST
+API by either talking directly to it via tooling you already know about (such as
+curl, et al), or by using the CloudAPI SDK from Joyent.  The CloudAPI SDK is
+available as an npm module, which you can install with:
+
+    $ npm install smartdc
+
+The rest of this document will show all APIs in terms of both the raw HTTP
+specification, the SDK API, and the CLI command.
+
+## Issuing Requests
+
+All HTTP calls to CloudAPI must be made over SSL/TLS, and requests must carry at
+least two headers (in addition to standard HTTP headers): `Authorization` and
+`X-Api-Version` header.  The details are explained below.  In addition to these
+headers, any requests requiring content must be sent in an acceptable scheme to
+CloudAPI.  Details are also below.
+
+### Content-Type
+
+For requests requiring content, you can send parameters encoded with
+`application/json`, `application/x-www-form-urlencoded` or
+`multipart/form-data`.  Joyent recommends `application/json`.  The value of the
+`Accept` header determines the encoding of content returned in responses.
+CloudAPI supports `application/json` response encodings only.
+
+For exmaple, all of the following are valid calls:
+
+Query String (on the uri):
+
+    POST /my/keys?name=rsa&key=... HTTP/1.1
+    Host: joyent.com
+    Authorization: ...
+    Content-Length: 0
+
+Form encoded in the body:
+
+    POST /my/keys HTTP/1.1
+    Host: joyent.com
+    Authorization: ...
+    Content-Type: application/x-www-form-urlencoded
+    Content-Length: 123
+
+    name=rsa&key=...
+
+JSON in the body:
+
+    POST /my/keys HTTP/1.1
+    Host: joyent.com
+    Authorization: ...
+    Content-Type: application/json
+    Content-Length: 123
+
+    {"name":"rsa","key":"..."}
+
+### Authorization
+
+All API calls to the CloudAPI require an Authorization header, which supports
+multiple ["schemes"](http://tools.ietf.org/html/rfc2617). Currently CloudAPI
+supports two Authentication mechanisms:
+
+* Basic Authentication Scheme
+* HTTP Signature Authentication Scheme
+
+The Basic Authentication Scheme is outlined in
+[RFC 2617](http://tools.ietf.org/html/rfc2617).  The HTTP Signature
+Authentication Scheme is outlined in [Appendix C](#Appendix-C).
+
+In order to leverage Basic Authentication, simply use your SmartDataCenter login
+and password.  For example, if your username is `demo` and your password is
+`secret`, the value of the Authorization header would be:
+
+    Authorization: Basic ${Base64(demo:secret)}
+
+In order to leverage HTTP Signature Authentication, only RSA signing mechanisms
+are supported, and your keyId must be equal to the path returned from a
+`ListKeys` API call.  For example, if your SmartDataCenter login is `demo`, and
+you've uploaded an RSA SSH key with the name `foo`, an Authorization header
+would look like:
+
+    Authorization: Signature keyId=/demo/keys/foo,algorithm="rsa-sha256" ${Base64($Date)}
+
+The default value to sign for CloudAPI requests is simply the value of the HTTP
+`Date` header.  For more informaton on the Date header value, see
+[RFC 2616](http://tools.ietf.org/html/rfc2616#section-14.18).  All requests to
+CloudAPI using the Signature authentication scheme *must* send a Date header.
+Note that clock skew will be enforced to 300s (positive or negative) of the
+value sent.
+
+Because the security value of HTTP Signature Authentication is much stronger
+than HTTP Basic Authentication, Joyent recommends you send all requests using
+the Signature mechanism.  Full support for this authentication scheme is in the
+CloudAPI SDK; additionally, a reference implementation for node.js is available
+in the NPM `http-signature`, which you can install with:
+
+    npm install http-signature
+
+### X-Api-Version
+
+The CloudAPI is strongly versioned, and all requests *must* specify a version of
+the API.  The `X-Api-Version` header is expected to carry a
+[semver](http://semver.org/) string that the client wants to use,with the
+additional twist that your client can specify ranges of versions to support, as
+you can with NPM.   For details on how to specify ranges, check
+[node-semver](https://github.com/isaacs/node-semver).  A couple examples:
+
+    X-Api-Version: ~6.5
+    X-Api-Version: >=6.5.0
+
+Joyent recommends you set the X-Api-Version header to `~6.5`; each service
+release of SmartDataCenter will increment the `patch` version; any major
+releases of SmartDataCenter will increment either the `minor` or `major`
+version.
+
+
+### Using cURL with CloudAPI
+
+Since [cURL](http://curl.haxx.se/) is commonly used to script requests to web
+services, here's a simple alias you can use to wrap cURL to communicate with
+CloudAPI:
+
+    $ alias cloudapi='curl -is -u demo:secret -H "Accept: application/json" -H "X-Api-Version: ~6.5"'
+
+Then you could try:
+
+    $ cloudapi https://api.example.com/my/machines
+
+That step will use Basic Authentication; if you want to leverage cURL and HTTP
+Signature Authentication, you'll need to do a little scripting of `date`,
+`openssl` and `curl`.  Here's a sample function:
+
+    $ function cloudapi() {
+      local now=`date -u "+%a, %d %h %Y %H:%M:%S GMT"` ;
+      local signature=`echo ${now} | tr -d '\n' | openssl dgst -sha256 -sign ~/.ssh/id_rsa | openssl enc -e -a | tr -d '\n'` ;
+
+      curl -is -H "Accept: application/json" -H "x-api-version: ~6.5" -H "Date: ${now}" -H "Authorization: Signature keyId=\"/demo/keys/id_rsa\",algorithm=\"rsa-sha256\" ${signature}" --url https://api.example.com$@ ;
+      echo "";
+    }
+
+With that function, you could just do:
+
+    $ cloudapi /my/machines
+
+## CloudAPI HTTP Responses
+
+As indicated above, CloudAPI returns all response objects as `application/json`
+encoded HTTP bodies.  In addition to the content object, all response have
+the following headers:
+
+||**Header**||**Description**||
+||Date||When the response was sent (RFC 1123 format)||
+||X-Api-Version||The exact version of the CloudAPI server you talked to||
+||X-RequestId||A unique id for this request; you should log this||
+||X-Response-Time||How long the server took to process your request (ms)||
+
+If there is content, you can expect:
+
+||**Header**||**Description**||
+||Content-Length||How much content, in bytes||
+||Content-Type||Formatting of the response (almost always application/json)||
+||Content-MD5||An MD5 checksum of the response; you should check this||
+
+### HTTP Status Codes
+
+Your client should check for each of the following status codes from any API
+request:
+
+||**Response**||**Code**||**Description**||
+||400||Bad Request||Invalid HTTP Request||
+||401||Unauthorized||Either no Authorization header was sent, or invalid credentials were used||
+||403||Forbidden||No permissions to the specified resource||
+||404||Not Found||Something you requested was not found||
+||405||Method Not Allowed||Method not supported for the given resource||
+||406||Not Acceptable||Try sending a different Accept header||
+||409||Conflict||Most likely invalid or missing parameters||
+||413||Request Entity Too Large||You sent too much data||
+||415||Unsupported Media Type||You encoded your request in a format we don't understand||
+||420||Slow Down||You're sending too many requests||
+||449||Retry With||Invalid Version header; try with a different X-Api-Version string||
+||503||Service Unavailable||Either there's no capacity in this datacenter, or we're in a maintenance window||
+
+### Error Responses
+
+In the event of an error, CloudAPI will return a standard error response object
+of the scheme:
+
+    {
+      "code": "CODE",
+      "message": "human readable string"
+    }
+
+Where the code element is one of:
+
+||**Code**||**Description**||
+||BadRequest||You sent bad HTTP||
+||InternalError||Something was wrong on our end||
+||InvalidArgument||You sent bad arguments or a bad value for an argument||
+||InvalidCredentials||Try authenticating correctly||
+||InvalidHeader||You sent a bad HTTP header||
+||InvalidVersion||You sent a bad X-Api-Version string||
+||MissingParameter||You didn't send a required parameter||
+||NotAuthorized||You don't have access to the requested resource||
+||RequestThrottled||You got throttled||
+||RequestTooLarge||You sent too much request data||
+||RequestMoved||HTTP Redirect||
+||ResourceNotFound||What you asked for wasn't found||
+||UnknownError||Something completely unexpected happened.||
+
+Clients are expected to check HTTP status code first, and if in the 4xx range,
+they can leverage the codes above.
+
+
+
+# Keys
+
+Keys are the means by which you operate on your SSH/signing keys.  Currently
+CloudAPI supports uploads of public keys in the OpenSSH format.
+
+## ListKeys (GET /:login/keys)
+
+Lists all public keys we have on record for the specified account.
+
+### Inputs
+
+* None
+
+### Returns
+
+An array of key objects. Keys are:
+
+||**Field**||**Type**||**Description**||
+||name||String||Name for this key||
+||key||String||OpenSSH formatted public key||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+### CLI Command
+
+    $ sdc-listkeys
+
+### Example Request
+
+    GET /my/keys HTTP/1.1
+    Host: api.example.com
+    Authorization: ...
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Server: SmartDataCenter
+    Connection: close
+    Date: Tue, 28 Jun 2011 23:05:42 GMT
+    X-API-Version: 6.5.0
+    X-RequestId: 9E962AAA-E5F6-487F-8339-45FABA3CF5BD
+    X-Response-Time: 66
+    Content-Type: application/json
+    Content-Length: 503
+    Content-MD5: RHiVkkX0AZHOjijYqJFRNg==
+
+    [
+      {
+        "name": "rsa",
+        "key": "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA0A5Pf5Cq...",
+        "created": "2011-04-13T22:14:46+00:00",
+      }
+    ]
+
+## GetKey (GET /:login/keys/:key)
+
+Retrieves an individual key record.
+
+### Inputs
+
+* None
+
+### Returns
+
+||**Field**||**Type**||**Description**||
+||name||String||Name for this key||
+||key||String||OpenSSH formatted public key||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+### CLI Command
+
+    $ sdc-getkey rsa
+
+### Example Request
+
+    GET /my/keys/rsa HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-API-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, DELETE
+    Server: SmartDataCenter
+    Connection: close
+    Date: Tue, 28 Jun 2011 23:14:34 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: BE3559EE-713B-43EB-8DEB-6EE93F441C23
+    X-Response-Time: 78
+    Content-Type: application/json
+    Content-Length: 501
+    Content-MD5: O5KO1sbXxLHk1KHxN6U+Fw==
+
+    {
+      "name": "rsa",
+      "key": "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA0A5Pf5Cq...",
+      "created": "2011-04-13T22:14:46+00:00",
+    }
+
+## CreateKey (POST /:login/keys)
+
+Uploads a new OpenSSH key to SmartDataCenter for use in SSH and HTTP signing.
+
+### Inputs
+
+||**Field**||**Type**||**Description**||
+||name||String||Name for this key||
+||key||String||OpenSSH formatted public key||
+
+### Returns
+
+||**Field**||**Type**||**Description**||
+||name||String||Name for this key||
+||key||String||OpenSSH formatted public key||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||InvalidArgument||If name or key is invalid (usually key)||
+||MissingParameter||If you didn't send a key||
+||ResourceNotFound||If :login does not exist||
+
+### CLI Command
+
+    $ sdc-createkey -n id_rsa ~/.ssh/id_rsa.pub
+
+### Example Request
+
+    POST /my/keys HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Content-Length: 455
+    Content-Type: application/json
+    X-Api-Version: ~6.5
+
+    {
+      "name": "id_rsa",
+      "key": "ssh-rsa AAA..."
+    }
+
+### Example Response
+
+    HTTP/1.1 201 Created
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Server: SmartDataCenter
+    Connection: close
+    Date: Tue, 28 Jun 2011 23:14:34 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: BE3559EE-713B-43EB-8DEB-6EE93F441C23
+    X-Response-Time: 78
+    Content-Type: application/json
+    Content-Length: 501
+    Content-MD5: O5KO1sbXxLHk1KHxN6U+Fw==
+
+    {
+      "name": "rsa",
+      "key": "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA0A5Pf5Cq...",
+      "created": "2011-04-13T22:14:46+00:00",
+    }
+
+## DeleteKey (DELETE /:login/keys/:key)
+
+Deletes an SSH key by name.
+
+### Inputs
+
+* None
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+### CLI Command
+
+    $ sdc-deletekey id_rsa
+
+#### Example Request
+
+    DELETE /my/keys/id_rsa HTTP/1.1
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+    Content-Length: 0
+
+#### Example Response
+
+    HTTP/1.1 204 No Content
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, DELETE
+    Server: SmartDataCenter
+    Connection: close
+    Date: Tue, 28 Jun 2011 23:14:34 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: 4655EA0A-C4CB-4486-8AA9-8C8C9A0B71B1
+    X-Response-Time: 65
+    Content-Length: 0
+
+
+
+# Datacenters
+
+## ListDatacenters (GET /:login/datacenters)
+
+Provides a list of all datacenters this cloud is aware of.
+
+### Inputs
+
+* None
+
+### Returns
+
+An object where the keys are the datacenter name, and the value is the URL.
+
+||**Field**||**Type**||**Description**||
+||$datacentername||Url||location of the datacenter||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+### CLI Command
+
+    $ sdc-listdatacenters
+
+#### Example Request
+
+    GET /my/datacenters HTTP/1.1
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+    Content-Length: 0
+
+#### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET
+    Connection: close
+    x-api-version: 6.5.0
+    Date: Mon, 06 Jun 2011 18:45:21 GMT
+    Server: SmartDataCenter
+    x-request-id: 75812321-5887-45ae-b0d4-6e562cb463b5
+    x-response-time: 0
+    Content-Type: application/json
+    Content-Length: 28
+    Content-MD5: nvk5mzwiEmQEfWbQCcBauQ==
+
+    {
+      "joyent": "https://api.example.com"
+    }
+
+
+## GetDatacenter (GET /:login/datacenter/:name)
+
+Gets an individual datacenter by name.  Returns an HTTP redirect to your
+client, which you can ignore if you really want, as the datacenter url is in
+the Location header.
+
+### Inputs
+
+* None
+
+### Returns
+
+An object formatted like an Error Response; check the `Location` header for the
+URL itself.
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or :name does not exist||
+
+### CLI Command
+
+* None
+
+### Example Request
+
+    GET /my/datacenters/joyent HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 302 Moved Temporarily
+    Location: https://api.example.com
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET
+    Connection: close
+    x-api-version: 6.5.0
+    Date: Mon, 06 Jun 2011 18:47:01 GMT
+    Server: SmartDataCenter
+    x-request-id: e7b35c46-c36d-4e02-8cde-6fdf2695af15
+    x-response-time: 178
+    Content-Type: application/json
+    Content-Length: 875
+    Content-MD5: FV3cglJSamXOETia0jOZ5g==
+
+
+    {
+      "code": "ResourceMoved",
+      "message": joyent is at https://api.example.com"
+    }
+
+
+
+# Datasets
+
+A [dataset](#dataset-description) is the image of the software on your machine. It contains the software packages that will be available on newly provisioned machines. In the case of virtual machines, the dataset also includes the operating system. 
+
+## ListDatasets (GET /:login/datasets)
+
+Provides a list of datasets available in this datacenter.
+
+### Inputs
+
+* None
+
+### Returns
+
+An array of datasets. Dataset objects are:
+
+||id||String||a unique identifier for this dataset||
+||name||String||The "friendly name for this dataset||
+||os||String||The underlying operating system for this dataset||
+||version||String||The version for this dataset||
+||urn||String||The full URN for this dataset||
+||type||String||Whether this is a smartmachine or virtualmachine dataset||
+||default||Boolean||Whether this is the default dataset in this datacenter||
+||requirements||Object||Contains a grouping of various minimum requirements for provisioning a machine with this dataset. For example 'password' indicates that a password must be provided.||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+### CLI Command
+
+    $ sdc-listdatasets
+
+### Example Request
+
+    GET /my/datasets HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET
+    Server: SmartDataCenter
+    Connection: close
+    Date: Tue, 28 Jun 2011 23:14:34 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
+    X-Response-Time: 257
+    Content-Type: application/json
+    Content-Length: 402
+    Content-MD5: y7YOeXG98DYchC96s46yRw==
+
+    [
+      {
+        "name": "nodejs",
+        "version": "1.1.3",
+        "os": "smartos",
+        "id": "7456f2b0-67ac-11e0-b5ec-832e6cf079d5",
+        "urn": "sdc:sdc:nodejs:1.1.3",
+        "default": true,
+        "type": "smartmachine",
+        "created": "2011-04-15T22:04:12+00:00"
+      },
+      {
+        "name": "smartos",
+        "version": "1.3.12",
+        "os": "smartos",
+        "id": "febaa412-6417-11e0-bc56-535d219f2590",
+        "default": false,
+        "urn": "sdc:sdc:smartos:1.3.23",
+        "default": false,
+        "type": "smartmachine",
+        "created": "2011-04-11T08:45:00+00:00"
+      }
+    ]
+
+## GetDataset (GET /:login/datasets/:id)
+
+Gets an individual dataset by id.
+
+### Inputs
+
+* None
+
+### Returns
+
+||id||String||a unique identifier for this dataset||
+||name||String||The "friendly name for this dataset||
+||version||String||The version for this dataset||
+||urn||String||The full URN for this dataset||
+||type||String||Whether this is a smartmachine or virtualmachine dataset||
+||default||Boolean||Whether this is the default dataset in this datacenter||
+||requirements||Object||Contains a grouping of various minimum requirements for provisioning a machine with this dataset. For example 'password' indicates that a password must be provided.||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or the dataset specified does not exist||
+
+### CLI Command
+
+    $ sdc-getdataset 63ce06d8-7ae7-11e0-b0df-1fcf8f45c5d5
+
+#### Example Request
+
+    GET /my/datasets/63ce06d8-7ae7-11e0-b0df-1fcf8f45c5d5 HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+#### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET
+    Server: Joyent
+    Connection: close
+    Date: Tue, 28 Jun 2011 23:14:34 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
+    X-Response-Time: 257
+    Content-Type: application/json
+    Content-Length: 402
+    Content-MD5: y7YOeXG98DYchC96s46yRw==
+
+    {
+      "id": "63ce06d8-7ae7-11e0-b0df-1fcf8f45c5d5",
+      "name": "smartos",
+      "os": "smartos",
+      "type": "smartmachine",
+      "version": "1.3.13",
+      "created": "2011-06-27T18:41:39+00:00",
+      "default": true
+    }
+
+
+# Packages
+
+[Packages](#packages-description) are named collections of resources that are used to describe the ‘sizes’ of either a smart machine or a virtual machine. These resources
+include (but are not limited to) RAM, CPUs, CPU Caps, Lightweight
+Threads, Disk Space, Swap size, and Logical Networks.
+
+## ListPackages (GET /:login/packages)
+
+Provides a list of packages available in this datacenter.
+
+### Inputs
+
+* None
+
+### Returns
+
+An array of objects, of the form:
+
+||name||String||The "friendly name for this package||
+||memory||Number||How much memory will by available (in Mb)||
+||disk||Number||How much disk space will be available (in Gb)||
+||swap||Number||How much swap memory will be available (in Mb)||
+||default||Boolean||Whether this is the default package in this datacenter||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+### CLI Command
+
+    $ sdc-listpackages
+
+### Example Request
+
+    GET /my/packages HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET
+    Server: SmartDataCenter
+    Connection: close
+    Date: Tue, 28 Jun 2011 23:14:34 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
+    X-Response-Time: 257
+    Content-Type: application/json
+    Content-Length: 402
+    Content-MD5: y7YOeXG98DYchC96s46yRw==
+
+    [
+      {
+        "name": "regular_128",
+        "memory": 128,
+        "disk": 5120,
+        "swap": 256,
+        "default": true
+      },
+      {
+        "name": "regular_256",
+        "memory": 256,
+        "disk": 5120,
+        "swap": 512,
+        "default": false
+      },
+      {
+        "name": "regular_512",
+        "memory": 512,
+        "disk": 10240,
+        "swap": 1024,
+        "default": false
+      },
+      {
+        "name": "regular_1024",
+        "memory": 1024,
+        "disk": 15360,
+        "swap": 2048,
+        "default": false
+      }
+    ]
+
+## GetPackage (GET /:login/packages/:package)
+
+Gets a package by name.
+
+### Inputs
+
+* None
+
+### Returns
+
+||name||String||The "friendly name for this package||
+||memory||Number||How much memory will by available (in Mb)||
+||disk||Number||How much disk space will be available (in Gb)||
+||swap||Number||How much swap memory will be available (in Mb)||
+||default||Boolean||Whether this is the default package in this datacenter||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or the specified package does not exist||
+
+### CLI Command
+
+    $ sdc-getpackage regular_128
+
+### Example Request
+
+    GET /my/packages/regular_128 HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET
+    Server: SmartDataCenter
+    Connection: close
+    Date: Tue, 28 Jun 2011 23:14:34 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: F01F0DC1-12DE-4D9A-B92B-FB3A041E46B8
+    X-Response-Time: 120
+    Content-Type: application/json
+    Content-Length: 122
+    Content-MD5: aokYYCYw/EU8JwTD9F6PyA==
+
+    {
+      "name": "regular_128",
+      "memory": 128,
+      "swap": 256,
+      "disk": 5120,
+      "default": true
+    }
+
+
+
+# Machines
+
+## ListMachines (GET /:login/machines)
+
+Lists all machines we have on record for your account.  If you have a large
+number of machines, you can filter using the input parameters listed below.
+
+You can paginate this API by passing in `offset`, and `limit`.  HTTP responses
+will contain the additional headers `x-resource-count` and `x-query-limit`. If
+`x-resource-count` is less than `x-query-limit`, you're done, otherwise call the
+API again with `offset` set to `offset + limit`.
+
+Note that there is a `HEAD /:login/machines` form of this API so you can
+retrieve the number of machines.
+
+### Inputs
+
+||type||String||virtualmachine or smartmachine||
+||name||String||Machine name to find (will make your list size 1, or 0)||
+||dataset||String||dataset ID; returns machines provisioned with that dataset||
+||state||String||The current state of the machine||
+||memory||Number||The current size of the RAM deployed for the machine (Mb)||
+||tombstone||Number||Include machines destroyed in the last N minutes||
+||limit||Number||Return N machines; default is 1000 (which is also the maximum allowable result set size)||
+||offset||Number||Get the next $limit of machines starting at this point||
+||tag.$name||String||An arbitrary set of tags can be used to query on, assuming they are prefixed with "tag."||
+||credentials||Boolean||Whether to include the generated credentials for machines, if present. Defaults to false.||
+
+### Returns
+
+An array of machine objects, which contain:
+
+||id||String||The globally unique id for this machine||
+||name||String||The "friendly" name for this machine||
+||type||String||Whether this is a smartmachine or virtualmachine||
+||state||String||The current state of this machine||
+||dataset||URN||The dataset urn this machine was provisioned with||
+||memory||Number||The amount of memory this machine has (Mb)||
+||disk||Number||The amount of disk this machine has (Gb)||
+||ips||Array[String]||The IP addresses this machine has||
+||metadata||Object[String => String]||Any "extra" metadata this machine has||
+||created||Date (ISO8601)||When this machine was created||
+||updated||Date (ISO8601)||When this machine was updated||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+||InvalidArgument||If one of the input parameters was invalid||
+
+### CLI Command
+
+Getting all machines:
+
+    $ sdc-listmachines
+
+Getting all SmartMachines:
+
+    $ sdc-listmachines -y smartmachine
+
+Getting all SmartMachines that are currently running:
+
+    $ sdc-listmachines -y smartmachine -s running
+
+Getting all SmartMachines that are currently running and have 256 Mb of memory:
+
+    $ sdc-listmachines -y smartmachine -s running -m 256
+
+Getting all SmartMachines that are currently running, with 256 Mb of memory tagged 'test':
+
+    $ sdc-listmachines -y smartmachine -s running -m 256 -t group=test
+
+Basically, the CLI has sane parameters that let you filter on anything in the
+API, and you can combine them.  run `$ sdc-listmachines -h` to see all the
+options.
+
+### Example Request
+
+    GET /my/machines HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Server: SmartDataCenter
+    Connection: close
+    Date: Tue, 28 Jun 2011 23:14:34 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: AECD793C-3368-45FA-ACD9-19AC394B8933
+    X-Response-Time: 315
+    x-resource-count: 2
+    x-query-limit: 25
+    Content-Type: application/json
+    Content-Length: 292
+    Content-MD5: kGRcBWkLgMT+IAjDM46rFg==
+
+    [
+      {
+        "id": "15080eca-3786-4bb8-a4d0-f43e1981cd72",
+        "name": "getting-started",
+        "type": "smartmachine",
+        "state": running",
+        "dataset": "sdc:sdc:smartos:1.3.15",
+        "memory": 256,
+        "disk": 5120,
+        "ips": [
+          "10.88.88.50"
+        ],
+        "metadata": {},
+        "created": "2011-06-03T00:02:31+00:00",
+        "updated": "2011-06-03T00:02:31+00:00"
+      }
+    ]
+
+
+## GetMachine (GET /:login/machines/:id)
+
+Gets the details for an individual machine.
+
+### Inputs
+
+* None
+
+### Returns
+
+||id||String||The globally unique id for this machine||
+||name||String||The "friendly" name for this machine||
+||type||String||Whether this is a smartmachine or virtualmachine||
+||state||String||The current state of this machine||
+||dataset||URN||The dataset urn this machine was provisioned with||
+||memory||Number||The amount of memory this machine has (Mb)||
+||disk||Number||The amount of disk this machine has (Gb)||
+||ips||Array[String]||The IP addresses this machine has||
+||metadata||Object[String => String]||Any "extra" metadata this machine has||
+||created||Date (ISO8601)||When this machine was created||
+||updated||Date (ISO8601)||When this machine was updated||
+||credentials||Boolean||Whether to include the generated credentials for machines, if present. Defaults to false.||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+### CLI Command
+
+Getting all machines:
+
+    $ sdc-getmachine 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+
+### Example Request
+
+    GET /my/machines/75cfe125-a5ce-49e8-82ac-09aa31ffdf26 HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST, DELETE
+    Server: SmartDataCenter
+    Connection: close
+    Date: Tue, 28 Jun 2011 23:14:34 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: 4A8C4694-03C3-484D-80E0-ACBA9FEE6C7C
+    X-Response-Time: 174
+    Content-Type: application/json
+    Content-Length: 261
+    Content-MD5: oDccU7ZWZrOkdl/pGZ4oNA==
+
+    {
+      "id": "75cfe125-a5ce-49e8-82ac-09aa31ffdf26",
+      "name": "getting-started",
+      "type": "smartmachine",
+      "state": "running",
+      "dataset": "sdc:sdc:smartos:1.3.15",
+      "ips": [
+        "10.88.88.51"
+      ],
+      "memory": 128,
+      "disk": 5120,
+      "metadata": {},
+      "created": "2011-06-27T23:50:49+00:00",
+      "updated": "2011-06-28T00:09:37+00:00"
+    }
+
+## CreateMachine (POST /:login/machines)
+
+Allows you to provision a machine.  Note that if you do not specify a package
+and/or dataset, you'll get the datacenter defaults for each.  If you do not
+specify a name, CloudAPI will generate a random one for you.  Your machine
+will initially be not available for login (SmartDataCenter must provision and
+boot it).  You can poll [GetMachine](#GetMachine) for status.  When the `state`
+field is equal to `running`, you can login.
+
+With regards to login, if the machine is of type `smartmachine`, you can use any
+of the SSH keys managed under the keys section of CloudAPI to login, as any
+POSIX user on the OS.  You can add/remove them over time, and the machine will
+automatically work with that set.
+
+If the the machine is a virtualmachine, and of a UNIX-derived OS (e.g. Linux),
+you *must* have keys uploaded before provisioning; that entire set of keys will
+be written out to /root/.ssh/authorized_keys, and you can ssh in using one of
+those.  Changing the keys over time under your account will not affect the
+running virtual machine in any way; those keys are statically written at
+provisioning-time only, and you will need to manually manage them.
+
+If the dataset you create a machine from is set to generate passwords for you,
+the username/password pairs will be returned in the metadata response as a
+nested object, like:
+
+    "metadata": {
+      "credentials": {
+        "root": "s8v9kuht5e",
+        "admin": "mf4bteqhpy"
+      }
+    }
+
+You cannot overwrite the `credentials` key in CloudAPI.
+
+More generally, the metadata keys can be set either at machine creation time
+or after the fact.  You must either pass in plain string values, or a JSON
+encoded string. On metadata retrieval, you will get back a "complex" JSON
+object.
+
+### Inputs
+
+||name||String||friendly name for this machine; default is a randomly generated name||
+||package||String||Name of the package to use on provisioning; default is indicated in ListPackages||
+||dataset||String||dataset URN; default is indicated in ListDatasets||
+||metadata.$name||String||An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata."||
+||tag.$name||String||An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag."||
+
+### Returns
+
+||id||String||The globally unique id for this machine||
+||name||String||The "friendly" name for this machine||
+||type||String||Whether this is a smartmachine or virtualmachine||
+||state||String||The current state of this machine||
+||dataset||URN||The dataset urn this machine was provisioned with||
+||memory||Number||The amount of memory this machine has (Mb)||
+||disk||Number||The amount of disk this machine has (Gb)||
+||ips||Array[String]||The IP addresses this machine has||
+||metadata||Object[String => String]||Any "extra" metadata this machine has||
+||created||Date (ISO8601)||When this machine was created||
+||updated||Date (ISO8601)||When this machine was updated||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+||InsufficientCapacity||There isn't enough capacity in this datacenter||
+||InvalidArgument||If one of the input parameters was invalid||
+
+### CLI Command
+
+    $ sdc-createmachine
+
+### Example Request
+
+    POST /my/machines HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Content-Length: 455
+    Content-Type: application/x-www-form-urlencoded
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 201 Created
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Server: Joyent
+    Connection: close
+    Date: Wed, 13 Apr 2011 23:12:39 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: 04BF964B-C285-4BDF-84B1-762B8FDCADB1
+    X-Response-Time: 470
+    Content-Type: application/json
+    Content-Length: 197
+    Content-MD5: yuUKkqnVw/ZtHXTTeoWVDQ==
+
+    {
+      "id": "55a366ce-6c30-4f88-a36b-53638bd0cb62",
+      "name": abcd1234",
+      "type": "smartmachine",
+      "state": "provisioning",
+      "dataset": nodejs-1.1.4",
+      "memory": 128,
+      "disk": 5120,
+      "ips": [
+        "10.88.88.51"
+      ],
+      "metadata": {},
+      "created": "2011-06-03T00:02:31+00:00",
+      "updated": "2011-06-03T00:02:31+00:00",
+    }
+
+
+## StopMachine (POST /:login/machines/:id?action=stop)
+
+Allows you to shut down a machine.  POST to the machine name
+with an action of 'stop'.
+
+You can poll on [GetMachine](#GetMachine) until the state is `stopped`.
+
+### Inputs
+
+||action||String||Use the exact string stop.||
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+||InvalidState||The machine is in an invalid state to be stopped||
+||InvalidArgument||If action was invalid||
+||MissingParameter||If action wasn't sent||
+
+### CLI Command
+
+    $ sdc-stopmachine 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+
+### Example Request
+
+    POST /my/machines/75cfe125-a5ce-49e8-82ac-09aa31ffdf26 HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Content-Length: 12
+    Content-Type: application/x-www-form-urlencoded
+    X-Api-Version: ~6.5
+
+    action=stop
+
+### Example Response
+
+    HTTP/1.1 202 Accepted
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST, DELETE
+    Server: SmartDataCenter
+    Connection: close
+    Date: Wed, 13 Apr 2011 23:35:25 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: F09F3674-2151-434B-9911-29DD188057F0
+    X-Response-Time: 115
+    Content-Length: 0
+
+## StartMachine (POST /:login/machines/:id?action=start)
+
+Allows you to boot up a machine.  POST to the machine name
+with an action of `start`.
+
+You can poll on [GetMachine](#GetMachine) until the state is `running`.
+
+### Inputs
+
+||action||String||Use the exact string start.||
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+||InvalidState||The machine is in an invalid state to be stopped||
+||InvalidArgument||If action was invalid||
+||MissingParameter||If action wasn't sent||
+
+### CLI Command
+
+    $ sdc-startmachine 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+
+### Example Request
+
+    POST /my/machines/75cfe125-a5ce-49e8-82ac-09aa31ffdf26 HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Content-Length: 12
+    Content-Type: application/x-www-form-urlencoded
+    X-Api-Version: ~6.5
+
+    action=start
+
+### Example Response
+
+    HTTP/1.1 202 Accepted
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST, DELETE
+    Server: SmartDataCenter
+    Connection: close
+    Date: Wed, 13 Apr 2011 23:35:25 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: F09F3674-2151-434B-9911-29DD188057F0
+    X-Response-Time: 115
+    Content-Length: 0
+
+## RebootMachine (POST /:login/machines/:id?action=reboot)
+
+Allows you to 'reboot' a machine.  POST to the machine name
+with an action of `reboot`.
+
+You can poll on [GetMachine](#GetMachine) until the state is `running`.
+
+### Inputs
+
+||action||String||Use the exact string reboot.||
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+||InvalidState||The machine is in an invalid state to be stopped||
+||InvalidArgument||If action was invalid||
+||MissingParameter||If action wasn't sent||
+
+### CLI Command
+
+    $ sdc-rebootmachine 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+
+### Example Request
+
+    POST /my/machines/75cfe125-a5ce-49e8-82ac-09aa31ffdf26 HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Content-Length: 12
+    Content-Type: application/x-www-form-urlencoded
+    X-Api-Version: ~6.5
+
+    action=reboot
+
+### Example Response
+
+    HTTP/1.1 202 Accepted
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST, DELETE
+    Server: SmartDataCenter
+    Connection: close
+    Date: Wed, 13 Apr 2011 23:35:25 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: F09F3674-2151-434B-9911-29DD188057F0
+    X-Response-Time: 115
+    Content-Length: 0
+
+## ResizeMachine (POST /:login/machines/:id?action=resize)
+
+Allows you to resize a SmartMachine (this operation is not supported on
+virtual machines).  POST to the machine id with an action of `resize`.
+
+You must additionally include a new package name, as you can only resize a
+machine to another package.
+
+### Inputs
+
+||action||String||Use the exact string resize||
+||package||String||Use a package name returned from ListPackages||
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+||InvalidState||The machine is in an invalid state to be stopped||
+||InvalidArgument||If action was invalid or package wasn't a valid name||
+||MissingParameter||If action wasn't sent or package wasn't sent||
+
+### CLI Command
+
+    $ sdc-resizemachine -p regular_512 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+
+### Example Request
+
+    POST /my/machines/75cfe125-a5ce-49e8-82ac-09aa31ffdf26 HTTP/1.1
+    Authorization: ...
+    Host: localhost:8080
+    Accept: application/json
+    Content-Length: 12
+    Content-Type: application/x-www-form-urlencoded
+    X-Api-Version: ~6.5
+
+    action=resize&package=regular_512
+
+### Example Response
+
+    HTTP/1.1 202 Accepted
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST, DELETE
+    Connection: close
+    x-api-version: 6.5.0
+    Date: Sat, 11 Jun 2011 18:31:14 GMT
+    Server: SmartDataCenter
+    x-request-id: 3974ead1-0f1d-49ed-974c-1abfd13d6087
+    x-response-time: 161
+    Content-Length: 0
+
+## CreateMachineSnapshot (POST /:login/machines/:id/snapshots)
+
+Allows you to take a snapshot of a machine.  Note that snapshots are not usable
+with other machines; they are a point in time snapshot of "this" machine.  Once
+you have one or more snapshots, you can boot the machine from a snapshot.
+
+You can only take snapshots on machines that are of type 'smartmachine'.
+
+You can poll on [GetMachineSnapshot](#GetMachineSnapshot) until the state is
+`success`.
+
+### Inputs
+
+||name||String||The name to assign to the new snapshot.||
+
+### Returns
+
+||name||String||The name of this snapshot||
+||state||String||The current state of the snapshot||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or the machine :id does not exist||
+||InvalidArgument||If name was invalid, or :id was not a smartmachine||
+
+### CLI Command
+
+    $ sdc-createmachinesnapshot -n just-booted 5e42cd1e-34bb-402f-8796-bf5a2cae47db
+
+### Example Request
+
+    POST /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/snapshots HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Content-Length: 12
+    Content-Type: application/x-www-form-urlencoded
+    X-Api-Version: ~6.5
+
+    name=just-booted
+
+### Example Response
+
+    HTTP/1.1 201 Created
+    Location: /mark/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/snapshots/just-booted
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Connection: close
+    X-Api-Version: 6.5.0
+    Date: Tue, 05 Jul 2011 17:19:26 GMT
+    Server: SmartDataCenter
+    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    X-Response-Time: 754
+    Content-Type: application/json
+    Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
+    Content-Length: 116
+
+    {
+      "name": "just-booted",
+      "state": "queued",
+      "created": "2011-07-05T17:19:26+00:00",
+      "updated": "2011-07-05T17:19:26+00:00"
+    }
+
+## StartMachineFromSnapshot (POST /:login/machines/:id/snapshots/:name)
+
+If a machine is in the 'stopped' state, you can choose to start the machine from
+the referenced snapshot.
+
+### Inputs
+
+* None
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login, :id or :name does not exist||
+
+### CLI Command
+
+    $ sdc-startmachinefromsnapshot -n just-booted 5e42cd1e-34bb-402f-8796-bf5a2cae47db 
+    
+### Example Request
+
+    POST /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/snapshots/just-booted HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Content-Length: 0
+    Content-Type: application/x-www-form-urlencoded
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 202 Accepted
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST, DELETE
+    Connection: close
+    X-Api-Version: 6.5.0
+    Date: Tue, 05 Jul 2011 17:26:56 GMT
+    Server: SmartDataCenter
+    X-Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
+    X-Response-Time: 297
+    Content-Length: 0
+
+
+## ListMachineSnapshots (GET /:login/machines/:id/snapshots)
+
+Lists all snapshots taken for a given machine.  There are no
+filtration parameters for this API.
+
+### Inputs
+
+* None
+
+### Returns
+
+An array of snapshots:
+
+||name||String||The name of this snapshot||
+||state||String||The current state of the snapshot||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login, :id or :name does not exist||
+
+### CLI Command
+
+    $ sdc-listmachinesnapshots 5e42cd1e-34bb-402f-8796-bf5a2cae47db
+
+### Example Request
+
+    GET /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/snapshots HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Content-Length: 0
+    Content-Type: application/x-www-form-urlencoded
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 200 Ok
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Connection: close
+    X-Api-Version: 6.5.0
+    Date: Tue, 05 Jul 2011 17:19:26 GMT
+    Server: SmartDataCenter
+    X-Request-Id: 06a57272-9238-4276-951b-4123fbfdb948
+    X-Response-Time: 66
+    Content-Type: application/json
+    Content-MD5: UYdtqgRjRZVikfCM5Uf4XQ==
+    Content-Length: 119
+
+    [
+      {
+        "name": "just-booted",
+        "state": "queued",
+        "created": "2011-07-05T17:19:26+00:00",
+        "updated": "2011-07-05T17:19:26+00:00"
+      }
+    ]
+
+## GetMachineSnapshot (GET /:login/machines/:id/snapshots/:name)
+
+Gets the state of the named snapshot.
+
+### Inputs
+
+* None
+
+### Returns
+
+||name||String||The name of this snapshot||
+||state||String||The current state of the snapshot (poll until it's "created")||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login, :id or :name does not exist||
+
+### CLI Command
+
+    $ sdc-getmachinesnapshot -m 5e42cd1e-34bb-402f-8796-bf5a2cae47db just-booted
+
+### Example Request
+
+    GET /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/snapshots/just-booted HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Content-Length: 0
+    Content-Type: application/x-www-form-urlencoded
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST, DELETE
+    Connection: close
+    X-Api-Version: 6.5.0
+    Date: Tue, 05 Jul 2011 17:26:56 GMT
+    Server: SmartDataCenter
+    X-Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
+    X-Response-Time: 297
+    Content-Type: application/json
+    Content-MD5: VoPeS9cac4YMBIs8gUkd/A==
+    Content-Length: 117
+
+    {
+      "name": "just-booted",
+      "state": "queued",
+      "created": "2011-07-05T17:19:26+00:00",
+      "updated": "2011-07-05T17:19:26+00:00"
+    }
+
+## DeleteMachineSnapshot (DELETE /:login/machines/:id/snapshots/:name)
+
+Deletes the specified snapshot of a machine.
+
+### Inputs
+
+* None
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login, :id or :name does not exist||
+
+### CLI Command
+
+    $ sdc-deletemachinesnapshot -m 5e42cd1e-34bb-402f-8796-bf5a2cae47db just-booted
+
+### Example Request
+
+    DELETE /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/snapshots/just-booted HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Content-Length: 0
+    Content-Type: application/x-www-form-urlencoded
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 204 No Content
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST, DELETE
+    Connection: close
+    X-Api-Version: 6.5.0
+    Date: Tue, 05 Jul 2011 17:26:56 GMT
+    Server: SmartDataCenter
+    X-Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
+    X-Response-Time: 297
+    Content-Length: 0
+
+## UpdateMachineMetadata (POST /:login/machines/:id/metadata)
+
+Allows you to update the metadata for a given machine.  Note that updating the
+metadata via CloudAPI will result in the metadata being updated in the running
+instance.
+
+The semantics of this call are sublty different that the AddMachineTags call,
+in that any metadata keys passed in here are created if they do not exist, and
+overwritten if they do.
+
+### Inputs
+
+||**Field**||**Type**||**Description**||
+||$key||String||You can assign any number of metadata keys in this call; the string can be either a plain string, or a JSON encoded string, which will be converted to a "proper" JSON object.||
+
+### Returns
+
+Returns the current set of tags.
+
+||**Field**||**Type**||**Description**||
+||$key||Object||Your value||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or the machine :id does not exist||
+
+### CLI Command
+
+    $ ./sdc-updatemachinemetadata -m foo=bar -m group=test cf055959-d776-482e-bd71-ca510a04bdd7
+
+### Example Request
+
+    POST /my/machines/cf055959-d776-482e-bd71-ca510a04bdd7/metadata HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Content-Length: 12
+    Content-Type: application/x-www-form-urlencoded
+    X-Api-Version: ~6.5
+
+    foo=bar&group=test
+
+### Example Response
+
+    HTTP/1.1 200 Ok
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Connection: close
+    X-Api-Version: 6.5.0
+    Date: Tue, 05 Jul 2011 17:19:26 GMT
+    Server: SmartDataCenter
+    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    X-Response-Time: 754
+    Content-Type: application/json
+    Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
+    Content-Length: 116
+
+    {
+      "foo": "bar",
+      "group": "test"
+    }
+
+## GetMachineMetadata (GET /:login/machines/:id/metadata)
+
+Returns the complete set of metadata associated with this machine.
+
+### Inputs
+
+||**Field**||**Type**||**Description**||
+||credentials||Boolean||Whether or not to return machine credentials. Defaults to false.||
+
+### Returns
+
+Returns the current metadata object
+
+||**Field**||**Type**||**Description**||
+||$name||Object||Your value||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or the machine :id does not exist||
+
+### CLI Command
+
+    $ sdc-getmachinemetadata -c cf055959-d776-482e-bd71-ca510a04bdd7
+
+### Example Request
+
+    GET /my/machines/cf055959-d776-482e-bd71-ca510a04bdd7/metadata?credentials=true HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 200 Ok
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Connection: close
+    X-Api-Version: 6.5.0
+    Date: Tue, 05 Jul 2011 17:19:26 GMT
+    Server: SmartDataCenter
+    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    X-Response-Time: 754
+    Content-Type: application/json
+    Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
+    Content-Length: 116
+
+    {
+      "foo": "bar",
+      "group": "test",
+      "credentials": {
+        "root": "s8v9kuht5e",
+        "admin": "mf4bteqhpy"
+      }
+    }
+
+## DeleteMachineMetadata (GET /:login/machines/:id/metadata/:key)
+
+Deletes a single metadata key from this machine.
+
+### Inputs
+
+* None
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or the machine :id does not exist||
+
+### CLI Command
+
+    $ sdc-deletemachinemetadata -m cf055959-d776-482e-bd71-ca510a04bdd7 foo
+
+### Example Request
+
+    DELETE /my/machines/cf055959-d776-482e-bd71-ca510a04bdd7/metadata/foo HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 204 No Content
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Connection: close
+    X-Api-Version: 6.5.0
+    Date: Tue, 05 Jul 2011 17:19:26 GMT
+    Server: SmartDataCenter
+    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    X-Response-Time: 754
+    Content-Type: application/json
+    Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
+    Content-Length: 0
+
+## DeleteAllMachineMetadata (GET /:login/machines/:id/metadata)
+
+Deletes all metadata keys from this machine.
+
+### Inputs
+
+* None
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or the machine :id does not exist||
+
+### CLI Command
+
+    $ sdc-deletemachinemetadata -m cf055959-d776-482e-bd71-ca510a04bdd7 *
+
+### Example Request
+
+    DELETE /my/machines/cf055959-d776-482e-bd71-ca510a04bdd7/metadata HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 204 No Content
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Connection: close
+    X-Api-Version: 6.5.0
+    Date: Tue, 05 Jul 2011 17:19:26 GMT
+    Server: SmartDataCenter
+    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    X-Response-Time: 754
+    Content-Type: application/json
+    Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
+    Content-Length: 0
+
+## AddMachineTags (POST /:login/machines/:id/tags)
+
+Allows you to add additional tags, other than those set at provisioning time.
+This API lets you *append* new tags, not overwrite existing tags.
+
+This call allows you to send any number of parameters; all of these will be
+converted into tags on the machine that can be used for searching later.
+
+### Inputs
+
+||**Field**||**Type**||**Description**||
+||$tagName||String||You can assign any number of tags in this call||
+
+### Returns
+
+Returns the current set of tags.
+
+||**Field**||**Type**||**Description**||
+||$tagName||String||Your value||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or the machine :id does not exist||
+
+### CLI Command
+
+    $ sdc-addmachinetags -t foo=bar -t group=test 5e42cd1e-34bb-402f-8796-bf5a2cae47db
+
+### Example Request
+
+    POST /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/tags HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Content-Length: 12
+    Content-Type: application/x-www-form-urlencoded
+    X-Api-Version: ~6.5
+
+    foo=bar&group=test
+
+### Example Response
+
+    HTTP/1.1 200 Ok
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Connection: close
+    X-Api-Version: 6.5.0
+    Date: Tue, 05 Jul 2011 17:19:26 GMT
+    Server: SmartDataCenter
+    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    X-Response-Time: 754
+    Content-Type: application/json
+    Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
+    Content-Length: 116
+
+    {
+      "foo": "bar",
+      "group": "test"
+    }
+
+## ListMachineTags (GET /:login/machines/:id/tags)
+
+Returns the complete set of tags associated with this machine.
+
+### Inputs
+
+* None
+
+### Returns
+
+Returns the current set of tags.
+
+||**Field**||**Type**||**Description**||
+||$tagName||String||Your value||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or the machine :id does not exist||
+
+### CLI Command
+
+    $ sdc-listmachinetags 5e42cd1e-34bb-402f-8796-bf5a2cae47db
+
+### Example Request
+
+    GET /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/tags HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 200 Ok
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Connection: close
+    X-Api-Version: 6.5.0
+    Date: Tue, 05 Jul 2011 17:19:26 GMT
+    Server: SmartDataCenter
+    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    X-Response-Time: 754
+    Content-Type: application/json
+    Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
+    Content-Length: 116
+
+    {
+      "foo": "bar",
+      "group": "test"
+    }
+
+## GetMachineTag (GET /:login/machines/:id/tags/:tag)
+
+Returns the value for a single tag on this machine.  Note that this API is
+"special", as it returns content in `text/plain`; this also means you must
+set the `Accept` header to `text/plain`.
+
+### Inputs
+
+* None
+
+### Returns
+
+Returns the value of :tag in plain text.
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login, :id or :tag does not exist||
+
+### CLI Command
+
+    $ sdc-getmachinetag -m 5e42cd1e-34bb-402f-8796-bf5a2cae47db foo
+
+### Example Request
+
+    GET /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/tags/foo HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: text/plain
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 200 Ok
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Connection: close
+    X-Api-Version: 6.5.0
+    Date: Tue, 05 Jul 2011 17:19:26 GMT
+    Server: SmartDataCenter
+    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    X-Response-Time: 754
+    Content-Type: text/plain
+    Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
+    Content-Length: 3
+
+    bar
+
+## DeleteMachineTag (DELETE /:login/machines/:id/tags/:tag)
+
+Deletes a single tag from this machine.
+
+### Inputs
+
+* None
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login, :id or :tag does not exist||
+
+### CLI Command
+
+    $ sdc-deletemachinetag -m 5e42cd1e-34bb-402f-8796-bf5a2cae47db foo
+
+### Example Request
+
+    DELETE /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/tags/foo HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: text/plain
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 204 No Content
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST, DELETE
+    Connection: close
+    X-Api-Version: 6.5.0
+    Date: Tue, 05 Jul 2011 17:19:26 GMT
+    Server: SmartDataCenter
+    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    X-Response-Time: 754
+    Content-Length: 0
+
+## DeleteMachineTags (DELETE /:login/machines/:id/tags)
+
+Deletes all tags from this machine.
+
+### Inputs
+
+* None
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login or :id does not exist||
+
+### CLI Command
+
+    $ sdc-deletemachinetag -m 5e42cd1e-34bb-402f-8796-bf5a2cae47db "*"
+
+Note that if you're running in a Unix-like environment, you need to quote the
+wildcard to keep the shell from matching files in the current directory.
+
+### Example Request
+
+    DELETE /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/tags HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: text/plain
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 204 No Content
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST, DELETE
+    Connection: close
+    X-Api-Version: 6.5.0
+    Date: Tue, 05 Jul 2011 17:19:26 GMT
+    Server: SmartDataCenter
+    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    X-Response-Time: 754
+    Content-Length: 0
+
+## DeleteMachine (DELETE /:login/machines/:id)
+
+Allows you to completely destroy a machine.  Machine must be in the
+`stopped` state first.
+
+### Inputs
+
+* None
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+||InvalidState||The machine is in an invalid state to be stopped||
+
+### CLI Command
+
+    $ sdc-deletemachine 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+
+### Example Request
+
+    DELETE /my/machines/75cfe125-a5ce-49e8-82ac-09aa31ffdf26 HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+#### Example Response
+
+    HTTP/1.1 204 No Content
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST, DELETE
+    Server: SmartDataCenter
+    Connection: close
+    Date: Wed, 13 Apr 2011 23:38:03 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: 762C3F37-8ACA-4A49-AF10-84CEC8137B1D
+    X-Response-Time: 72
+    Content-Length: 0
+
+
+
+# Analytics
+
+It is strongly recommended that before you read the API documentation for Analytics,
+you first read through [Appendix B: Cloud Analytics](#appendix-b-cloud-analytics).
+Most supporting documentation and explanation of types and interactions are
+described there.
+
+## DescribeAnalytics (GET /:login/analytics)
+
+Supports retrieving the "schema" for instrumentations that can be created using
+the analytics endpoint.
+
+### Inputs
+
+* None
+
+### Returns
+
+A large object that reflects the analytics available to you. Each of the items
+listed below is actually an object; the "keys" in each are what can be used. For
+example, in 'modules', you'll get something like:
+
+    {
+      "modules": {
+        "cpu": { "label": "CPU" },
+        "memory": { "label": "Memory" },
+        ...
+      },
+      "fields": {
+        "hostname": {
+          "label": "server hostname",
+          "type": "string"
+        },
+        "runtime": {
+          "label": "time on CPU",
+          "type": "time"
+        },
+        "zonename": {
+          "label": "zone name",
+          "type": "string"
+        }
+      },
+      "types": {
+        "string": {
+          "arity": "discrete",
+          "unit": ""
+        },
+        "size": {
+          "arity": "numeric",
+          "unit": "bytes",
+          "abbr": "B",
+          "base": 2,
+        },
+        "time": {
+          "arity": "numeric",
+          "unit": "seconds",
+          "abbr": "s",
+          "base": 10,
+          "power": -9,
+        }
+      },
+      "metrics": [ {
+        "module": "cpu",
+        "stat": "thread_executions",
+        "label": "thread executions",
+        "interval": "interval",
+        "fields": [ "hostname", "zonename", "runtime" ],
+        "unit": "operations"
+      }, {
+        "module": "memory",
+        "stat": "rss",
+        "label": "resident set size",
+        "interval": "point",
+        "fields": [ "hostname", "zonename" ],
+        "type": "size"
+      } ],
+      "transformations": {
+        "geolocate": {
+          "label": "geolocate IP addresses",
+          "fields": [ "raddr" ]
+        },
+        "reversedns": {
+          "label": "reverse dns IP addresses lookup",
+          "fields": [ "raddr" ]
+        }
+      }
+    }
+
+You can use `cpu`, `memory` as module parameters to the other APIs.
+
+||**Field**||**Type**||
+||modules||Object||
+||fields||Object||
+||types||Object||
+||types||Object||
+||metrics||Object||
+||transformations||Object||
+
+Each of these objects is discussed below:
+
+#### Modules
+
+Each metric is identified by both a `module` and `stat` name.  Modules exist
+as namespaces to organize metrics.  Module configuration looks like this:
+
+    "modules": {
+      "cpu": {
+        "label": "CPU" },
+        "memory": { "label": "Memory" },
+        ...
+      }
+
+Each module has a name (its key in the "modules" structure) and an object with a
+single field called `label` which is its human-readable label.
+
+#### Metrics
+
+Metrics describe quantities which can be measured by the system.  Data is not
+collected for metrics unless an instrumentation has been configured for it.
+
+    "metrics": [ {
+      "module": "cpu",
+      "stat": "thread_executions",
+      "label": "thread executions",
+      "interval": "interval",
+      "fields": [ "hostname", "zonename", "runtime" ],
+      "unit": "operations"
+    }, {
+      "module": "memory",
+      "stat": "rss",
+      "label": "resident set size",
+      "interval": "point",
+      "fields": [ "hostname", "zonename" ],
+      "type": "size"
+    } ]
+
+Each metric has the following properties:
+
+||**Field**||**Type**||**Description**||
+||module||String||With stat, a unique metric identifier||
+||stat||String||With module, a unique metric identifier||
+||label||String||A human-readable metric description||
+||interval||String||either "interval" or "point", indicating whether the value of this metric covers activity over an *interval* of time or a snapshot of state at a particular `point*` in time||
+||fields||Array||a list of fields to be used for predicates and decompositions||
+||type||String||type or unit used to display labels for values of this metric||
+
+#### Fields
+
+Fields represent metadata by which data points can be filtered or decomposed.
+
+
+    "fields": {
+      "pid": {
+        "label": "process identifier",
+        "type": "string"
+      },
+      "execname": {
+        "label": "application name",
+        "type": "string"
+      },
+      "psargs": {
+        "label": "process arguments",
+        "type": "string"
+      },
+      ...
+
+Each field has the following properties:
+
+||**Field**||**Type**||**Description**||
+||label||String||human-readable description of the field||
+||type||String||type of the field, which determines how to label it as well as whether the field is numeric or discrete||
+
+Fields are either numeric or discrete based on the "arity" of their type.
+
+###### Numeric fields
+
+* In predicates, values of numeric fields can be compared using numeric equality
+  and inequality operators (=, <, >, etc.).
+* In decompositions, a numeric field yields a numeric decomposition (see
+  "Numeric decompositions" above).
+
+###### Discrete fields
+
+* In predicates, values of discrete fields can only be compared using string
+  equality.
+* In decompositions, a discrete field yields a discrete decomposition (see
+  "Discrete decompositions" above).
+
+Note that some fields look like numbers but are used by software as identifiers
+and so are actually discrete fields.  Examples include process identifiers,
+which are numbers but for which it doesn't generally make sense to compare
+using inequalities or decompose to get a numeric distribution.
+
+#### Types
+
+Types are used with both metrics and fields for two purposes: to hint to clients
+at how to best label values, and to distinguish between numeric and discrete
+quantities.
+
+    "types": {
+      "string": {
+        "arity": "discrete",
+        "unit": ""
+      },
+      "size": {
+        "arity": "numeric",
+        "unit": "bytes",
+        "abbr": "B",
+        "base": 2,
+      },
+      "time": {
+        "arity": "numeric",
+        "unit": "seconds",
+        "abbr": "s",
+        "base": 10,
+        "power": -9,
+       }
+     }
+
+Each type has the following properties:
+
+||**Field**||**Type**||**Description**||
+||arity||String||indicates whether values of this type are "discrete" (e.g., identifiers and other strings), or "numeric" (e.g., measurements)||
+||unit||String||base unit for this type||
+||abbr||String||(optional) abbreviation for this base unit for this type||
+||base||Number||indicates that when labeled, this quantity is usually labeled with SI prefixes corresponding to powers of the specified base||
+||power||Number||this indicates that the raw values of this type are expressed in units corresponding to base raised to power||
+
+#### Transformations
+
+Transformations are post-processing functions that can be applied to data when
+it's retrieved.
+
+    "transformations": {
+      "geolocate": {
+        "label": "geolocate IP addresses",
+        "fields": [ "raddr" ]
+      },
+      "reversedns": {
+        "label": "reverse dns IP addresses lookup",
+        "fields": [ "raddr" ]
+      }
+    }
+
+Each transformation has the following properties:
+
+||**Field**||**Type**||**Description**||
+||label||String||Human readable string||
+||fields||Array||list of field names that can be transformed||
+
+The above transformations transform values of the "raddr" (remote address) field
+of any metric to either an object with geolocation details or an array of
+reverse-DNS hostnames, respectively.
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+### CLI Command
+
+    $ sdc-describeanalytics
+
+### Example Request
+
+    GET /my/analytics HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Server: SmartDataCenter
+    Connection: close
+    Date: Wed, 13 Apr 2011 23:40:30 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: 83BB32FC-1F65-4FEB-871E-BABCD96D588D
+    X-Response-Time: 285
+    Content-Type: application/json
+    Content-Length: 2806
+    Content-MD5: M4mXJlxSgflBnhXPYYCp1g==
+
+    {
+      "modules": {
+        "cpu": {
+          "label": "CPU"
+        },
+        "fs": {
+          "label": "Filesystem"
+        },
+        "node": {
+          "label": "Node.js 0.4.x"
+        }
+      },
+      // ....
+    }
+
+## ListInstrumentations (GET /:login/analytics/instrumentations)
+
+Retrieves all currently created instrumentations.
+
+### Inputs
+
+* None
+
+### Returns
+
+An array of instrumentations:
+
+||**Field**||**Type**||
+||module||String||
+||stat||String||
+||predicate||String||
+||decomposition||Array||
+||value-dimension||Number||
+||value-arity||String||
+||retention-time||Number||
+||granularity||Number||
+||idle-max||Number||
+||transformations||Array||
+||persist-data||Boolean||
+||crtime||Number||
+||value-scope||String||
+||id||String||
+||uris||Array||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+||InvalidArgument||If input values were incorrect||
+
+### CLI
+
+    $ sdc-listinstrumentations
+
+### Example Request
+
+    GET /my/analytics/instrumentations HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Server: SmartDataCenter
+    Connection: close
+    Date: Wed, 13 Apr 2011 23:49:40 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: 99839114-1B59-4733-AC64-A93144CA7D8B
+    X-Response-Time: 48
+    Content-Type: application/json
+    Content-Length: 1062
+    Content-MD5: 8dSboZrGVMsaRYWGFbq88A==
+
+
+    [
+      {
+        "module": "syscall",
+        "stat": "syscalls",
+        "predicate": {},
+        "decomposition": [],
+        "value-dimension": 1,
+        "value-arity": "scalar",
+        "enabled": true,
+        "retention-time": 600,
+        "idle-max": 3600,
+        "transformations": {},
+        "nsources": 1,
+        "granularity": 1,
+        "persist-data": false,
+        "crtime": 1309457451143,
+        "value-scope": "interval",
+        "id": "42",
+        "uris": [{
+          "uri": "/admin/analytics/instrumentations/42/value/raw",
+          "name": "value_raw"
+        }]
+      }
+    }
+
+## GetInstrumentation (GET /:login/analytics/instrumentations/:id)
+
+Retrieves the configuration for an instrumentation.
+
+### Inputs
+
+* None
+
+### Returns
+
+||**Field**||**Type**||
+||module||String||
+||stat||String||
+||predicate||String||
+||decomposition||Array||
+||value-dimension||Number||
+||value-arity||String||
+||retention-time||Number||
+||granularity||Number||
+||idle-max||Number||
+||transformations||Array||
+||persist-data||Boolean||
+||crtime||Number||
+||value-scope||String||
+||id||String||
+||uris||Array||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+||InvalidArgument||If input values were incorrect||
+
+### CLI
+
+    $ sdc-getinstrumentation 1
+
+### Example Request
+
+    GET /my/analytics/instrumentations/1 HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Location: /my/analytics/instrumentations/1
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, DELETE
+    Server: SmartDataCenter
+    Connection: close
+    Date: Wed, 13 Apr 2011 23:53:29 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: E79B48A2-EC5B-475E-A473-1AF0053FCF4F
+    X-Response-Time: 60
+    Content-Type: application/json
+    Content-Length: 530
+    Content-MD5: kOuwnsK6U9yQY7MpN3lEvQ==
+
+    {
+      "module": "syscall",
+      "stat": "syscalls",
+      "predicate": {},
+      "decomposition": [],
+      "value-dimension": 1,
+      "value-arity": "scalar",
+      "enabled": true,
+      "retention-time": 600,
+      "idle-max": 3600,
+      "transformations": {},
+      "nsources": 1,
+      "granularity": 1,
+      "persist-data": false,
+      "crtime": 1309374801692,
+      "value-scope": "interval",
+      "id": "2",
+      "uris": [
+        {
+          "uri": "/my/analytics/instrumentations/2/value/raw",
+          "name": "value_raw"
+        }
+      ]
+    }
+
+## GetInstrumentationValue (GET /:login/analytics/instrumentations/:id/value/raw)
+
+Retrieves the data associated to an instrumentation for a point(s) in time.
+
+### Inputs
+
+* None
+
+### Returns
+
+||**Field**||**Type**||
+||value||Object||
+||transformations||Object||
+||start_time||Number||
+||duration||Number||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+||InvalidArgument||If input values were incorrect||
+
+### CLI
+
+    $ sdc-getinstrumentation -v 1
+
+### Example Request
+
+    GET /my/analytics/instrumentations/1/value/raw
+    Host: api.example.com
+    Authorization: ...
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, DELETE
+    Server: SmartDataCenter
+    Connection: close
+    Date: Wed, 13 Apr 2011 23:53:29 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: E79B48A2-EC5B-475E-A473-1AF0053FCF4F
+    X-Response-Time: 60
+    Content-Type: application/json
+    Content-Length: 530
+    Content-MD5: kOuwnsK6U9yQY7MpN3lEvQ==
+
+    {
+      "value": [
+        [ [ 17000, 17999 ], 12 ],
+        [ [ 18000, 18999 ], 12 ],
+        ...
+      ],
+      "transformations": {},
+      "start_time": 1309383598,
+      "duration": 1,
+      "nsources": 1,
+      "minreporting": 1,
+      "requested_start_time": 1309383598,
+      "requested_duration": 1,
+      "requested_end_time": 1309383599
+    }
+
+## GetInstrumentationHeatmap (GET /:login/analytics/instrumentations/:id/value/heatmap/image)
+
+Retrieves a particular instrumentation's heatmap.
+
+### Inputs
+
+||**Field**||**Type**||**Description**||
+||height||Number||height of the image in pixels||
+||width||Number||width of the image in pixels||
+||ymin||Number||Y-Axis value for the bottom of the image (default: 0)||
+||ymax||Number||Y-Axis value for the top of the image (default: auto)||
+||nbuckets||Number||Number of buckets in the vertical dimension||
+||selected||Array||Array of field values to highlight, isolate or exclude||
+||isolate||Boolean||If true, only draw selected values||
+||exclude||Boolean||If true, don't draw selected values at all||
+||hues||Array||Array of colors for highlighting selected field values||
+||decompose_all||Boolean||highlight all field values (possibly reusing hues)||
+
+### Returns
+
+||**Field**||**Type**||**Description**||
+||bucket\_time||Number||time corresponding to the bucket (Unix seconds)||
+||bucket\_ymin||Number||Minimum y-axis value for the bucket||
+||bucket\_ymax||Number||Maximum y-axis value for the bucket||
+||present||Object||if the instrumentation defines a discrete decomposition, this property's value is an object whose keys are values of that field and whose values are the number of data points in that bucket for that key||
+||total||Number||The total number of data points in the bucket||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+||InvalidArgument||If input values were incorrect||
+
+### CLI
+
+* None
+
+### Example Request
+
+    GET /my/analytics/instrumentations/1/heatmap/image HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET
+    Connection: close
+    X-Api-Version: 6.5.0
+    Date: Wed, 29 Jun 2011 23:57:44 GMT
+    Server: SmartDataCenter
+    X-Request-Id: 3d511185-36b8-4699-9cdd-a67bf8be7a6d
+    X-Response-Time: 109
+    Content-Type: application/json
+    Content-MD5: r5tPNDLr1HQE1tsLNqPbvg==
+    Content-Length: 2052
+
+    {
+      "nbuckets": 100,
+      "width": 600,
+      "height": 300,
+      "ymin": 0,
+      "ymax": 400000,
+      "present": [],
+      "transformations": {},
+      "image": "iVBORw0KGgoAAA...",
+      "start_time": 1309391804,
+      "duration": 60,
+      "nsources": 1,
+      "minreporting": 1,
+      "requested_start_time": 1309391804,
+      "requested_duration": 60,
+      "requested_end_time": 1309391864
+      }
+
+
+## GetInstrumentationHeatmapDetails (GET /:login/analytics/instrumentations/:id/value/heatmap/details)
+
+Allows you to retrieve the bucket details for a heatmap.
+
+### Inputs
+
+Takes all the same parameters as [GetInstrumentationHeatmap](#GetInstrumentationHeatmap),
+and additionally:
+
+||**Field**||**Type**||
+||x||Number||
+||y||Number||
+
+### Returns
+
+The returned value includes:
+
+||**Field**||**Type**||
+||bucket\_time||Number||
+||bucket\_ymin||Number||
+||bucket\_ymax||Number||
+||present||Object||
+||total||Number||
+
+### Errors
+
+### CLI
+
+* None
+
+### Example Request
+
+* TODO
+
+### Example Response
+
+* TODO
+
+## CreateInstrumentation (POST /:login/analytics/instrumentations)
+
+Creates an instrumentation.  Note you can clone an existing instrumentation
+by passing in the parameter `clone`, which should be a numeric id of an
+existing instrumentation.
+
+### Inputs
+
+||**Field**||**Type**||**Description**||
+||clone||Number||An existing instrumentation||
+||module||String||The CA module||
+||stat||String||The CA stat||
+||predicate||String||Must be a JSON string||
+||decomposition||String||An array of arrays||
+||granularity||Number||default is 1: number of seconds between data points||
+||retention-time||Number||How long to keep this instrumentation data for||
+||persist-data||Boolean||Whether or not to store this for historical analysis||
+||idle-max||Number||number of seconds after which if the instrumentation or its data has not been accessed via the API the service may delete the instrumentation and its data||
+
+### Returns
+
+||**Field**||**Type**||
+||module||String||
+||stat||String||
+||predicate||String||
+||decomposition||Array||
+||value-dimension||Number||
+||value-arity||String||
+||retention-time||Number||
+||granularity||Number||
+||idle-max||Number||
+||transformations||Array||
+||persist-data||Boolean||
+||crtime||Number||
+||value-scope||String||
+||id||String||
+||uris||Array||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+||InvalidArgument||If input values were incorrect||
+||MissingParameter||If parameter values were missing||
+
+### CLI
+
+    $ sdc-createinstrumentation -m syscall -s syscalls
+
+### Example Request
+
+    POST /my/analytics/instrumentations HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+    Content-Length: 12
+    Content-Type: application/x-www-form-urlencoded
+
+    module=syscall&stat=syscalls
+
+### Example Response
+
+    HTTP/1.1 201 Created
+    Location: https://api.example.com/my/analytics/instrumentations/2
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Server: SmartDataCenter
+    Connection: close
+    Date: Wed, 13 Apr 2011 23:43:24 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: F4238406-ED7D-4938-937B-4E3D0F93D924
+    X-Response-Time: 1508
+    Content-Type: application/json
+    Content-Length: 544
+    Content-MD5: CrcS3CTR5mwpOvJEx60s1g==
+
+    {
+      "module": "syscall",
+      "stat": "syscalls",
+      "predicate": {},
+      "decomposition": [],
+      "value-dimension": 1,
+      "value-arity": "scalar",
+      "enabled": true,
+      "retention-time": 600,
+      "idle-max": 3600,
+      "transformations": {},
+      "nsources": 1,
+      "granularity": 1,
+      "persist-data": false,
+      "crtime": 1309374801692,
+      "value-scope": "interval",
+      "id": "2",
+      "uris": [
+        {
+          "uri": "/mark/analytics/instrumentations/2/value/raw",
+          "name": "value_raw"
+        }
+      ]
+    }
+
+## DeleteInstrumentation (DELETE /:login/analytics/instrumentations/:id)
+
+Destroys an instrumentation.
+
+### Inputs
+
+* None
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+### CLI
+
+    $ sdc-deleteinstrumentation 1
+
+#### Example Request
+
+    DELETE /my/analytics/instrumentations/1 HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+#### Example Response
+
+    HTTP/1.1 204 No Content
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, DELETE
+    Server: SmartDataCenter
+    Connection: close
+    Date: Wed, 13 Apr 2011 23:56:29 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: E4DD448D-F491-4A88-9237-DAF6C4DC782C
+    X-Response-Time: 49
+    Content-Length: 0
+
+
+
+# Appendix A: Machine Provisioning
+
+## Machine States
+
+The following is the state diagram for a machine:
+
+<pre>
+          POST /my/machines
+                     |
+                     |
+                     V
+          +----------------+
+          |  Provisioning  |
+          +----------------+
+                     |
+                     |
+                     V
+          +----------------+
+    +---->|     Running    |
+    |     +----------------+
+    |                |
+    |                | action=stop
+    |                V
+    |     +----------------+
+    |     |    Stopping    |
+    |     +----------------+
+    |                |
+    | action=start   |
+    |                V
+    |     +----------------+
+    +---- |     Stopped    |
+          +----------------+
+                     |
+                     | DELETE
+                     V
+          +----------------+
+          |  Deleted       |---+
+          +----------------+   |
+                               |
+                              ---
+                               -
+
+</pre>
+
+At any point the state can also be `offline`, if there is a network/power
+event to the machine.
+
+# Appendix B: Cloud Analytics
+
+Cloud Analytics (CA) provides deep observability for systems and applications in
+a SmartDataCenter cloud.  The CA service enables you to dynamically instrument
+systems in the cloud to collect performance data that can be visualized in
+real-time (through the portal) or collected using the API and analyzed later by
+custom tools.  This data can be collected and saved indefinitely for
+capacity planning and other historical analysis.
+
+## Building blocks: metrics, instrumentations, and fields
+
+A **metric** is any quantity that can be instrumented using CA.  For examples:
+
+* Disk I/O operations
+* Kernel thread executions
+* TCP connections established
+* MySQL queries
+* HTTP server operations
+* System load average
+
+Each metric also defines which **fields** are available when data is collected.
+These fields can be used to filter or decompose data.  For example, the Disk I/O
+operations metric provides fields "hostname" (for the current server's
+hostname) and "disk" (for the name of the disk actually performing an
+operation), which allows users to filter out data from a physical server or
+break out the number of operations by disk.
+
+You can list the available metrics using the
+[DescribeAnalytics](#DescribeAnalytics) API.
+
+    {
+      "metrics": [
+        {
+          "module": "fs",
+          "stat": "logical_ops",
+          "label": "logical filesystem operations",
+          "interval": "interval",
+          "fields": ["pid","execname",...,"fstype","optype","latency"],
+          "unit": "operations"
+        }, ...  ], ...
+    }
+
+The "module" and "stat" properties identify the metric.
+
+When you want to actually gather data for a metric, you create an
+**instrumentation**.  The instrumentation specifies:
+
+* which metric to collect
+* an optional **predicate** based on the metric's fields (e.g., only collect
+  data from certain hosts, or data for certain operations)
+* an optional **decomposition** based on the metric's fields (e.g., break down
+  the results by server hostname)
+* how frequently to aggregate data (e.g., every second, every hour, etc.)
+* how much data to keep (e.g., 10 minutes' worth, 6 months' worth, etc.)
+* other configuration options
+
+Continuing the above example, if the system provides the metric "FS Operations"
+with fields "optype" and "latency", an example instrumentation might
+specify:
+
+* to collect data for the FS Operations" metric (the *metric*)
+* to collect only data from for read operations (a *predicate*)
+* to break out the results by latency (a *decomposition*)
+
+    $ sdc-createinstrumentation -m fs -s logical_ops -n latency -p '{"eq": ["optype","read"]}'
+
+When we create an instrumentation, the system dynamically instruments the
+relevant software and starts gathering data.  The data is made available
+immediately in real-time.  To get the data for a particular point in time, you
+retrieve the **value** of the instrumentation for that time:
+
+    $ sdc-getinstrumentation -v 4
+    {
+      "value": [
+        [ [ 17000, 17999 ], 12 ],
+        [ [ 18000, 18999 ], 12 ],
+        ...
+      ],
+      "transformations": {},
+      "start_time": 1309383598,
+      "duration": 1,
+      "nsources": 1,
+      "minreporting": 1,
+      "requested_start_time": 1309383598,
+      "requested_duration": 1,
+      "requested_end_time": 1309383599
+    }
+
+
+To summarize: *metrics* define what data the system is capable of reporting.
+*Fields* enhance the raw numbers with additional metadata about each event that
+can be used for filtering and decomposition.  *Instrumentations* specify which
+metrics to actually collect, what additional information to collect from each
+metric, and how to store that data.  When you want to retrieve that data, you
+query the service for the *value* of the instrumentation.
+
+## Values and visualizations
+
+We showed above how fields can be used to decompose results.  Let's look at that
+in more detail.  We'll continue using the "FS Operations" metric with
+fields "optype".
+
+### Scalar values
+
+Suppose we create an instrumentation with no filter and no decomposition.  Then
+the value of the instrumentation for a particular time interval might look
+something like this (omitting several unrelated properties):
+
+    {
+      start_time: 1308789361,
+      duration: 1,
+      value: 573
+    }
+
+In this case, `start_time` denotes the start of the time interval in Unix time,
+`duration` denotes the length of the interval, and `value` denotes the actual
+value, which is 573.  This means that 573 FS operations completed on all
+systems in the cloud between times 1308789361 and 1308789362.
+
+### Discrete decompositions
+
+Now suppose we create a new instrumentation with a decomposition by `execname`.
+Then the raw value might look something like this:
+
+    {
+      start_time: 1308789361,
+      duration: 1,
+      value: {
+        ls: 1,
+        cat: 49,
+        ...
+      }
+    }
+
+We call the decomposition by `execname` a **discrete decomposition** because the
+possible values of execname ("ls", "cat", ...) are not numbers.
+
+### Numeric decompositions
+
+It's useful to decompose some metrics by numeric fields.  For example, you might
+want to view FS operations decomposed by latency (how long the operation
+took).  The result is a *distribution*, which groups nearby latencies into
+buckets and shows the number of disk I/O operations that fell into each bucket.
+The result looks like this:
+
+    {
+      "start_time": 1308863061,
+      "duration": 1,
+      "value": [
+        [ [ 53000, 53999 ], 4 ],
+        [ [ 54000, 54999 ], 4 ],
+        [ [ 55000, 55999 ], 7 ],
+        ...
+        [ [ 810000, 819999 ], 1 ]
+      ]
+    }
+
+That data indicates that at time 1308863061, the system completed:
+
+* 4 requests with latency between 53 and 54 microseconds,
+* 4 requests with latency between 54 and 55 microseconds,
+* 7 requests between 55 and 56 microseconds, and so on, and finally
+* 1 request with latency between 810 and 820 microseconds.
+
+This type of instrumentation is called a **numeric decomposition**.
+
+### Combining decompositions
+
+It's possible to combine a single discrete and numeric decomposition to produce
+an object mapping discrete key to numeric distribution, whose value looks like
+this:
+
+    {
+      "start_time": 1308863799,
+      "duration": 1,
+      "value": {
+        "ls": [
+          [ [ 110000, 119999 ], 1 ],
+          [ [ 120000, 129999 ], 1 ],
+          ...
+          [ [ 420000, 429999 ], 1 ],
+          [ [ 25000000, 25999999 ], 1 ]
+        ]
+      }
+    }
+
+As we will see, this data allows clients to visualize the distribution of I/O
+latency and then highlight individual programs in the distribution (or whatever
+field you broke it down along).
+
+### Value-related properties
+
+We can now explain several of the instrumentation properties shown previously:
+
+* `value-dimension`: the number of dimensions in returned values, which is
+  the number of decompositions specified in the instrumentation, plus 1.
+  Instrumentations with no decompositions have dimension 1 (scalar values).
+  Instrumentations with a single discrete or numeric decomposition have value 2
+  (vector values).  Instrumentations with both a discrete and numeric
+  decomposition have value 3 (vector of vectors).
+* `value-arity`: describes the format of individual values
+    * `scalar`: the value is a scalar value (a number)
+    * `discrete-decomposition`: the value is an object mapping discrete keys to
+      scalars
+    * `numeric-decomposition`: the value is either an object (really an array of
+      arrays) mapping buckets (numeric ranges) to scalars, or an object mapping
+      discrete keys to such an object.  That is, a numeric decomposition is one
+      which contains at the leaf a distribution of numbers.
+
+The arity serves as a hint to visualization clients: scalars are typically
+rendered as line or bar graphs, discrete decompositions are rendered as stacked
+or separate line or bar graphs, and numeric decompositions are rendered as
+heatmaps.
+
+### Predicate Syntax
+
+Predicates allow you to filter out data points based on the *fields* of a
+metric.  For example, instead of looking at FS operations for your whole
+cloud, you may only care about operations with latency over 100ms, or on a
+particular machine.
+
+Predicates are represented as JSON objects using an LISP-like syntax.  The
+primary goal for predicate syntax is to be very easy to construct and parse
+automatically to enable people to build tools to work with them.
+
+The following leaf predicates are available:
+
+`{ eq: [ fieldname, value ] }`: equality (string or number, as appropriate).
+`{ ne: [ fieldname, value ] }`: inequality (string or number, as appropriate).
+`{ le: [ fieldname, value ] }`: less than or equal to (numbers only).
+`{ lt: [ fieldname, value ] }`: less than (numbers only).
+`{ ge: [ fieldname, value ] }`: greater than or equal to (numbers only).
+`{ gt: [ fieldname, value ] }`: greater than (numbers only).
+
+Additionally, the following compound predicates are available:
+
+`{ and: [ predicate, ... ] }`: all of subpredicates must be true.
+`{ or: [ predicate, ... ] }`: at least one of subpredicates must be true.
+
+All of these can be combined to form complex filters for drilling down.  For
+example, this predicate:
+
+    {
+      and: {
+        { eq: [ "execname", "mysqld" ] }
+        { gt: [ "latency", 100000000 ] },
+        { or: [
+          { eq: [ "hostname", "host1" ] },
+          { eq: [ "hostname", "host2" ] },
+          { eq: [ "hostname", "host3" ] }
+        ] },
+      }
+    }
+
+This predicate could be used with the "logical filesystem operations" metric to
+identify file operations performed by MySQL on machines "host1", "host2", or
+"host3" that took longer than 100ms.
+
+### Heatmaps
+
+Up to this point we have been showing **raw values**, which are JSON
+representations of the data exactly as gathered by Cloud Analytics.
+However, the service may provide other representations of the same data.  For
+numeric decompositions, the service provides several **heatmap** resources that
+generate heatmaps, like this one:
+
+<img src="docs/public/media/img/heatmap.png" />
+
+Like raw values, heatmap values are returned using JSON, but instead of
+specifying a `value` property, they specify an `image` property whose contents
+are a base64-encoded PNG image.  For details, see the API reference.  Using the
+API, it's possible to specify the size of the image, the colors used, which
+values of the discrete decomposition to select, and many other properties
+controlling the final result.
+
+Heatmaps also provide a resource for getting the details of a particular heatmap
+bucket, which looks like this:
+
+    {
+      "start_time": 1308865184,
+      "duration": 60,
+      "nbuckets": 100,
+      "width": 600,
+      "height": 300,
+      "bucket_time": 1308865185,
+      "bucket_ymin": 10000,
+      "bucket_ymax": 19999,
+      "present": {
+        "ls": 5,
+        "cat": 57
+      },
+      "total": 1,
+    }
+
+This example indicates the following about the particular heatmap bucket we
+clicked on:
+
+* the time represented by the bucket is 1308865185
+* the bucket covers a latency range between 10 and 20 microseconds
+* at that time and latency range, program `ls` completed 5 operations and
+  program `cat` completed 57 operations.
+
+This level of detail is critical for understanding hot spots or other patterns
+in the heatmap.
+
+## Data granularity and data retention
+
+By default, CA collects and saves data each second for 10 minutes.  So if you
+create an instrumentation for FS operations, the service will save
+the per-second number of FS operations going back for the last 10
+minutes.  These parameters are configurable using the following instrumentation
+properties:
+
+* `granularity`: how frequently to aggregate data, in seconds.  The default is 1
+  second.  For example, a value of 300 means to aggregate every 5 minutes' worth
+  of data into a single data point.  The smaller this value, the more space the
+  raw data takes up.  `granularity` cannot be changed after an instrumentation
+  is created.
+* `retention-time`: how long, in seconds, to keep each data point.  The default
+  is 600 seconds (10 minutes).  The higher this value, the more space the raw
+  data takes up.  `retention-time` can be changed after an instrumentation is
+  created.
+
+These values affect the space used by the instrumentation's data.  For example,
+all things being equal, the following all store the same amount of data:
+
+* 10 minutes' worth of per-second data (600 data points)
+* 50 minutes' worth of per-5-second data
+* 25 days' worth of per-hour data
+* 600 days' worth of per-day data
+
+The system imposes limits on these properties so that each instrumentation's
+data cannot consume too much space.  The limits are expressed internally as a
+number of data points, so you can adjust granularity and retention-time to match
+your needs.  Typically, you'll be interested in either per-second data for live
+performance analysis or an array of different granularities and retention-times
+for historical usage patterns.
+
+## Data persistence
+
+By default, data collected by the CA service is only cached in memory, not
+persisted on disk.  As a result, transient failures of underlying CA service
+instances can result in loss of the collected data.  For live performance
+analysis, this is likely not an issue, since the likelihood of a crash is low
+and the data can probably be collected again.  For historical data being kept
+for days, weeks, or even months, it's necessary to persist data to disk.  This
+can be specified by setting the `persist-data` instrumentation property to
+"true".  In that case, CA will ensure that data is persisted at approximately
+the `granularity` interval of the instrumentation, but no more frequently than
+every few minutes.  (For that reason, there's little value in persisting an
+instrumentation whose retention time is only a few minutes.)
+
+## Transformations
+
+Transformations are post-processing functions that can be applied to data when
+it's retrieved.  You do not need to specify transformations when you create an
+instrumentation; you need only specify them when you retrieve the value.
+Transformations map values of a discrete decomposition to something else.  For
+example, a metric that reports HTTP operations decomposed by IP address supports
+a transformation that performs a reverse-DNS lookup on each IP address so that
+you can view the results by hostname instead.  Another transformation maps IP
+addresses to geolocation data for displaying incoming requests on a world map.
+
+Each supported transformation has a name, like "reversedns".  When a
+transformation is requested for a value, the returned value includes a
+`transformations` object with keys corresponding to each transformation (e.g.,
+"reversedns").  Each of these is an object mapping keys of the discrete
+decomposition to transformed values.  For example:
+
+    {
+      "value": {
+        "8.12.47.107": 57
+      },
+      "transformations": {
+        "reversedns": {
+          "8.12.47.107": [ "joyent.com" ]
+        }
+      },
+      "start_time": 1308863799,
+      "duration": 1,
+      "nsources": 1,
+      "minreporting": 1,
+      "requested_start_time": 1308863799,
+      "requested_duration": 1,
+      "requested_end_time": 1308863800
+    }
+
+Transformations are always performed asynchronously and the results cached
+internally for future requests.  So the first time you request a transformation
+like "reversedns", you may see no values transformed at all.  As you retrieve
+the value again, the system will have completed the reverse-DNS lookup for
+addresses in the data and they will be included in the returned value.
+
+
+# Appendix C: HTTP Signature Authentication
+
+In addition to HTTP Basic Authentication, CloudAPI supports a new
+mechanism for authenticating HTTP requests based on signing with your SSH
+private key.  Specific examples of using this mechanism with SDC are given here.
+Reference the `HTTP Signature Authentication` specification by Joyent, Inc. for
+complete details.
+
+A node.js library for HTTP Signature is available with:
+
+    $ npm install http-signature
+
+## CloudAPI Specific Parameters
+
+The `Signature` authentication scheme is based on the model that the client must
+authenticate itself with a digital signature produced by the private key
+associated with an SSH key under your account (see `/my/keys` above).  Currently
+only RSA signatures are supported.  You generate a signature by signing the
+value of the HTTP `Date` header.
+
+As an example, assuming that you have associated an RSA SSH key with your account,
+called 'rsa-1', the following request is what you would send for a `ListMachines`
+request:
+
+    GET /my/machines HTTP/1.1
+    Host: api.example.com
+    Date: Sat, 11 Jun 2011 23:56:29 GMT
+    Authorization: Signature keyId="/demo/keys/rsa-1",algorithm="rsa-sha256" <Base64(rsa(sha256($Date)))>
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+Where the signature is attached with the
+Base64(rsa(sha256(Sat, 11 Jun 2011 23:56:29 GMT))) output.  Note that the
+`keyId` parameter *cannot* use the _my_ shortcut, as in the HTTP resource paths.
+This is because CloudAPI must lookup your account to resolve the key, as with
+Basic authentication.  In short, you *MUST* use the login name associated to
+your account to specify the `keyId`.
+
+## Sample Code
+
+Sample code for generating the `Authorization` header (and `Date` header), now
+follows.
+
+    var crypto = require('crypto');
+    var fs = require('fs');
+    var https = require('https');
+
+
+
+    /**
+     * Simply pads a number < 10 with a leading 0.
+     *
+     * @param {String} val a numeric string.
+     * @return {String} a new value that may have a leading 0.
+     */
+    function pad(val) {
+      if (parseInt(val, 10) < 10)
+        val = '0' + val;
+      return val;
+    }
+
+
+    /**
+     * Generates an RFC 1123 compliant Date String
+     *
+     * @return {String} RFC 1123 date string.
+     */
+    function httpDate() {
+      var now = new Date();
+      var months = ['Jan',
+                    'Feb',
+                    'Mar',
+                    'Apr',
+                    'May',
+                    'Jun',
+                    'Jul',
+                    'Aug',
+                    'Sep',
+                    'Oct',
+                    'Nov',
+                    'Dec'];
+      var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      return days[now.getUTCDay()] + ', ' +
+                  pad(now.getUTCDate()) + ' ' +
+                  months[now.getUTCMonth()] + ' ' +
+                  now.getUTCFullYear() + ' ' +
+                  pad(now.getUTCHours()) + ':' +
+                  pad(now.getUTCMinutes()) + ':' +
+                  pad(now.getUTCSeconds()) +
+                  ' GMT';
+    }
+
+
+    ///--- Mainline
+
+    // Read in an SSH key from the "usual" location.
+    var file = process.env.HOME + '/.ssh/id_rsa';
+    var key = fs.readFileSync(file, 'ascii');
+    if (!key)
+      throw new Error(file + ' was not a valid RSA key');
+
+    var date = httpDate();
+    var signer = crypto.createSign('RSA-SHA256');
+    signer.update(date);
+    authz = 'Signature keyId="/mark/keys/rsa-1",algorithm="rsa-sha256" ' + signer.sign(key, 'base64');
+
+    var request = {
+      host: 'api.example.com',
+      path: '/my/machines',
+      headers: {
+        'x-api-version': '~6.5',
+        'Date': date,
+        'Authorization': authz
+      }
+    };
+    https.get(request, function(res) {
+      console.log('STATUS: ' + res.statusCode);
+      console.log('HEADERS: ' + JSON.stringify(res.headers, null, 2));
+      res.setEncoding('utf8');
+      res.body = '';
+      res.on('data', function(chunk) {
+        res.body += chunk;
+      });
+      res.on('end', function() {
+        console.log('BODY: ' + JSON.stringify(res.body, null, 2));
+      });
+    }).end();
+
+
+# Appendix D: CloudAPI CLI Commands
+
+||**Command**||**Description**||
+||[sdc-addmachinetags](#AddMachineTags)||Allows you to add additional tags, other than those set at provisioning time.||
+||[sdc-createinstrumentation](#CreateInstrumentation)||Creates an instrumentation.||
+||[sdc-createkey](#CreateKey)||Uploads a new OpenSSH key to SmartDataCenter.||
+||[sdc-createmachine](#CreateMachine)||Allows you to provision a machine.||
+||[sdc-createmachinesnapshot](#CreateMachineSnapshot)||Allows you to take a snapshot of a machine.||
+||[sdc-deleteinstrumentation](#DeleteInstrumentation)||Destroys an instrumentation.||
+||[sdc-deletekey](#DeleteKey)||Deletes an SSH key by name.||
+||[sdc-deletemachine](#DeleteMachine)||Allows you to completely destroy a machine.||
+||[sdc-deletemachinemetadata](#DeleteMachineMetadata)||Deletes a single metadata key from this machine.||
+||[sdc-deletemachinesnapshot](#DeleteMachineSnapshot)||Deletes the specified snapshot of a machine.||
+||[sdc-deletemachinetag](#DeleteMachineTag)||Deletes a single tag from this machine.||
+||[sdc-describeanalytics](#DescribeAnalytics)||Retrieves the "schema" for instrumentations that can be created using the analytics endpoint.||
+||[sdc-getdataset](#GetDataset)||Gets an individual dataset by id.||
+||[sdc-getinstrumentation](#GetInstrumentation)||Retrieves the configuration for an instrumentation.||
+||[sdc-getkey](#GetKey)||Retrieves an individual key record.||
+||[sdc-getmachine](#GetMachine)||Gets the details for an individual machine.||
+||[sdc-getmachinemetadata](#GetMachineMetadata)||Returns the complete set of metadata associated with this machine.||
+||[sdc-getmachinesnapshot](#GetMachineSnapshot)||Gets the state of the named snapshot.||
+||[sdc-getmachinetag](#GetMachineTag)||Returns the value for a single tag on this machine.||
+||[sdc-getpackage](#GetPackage)||Gets a package by name.||
+||[sdc-listdatacenters](#ListDatacenters)||Provides a list of all datacenters this cloud is aware of.||
+||[sdc-listdatasets](#ListDatasets)||Provides a list of datasets available in this datacenter.||
+||[sdc-listinstrumentations](#ListInstrumentations)||Retrieves all currently created instrumentations.||
+||[sdc-listkeys](#ListKeys)||Lists all public keys we have on record for the specified account.||
+||[sdc-listmachines](#ListMachines)||Lists all machines on record for an account.||
+||[sdc-listmachinesnapshots](#ListMachineSnapshots)||Lists all snapshots taken for a given machine.||
+||[sdc-listmachinetags](#ListMachineTags)||Returns the complete set of tags associated with this machine.||
+||[sdc-listpackages](#ListPackages)||Provides a list of packages available in this datacenter.||
+||[sdc-rebootmachine](#RebootMachine)||Allows you to 'reboot' a machine.||
+||[sdc-resizemachine](#ResizeMachine)||Allows you to resize a SmartMachine.||
+||[sdc-setup](#set-up-your-cli)||Sets up an account on a datacenter for use with this CLI.||
+||[sdc-startmachine](#StartMachine)||Allows you to boot up a machine||
+||[sdc-startmachinefromsnapshot](#StartMachineFromSnapshot)||Starts a stopped machine from the referenced snapshot.||
+||[sdc-stopmachine](#StopMachine)||Allows you to shut down a machine.||
+||[sdc-updatemachinemetadata](#UpdateMachineMetadata)||Allows you to update the metadata for a given machine.||
+
+
+<br />
+<br />
+<br />
+***
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/"><img alt="Creative Commons License" style="border-width:0;float:left;margin:4px 8px 0 0;" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a> <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Text" property="dct:title" rel="dct:type">Joyent CloudAPI Documentation</span> by <a xmlns:cc="http://creativecommons.org/ns#" href="http://www.joyent.com" property="cc:attributionName" rel="cc:attributionURL">Joyent, Inc.</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
+***
