@@ -6,7 +6,7 @@
     "private": true,
     "dependencies": {
         "async": "0.1.15",
-        "bunyan": "0.5.3",
+        "bunyan": "0.6.1",
         "dtrace-provider": "0.0.6",
         "filed": "0.0.5",
         "http-signature": "0.9.8",
