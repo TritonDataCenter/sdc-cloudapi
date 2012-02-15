@@ -20,6 +20,12 @@
 NODE            := node
 NPM		:= npm
 TAP		:= ./node_modules/.bin/tap
+TAR = tar
+UNAME := $(shell uname)
+
+ifeq ($(UNAME), SunOS)
+	TAR = gtar
+endif
 
 #
 # Files
@@ -34,11 +40,45 @@ JSSTYLE_FILES	 = $(JS_FILES)
 SMF_MANIFESTS	 = smf/manifests/cloudapi.xml
 
 #
+# Variables
+#
+
+ROOT                    := $(shell pwd)
+TIMESTAMP               := $(shell date -u "+%Y%m%dT%H%M%SZ")
+
+CLOUDAPI_VERSION        := $(shell git symbolic-ref HEAD | \
+	         awk -F / '{print $$3}')-$(TIMESTAMP)-g$(shell \
+                 git describe --all --long | awk -F '-g' '{print $$NF}')
+
+RELEASE_TARBALL         = cloudapi-pkg-$(CLOUDAPI_VERSION).tar.bz2
+TMPDIR                  = /tmp/$(CLOUDAPI_VERSION)
+
+#
 # Repo-specific targets
 #
 .PHONY: all
 all:
 	$(NPM) rebuild
+
+.PHONY: release
+release:
+	@echo "Building $(RELEASE_TARBALL)"
+	@mkdir -p $(TMPDIR)/root/opt/smartdc/cloudapi
+	@mkdir -p $(TMPDIR)/site
+	@touch $(TMPDIR)/site/.do-not-delete-me
+	@mkdir -p $(TMPDIR)/root
+	@mkdir -p $(tmpdir)/root/opt/smartdc/cloudapi/ssl
+	cp -r	$(ROOT)/build/docs \
+		$(ROOT)/etc \
+		$(ROOT)/lib \
+		$(ROOT)/main.js \
+		$(ROOT)/node_modules \
+		$(ROOT)/package.json \
+		$(ROOT)/smf \
+		$(TMPDIR)/root/opt/smartdc/cloudapi/
+	(cd $(TMPDIR) && $(TAR) -jxf $(ROOT)/node-v0.6.10.tar.bz2)
+	(cd $(TMPDIR) && $(TAR) -jcf $(ROOT)/$(RELEASE_TARBALL) root site)
+	@rm -rf $(TMPDIR)
 
 .PHONY: test
 test: $(TAP)

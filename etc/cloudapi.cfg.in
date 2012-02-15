@@ -1,0 +1,57 @@
+{
+    "port": 443,
+    "certificate": "/opt/smartdc/cloudapi/ssl/cert.pem",
+    "key": "/opt/smartdc/cloudapi/ssl/key.pem",
+    "ufds": {
+        "url": "ldaps://127.0.0.1",
+        "bindDN": "UFDS_ROOT_DN",
+        "bindPassword": "UFDS_ROOT_PW",
+        "cache": {
+            "size": 5000,
+            "expiry": 60
+        }
+    },
+    "mapi": {
+        "uri": "MAPI_URL",
+        "username": "MAPI_HTTP_ADMIN_USER",
+        "password": "MAPI_HTTP_ADMIN_PW",
+        "cache": {
+            "size": 5000,
+            "expiry": 60
+        }
+    },
+    "ca": {
+        "uri": "CA_URL"
+    },
+    "datacenters": {
+        "DATACENTER_NAME": "CLOUDAPI_EXTERNAL_URL"
+    },
+    "ipThrottles": {
+        "all": {
+            "ip": true,
+            "burst": 30,
+            "rate": 10,
+            "overrides": {
+                "127.0.0.1": {
+                    "burst": 0,
+                    "rate": 0
+                }
+            }
+        },
+        "analytics": false
+    },
+    "userThrottles": {
+        "all": {
+            "username": true,
+            "burst": 30,
+            "rate": 10,
+            "overrides": {
+                "CAPI_ADMIN_LOGIN": {
+                    "burst": 0,
+                    "rate": 0
+                }
+            }
+        },
+        "analytics": false
+    }
+}

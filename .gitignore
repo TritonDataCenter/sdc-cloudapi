@@ -1,8 +1,8 @@
-/node_modules
-/tmp
 build
+node_modules
 docs/*.json
 docs/*.html
 cscope.in.out
 cscope.po.out
 cscope.out
+cloudapi-*.tar.bz2
