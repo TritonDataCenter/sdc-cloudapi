@@ -56,12 +56,16 @@ TMPDIR                  = /tmp/$(CLOUDAPI_VERSION)
 #
 # Repo-specific targets
 #
-.PHONY: all
-all:
+.PHONY: build
+build:
 	$(NPM) rebuild
 
+.PHONY: all
+all: build
+
+
 .PHONY: release
-release:
+release: check build docs
 	@echo "Building $(RELEASE_TARBALL)"
 	@mkdir -p $(TMPDIR)/root/opt/smartdc/cloudapi
 	@mkdir -p $(TMPDIR)/site
