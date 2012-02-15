@@ -84,6 +84,16 @@ release: check build docs
 	(cd $(TMPDIR) && $(TAR) -jcf $(ROOT)/$(RELEASE_TARBALL) root site)
 	@rm -rf $(TMPDIR)
 
+
+.PHONY: publish
+publish: release
+	@if [[ -z "$(BITS_DIR)" ]]; then \
+	  echo "error: 'BITS_DIR' must be set for 'publish' target"; \
+	  exit 1; \
+	fi
+	mkdir -p $(BITS_DIR)/cloudapi
+	cp $(ROOT)/$(RELEASE_TARBALL) $(BITS_DIR)/cloudapi/$(RELEASE_TARBALL)
+
 .PHONY: test
 test: $(TAP)
 	$(TAP) --timeout 120 test/*.test.js
