@@ -7,3 +7,6 @@ cscope.in.out
 cscope.po.out
 cscope.out
 cloudapi-*.tar.bz2
+node_modules/dtrace-provider/.lock-wscript
+node_modules/sdc-clients/node_modules/ldapjs/node_modules/buffertools/.lock-wscript
+node_modules/sdc-clients/node_modules/ldapjs/node_modules/dtrace-provider/.lock-wscript
