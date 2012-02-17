@@ -43,15 +43,20 @@ SMF_MANIFESTS	 = smf/manifests/cloudapi.xml
 # Variables
 #
 
+# Mountain Gorilla-spec'd versioning.
+# Need GNU awk for multi-char arg to "-F".
+AWK := $(shell (which gawk 2>/dev/null | grep -v "^no ") || (which nawk 2>/dev/null | grep -v "^no ") || which awk)
+BRANCH := $(shell git symbolic-ref HEAD | $(AWK) -F/ '{print $$3}')
+ifeq ($(TIMESTAMP),)
+	TIMESTAMP := $(shell date -u "+%Y%m%dT%H%M%SZ")
+endif
+GITDESCRIBE := g$(shell git describe --all --long --dirty | $(AWK) -F'-g' '{print $$NF}')
+STAMP := $(BRANCH)-$(TIMESTAMP)-$(GITDESCRIBE)
+
 ROOT                    := $(shell pwd)
-TIMESTAMP               := $(shell date -u "+%Y%m%dT%H%M%SZ")
+RELEASE_TARBALL         := cloudapi-pkg-$(STAMP).tar.bz2
+TMPDIR                  := /tmp/$(STAMP)
 
-CLOUDAPI_VERSION        := $(shell git symbolic-ref HEAD | \
-	         awk -F / '{print $$3}')-$(TIMESTAMP)-g$(shell \
-                 git describe --all --long | awk -F '-g' '{print $$NF}')
-
-RELEASE_TARBALL         = cloudapi-pkg-$(CLOUDAPI_VERSION).tar.bz2
-TMPDIR                  = /tmp/$(CLOUDAPI_VERSION)
 
 #
 # Repo-specific targets
