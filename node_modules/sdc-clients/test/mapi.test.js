@@ -40,7 +40,6 @@ function waitForState(state, callback) {
 ///--- Tests
 
 exports.setUp = function(test, assert) {
-  restify.setLogLevel('Trace');
   mapi = new MAPI({
     url: MAPI_URL,
     username: 'admin',
@@ -213,7 +212,7 @@ exports.test_list_machines_no_vms = function(test, assert) {
 
 exports.test_get_zone_by_alias = function(test, assert) {
   var opts = {
-    alias: 'mapi'
+    alias: 'ufds0'
   };
   mapi.listMachines(CUSTOMER, opts, function(err, zones) {
     assert.ifError(err);
@@ -240,7 +239,7 @@ exports.test_get_zone_by_alias_not_found = function(test, assert) {
 
 exports.test_get_machine = function(test, assert) {
   var opts = {
-    alias: 'mapi'
+    alias: 'ufds0'
   };
   mapi.listMachines(CUSTOMER, opts, function(err, zones) {
     assert.ifError(err);

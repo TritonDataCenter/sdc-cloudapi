@@ -21,11 +21,10 @@ exports.setUp = function(test, assert) {
   ca = new CA({
     url: CA_URL,
     retryOptions: {
-      retries: 5,
+      retries: 1,
       minTimeout: 1000
     }
   });
-  restify.setLogLevel('Trace');
   test.finish();
 };
 
