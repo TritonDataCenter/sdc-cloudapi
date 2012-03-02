@@ -63,7 +63,7 @@ TMPDIR                  := /tmp/$(STAMP)
 #
 .PHONY: build
 build:
-	$(NPM) rebuild
+	$(NPM) install
 
 .PHONY: all
 all: build
