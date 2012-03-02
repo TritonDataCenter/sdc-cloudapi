@@ -17,7 +17,7 @@
         "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#34fffb9c8b2b22dd507ab23f95de3a1dfb7139fa"
     },
     "devDependencies": {
-        "tap": "0.2"
+        "tap": "0.2.3"
     },
     "scripts": {
         "start": "node ./main.js",
