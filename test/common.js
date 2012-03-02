@@ -2,6 +2,7 @@
 var assert = require('assert');
 var crypto = require('crypto');
 
+var Logger = require('bunyan');
 var restify = require('restify');
 var uuid = require('node-uuid');
 
@@ -24,11 +25,21 @@ module.exports = {
 
         var user = 'a' + uuid().substr(0, 7) + '@joyent.com';
         var client = restify.createJsonClient({
-            url: (process.env.CLOUDAPI_URL || 'http://localhost:8080'),
+            url: process.env.CLOUDAPI_URL || 'http://localhost:8080',
             version: '*',
             retryOptions: {
                 retry: 0
-            }
+            },
+            log: new Logger({
+                level: process.env.LOG_LEVEL || 'info',
+                name: 'cloudapi_unit_test',
+                stream: process.stderr,
+                serializers: {
+                    err: Logger.stdSerializers.err,
+                    req: Logger.stdSerializers.req,
+                    res: restify.bunyan.serializers.response
+                }
+            })
         });
         client.basicAuth(user, PASSWD);
         client.testUser = user;
