@@ -7,6 +7,7 @@ var path = require('path');
 var d = require('dtrace-provider');
 var Logger = require('bunyan');
 var nopt = require('nopt');
+var restify = require('restify');
 
 var app = require('./lib').app;
 
