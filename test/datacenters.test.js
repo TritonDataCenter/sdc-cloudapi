@@ -38,7 +38,8 @@ test('ListDatacenters OK', function(t) {
 
 
 test('GetDatacenter OK', function(t) {
-    client.get('/my/datacenters/coal', function(err, req, res, body) {
+    var dc = process.env.DATACENTER || 'coal';
+    client.get('/my/datacenters/' + dc, function(err, req, res, body) {
         t.ifError(err);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 302);
