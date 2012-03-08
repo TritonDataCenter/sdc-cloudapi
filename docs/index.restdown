@@ -21,12 +21,12 @@ This document refers to SmartDataCenter 6.5.
 
 ## Conventions
 
-Any content formatted like this:
+Any content formatted like this is a command-line example that you
+can run from a shell:
 
     $ sdc-listmachines
 
-is a command-line example that you can run from a shell.  All other examples
-and information is formatted like this:
+All other examples and information is formatted like this:
 
     GET /my/machines HTTP/1.1
 
@@ -45,35 +45,38 @@ CloudAPI, you can:
 
 ## How do I access CloudAPI?
 
-CloudAPI is available as a REST API, and you can use access it using:
+CloudAPI is available as a REST API, and you can access it using:
 
 * SmartDataCenter Customer Portal
 * [Command line interface](https://github.com/joyent/node-smartdc) (CLI)
 * [node.js SDK](https://github.com/joyent/node-smartdc)
 * REST API
 
-If you don't want to write any code, you can use the CloudAPI CLI. The CLI
-allows you to perform every action available in the SDK, or via the REST API.
-
-The next section will get you up and running with the most common tasks for
-using SmartDataCenter.
-
+If you don't want to write any code, use the CloudAPI CLI. The CLI
+lets use command line tools to perform every action available in
+the SDK and in the REST API.
 
 
 # Getting Started
 
-The CloudAPI command line interface requires Node.js and NPM to run. If you need to install them, see the [Node.js installation instructions](https://github.com/joyent/node/wiki/Installation) and the [NPM installation instructions](http://npmjs.org/).
+The CloudAPI command line interface (CLI) requires Node.js and npm to run.
 
-Once Node.js and NPM are installed,  install the CloudAPI CLI as an NPM module like this:
+You can get Node.js from [nodejs.org](http://nodejs.org) as source code
+and as precompiled packages for Windows and Macintosh. (npm has been included
+in the Node.js distribution since version 0.6.3.)
+
+Once you've installed Node.js and npm, install the CloudAPI CLI like this:
 
     $ npm install smartdc -g
 
-That will install the CLI globally, which is almost certainly what you want.
-
-You will also want to install [json](https://github.com/trentm/json), a tool that
+You will also want to install [jsontool](https://github.com/trentm/json), a tool that
 makes it easier to work with JSON-formatted output. You can install it like this:
 
     $ npm install jsontool -g
+
+In both cases the `-g` switch installs the tools globally,
+usually in `/usr/local/bin`,
+so that you can use them easily from the command line.
 
 ## Generate an SSH key
 
@@ -111,7 +114,7 @@ would have a different endpoint. In this document, we'll use
 Note that CloudAPI always uses secure HTTP, which means that the endpoint URL
 must begin with `https`.
 
-Use the login for your SmartDataCenter account, and the password that goes with
+Use the login for your SmartDataCenter account and the password that goes with
 it.  For the SSH public key, the default is ~/.ssh/id_rsa.pub; if you're using
 a different key with SmartDataCenter, enter the path to the *public* key.
 
@@ -135,9 +138,10 @@ You can set environment variables for the following flags so that you don't have
 to type them for each request:
 
 || **CLI Flag** || **Description** || **Environment Variable** ||
-||--account||login name (account)||SDC\_CLI\_ACCOUNT||
-||--keyId||name of the key to use for signing||SDC\_CLI\_KEY\_ID||
-||--url||URL of the CloudAPI endpoint||SDC\_CLI\_URL||
+||--account<br/>-a||Login name (account)||SDC\_CLI\_ACCOUNT||
+||--keyId<br/>-k||Name of the key to use for signing||SDC\_CLI\_KEY\_ID||
+||--url<br/>-u||URL of the CloudAPI endpoint||SDC\_CLI\_URL||
+||--identity<br/>-i||Path to the location of your SSH key.<br/>On a Macintosh, this is usually `/Users/username/.ssh/id_rsa`||SDC\_CLI\_IDENTITY||
 
 Note that you can use the short form of flags as well. For instance, you 
 can use the `-a` or the `--account` flag.
@@ -236,7 +240,7 @@ example, run:
 Now the default environment varaible you set up for the CloudAPI CLI is no
 longer valid, so try listing your keys with:
 
-    $ sdc-listkeys -k my_other_rsa_key
+    $ sdc-getkey my_other_rsa_key
 
 You can of course set the necessary environment variable again with:
 
@@ -245,7 +249,7 @@ You can of course set the necessary environment variable again with:
 Note that by default the name generated for your SSH keys is the same as the SSH
 public key fingerprint, minus the separating ':' characters.
 
-At this point you could delete your other key from the system; see Cleaning Up
+At this point you could delete your other key from the system; see [Cleaning Up](#cleaning-up)
 for a quick example.
 
 ## Creating Analytics
@@ -279,8 +283,7 @@ point, for a full discssion of analytics, be sure to read
 
 After going through the Getting Started section, you should now have at least
 one SSH key, one machine and one instrumentation.  The rest of the commands
-assume you have the `jsontool` NPM module installed.  If not, check it out, as
-it's very handy; you can install with `npm install jsontool`.
+assume you have [jsontool](https://github.com/trentm/json) installed.
 
 ### Deleting Instrumentations
 
