@@ -31,7 +31,7 @@ test('ListDatacenters OK', function(t) {
         t.ok(body);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 200);
-        t.ok(body.coal);
+        t.ok(body[process.env.DATACENTER || 'coal']);
         t.end();
     });
 });
