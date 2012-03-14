@@ -98,10 +98,31 @@ publish: release
 	fi
 	mkdir -p $(BITS_DIR)/cloudapi
 	cp $(ROOT)/$(RELEASE_TARBALL) $(BITS_DIR)/cloudapi/$(RELEASE_TARBALL)
+<<<<<<< HEAD
 
-.PHONY: test
-test: $(TAP)
-	$(TAP) --timeout 120 test/*.test.js
+.PHONY: test account_test datacenters_test datasets_test keys_test machines_test packages_test
+
+account_test: $(TAP)
+	$(TAP) --tap --timeout 120 test/account.test.js
+
+datacenters_test: $(TAP)
+	$(TAP) --tap --timeout 120 test/datacenters.test.js
+
+datasets_test: $(TAP)
+	$(TAP) --tap --timeout 120 test/datasets.test.js
+
+keys_test: $(TAP)
+	$(TAP) --tap --timeout 120 test/keys.test.js
+
+machines_test: $(TAP)
+	$(TAP) --tap --timeout 120 test/machines.test.js
+
+packages_test: $(TAP)
+	$(TAP) --tap --timeout 120 test/packages.test.js
+=======
+>>>>>>> 2b8a8141f56511165348e2d42788986d9e935d21
+
+test: account_test datacenters_test datasets_test keys_test machines_test packages_test
 
 include ./Makefile.deps
 include ./Makefile.targ
