@@ -813,7 +813,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     }
 
 
-## GetDatacenter (GET /:login/datacenter/:name)
+## GetDatacenter (GET /:login/datacenters/:name)
 
 Gets an individual datacenter by name.  Returns an HTTP redirect to your
 client, which you can ignore if you really want, as the datacenter url is in
@@ -1319,7 +1319,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-Getting all machines:
+Getting the details for the machine whose UUID is 75cfe125-a5ce-49e8-82ac-09aa31ffdf26:
 
     $ sdc-getmachine 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
 
@@ -1553,7 +1553,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If :login does not exist||
-||InvalidState||The machine is in an invalid state to be stopped||
+||InvalidState||The machine is in an invalid state to be started||
 ||InvalidArgument||If action was invalid||
 ||MissingParameter||If action wasn't sent||
 
@@ -2098,7 +2098,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       }
     }
 
-## DeleteMachineMetadata (GET /:login/machines/:id/metadata/:key)
+## DeleteMachineMetadata (DELETE /:login/machines/:id/metadata/:key)
 
 Deletes a single metadata key from this machine.
 
@@ -2144,7 +2144,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
     Content-Length: 0
 
-## DeleteAllMachineMetadata (GET /:login/machines/:id/metadata)
+## DeleteAllMachineMetadata (DELETE /:login/machines/:id/metadata)
 
 Deletes all metadata keys from this machine.
 
@@ -2467,7 +2467,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If :login does not exist||
-||InvalidState||The machine is in an invalid state to be stopped||
+||InvalidState||The machine is in an invalid state to be deleted||
 
 ### CLI Command
 
