@@ -26,7 +26,7 @@ can run from a shell:
 
     $ sdc-listmachines
 
-All other examples and information is formatted like this:
+All other examples and information are formatted like this:
 
     GET /my/machines HTTP/1.1
 
@@ -53,7 +53,7 @@ CloudAPI is available as a REST API, and you can access it using:
 * REST API
 
 If you don't want to write any code, use the CloudAPI CLI. The CLI
-lets use command line tools to perform every action available in
+lets you use command line tools to perform every action available in
 the SDK and in the REST API.
 
 
@@ -237,17 +237,18 @@ example, run:
 
     $ sdc-createkey -n my_other_rsa_key ~/.ssh/my_other_rsa_key.pub
 
-Now the default environment varaible you set up for the CloudAPI CLI is no
-longer valid, so try listing your keys with:
+The `-n` option sets the name of the key. If you don't provide one, Cloud API
+sets it to the name of the file. In this case `my_other_rsa_key.pub`.
 
-    $ sdc-getkey my_other_rsa_key
-
-You can of course set the necessary environment variable again with:
+To use the new key, you will need to update the environment variables:
 
     $ export SDC_CLI_KEY_ID=my_other_rsa_key
 
-Note that by default the name generated for your SSH keys is the same as the SSH
-public key fingerprint, minus the separating ':' characters.
+If the key is stored in a file other than `~/.ssh/id_rsa`, you will also need
+to add it to the SSH Agent and to set the `SDC_CLI_IDENTITY` variable:
+
+    $ export SDC_CLI_IDENTITY=~/.ssh/my_other_rsa_key
+    $ ssh-add $SDC_CLI_IDENTITY
 
 At this point you could delete your other key from the system; see [Cleaning Up](#cleaning-up)
 for a quick example.
@@ -3627,7 +3628,7 @@ However, the service may provide other representations of the same data.  For
 numeric decompositions, the service provides several **heatmap** resources that
 generate heatmaps, like this one:
 
-<img src="docs/public/media/img/heatmap.png" />
+<img src="media/img/heatmap.png" />
 
 Like raw values, heatmap values are returned using JSON, but instead of
 specifying a `value` property, they specify an `image` property whose contents
