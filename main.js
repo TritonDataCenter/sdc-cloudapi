@@ -40,21 +40,21 @@ var shortOpts = {
 ///--- Helpers
 
 function usage(code, message) {
-  var _opts = '';
-  Object.keys(shortOpts).forEach(function(k) {
-    var longOpt = shortOpts[k][0].replace('--', '');
-    var type = opts[longOpt].name || 'string';
-    if (type && type === 'boolean') type = '';
-    type = type.toLowerCase();
+    var _opts = '';
+    Object.keys(shortOpts).forEach(function (k) {
+        var longOpt = shortOpts[k][0].replace('--', '');
+        var type = opts[longOpt].name || 'string';
+        if (type && type === 'boolean') type = '';
+        type = type.toLowerCase();
 
-    _opts += ' [--' + longOpt + ' ' + type + ']';
-  });
+        _opts += ' [--' + longOpt + ' ' + type + ']';
+    });
 
-  var msg = (message ? message + '\n' : '') +
-    'usage: ' + path.basename(process.argv[1]) + _opts;
+    var msg = (message ? message + '\n' : '') +
+        'usage: ' + path.basename(process.argv[1]) + _opts;
 
-  process.stderr.write(msg + '\n');
-  process.exit(code);
+    process.stderr.write(msg + '\n');
+    process.exit(code);
 }
 
 
@@ -67,7 +67,7 @@ function run() {
     });
 
     DTP.enable();
-    server.start(function() {
+    server.start(function () {
         LOG.info('CloudAPI listening at %s', server.url);
     });
 
@@ -97,7 +97,7 @@ if (PARSED.debug) {
     for (var i = 0; i < os.cpus().length; i++)
         cluster.fork();
 
-    cluster.on('death', function(worker) {
+    cluster.on('death', function (worker) {
         LOG.error({worker: worker}, 'worker %d exited');
     });
 

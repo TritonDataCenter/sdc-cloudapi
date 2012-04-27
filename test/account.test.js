@@ -23,7 +23,6 @@ function checkOk(t, err, req, res, body) {
     t.equal(body.login, client.testUser);
     t.equal(body.email, client.testUser);
     t.ok(body.id);
-    t.ok(body.updated);
     t.equal(res.statusCode, 200);
 }
 

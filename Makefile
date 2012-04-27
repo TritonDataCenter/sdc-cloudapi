@@ -17,57 +17,56 @@
 #
 # Tools
 #
-NODE            := node
-NPM		:= npm
 TAP		:= ./node_modules/.bin/tap
-TAR = tar
-UNAME := $(shell uname)
-
-ifeq ($(UNAME), SunOS)
-	TAR = gtar
-endif
 
 #
 # Files
 #
-CFG_FILE         = etc/cloudapi.coal.cfg
 DOC_FILES	 = index.restdown
-JS_FILES	:= $(shell find lib -name '*.js')
+JS_FILES	:= $(shell ls *.js) $(shell find lib -name '*.js')
 JSL_CONF_NODE	 = tools/jsl.node.conf
-JSL_FILES_NODE   = main.js $(JS_FILES)
-JSSTYLE_FLAGS    = -f tools/jsstyle.conf
+JSL_FILES_NODE   = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
-SMF_MANIFESTS	 = smf/manifests/cloudapi.xml
+JSSTYLE_FLAGS    = -f tools/jsstyle.conf
+SHRINKWRAP	 = npm-shrinkwrap.json
+SMF_MANIFESTS    = smf/manifests/cloudapi.xml
+
+CLEAN_FILES	+= node_modules $(SHRINKWRAP) cscope.files
+
+include ./tools/mk/Makefile.defs
+include ./tools/mk/Makefile.node.defs
+include ./tools/mk/Makefile.node_deps.defs
+include ./tools/mk/Makefile.smf.defs
 
 #
 # Variables
 #
 
 # Mountain Gorilla-spec'd versioning.
-# Need GNU awk for multi-char arg to "-F".
-AWK := $(shell (which gawk 2>/dev/null | grep -v "^no ") || (which nawk 2>/dev/null | grep -v "^no ") || which awk)
-BRANCH := $(shell git symbolic-ref HEAD | $(AWK) -F/ '{print $$3}')
-ifeq ($(TIMESTAMP),)
-	TIMESTAMP := $(shell date -u "+%Y%m%dT%H%M%SZ")
-endif
-GITDESCRIBE := g$(shell git describe --all --long --dirty | $(AWK) -F'-g' '{print $$NF}')
-STAMP := $(BRANCH)-$(TIMESTAMP)-$(GITDESCRIBE)
+
 
 ROOT                    := $(shell pwd)
 RELEASE_TARBALL         := cloudapi-pkg-$(STAMP).tar.bz2
 TMPDIR                  := /tmp/$(STAMP)
 
+#
+# Env vars
+#
+PATH	:= $(NODE_INSTALL)/bin:/opt/local/bin:${PATH}
+
 
 #
 # Repo-specific targets
 #
-.PHONY: build
-build:
-	$(NPM) install
-
 .PHONY: all
 all: build
 
+.PHONY: build
+build: $(SMF_MANIFESTS) | $(TAP) $(REPO_DEPS)
+	$(NPM) install
+
+$(TAP): | $(NPM_EXEC)
+	$(NPM) install
 
 .PHONY: release
 release: check build docs
@@ -77,7 +76,7 @@ release: check build docs
 	@touch $(TMPDIR)/site/.do-not-delete-me
 	@mkdir -p $(TMPDIR)/root
 	@mkdir -p $(tmpdir)/root/opt/smartdc/cloudapi/ssl
-	cp -r	$(ROOT)/build/docs \
+	cp -r	$(ROOT)/build \
 		$(ROOT)/etc \
 		$(ROOT)/lib \
 		$(ROOT)/main.js \
@@ -85,7 +84,6 @@ release: check build docs
 		$(ROOT)/package.json \
 		$(ROOT)/smf \
 		$(TMPDIR)/root/opt/smartdc/cloudapi/
-	(cd $(TMPDIR) && $(TAR) -jxf $(ROOT)/node-v0.6.10.tar.bz2)
 	(cd $(TMPDIR) && $(TAR) -jcf $(ROOT)/$(RELEASE_TARBALL) root site)
 	@rm -rf $(TMPDIR)
 
@@ -121,5 +119,8 @@ packages_test: $(TAP)
 
 test: account_test datacenters_test datasets_test keys_test machines_test packages_test
 
-include ./Makefile.deps
-include ./Makefile.targ
+include ./tools/mk/Makefile.deps
+include ./tools/mk/Makefile.node.targ
+include ./tools/mk/Makefile.node_deps.targ
+include ./tools/mk/Makefile.smf.targ
+include ./tools/mk/Makefile.targ

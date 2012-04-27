@@ -70,7 +70,7 @@ test('CreateKey (named) OK', function(t) {
     };
     client.post('/my/keys', key, function(err, req, res, body) {
         t.ifError(err);
-        t.ok(body)
+        t.ok(body);
         t.equal(res.statusCode, 201);
         common.checkHeaders(t, res.headers);
         checkKey(t, body);
@@ -100,7 +100,7 @@ test('GetKey OK', function(t) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
-        t.ok(body)
+        t.ok(body);
         checkKey(t, body);
         t.end();
     });
@@ -136,9 +136,9 @@ test('CreateKey OK', function(t) {
         t.ifError(err);
         t.equal(res.statusCode, 201);
         common.checkHeaders(t, res.headers);
-        t.ok(body)
+        t.ok(body);
         checkKey(t, body);
-        name = body.name
+        name = body.name;
         fp = body.fingerprint;
         t.end();
     });
@@ -171,7 +171,7 @@ test('teardown', { timeout: 'Infinity' }, function(t) {
     function nuke(callback) {
         client.teardown(function(err) {
             if (err)
-                return setTimeout(function() { return nuke(callback) }, 500);
+                return setTimeout(function() { return nuke(callback); }, 500);
 
             return callback(null);
         });

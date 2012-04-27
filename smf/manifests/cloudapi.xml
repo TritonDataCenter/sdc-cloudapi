@@ -32,7 +32,7 @@
                                    privileges="basic,net_privaddr"/>
                 <method_environment>
                     <envvar name="PATH"
-                            value="/opt/smartdc/cloudapi/bin:/opt/local/bin:/usr/bin:/usr/sbin:/bin"/>
+                            value="/opt/smartdc/cloudapi/build/node/bin:/opt/local/bin:/usr/bin:/usr/sbin:/bin"/>
                     <envvar name="LD_PRELOAD_32"
                             value="/usr/lib/extendedFILE.so.1" />
                 </method_environment>

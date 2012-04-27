@@ -29,19 +29,19 @@ var TAP_CONF = {
 
 ///--- Helpers
 
-function checkMachine(t, machine) {
-    t.ok(machine);
-    t.ok(machine.id);
-    t.ok(machine.name);
-    t.ok(machine.type);
-    t.ok(machine.state);
-    t.ok(machine.dataset);
-    t.ok(machine.ips);
-    t.ok(machine.memory);
-    t.ok(machine.disk);
-    t.ok(machine.metadata);
-    t.ok(machine.created);
-    t.ok(machine.updated);
+function checkMachine(t, m) {
+    t.ok(m);
+    t.ok(m.id);
+    t.ok(m.name);
+    t.ok(m.type);
+    t.ok(m.state);
+    t.ok(m.dataset);
+    t.ok(m.ips);
+    t.ok(m.memory);
+    t.ok(m.disk);
+    t.ok(m.metadata);
+    t.ok(m.created);
+    t.ok(m.updated);
 }
 
 
@@ -55,7 +55,7 @@ function checkSnapshot(t, snap) {
 function checkState(url, state, callback) {
     return client.get(url, function(err, req, res, body) {
         if (err)
-            return callback(err)
+            return callback(err);
 
         return callback(null, (body ? body.state === state : false));
     });
@@ -85,9 +85,9 @@ test('setup', TAP_CONF, function(t) {
         t.ok(_client);
         client = _client;
 
-        client.post('/my/keys', {key: KEY}, function(err, req, res, body) {
-            t.ifError(err);
-            keyName = body.name
+        client.post('/my/keys', {key: KEY}, function(err2, req, res, body) {
+            t.ifError(err2);
+            keyName = body.name;
             t.end();
         });
     });
@@ -265,8 +265,8 @@ test('Delete snapshot', TAP_CONF, function(t) {
   client.get(url, function(err, req, res, body) {
     t.ifError(err);
     body.forEach(function(s) {
-      client.del(url + '/' + s.name, function(err) {
-        t.ifError(err);
+      client.del(url + '/' + s.name, function(err2) {
+        t.ifError(err2);
         t.end();
       });
     });

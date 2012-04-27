@@ -7,17 +7,17 @@
     "dependencies": {
         "async": "0.1.18",
         "bunyan": "0.6.8",
-        "dtrace-provider": "0.0.6",
-        "filed": "0.0.5",
+        "dtrace-provider": "0.0.7",
+        "filed": "0.0.6",
         "http-signature": "0.9.9",
         "mime": "1.2.5",
         "node-uuid": "1.3.3",
         "nopt": "1.0.10",
-        "restify": "git://github.com/mcavage/node-restify.git#0a689b2d338cb824b5ae09c57c032789243ce56c",
-        "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#be201018c2b000bd9ce5d1d125301e705e98af93"
+        "restify": "1.4.1",
+        "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#8c2826ccb725ffd5aabeb2758acefff7a923f053"
     },
     "devDependencies": {
-        "tap": "0.2.3"
+        "tap": "0.2.4"
     },
     "scripts": {
         "start": "node ./main.js",

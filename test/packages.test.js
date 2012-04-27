@@ -50,7 +50,7 @@ test('ListPackages OK', function(t) {
         t.ok(body.length);
         body.forEach(function(p) {
             checkPackage(t, p);
-        })
+        });
         t.end();
     });
 });
@@ -59,7 +59,7 @@ test('ListPackages OK', function(t) {
 test('GetPackage OK', function(t) {
     client.get('/my/packages/regular_128', function(err, req, res, body) {
         t.ifError(err);
-        t.ok(body)
+        t.ok(body);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
         checkPackage(t, body);

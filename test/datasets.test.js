@@ -52,7 +52,7 @@ test('ListDatasets OK', function(t) {
         t.ok(body.length);
         body.forEach(function(d) {
             checkDataset(t, d);
-        })
+        });
         t.end();
     });
 });
@@ -63,7 +63,7 @@ test('GetDataset OK', function(t) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
-        t.ok(body)
+        t.ok(body);
         checkDataset(t, body);
         t.end();
     });

@@ -47,7 +47,7 @@ module.exports = {
         var ufds = new UFDS({
             url: (process.env.UFDS_URL || 'ldaps://10.99.99.21'),
             bindDN: 'cn=root',
-            bindPassword: 'secret',
+            bindPassword: 'secret'
         });
         ufds.on('error', function(err) {
             return callback(err);
@@ -63,18 +63,18 @@ module.exports = {
                     return callback(err);
 
                 client.ufds = ufds;
-                client.teardown = function teardown(callback) {
-                    client.ufds.deleteUser(client.testUser, function(err) {
-                        if (err) // blindly ignore
-                            return callback(err);
+                client.teardown = function teardown(cb) {
+                    client.ufds.deleteUser(client.testUser, function(err2) {
+                        if (err2) // blindly ignore
+                            return cb(err2);
 
                         ufds.close(function() {});
-                        return callback(null);
+                        return cb(null);
                     });
                 };
 
                 return callback(null, client);
-            })
+            });
         });
     },
 
@@ -88,7 +88,7 @@ module.exports = {
         t.ok(headers['x-request-id']);
         t.ok(headers['x-response-time'] >= 0);
         t.equal(headers.server, 'Joyent SmartDataCenter 7.0.0');
-        t.equal(headers.connection, 'close');
+        t.equal(headers.connection, 'Keep-Alive');
         t.equal(headers['x-api-version'], '7.0.0');
     }
 
