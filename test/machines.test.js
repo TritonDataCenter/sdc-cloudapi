@@ -129,18 +129,6 @@ test('CreateMachine', TAP_CONF, function(t) {
 });
 
 
-// Do this here so that Riak has time to nuke it by teardown
-test('delete ssh key', TAP_CONF, function(t) {
-    var path = '/my/keys/' + encodeURIComponent(keyName);
-    client.del(path, function(err, req, res) {
-        t.ifError(err);
-        t.equal(res.statusCode, 204);
-        common.checkHeaders(t, res.headers);
-        t.end();
-    });
-});
-
-
 test('ListMachines all', TAP_CONF, function(t) {
     client.get('/my/machines', function(err, req, res, body) {
         t.ifError(err);
@@ -290,6 +278,7 @@ test('teardown', TAP_CONF, function (t) {
     client.del('/my/keys/' + keyName, function (err, req, res) {
         t.ifError(err, 'delete key error');
         t.equal(res.statusCode, 204);
+        common.checkHeaders(t, res.headers);
         client.teardown(function (err2) {
             t.ifError(err2, 'teardown error');
             t.end();
