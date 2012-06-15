@@ -1,7 +1,7 @@
-// Copyright 2012 Joyent, Inc.  All rights reserved.
+// Copyright 2012 Joyent, Inc. All rights reserved.
 
 var fs = require('fs');
-
+var util = require('util');
 var test = require('tap').test;
 var uuid = require('node-uuid');
 
@@ -9,10 +9,10 @@ var common = require('./common');
 
 
 
-///--- Globals
+// --- Globals
 
 var client;
-var keyName;
+var keyName = uuid();
 var machine;
 var KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAvad19ePSDckmgmo6Unqmd8' +
     'n2G7o1794VN3FazVhV09yooXIuUhA+7OmT7ChiHueayxSubgL2MrO/HvvF/GGVUs/t3e0u4' +
@@ -27,7 +27,7 @@ var TAP_CONF = {
 
 
 
-///--- Helpers
+// --- Helpers
 
 function checkMachine(t, m) {
     t.ok(m);
@@ -53,60 +53,62 @@ function checkSnapshot(t, snap) {
 
 
 function checkState(url, state, callback) {
-    return client.get(url, function(err, req, res, body) {
-        if (err)
+    return client.get(url, function (err, req, res, body) {
+        if (err) {
             return callback(err);
-
+        }            
         return callback(null, (body ? body.state === state : false));
     });
 }
 
 
 function waitForState(url, state, callback) {
-    return checkState(url, state, function(err, ready) {
-        if (err)
+    return checkState(url, state, function (err, ready) {
+        if (err) {
             return callback(err);
-
-        if (!ready)
-            return setTimeout(function() {
+        }
+        if (!ready) {
+            return setTimeout(function () {
                 waitForState(url, state, callback);
             }, (process.env.POLL_INTERVAL || 500));
-
+        }
         return callback(null);
     });
 }
 
 
-///--- Tests
+// --- Tests
 
-test('setup', TAP_CONF, function(t) {
-    common.setup(function(err, _client) {
-        t.ifError(err);
-        t.ok(_client);
+test('setup', TAP_CONF, function (t) {
+    common.setup(function (err, _client) {
+        t.ifError(err, 'common setup error');
+        t.ok(_client, 'common _client ok');
         client = _client;
 
-        client.post('/my/keys', {key: KEY}, function(err2, req, res, body) {
-            t.ifError(err2);
-            keyName = body.name;
+        client.post('/my/keys', {
+            key: KEY,
+            name: keyName
+        }, function (err2, req, res, body) {
+            t.ifError(err2, 'POST /my/keys error');
             t.end();
         });
     });
 });
 
 
-test('ListMachines (empty)', TAP_CONF, function(t) {
-    client.get('/my/machines', function(err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
+test('ListMachines (empty)', TAP_CONF, function (t) {
+    client.get('/my/machines', function (err, req, res, body) {
+        t.ifError(err, 'GET /my/machines error');
+        t.equal(res.statusCode, 200, 'GET /my/machines Status');
         common.checkHeaders(t, res.headers);
-        t.ok(body);
-        t.ok(Array.isArray(body));
-        t.ok(!body.length);
+        t.ok(body, 'GET /my/machines body');
+        t.ok(Array.isArray(body), 'body is an array');
+        t.ok(!body.length, 'body array is empty');
         t.end();
     });
 });
 
-
+/*
 test('CreateMachine', TAP_CONF, function(t) {
     var obj = {
         dataset: 'smartos',
@@ -282,12 +284,16 @@ test('DeleteMachine', TAP_CONF, function(t) {
         t.end();
     });
 });
+*/
 
-
-test('teardown', TAP_CONF, function(t) {
-    client.teardown(function(err) {
-        t.ifError(err);
-        t.end();
+test('teardown', TAP_CONF, function (t) {
+    client.del('/my/keys/' + keyName, function (err, req, res) {
+        t.ifError(err, 'delete key error');
+        t.equal(res.statusCode, 204);
+        client.teardown(function (err2) {
+            t.ifError(err2, 'teardown error');
+            t.end();
+        });
     });
 });
 

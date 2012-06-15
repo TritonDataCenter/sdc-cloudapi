@@ -8,3 +8,4 @@ cscope.po.out
 cscope.out
 cloudapi-*.tar.bz2
 node_modules
+etc/*.json

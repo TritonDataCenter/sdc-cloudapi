@@ -66,8 +66,8 @@
       }
     },
     "sdc-clients": {
-      "version": "7.0.3",
-      "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#8c2826ccb725ffd5aabeb2758acefff7a923f053",
+      "version": "8.0.0",
+      "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#a0d4ab63df98cdbc8d23ed6fe438a0241a9b24bb",
       "dependencies": {
         "ldapjs": {
           "version": "0.5.0",
@@ -87,34 +87,92 @@
         "lru-cache": {
           "version": "1.1.0"
         },
-        "sprintf": {
-          "version": "0.1.1"
-        },
-        "whiskey": {
-          "version": "0.6.6",
+        "restify": {
+          "version": "1.4.2",
           "dependencies": {
-            "magic-templates": {
-              "version": "0.1.1"
+            "byline": {
+              "version": "2.0.2"
             },
-            "rimraf": {
-              "version": "1.0.1"
+            "formidable": {
+              "version": "1.0.9"
             },
-            "terminal": {
-              "version": "0.1.3"
+            "dtrace-provider": {
+              "version": "0.0.6"
             },
-            "gex": {
-              "version": "0.0.1",
+            "lru-cache": {
+              "version": "1.0.5"
+            },
+            "qs": {
+              "version": "0.4.2"
+            },
+            "retry": {
+              "version": "0.6.0"
+            },
+            "semver": {
+              "version": "1.0.13"
+            }
+          }
+        },
+        "clone": {
+          "version": "0.1.0"
+        },
+        "nodeunit": {
+          "version": "0.7.4",
+          "dependencies": {
+            "tap": {
+              "version": "0.2.5",
               "dependencies": {
-                "underscore": {
-                  "version": "1.3.3"
+                "inherits": {
+                  "version": "1.0.0"
+                },
+                "yamlish": {
+                  "version": "0.0.5"
+                },
+                "slide": {
+                  "version": "1.1.3"
+                },
+                "runforcover": {
+                  "version": "0.0.2",
+                  "dependencies": {
+                    "bunker": {
+                      "version": "0.1.2",
+                      "dependencies": {
+                        "burrito": {
+                          "version": "0.2.12",
+                          "dependencies": {
+                            "traverse": {
+                              "version": "0.5.2"
+                            },
+                            "uglify-js": {
+                              "version": "1.1.1"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "mkdirp": {
+                  "version": "0.3.3"
+                },
+                "difflet": {
+                  "version": "0.2.1",
+                  "dependencies": {
+                    "traverse": {
+                      "version": "0.6.1"
+                    },
+                    "charm": {
+                      "version": "0.0.8"
+                    }
+                  }
+                },
+                "deep-equal": {
+                  "version": "0.0.0"
+                },
+                "buffer-equal": {
+                  "version": "0.0.0"
                 }
               }
-            },
-            "simplesets": {
-              "version": "1.1.6"
-            },
-            "logmagic": {
-              "version": "0.1.4"
             }
           }
         }
