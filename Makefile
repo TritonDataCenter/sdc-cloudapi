@@ -82,6 +82,7 @@ release: check build docs
 		$(ROOT)/main.js \
 		$(ROOT)/node_modules \
 		$(ROOT)/package.json \
+		$(ROOT)/npm-shrinkwrap.json \
 		$(ROOT)/smf \
 		$(TMPDIR)/root/opt/smartdc/cloudapi/
 	(cd $(TMPDIR) && $(TAR) -jcf $(ROOT)/$(RELEASE_TARBALL) root site)
