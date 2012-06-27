@@ -1,53 +1,27 @@
-# Joyent Engineering Guide
+# Joyent CloudAPI
 
-Repository: <git@git.joyent.com:eng.git>
-Browsing: <https://mo.joyent.com/eng>
-Who: Trent Mick, Dave Pacheco
-Docs: <https://head.no.de/docs/eng>
-Tickets/bugs: <https://devhub.joyent.com/jira/browse/TOOLS>
+Repository: <git@git.joyent.com:cloudapi.git>
+Browsing: <https://mo.joyent.com/cloudapi>
+Who: Mark Cavage, Pedro Palazón Candel et others.
+Docs: <https://mo.joyent.com/docs/cloudapi/master/>
+Tickets/bugs: <https://devhub.joyent.com/jira/browse/PUBAPI>
 
 
 # Overview
 
-This repo serves two purposes: (1) It defines the guidelines and best
-practices for Joyent engineering work (this is the primary goal), and (2) it
-also provides boilerplate for an SDC project repo, giving you a starting
-point for many of the suggestion practices defined in the guidelines. This is
-especially true for node.js-based REST API projects.
+CloudAPI is the API that customers use to interact with SmartDataCenter product
 
-Start with the guidelines: <https://head.no.de/docs/eng>
-
-
-# Repository
-
-    deps/           Git submodules and/or commited 3rd-party deps should go
-                    here. See "node_modules/" for node.js deps.
-    docs/           Project docs (restdown)
-    lib/            Source files.
-    node_modules/   Node.js deps, either populated at build time or commited.
-                    See Managing Dependencies.
-    pkg/            Package lifecycle scripts
-    smf/manifests   SMF manifests
-    smf/methods     SMF method scripts
-    test/           Test suite (using node-tap)
-    tools/          Miscellaneous dev/upgrade/deployment tools and data.
-    Makefile
-    package.json    npm module info (holds the project version)
-    README.md
 
 
 # Development
 
 To run the boilerplate API server:
 
-    git clone git@git.joyent.com:eng.git
-    cd eng
+    git clone git@git.joyent.com:cloudapi.git
+    cd cloudapi
     git submodule update --init
     make all
-    node server.js
-
-To update the guidelines, edit "docs/index.restdown" and run `make docs`
-to update "docs/index.html".
+    node -f ./etc/cloudapi.config.json 2>&1 | bunyan
 
 Before commiting/pushing run `make prepush` and, if possible, get a code
 review.
@@ -57,6 +31,15 @@ review.
 # Testing
 
     make test
+
+or, individually:
+
+    make account_test
+    make datacenters_test
+    make datasets_test
+    make keys_test
+    make machines_test
+    make packages_test
 
 Optimistic, isn't it?. Reality is that, while it may works, that command
 includes a set of assumptions which may or not be satisfied by the environment
@@ -77,25 +60,10 @@ variables. The following is a list of these variables and their default values:
 - `POLL_INTERVAL`: Value used to check for a vm status change, in milisecs.
   By default, 500 miliseconds.
 
-# Other Sections Here
-
-Add other sections to your README as necessary. E.g. Running a demo, adding
-development data.
-
-
-
 # TODO
 
 Remaining work for this repo:
 
-- any "TODO" or "XXX" in the repo
-- review from engineering group
-- [Trent] Finish the restdown "public" dir and other work as discussed with
-  Philip. `git rm docs/media/css`
-- Give a little starter guide on using this repo as a starter template for the
-  new repos (for NAPI, CNAPI, FWAPI, DAPI, Workflow API, ZAPI). Include
-  getting on mo.joyent.com and head.no.de/docs for this.
-- Should we spec JIRA projects for the new APIs?
-- Add the node/npm local build support a la Amon and DSAPI. I.e. deps/node
-  and deps/npm git submodules and build handling in the Makefile.
+- Make it work with SDC 7.0, providing same API than 6.5 did.
+- New 7.0 version of the API, once we're done with the previous task.
 
