@@ -15,7 +15,7 @@ CloudAPI is the API that customers use to interact with SmartDataCenter product
 
 # Development
 
-To run the boilerplate API server:
+To run the CloudAPI server:
 
     git clone git@git.joyent.com:cloudapi.git
     cd cloudapi
