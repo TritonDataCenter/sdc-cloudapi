@@ -14,7 +14,7 @@
         "node-uuid": "1.3.3",
         "nopt": "1.0.10",
         "restify": "1.4.1",
-        "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#dcc52c83b0d6101cfbb4163ebad12c525d815eb5"
+        "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#085128b2cdeb46d6f2aa4a014dac97156af47b4d"
     },
     "devDependencies": {
         "tap": "0.2.4"

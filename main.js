@@ -59,19 +59,19 @@ function usage(code, message) {
 
 
 function run() {
-    var server = app.createServer({
+    return app.createServer({
         config: PARSED.file || DEFAULT_CFG,
         overrides: PARSED,
         log: LOG,
         dtrace: DTP
-    });
+    }, function (server) {
+        DTP.enable();
+        server.start(function () {
+            LOG.info('CloudAPI listening at %s', server.url);
+        });
 
-    DTP.enable();
-    server.start(function () {
-        LOG.info('CloudAPI listening at %s', server.url);
+        return server;
     });
-
-    return server;
 }
 
 ///--- Mainline

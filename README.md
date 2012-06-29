@@ -21,7 +21,7 @@ To run the CloudAPI server:
     cd cloudapi
     git submodule update --init
     make all
-    node -f ./etc/cloudapi.config.json 2>&1 | bunyan
+    node main.js -f ./etc/cloudapi.config.json 2>&1 | bunyan
 
 Before commiting/pushing run `make prepush` and, if possible, get a code
 review.
@@ -48,8 +48,6 @@ you are trying to run tests into.
 There are some requirements to run the test suites, in the form of environment
 variables. The following is a list of these variables and their default values:
 
-- `CLOUDAPI_URL`: Complete URL to Cloud API server, where _complete_ means
-  protocol included. Default value: `http://localhost:8080`
 - `LOG_LEVEL`: Tests log level. Default `info`.
 - `UFDS_URL`: Complete URL to UFDS ldap server, where _complete_, again, means
   protocol included. Default value: `ldaps://10.99.99.13`, (the default COAL

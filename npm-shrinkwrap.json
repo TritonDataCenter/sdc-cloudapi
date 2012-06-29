@@ -67,7 +67,7 @@
     },
     "sdc-clients": {
       "version": "8.0.0",
-      "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#dcc52c83b0d6101cfbb4163ebad12c525d815eb5",
+      "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#085128b2cdeb46d6f2aa4a014dac97156af47b4d",
       "dependencies": {
         "ldapjs": {
           "version": "0.5.0",
