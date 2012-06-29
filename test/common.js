@@ -7,7 +7,6 @@ var restify = require('restify');
 var uuid = require('node-uuid');
 var d = require('dtrace-provider');
 var UFDS = require('sdc-clients').UFDS;
-var NAPI = require('sdc-clients').NAPI;
 var app = require('../lib').app;
 var util = require('util');
 
@@ -59,17 +58,6 @@ module.exports = {
 
                     client.basicAuth(user, PASSWD);
                     client.testUser = user;
-
-                    napi = new NAPI({
-                        url: process.env.NAPI_URL || 'http://10.99.99.10',
-                        retry: {
-                            retries: 1,
-                            minTimeout: 1000
-                        },
-                        log: client.log
-                    });
-
-                    client.napi = napi;
 
                     ufds = new UFDS({
                         url: (process.env.UFDS_URL || 'ldaps://10.99.99.13'),
