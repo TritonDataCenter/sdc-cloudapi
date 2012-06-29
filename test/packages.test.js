@@ -2,14 +2,14 @@
 
 var test = require('tap').test;
 var uuid = require('node-uuid');
-
+var util = require('util');
 var common = require('./common');
 
 
 
 ///--- Globals
 
-var client;
+var client, server;
 
 
 
@@ -31,10 +31,12 @@ function checkPackage(t, pkg) {
 ///--- Tests
 
 test('setup', function (t) {
-    common.setup(function (err, _client) {
+    common.setup(function (err, _client, _server) {
         t.ifError(err);
         t.ok(_client);
         client = _client;
+        t.ok(_server);
+        server = _server;
         t.end();
     });
 });
@@ -81,7 +83,9 @@ test('GetPackage 404', function (t) {
 
 test('teardown', function (t) {
     client.teardown(function (err) {
-        t.ifError(err);
-        t.end();
+        t.ifError(err, 'client teardown error');
+        server.close(function () {
+            t.end();
+        });
     });
 });

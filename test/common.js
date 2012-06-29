@@ -1,20 +1,31 @@
 // Copyright 2012 Joyent, Inc. All rights reserved.
 var assert = require('assert');
 var crypto = require('crypto');
-
+var path = require('path');
 var Logger = require('bunyan');
 var restify = require('restify');
 var uuid = require('node-uuid');
-
+var d = require('dtrace-provider');
 var UFDS = require('sdc-clients').UFDS;
-
-
+var NAPI = require('sdc-clients').NAPI;
+var app = require('../lib').app;
+var util = require('util');
 
 // --- Globals
 
 var PASSWD = 'secret';
-
-
+var DEFAULT_CFG = path.join(__dirname, '..', '/etc/cloudapi.config.json');
+var LOG =  new Logger({
+    level: process.env.LOG_LEVEL || 'info',
+    name: 'cloudapi_unit_test',
+    stream: process.stderr,
+    serializers: {
+        err: Logger.stdSerializers.err,
+        req: Logger.stdSerializers.req,
+        res: restify.bunyan.serializers.response
+    }
+});
+var DTP = d.createDTraceProvider('cloudapi_test');
 
 // --- Library
 
@@ -24,62 +35,86 @@ module.exports = {
         assert.ok(callback);
 
         var user = 'a' + uuid().substr(0, 7) + '@joyent.com',
-            ufds,
-            client = restify.createJsonClient({
-            url: process.env.CLOUDAPI_URL || 'http://localhost:8080',
-            version: '*',
-            retryOptions: {
-                retry: 0
-            },
-            log: new Logger({
-                level: process.env.LOG_LEVEL || 'info',
-                name: 'cloudapi_unit_test',
-                stream: process.stderr,
-                serializers: {
-                    err: Logger.stdSerializers.err,
-                    req: Logger.stdSerializers.req,
-                    res: restify.bunyan.serializers.response
-                }
-            })
-        });
-        client.basicAuth(user, PASSWD);
-        client.testUser = user;
+            ufds, napi, client,
+            server = app.createServer({
+                config: DEFAULT_CFG,
+                log: LOG,
+                dtrace: DTP,
+                overrides: {},
+                test: true
+            }, function (s) {
+                server = s;
 
-        ufds = new UFDS({
-            url: (process.env.UFDS_URL || 'ldaps://10.99.99.13'),
-            bindDN: 'cn=root',
-            bindPassword: 'secret'
-        });
-        ufds.on('error', function (err) {
-            return callback(err);
-        });
-        ufds.on('ready', function () {
-            var entry = {
-                login: client.testUser,
-                email: client.testUser,
-                userpassword: PASSWD
-            };
-            return ufds.addUser(entry, function (err) {
-                if (err) {
-                    return callback(err);
-                }
+                server.start(function () {
+                    LOG.info('CloudAPI listening at %s', server.url);
 
-                client.ufds = ufds;
-                client.teardown = function teardown(cb) {
-                    client.ufds.deleteUser(client.testUser, function (err2) {
-                        if (err2) {
-                            // blindly ignore
-                            return cb(err2);
-                        }
-
-                        ufds.close(function () {});
-                        return cb(null);
+                    client = restify.createJsonClient({
+                        url: server.url,
+                        version: '*',
+                        retryOptions: {
+                            retry: 0
+                        },
+                        log: LOG
                     });
-                };
 
-                return callback(null, client);
+                    client.basicAuth(user, PASSWD);
+                    client.testUser = user;
+
+                    napi = new NAPI({
+                        url: process.env.NAPI_URL || 'http://10.99.99.10',
+                        retry: {
+                            retries: 1,
+                            minTimeout: 1000
+                        },
+                        log: client.log
+                    });
+
+                    client.napi = napi;
+
+                    ufds = new UFDS({
+                        url: (process.env.UFDS_URL || 'ldaps://10.99.99.13'),
+                        bindDN: 'cn=root',
+                        bindPassword: 'secret'
+                    });
+
+                    ufds.on('error', function (err) {
+                        return callback(err);
+                    });
+
+                    ufds.on('ready', function () {
+                        var entry = {
+                            login: client.testUser,
+                            email: client.testUser,
+                            userpassword: PASSWD
+                        };
+                        return ufds.addUser(entry, function (err) {
+                            if (err) {
+                                return callback(err);
+                            }
+
+                            client.ufds = ufds;
+                            client.teardown = function teardown(cb) {
+                                client.ufds.deleteUser(client.testUser,
+                                    function (err2) {
+                                    if (err2) {
+                                        // blindly ignore
+                                        return cb(err2);
+                                    }
+
+                                    return ufds.close(function () {
+                                        return cb(null);
+                                    });
+                                });
+                            };
+
+                            return callback(null, client, server);
+                        });
+                    });
+
+                });
+
             });
-        });
+
     },
 
     checkHeaders: function (t, headers) {
@@ -96,5 +131,4 @@ module.exports = {
         t.equal(headers.connection, 'Keep-Alive', 'headers keep alive');
         t.equal(headers['x-api-version'], '7.0.0', 'headers x-api-version');
     }
-
 };

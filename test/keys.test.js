@@ -1,4 +1,4 @@
-// Copyright 2011 Joyent, Inc.  All rights reserved.
+// Copyright 2012 Joyent, Inc.  All rights reserved.
 
 var test = require('tap').test;
 var uuid = require('node-uuid');
@@ -7,9 +7,9 @@ var common = require('./common');
 
 
 
-///--- Globals
+// --- Globals
 
-var client;
+var client, server;
 var KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAvad19ePSDckmgmo6Unqmd8' +
     'n2G7o1794VN3FazVhV09yooXIuUhA+7OmT7ChiHueayxSubgL2MrO/HvvF/GGVUs/t3e0u4' +
     '5YwRC51EVhyDuqthVJWjKrYxgDMbHru8fc1oV51l0bKdmvmJWbA/VyeJvstoX+eiSGT3Jge' +
@@ -17,7 +17,7 @@ var KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAvad19ePSDckmgmo6Unqmd8' +
 
 
 
-///--- Helpers
+// --- Helpers
 
 function checkKey(t, key) {
     t.ok(key);
@@ -27,20 +27,22 @@ function checkKey(t, key) {
 
 
 
-///--- Tests
+// --- Tests
 
-test('setup', function(t) {
-    common.setup(function(err, _client) {
+test('setup', function (t) {
+    common.setup(function (err, _client, _server) {
         t.ifError(err);
         t.ok(_client);
         client = _client;
+        t.ok(_server);
+        server = _server;
         t.end();
     });
 });
 
 
-test('ListKeys (empty) OK', function(t) {
-    client.get('/my/keys', function(err, req, res, body) {
+test('ListKeys (empty) OK', function (t) {
+    client.get('/my/keys', function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -52,8 +54,8 @@ test('ListKeys (empty) OK', function(t) {
 });
 
 
-test('CreateKey (missing key)', function(t) {
-    client.post('/my/keys', {}, function(err) {
+test('CreateKey (missing key)', function (t) {
+    client.post('/my/keys', {}, function (err) {
         t.ok(err);
         t.equal(err.httpCode, 409);
         t.equal(err.restCode, 'MissingParameter');
@@ -63,12 +65,12 @@ test('CreateKey (missing key)', function(t) {
 });
 
 
-test('CreateKey (named) OK', function(t) {
+test('CreateKey (named) OK', function (t) {
     var key = {
         key: KEY,
         name: 'id_rsa 1'
     };
-    client.post('/my/keys', key, function(err, req, res, body) {
+    client.post('/my/keys', key, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         t.equal(res.statusCode, 201);
@@ -79,14 +81,14 @@ test('CreateKey (named) OK', function(t) {
 });
 
 
-test('ListKeys OK', function(t) {
-    client.get('/my/keys', function(err, req, res, body) {
+test('ListKeys OK', function (t) {
+    client.get('/my/keys', function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.ok(body.length);
-        body.forEach(function(k) {
+        body.forEach(function (k) {
             checkKey(t, k);
         });
         t.end();
@@ -94,9 +96,9 @@ test('ListKeys OK', function(t) {
 });
 
 
-test('GetKey OK', function(t) {
+test('GetKey OK', function (t) {
     var url = '/my/keys/' + encodeURIComponent('id_rsa 1');
-    client.get(url, function(err, req, res, body) {
+    client.get(url, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -107,9 +109,9 @@ test('GetKey OK', function(t) {
 });
 
 
-test('DeleteKey OK', function(t) {
+test('DeleteKey OK', function (t) {
     var url = '/my/keys/' + encodeURIComponent('id_rsa 1');
-    client.del(url, function(err, req, res) {
+    client.del(url, function (err, req, res) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
         common.checkHeaders(t, res.headers);
@@ -118,8 +120,8 @@ test('DeleteKey OK', function(t) {
 });
 
 
-test('DeleteKey 404', function(t) {
-    client.del('/my/keys/' + uuid(), function(err) {
+test('DeleteKey 404', function (t) {
+    client.del('/my/keys/' + uuid(), function (err) {
         t.ok(err);
         t.equal(err.httpCode, 404);
         t.equal(err.restCode, 'ResourceNotFound');
@@ -131,8 +133,8 @@ test('DeleteKey 404', function(t) {
 
 var name;
 var fp;
-test('CreateKey OK', function(t) {
-    client.post('/my/keys', { key: KEY }, function(err, req, res, body) {
+test('CreateKey OK', function (t) {
+    client.post('/my/keys', { key: KEY }, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 201);
         common.checkHeaders(t, res.headers);
@@ -145,9 +147,9 @@ test('CreateKey OK', function(t) {
 });
 
 
-test('Cleanup Key', function(t) {
+test('Cleanup Key', function (t) {
     var path = '/my/keys/' + encodeURIComponent(name);
-    client.del(path, function(err, req, res) {
+    client.del(path, function (err, req, res) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
         common.checkHeaders(t, res.headers);
@@ -156,8 +158,8 @@ test('Cleanup Key', function(t) {
 });
 
 
-test('GetKey 404', function(t) {
-    client.get('/my/keys/' + uuid(), function(err) {
+test('GetKey 404', function (t) {
+    client.get('/my/keys/' + uuid(), function (err) {
         t.ok(err);
         t.equal(err.httpCode, 404);
         t.equal(err.restCode, 'ResourceNotFound');
@@ -167,18 +169,23 @@ test('GetKey 404', function(t) {
 });
 
 
-test('teardown', { timeout: 'Infinity' }, function(t) {
+test('teardown', { timeout: 'Infinity' }, function (t) {
     function nuke(callback) {
-        client.teardown(function(err) {
-            if (err)
-                return setTimeout(function() { return nuke(callback); }, 500);
+        client.teardown(function (err) {
+            if (err) {
+                return setTimeout(function () {
+                    return nuke(callback); 
+                }, 500);
+            }
 
             return callback(null);
         });
     }
 
-    return nuke(function(err) {
+    return nuke(function (err) {
         t.ifError(err);
-        t.end();
+        server.close(function () {
+            t.end();
+        });
     });
 });

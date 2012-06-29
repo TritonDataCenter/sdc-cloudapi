@@ -1,4 +1,4 @@
-// Copyright 2011 Joyent, Inc.  All rights reserved.
+// Copyright 2012 Joyent, Inc.  All rights reserved.
 
 var test = require('tap').test;
 var uuid = require('node-uuid');
@@ -7,26 +7,28 @@ var common = require('./common');
 
 
 
-///--- Globals
+// --- Globals
 
-var client;
+var client, server;
 
 
 
-///--- Tests
+// --- Tests
 
-test('setup', function(t) {
-    common.setup(function(err, _client) {
+test('setup', function (t) {
+    common.setup(function (err, _client, _server) {
         t.ifError(err);
         t.ok(_client);
         client = _client;
+        t.ok(_server);
+        server = _server;
         t.end();
     });
 });
 
 
-test('ListDatacenters OK', function(t) {
-    client.get('/my/datacenters', function(err, req, res, body) {
+test('ListDatacenters OK', function (t) {
+    client.get('/my/datacenters', function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         common.checkHeaders(t, res.headers);
@@ -37,9 +39,9 @@ test('ListDatacenters OK', function(t) {
 });
 
 
-test('GetDatacenter OK', function(t) {
+test('GetDatacenter OK', function (t) {
     var dc = process.env.DATACENTER || 'coal';
-    client.get('/my/datacenters/' + dc, function(err, req, res, body) {
+    client.get('/my/datacenters/' + dc, function (err, req, res, body) {
         t.ifError(err);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 302);
@@ -50,8 +52,8 @@ test('GetDatacenter OK', function(t) {
 });
 
 
-test('GetDatacenter 404', function(t) {
-    client.get('/my/datacenters/' + uuid(), function(err) {
+test('GetDatacenter 404', function (t) {
+    client.get('/my/datacenters/' + uuid(), function (err) {
         t.ok(err);
         t.equal(err.httpCode, 404);
         t.equal(err.restCode, 'ResourceNotFound');
@@ -61,9 +63,11 @@ test('GetDatacenter 404', function(t) {
 });
 
 
-test('teardown', function(t) {
-    client.teardown(function(err) {
-        t.ifError(err);
-        t.end();
+test('teardown', function (t) {
+    client.teardown(function (err) {
+        t.ifError(err, 'client teardown error');
+        server.close(function () {
+            t.end();
+        });
     });
 });
