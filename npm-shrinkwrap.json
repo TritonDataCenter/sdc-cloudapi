@@ -65,6 +65,9 @@
         }
       }
     },
+    "semver": {
+      "version": "1.0.13"
+    },
     "sdc-clients": {
       "version": "8.0.0",
       "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#085128b2cdeb46d6f2aa4a014dac97156af47b4d",
