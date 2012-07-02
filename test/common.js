@@ -7,6 +7,7 @@ var restify = require('restify');
 var uuid = require('node-uuid');
 var d = require('dtrace-provider');
 var UFDS = require('sdc-clients').UFDS;
+var VMAPI = require('sdc-clients').VMAPI;
 var app = require('../lib').app;
 var util = require('util');
 
@@ -59,6 +60,18 @@ module.exports = {
                     client.basicAuth(user, PASSWD);
                     client.testUser = user;
 
+                    // We need vmapi client to check jobs on tests, given if we
+                    // just wait for vmachine status change, we'll be just
+                    // hanging forever.
+                    client.vmapi = new VMAPI({
+                        url: process.env.VMAPI_URL || 'http://10.99.99.18',
+                        retry: {
+                            retries: 1,
+                            minTimeout: 1000
+                        },
+                        log: client.log
+                    });
+
                     ufds = new UFDS({
                         url: (process.env.UFDS_URL || 'ldaps://10.99.99.13'),
                         bindDN: 'cn=root',
@@ -86,7 +99,7 @@ module.exports = {
                                     function (err2) {
                                     if (err2) {
                                         // blindly ignore
-                                        return cb(err2);
+                                        // return cb(err2);
                                     }
 
                                     return ufds.close(function () {

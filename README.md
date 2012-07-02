@@ -49,9 +49,12 @@ There are some requirements to run the test suites, in the form of environment
 variables. The following is a list of these variables and their default values:
 
 - `LOG_LEVEL`: Tests log level. Default `info`.
-- `UFDS_URL`: Complete URL to UFDS ldap server, where _complete_, again, means
+- `UFDS_URL`: Complete URL to UFDS ldap server, where _complete_ means
   protocol included. Default value: `ldaps://10.99.99.13`, (the default COAL
   ip for the ufds zone).
+- `VMAPI_URL`: Complete URL to VMAPI http server, where _complete_, again, means
+  protocol included. Default value: `http://10.99.99.18`, (the default COAL
+  ip for the vmapi zone).
 
 ## Other test related env vars:
 

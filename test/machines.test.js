@@ -11,7 +11,7 @@ var common = require('./common');
 
 // --- Globals
 
-var client;
+var client, server;
 var keyName = uuid();
 var machine;
 var KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAvad19ePSDckmgmo6Unqmd8' +
@@ -25,23 +25,21 @@ var TAP_CONF = {
     timeout: 'Infinity '
 };
 
-
-
 // --- Helpers
 
 function checkMachine(t, m) {
-    t.ok(m);
-    t.ok(m.id);
-    t.ok(m.name);
-    t.ok(m.type);
-    t.ok(m.state);
-    t.ok(m.dataset);
-    t.ok(m.ips);
-    t.ok(m.memory);
-    t.ok(m.disk);
-    t.ok(m.metadata);
-    t.ok(m.created);
-    t.ok(m.updated);
+    t.ok(m, 'checkMachine ok');
+    t.ok(m.id, 'checkMachine id ok');
+    t.ok(m.name, 'checkMachine name ok');
+    t.ok(m.type, 'checkMachine type ok');
+    t.ok(m.state, 'checkMachine state ok');
+    t.ok(m.dataset, 'checkMachine dataset ok');
+    t.ok(m.ips, 'checkMachine ips ok');
+    t.ok(m.memory, 'checkMachine memory ok');
+    t.ok(m.disk, 'checkMachine disk ok');
+    t.ok(m.metadata, 'checkMachine metadata ok');
+    t.ok(m.created, 'checkMachine created ok');
+    t.ok(m.updated, 'checkMachine updated ok');
 }
 
 
@@ -52,24 +50,33 @@ function checkSnapshot(t, snap) {
 }
 
 
-function checkState(url, state, callback) {
-    return client.get(url, function (err, req, res, body) {
+// We cannot test vms provisioning neither status changes without querying
+// jobs execution directly. Former approach of checking vms status changes
+// assumes that jobs which may cause machine status changes will always
+// succeed, which is not the case.
+function checkJob(uuid, callback) {
+    return client.vmapi.getJob(uuid, function (err, job) {
         if (err) {
             return callback(err);
-        }            
-        return callback(null, (body ? body.state === state : false));
-    });
+        }
+
+        if (job.execution === 'failed') {
+            return callback('Job failed');
+        }
+
+        return callback(null, (job ? job.execution === 'succeeded' : false));
+    })
 }
 
 
-function waitForState(url, state, callback) {
-    return checkState(url, state, function (err, ready) {
+function waitForJob(uuid, callback) {
+    return checkJob(uuid, function (err, ready) {
         if (err) {
             return callback(err);
         }
         if (!ready) {
             return setTimeout(function () {
-                waitForState(url, state, callback);
+                waitForJob(uuid, callback);
             }, (process.env.POLL_INTERVAL || 500));
         }
         return callback(null);
@@ -80,10 +87,12 @@ function waitForState(url, state, callback) {
 // --- Tests
 
 test('setup', TAP_CONF, function (t) {
-    common.setup(function (err, _client) {
+    common.setup(function (err, _client, _server) {
         t.ifError(err, 'common setup error');
         t.ok(_client, 'common _client ok');
         client = _client;
+        t.ok(_server);
+        server = _server;
 
         client.post('/my/keys', {
             key: KEY,
@@ -108,44 +117,60 @@ test('ListMachines (empty)', TAP_CONF, function (t) {
     });
 });
 
-/*
-test('CreateMachine', TAP_CONF, function(t) {
+
+test('CreateMachine', TAP_CONF, function (t) {
     var obj = {
         dataset: 'smartos',
-        'package': 'regular_128',
+        'package': 'sdc_128',
         name: 'a' + uuid().substr(0, 7),
         'metadata.foo': 'bar'
     };
     obj['tag.' + TAG_KEY] = TAG_VAL;
 
-    client.post('/my/machines', obj, function(err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 201);
+    client.post('/my/machines', obj, function (err, req, res, body) {
+        t.ifError(err, 'POST /my/machines error');
+        t.equal(res.statusCode, 201, 'POST /my/machines status');
         common.checkHeaders(t, res.headers);
-        t.ok(body);
+        t.ok(body, 'POST /my/machines body');
         checkMachine(t, body);
+        machine = body.id;
         t.end();
     });
 });
 
 
-test('ListMachines all', TAP_CONF, function(t) {
-    client.get('/my/machines', function(err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
+test('Wait For Running', TAP_CONF,  function (t) {
+    client.vmapi.listJobs({
+        vm_uuid: machine,
+        task: 'provision'
+    }, function (err, jobs) {
+        t.ifError(err, 'list jobs error');
+        t.ok(jobs);
+        t.ok(jobs.length);
+        waitForJob(jobs[0].uuid, function (err2) {
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
+    });
+});
+
+
+test('ListMachines all', TAP_CONF, function (t) {
+    client.get('/my/machines', function (err, req, res, body) {
+        t.ifError(err, 'GET /my/machines error');
+        t.equal(res.statusCode, 200, 'GET /my/machines status');
         common.checkHeaders(t, res.headers);
-        t.ok(body);
-        t.ok(Array.isArray(body));
-        t.ok(body.length);
-        body.forEach(function(m) {
+        t.ok(body, 'GET /my/machines body');
+        t.ok(Array.isArray(body), 'GET /my/machines body is array');
+        t.ok(body.length, 'GET /my/machines list is not empty');
+        body.forEach(function (m) {
             checkMachine(t, m);
-            machine = m.id;
         });
         t.end();
     });
 });
 
-
+/*
 test('ListMachines by tag', function(t) {
     var url = '/my/machines?tag.' + TAG_KEY + '=' + TAG_VAL;
     client.get(url, function(err, req, res, body) {
@@ -162,25 +187,35 @@ test('ListMachines by tag', function(t) {
         t.end();
     });
 });
+*/
 
-
-test('Wait For Running', TAP_CONF,  function(t) {
-    var url = '/my/machines/' + machine;
-    waitForState(url, 'running', function(err) {
+test('StopMachine', TAP_CONF, function (t) {
+    client.post('/my/machines/' + machine, {
+        action: 'stop'
+    }, function (err) {
         t.ifError(err);
         t.end();
     });
 });
 
 
-test('StopMachine', TAP_CONF, function(t) {
-    client.post('/my/machines/' + machine, {action: 'stop'}, function(err) {
-        t.ifError(err);
-        t.end();
+test('Wait For Stopped', TAP_CONF,  function (t) {
+    client.vmapi.listJobs({
+        vm_uuid: machine,
+        task: 'stop'
+    }, function (err, jobs) {
+        t.ifError(err, 'list jobs error');
+        t.ok(jobs);
+        t.ok(jobs.length);
+        waitForJob(jobs[0].uuid, function (err2) {
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
     });
 });
 
 
+/*
 test('ListTags', TAP_CONF, function(t) {
     var url = '/my/machines/' + machine + '/tags';
     client.get(url, function(err, req, res, body) {
@@ -263,16 +298,32 @@ test('Delete snapshot', TAP_CONF, function(t) {
   });
 });
 
-
-test('DeleteMachine', TAP_CONF, function(t) {
-    client.del('/my/machines/' + machine, function(err, req, res) {
-        t.ifError(err);
-        t.equal(res.statusCode, 204);
+*/
+test('DeleteMachine', TAP_CONF, function (t) {
+    client.del('/my/machines/' + machine, function (err, req, res) {
+        t.ifError(err, 'DELETE /my/machines error');
+        t.equal(res.statusCode, 204, 'DELETE /my/machines status');
         common.checkHeaders(t, res.headers);
         t.end();
     });
 });
-*/
+
+
+test('Wait For Destroyed', TAP_CONF,  function (t) {
+    client.vmapi.listJobs({
+        vm_uuid: machine,
+        task: 'destroy'
+    }, function (err, jobs) {
+        t.ifError(err, 'list jobs error');
+        t.ok(jobs);
+        t.ok(jobs.length);
+        waitForJob(jobs[0].uuid, function (err2) {
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
+    });
+});
+
 
 test('teardown', TAP_CONF, function (t) {
     client.del('/my/keys/' + keyName, function (err, req, res) {
@@ -280,8 +331,11 @@ test('teardown', TAP_CONF, function (t) {
         t.equal(res.statusCode, 204);
         common.checkHeaders(t, res.headers);
         client.teardown(function (err2) {
-            t.ifError(err2, 'teardown error');
-            t.end();
+            // Ignore err2 here, just means we have not been able to remove
+            // something from ufds.
+            server.close(function () {
+                t.end();
+            });
         });
     });
 });
