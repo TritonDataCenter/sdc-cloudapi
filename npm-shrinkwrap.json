@@ -59,9 +59,6 @@
         },
         "retry": {
           "version": "0.6.0"
-        },
-        "semver": {
-          "version": "1.0.13"
         }
       }
     },
@@ -70,20 +67,44 @@
     },
     "sdc-clients": {
       "version": "8.0.0",
-      "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#085128b2cdeb46d6f2aa4a014dac97156af47b4d",
+      "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#ea15811f76f1f5744eeb57a389efe7c1e5e236b5",
       "dependencies": {
         "ldapjs": {
           "version": "0.5.0",
-          "from": "git://github.com/mcavage/node-ldapjs.git#e378ae84748af3d46645440c23ed746da4165482",
+          "from": "git://github.com/mcavage/node-ldapjs.git#3ce399a710c8bb001b997a7bef62291b9806a87f",
           "dependencies": {
             "asn1": {
               "version": "0.1.11"
             },
             "buffertools": {
-              "version": "1.0.9"
+              "version": "1.1.0"
+            },
+            "bunyan": {
+              "version": "0.10.0"
+            },
+            "dtrace-provider": {
+              "version": "0.0.9"
             },
             "pooling": {
-              "version": "0.1.0"
+              "version": "0.2.1",
+              "dependencies": {
+                "bunyan": {
+                  "version": "0.7.0"
+                },
+                "vasync": {
+                  "version": "1.1.1",
+                  "dependencies": {
+                    "verror": {
+                      "version": "1.1.0",
+                      "dependencies": {
+                        "extsprintf": {
+                          "version": "1.0.0"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         },
@@ -91,33 +112,36 @@
           "version": "1.1.0"
         },
         "restify": {
-          "version": "1.4.2",
+          "version": "1.4.3",
           "dependencies": {
+            "async": {
+              "version": "0.1.22"
+            },
             "byline": {
               "version": "2.0.2"
             },
             "formidable": {
-              "version": "1.0.9"
+              "version": "1.0.11"
             },
             "dtrace-provider": {
               "version": "0.0.6"
             },
-            "lru-cache": {
-              "version": "1.0.5"
-            },
             "qs": {
-              "version": "0.4.2"
+              "version": "0.5.0"
             },
             "retry": {
               "version": "0.6.0"
             },
             "semver": {
-              "version": "1.0.13"
+              "version": "1.0.14"
             }
           }
         },
         "clone": {
           "version": "0.1.0"
+        },
+        "bunyan": {
+          "version": "0.8.0"
         },
         "nodeunit": {
           "version": "0.7.4",
@@ -162,7 +186,7 @@
                   "version": "0.2.1",
                   "dependencies": {
                     "traverse": {
-                      "version": "0.6.1"
+                      "version": "0.6.3"
                     },
                     "charm": {
                       "version": "0.0.8"
@@ -197,16 +221,16 @@
           "version": "0.0.2",
           "dependencies": {
             "bunker": {
-              "version": "0.1.1",
+              "version": "0.1.2",
               "dependencies": {
                 "burrito": {
-                  "version": "0.2.11",
+                  "version": "0.2.12",
                   "dependencies": {
                     "traverse": {
                       "version": "0.5.2"
                     },
                     "uglify-js": {
-                      "version": "1.0.7"
+                      "version": "1.1.1"
                     }
                   }
                 }
@@ -215,16 +239,16 @@
           }
         },
         "mkdirp": {
-          "version": "0.3.1"
+          "version": "0.3.3"
         },
         "difflet": {
           "version": "0.2.1",
           "dependencies": {
             "traverse": {
-              "version": "0.6.1"
+              "version": "0.6.3"
             },
             "charm": {
-              "version": "0.0.6"
+              "version": "0.0.8"
             }
           }
         },
