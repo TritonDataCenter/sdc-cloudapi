@@ -536,6 +536,37 @@ test('Wait For Destroyed', TAP_CONF,  function (t) {
 });
 
 
+test('ListMachines tombstone', TAP_CONF, function (t) {
+    client.get('/my/machines?tombstone=20', function (err, req, res, body) {
+        t.ifError(err, 'GET /my/machines error');
+        t.equal(res.statusCode, 200, 'GET /my/machines status');
+        common.checkHeaders(t, res.headers);
+        t.ok(body, 'GET /my/machines body');
+        t.ok(Array.isArray(body), 'GET /my/machines body is array');
+        t.ok(body.length, 'GET /my/machines list is not empty');
+        t.ok(body.some(function (m) {
+            return (m.id === machine);
+        }));
+        t.end();
+    });
+});
+
+
+test('ListMachines exclude tombstone', TAP_CONF, function (t) {
+    client.get('/my/machines', function (err, req, res, body) {
+        t.ifError(err, 'GET /my/machines error');
+        t.equal(res.statusCode, 200, 'GET /my/machines status');
+        common.checkHeaders(t, res.headers);
+        t.ok(body, 'GET /my/machines body');
+        t.ok(Array.isArray(body), 'GET /my/machines body is array');
+        t.notOk(body.some(function (m) {
+            return (m.id === machine);
+        }));
+        t.end();
+    });
+});
+
+
 test('teardown', TAP_CONF, function (t) {
     client.del('/my/keys/' + keyName, function (err, req, res) {
         t.ifError(err, 'delete key error');
