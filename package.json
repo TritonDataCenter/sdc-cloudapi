@@ -5,17 +5,17 @@
     "author": "Joyent (joyent.com)",
     "private": true,
     "dependencies": {
-        "async": "0.1.18",
-        "bunyan": "0.6.8",
+        "async": "0.1.22",
+        "bunyan": "0.8.0",
         "dtrace-provider": "0.0.7",
         "filed": "0.0.6",
         "http-signature": "0.9.9",
         "mime": "1.2.5",
         "node-uuid": "1.3.3",
         "nopt": "1.0.10",
-        "restify": "1.4.1",
+        "restify": "1.4.3",
         "semver": "1.0.13",
-        "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#ea15811f76f1f5744eeb57a389efe7c1e5e236b5"
+        "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#3617ec98a0d75f8468fb1176779ba7637aaa7912"
     },
     "devDependencies": {
         "tap": "0.2.4"

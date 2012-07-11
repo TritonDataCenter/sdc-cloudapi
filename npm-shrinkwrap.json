@@ -3,10 +3,10 @@
   "version": "7.0.0",
   "dependencies": {
     "async": {
-      "version": "0.1.18"
+      "version": "0.1.22"
     },
     "bunyan": {
-      "version": "0.6.8"
+      "version": "0.8.0"
     },
     "dtrace-provider": {
       "version": "0.0.7"
@@ -40,25 +40,28 @@
       }
     },
     "restify": {
-      "version": "1.4.1",
+      "version": "1.4.3",
       "dependencies": {
         "byline": {
           "version": "2.0.2"
         },
         "formidable": {
-          "version": "1.0.9"
+          "version": "1.0.11"
         },
         "dtrace-provider": {
           "version": "0.0.6"
         },
         "lru-cache": {
-          "version": "1.0.5"
+          "version": "1.1.0"
         },
         "qs": {
-          "version": "0.4.2"
+          "version": "0.5.0"
         },
         "retry": {
           "version": "0.6.0"
+        },
+        "semver": {
+          "version": "1.0.14"
         }
       }
     },
@@ -67,14 +70,16 @@
     },
     "sdc-clients": {
       "version": "8.0.0",
-      "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#ea15811f76f1f5744eeb57a389efe7c1e5e236b5",
+      "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#3617ec98a0d75f8468fb1176779ba7637aaa7912",
       "dependencies": {
         "ldapjs": {
-          "version": "0.5.0",
-          "from": "git://github.com/mcavage/node-ldapjs.git#3ce399a710c8bb001b997a7bef62291b9806a87f",
+          "version": "0.5.3",
           "dependencies": {
             "asn1": {
               "version": "0.1.11"
+            },
+            "assert-plus": {
+              "version": "0.1.0"
             },
             "buffertools": {
               "version": "1.1.0"
@@ -111,37 +116,8 @@
         "lru-cache": {
           "version": "1.1.0"
         },
-        "restify": {
-          "version": "1.4.3",
-          "dependencies": {
-            "async": {
-              "version": "0.1.22"
-            },
-            "byline": {
-              "version": "2.0.2"
-            },
-            "formidable": {
-              "version": "1.0.11"
-            },
-            "dtrace-provider": {
-              "version": "0.0.6"
-            },
-            "qs": {
-              "version": "0.5.0"
-            },
-            "retry": {
-              "version": "0.6.0"
-            },
-            "semver": {
-              "version": "1.0.14"
-            }
-          }
-        },
         "clone": {
           "version": "0.1.0"
-        },
-        "bunyan": {
-          "version": "0.8.0"
         },
         "nodeunit": {
           "version": "0.7.4",
