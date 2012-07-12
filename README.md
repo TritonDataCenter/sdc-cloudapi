@@ -11,8 +11,6 @@ Tickets/bugs: <https://devhub.joyent.com/jira/browse/PUBAPI>
 
 CloudAPI is the API that customers use to interact with SmartDataCenter product
 
-
-
 # Development
 
 To run the CloudAPI server:
@@ -26,6 +24,106 @@ To run the CloudAPI server:
 Before commiting/pushing run `make prepush` and, if possible, get a code
 review.
 
+# Configuration file.
+
+The configuration file `./etc/cloudapi.config.json` needs to be created before
+the CloudAPI server can run. Consequently, **this file is also required in
+order to run the test suite**.
+
+There is an example `cloudapi.coal.cfg` file checked into the repository, with
+the default values every required variable should take if we were running the
+tests into our development machine, which has access to a COAL setup.
+
+The file `cloudapi.cfg.in` is used by headnode setup to replace every variable
+by the proper values required to make CloudAPI to work for real into a given
+SDC setup.
+
+The following is a list of the required variables, all included into this file,
+and their expected values:
+
+      "port": 443,
+      "certificate": "/opt/smartdc/cloudapi/ssl/cert.pem",
+      "key": "/opt/smartdc/cloudapi/ssl/key.pem",
+
+These are pretty straightforward, port where the application HTTP server should
+listen to and, in case of HTTPS, path to certificate & key. 
+
+
+      "ufds": {
+          "url": "UFDS_URL",
+          "bindDN": "UFDS_ROOT_DN",
+          "bindPassword": "UFDS_ROOT_PW",
+          "cache": {
+              "size": 5000,
+              "expiry": 60
+          }
+      },
+
+The UFDS section. It should include the __complete__ ldap(s) address for UFDS,
+and the required DN and password to bind to the LDAP server.
+
+
+      "vmapi": {
+          "url": "VMAPI_URL",
+          "username": "VMAPI_HTTP_ADMIN_USER",
+          "password": "VMAPI_HTTP_ADMIN_PW",
+          "cache": {
+              "size": 5000,
+              "expiry": 60
+          }
+      },
+
+
+VMAPI section. Right now, the username and password members can be safely
+removed, since we agreed that internal APIs will not provide HTTP Basic Auth.
+`VMAPI_URL` must be the __complete__ HTTP address for VMAPI's HTTP server
+running into vmapi zone.
+
+
+      "napi": {
+          "url": "NAPI_URL",
+          "username": "NAPI_HTTP_ADMIN_USER",
+          "password": "NAPI_HTTP_ADMIN_PW",
+          "cache": {
+              "size": 5000,
+              "expiry": 300
+          }
+      },
+
+
+Same than the VMAPI section, but for NAPI. 
+
+
+      "imgapi": {
+          "url": "IMGAPI_URL",
+          "username": "IMGAPI_HTTP_ADMIN_USER",
+          "password": "IMGAPI_HTTP_ADMIN_PW",
+          "cache": {
+              "size": 5000,
+              "expiry": 300
+          }
+      },
+
+
+And the same thing for IMGAPI. For now, we are still using global Dataset API,
+instead of a private instance of the new IMGAPI.
+
+
+      "ca": {
+          "url": "CA_URL"
+      },
+
+
+The Cloud Analytics section. Like always, where we say URL we mean __complete__.
+
+
+      "datacenters": {
+          "DATACENTER_NAME": "CLOUDAPI_EXTERNAL_URL"
+      },
+
+
+The name of this datacenter, and the URL we can use to access CLOUDAPI from the
+outside world, if any.
 
 
 # Testing
@@ -49,17 +147,11 @@ There are some requirements to run the test suites, in the form of environment
 variables. The following is a list of these variables and their default values:
 
 - `LOG_LEVEL`: Tests log level. Default `info`.
-- `UFDS_URL`: Complete URL to UFDS ldap server, where _complete_ means
-  protocol included. Default value: `ldaps://10.99.99.13`, (the default COAL
-  ip for the ufds zone).
-- `VMAPI_URL`: Complete URL to VMAPI http server, where _complete_, again, means
-  protocol included. Default value: `http://10.99.99.18`, (the default COAL
-  ip for the vmapi zone).
-
-## Other test related env vars:
-
 - `POLL_INTERVAL`: Value used to check for a vm status change, in milisecs.
   By default, 500 miliseconds.
+
+Also, the contents of the aforementioned `./etc/cloudapi.config.json` file
+should have been properly set.
 
 # TODO
 
