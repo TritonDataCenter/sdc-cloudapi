@@ -43,6 +43,24 @@ var TAP_CONF = {
     timeout: 'Infinity '
 };
 
+// May or not be created by previous test run or whatever else:
+var sdc_256 = {
+    name: 'sdc_256',
+    version: '1.0.0',
+    max_physical_memory: 256,
+    quota: 10240,
+    max_swap: 512,
+    cpu_cap: 150,
+    max_lwps: 1000,
+    zfs_io_priority: 10,
+    'default': false,
+    vcpus: 1,
+    urn: 'sdc::sdc_256:1.0.0',
+    active: true
+};
+
+var sdc_256_entry;
+
 // --- Helpers
 
 function checkMachine(t, m) {
@@ -310,6 +328,60 @@ test('Wait For Rebooted', TAP_CONF,  function (t) {
 });
 
 
+// We may have been created this on previous test suite runs or not:
+test('Prepare resize package', TAP_CONF, function (t) {
+    client.pkg.get(sdc_256.urn, function (err, pkg) {
+        if (err) {
+            if (err.code === 'ResourceNotFound') {
+                // Try to create:
+                client.pkg.add(sdc_256, function (err2, pkg2) {
+                    t.ifError(err2, 'Error creating package');
+                    t.ok(pkg2);
+                    sdc_256_entry = pkg2;
+                });
+            } else {
+                t.ifError(err, 'Error fetching package');
+                t.end();
+            }
+        } else {
+            sdc_256_entry = pkg;
+            t.end();
+        }
+    })
+});
+
+
+test('Resize Machine', TAP_CONF, function (t) {
+    t.ok(sdc_256_entry, 'Resize package OK');
+    client.post('/my/machines/' + machine, {
+        action: 'resize',
+        'package': sdc_256_entry.name
+    }, function (err) {
+        t.ifError(err);
+        t.end();
+    });
+});
+
+
+test('Wait For Resized', TAP_CONF,  function (t) {
+    client.vmapi.listJobs({
+        vm_uuid: machine,
+        task: 'update'
+    }, function (err, jobs) {
+        t.ifError(err, 'list jobs error');
+        t.ok(jobs);
+        t.ok(jobs.length);
+        var resize_jobs = jobs.filter(function (job) {
+            return (typeof (job.params.max_physical_memory) !== 'undefined');
+        });
+        t.ok(resize_jobs.length);
+        waitForJob(resize_jobs[0].uuid, function (err2) {
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
+    });
+});
+
 
 test('ListTags', TAP_CONF, function (t) {
     var url = '/my/machines/' + machine + '/tags';
@@ -339,6 +411,7 @@ test('AddTag', TAP_CONF, function (t) {
         t.end();
     });
 });
+
 
 test('GetTag', TAP_CONF, function (t) {
     var path = '/my/machines/' + machine + '/tags/' + TAG_KEY;
@@ -462,6 +535,8 @@ test('DeleteAllMetadata', TAP_CONF, function (t) {
     });
 });
 
+
+
 /*
 test('Take Snapshot', TAP_CONF, function(t) {
     var url = '/my/machines/' + machine + '/snapshots';
@@ -581,4 +656,3 @@ test('teardown', TAP_CONF, function (t) {
         });
     });
 });
-

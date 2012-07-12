@@ -8,6 +8,7 @@ var uuid = require('node-uuid');
 var d = require('dtrace-provider');
 var UFDS = require('sdc-clients').UFDS;
 var VMAPI = require('sdc-clients').VMAPI;
+var Package = require('sdc-clients').Package;
 var app = require('../lib').app;
 var util = require('util');
 
@@ -94,6 +95,7 @@ module.exports = {
                             }
 
                             client.ufds = ufds;
+                            client.pkg = new Package(ufds);
                             client.teardown = function teardown(cb) {
                                 client.ufds.deleteUser(client.testUser,
                                     function (err2) {
