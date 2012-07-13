@@ -70,10 +70,10 @@
     },
     "sdc-clients": {
       "version": "8.0.0",
-      "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#3617ec98a0d75f8468fb1176779ba7637aaa7912",
+      "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#3743c49e1f26b190b0ca513d196ffc19eab240fe",
       "dependencies": {
         "ldapjs": {
-          "version": "0.5.3",
+          "version": "0.5.4",
           "dependencies": {
             "asn1": {
               "version": "0.1.11"
@@ -91,7 +91,7 @@
               "version": "0.0.9"
             },
             "pooling": {
-              "version": "0.2.1",
+              "version": "0.2.2",
               "dependencies": {
                 "bunyan": {
                   "version": "0.7.0"

@@ -15,7 +15,7 @@
         "nopt": "1.0.10",
         "restify": "1.4.3",
         "semver": "1.0.13",
-        "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#3617ec98a0d75f8468fb1176779ba7637aaa7912"
+        "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#3743c49e1f26b190b0ca513d196ffc19eab240fe"
     },
     "devDependencies": {
         "tap": "0.2.4"
