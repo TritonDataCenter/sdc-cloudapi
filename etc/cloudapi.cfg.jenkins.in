@@ -1,7 +1,7 @@
 {
     "port": 8080,
     "ufds": {
-        "url": "ldaps://127.0.0.1",
+        "url": "UFDS_URL",
         "bindDN": "UFDS_ROOT_DN",
         "bindPassword": "UFDS_ROOT_PW",
         "cache": {
