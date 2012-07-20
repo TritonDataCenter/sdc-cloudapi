@@ -2065,7 +2065,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ sdc-getmachinemetadata -c cf055959-d776-482e-bd71-ca510a04bdd7
+    $ sdc-getmachinemetadata cf055959-d776-482e-bd71-ca510a04bdd7
 
 ### Example Request
 
