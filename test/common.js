@@ -11,6 +11,7 @@ var VMAPI = require('sdc-clients').VMAPI;
 var Package = require('sdc-clients').Package;
 var app = require('../lib').app;
 var util = require('util');
+var fs = require('fs');
 
 // --- Globals
 
@@ -27,6 +28,10 @@ var LOG =  new Logger({
     }
 });
 var DTP = d.createDTraceProvider('cloudapi_test');
+var config = {};
+try {
+    config = JSON.parse(fs.readFileSync(DEFAULT_CFG, 'utf8'));
+} catch (e) {}
 
 // --- Library
 
@@ -45,7 +50,6 @@ module.exports = {
                 test: true
             }, function (s) {
                 server = s;
-
                 server.start(function () {
                     LOG.info('CloudAPI listening at %s', server.url);
 
@@ -65,7 +69,7 @@ module.exports = {
                     // just wait for vmachine status change, we'll be just
                     // hanging forever.
                     client.vmapi = new VMAPI({
-                        url: process.env.VMAPI_URL || 'http://10.99.99.18',
+                        url: process.env.VMAPI_URL || config.vmapi.url || 'http://10.99.99.21',
                         retry: {
                             retries: 1,
                             minTimeout: 1000
@@ -74,7 +78,7 @@ module.exports = {
                     });
 
                     ufds = new UFDS({
-                        url: (process.env.UFDS_URL || 'ldaps://10.99.99.13'),
+                        url: (process.env.UFDS_URL || config.ufds.url || 'ldaps://10.99.99.14'),
                         bindDN: 'cn=root',
                         bindPassword: 'secret'
                     });
