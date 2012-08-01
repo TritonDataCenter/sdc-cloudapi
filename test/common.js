@@ -79,8 +79,8 @@ module.exports = {
 
                     ufds = new UFDS({
                         url: (process.env.UFDS_URL || config.ufds.url || 'ldaps://10.99.99.14'),
-                        bindDN: 'cn=root',
-                        bindPassword: 'secret'
+                        bindDN: (config.ufds.bindDN || 'cn=root'),
+                        bindPassword: (config.ufds.bindPassword || 'secret')
                     });
 
                     ufds.on('error', function (err) {
