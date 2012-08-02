@@ -338,6 +338,7 @@ test('Prepare resize package', TAP_CONF, function (t) {
                     t.ifError(err2, 'Error creating package');
                     t.ok(pkg2);
                     sdc_256_entry = pkg2;
+                    t.end();
                 });
             } else {
                 t.ifError(err, 'Error fetching package');
