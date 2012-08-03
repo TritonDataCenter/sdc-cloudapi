@@ -2,7 +2,7 @@
 
 var test = require('tap').test;
 var uuid = require('node-uuid');
-
+var util = require('util');
 var common = require('./common');
 
 
@@ -62,7 +62,7 @@ test('GetAccount(:login) OK', function (t) {
 test('GetAccount 403', function (t) {
     client.get('/admin', function (err) {
         t.ok(err);
-        t.equal(err.httpCode, 403);
+        t.equal(err.statusCode, 403);
         t.equal(err.restCode, 'NotAuthorized');
         t.ok(err.message);
         t.end();
@@ -73,7 +73,7 @@ test('GetAccount 403', function (t) {
 test('GetAccount 404', function (t) {
     client.get('/' + uuid(), function (err) {
         t.ok(err);
-        t.equal(err.httpCode, 404);
+        t.equal(err.statusCode, 404);
         t.equal(err.restCode, 'ResourceNotFound');
         t.end();
     });

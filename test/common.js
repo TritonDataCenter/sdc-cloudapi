@@ -21,11 +21,7 @@ var LOG =  new Logger({
     level: process.env.LOG_LEVEL || 'info',
     name: 'cloudapi_unit_test',
     stream: process.stderr,
-    serializers: {
-        err: Logger.stdSerializers.err,
-        req: Logger.stdSerializers.req,
-        res: restify.bunyan.serializers.response
-    }
+    serializers: restify.bunyan.serializers
 });
 var DTP = d.createDTraceProvider('cloudapi_test');
 var config = {};
@@ -126,7 +122,6 @@ module.exports = {
 
     checkHeaders: function (t, headers) {
         assert.ok(t);
-
         t.ok(headers, 'headers ok');
         t.ok(headers['access-control-allow-origin'], 'headers allow-origin');
         t.ok(headers['access-control-allow-methods'], 'headers allow-methods');

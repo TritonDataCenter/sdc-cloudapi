@@ -57,7 +57,7 @@ test('ListKeys (empty) OK', function (t) {
 test('CreateKey (missing key)', function (t) {
     client.post('/my/keys', {}, function (err) {
         t.ok(err);
-        t.equal(err.httpCode, 409);
+        t.equal(err.statusCode, 409);
         t.equal(err.restCode, 'MissingParameter');
         t.ok(err.message);
         t.end();
@@ -123,7 +123,7 @@ test('DeleteKey OK', function (t) {
 test('DeleteKey 404', function (t) {
     client.del('/my/keys/' + uuid(), function (err) {
         t.ok(err);
-        t.equal(err.httpCode, 404);
+        t.equal(err.statusCode, 404);
         t.equal(err.restCode, 'ResourceNotFound');
         t.ok(err.message);
         t.end();
@@ -161,7 +161,7 @@ test('Cleanup Key', function (t) {
 test('GetKey 404', function (t) {
     client.get('/my/keys/' + uuid(), function (err) {
         t.ok(err);
-        t.equal(err.httpCode, 404);
+        t.equal(err.statusCode, 404);
         t.equal(err.restCode, 'ResourceNotFound');
         t.ok(err.message);
         t.end();

@@ -74,7 +74,7 @@ test('GetDataset OK', function (t) {
 test('GetDataset 404', function (t) {
     client.get('/my/datasets/' + uuid(), function (err) {
         t.ok(err, 'GET /my/datasets/ error');
-        t.equal(err.httpCode, 404, 'GET /my/datasets/ status');
+        t.equal(err.statusCode, 404, 'GET /my/datasets/ status');
         t.equal(err.restCode, 'ResourceNotFound', 'GET /my/datasets/ restCode');
         t.ok(err.message, 'GET /my/datasets/ error message');
         t.end();

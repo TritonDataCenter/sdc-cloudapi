@@ -73,7 +73,7 @@ test('GetPackage OK', function (t) {
 test('GetPackage 404', function (t) {
     client.get('/my/packages/' + uuid(), function (err) {
         t.ok(err);
-        t.equal(err.httpCode, 404);
+        t.equal(err.statusCode, 404);
         t.equal(err.restCode, 'ResourceNotFound');
         t.ok(err.message);
         t.end();

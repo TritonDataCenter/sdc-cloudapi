@@ -5,9 +5,6 @@
     "async": {
       "version": "0.1.22"
     },
-    "bunyan": {
-      "version": "0.8.0"
-    },
     "dtrace-provider": {
       "version": "0.0.7"
     },
@@ -38,35 +35,6 @@
           "version": "1.0.3"
         }
       }
-    },
-    "restify": {
-      "version": "1.4.3",
-      "dependencies": {
-        "byline": {
-          "version": "2.0.2"
-        },
-        "formidable": {
-          "version": "1.0.11"
-        },
-        "dtrace-provider": {
-          "version": "0.0.6"
-        },
-        "lru-cache": {
-          "version": "1.1.0"
-        },
-        "qs": {
-          "version": "0.5.0"
-        },
-        "retry": {
-          "version": "0.6.0"
-        },
-        "semver": {
-          "version": "1.0.14"
-        }
-      }
-    },
-    "semver": {
-      "version": "1.0.13"
     },
     "sdc-clients": {
       "version": "8.0.0",
@@ -116,8 +84,34 @@
         "lru-cache": {
           "version": "1.1.0"
         },
+        "restify": {
+          "version": "1.4.3",
+          "dependencies": {
+            "byline": {
+              "version": "2.0.2"
+            },
+            "formidable": {
+              "version": "1.0.11"
+            },
+            "dtrace-provider": {
+              "version": "0.0.6"
+            },
+            "qs": {
+              "version": "0.5.0"
+            },
+            "retry": {
+              "version": "0.6.0"
+            },
+            "semver": {
+              "version": "1.0.14"
+            }
+          }
+        },
         "clone": {
           "version": "0.1.0"
+        },
+        "bunyan": {
+          "version": "0.8.0"
         },
         "nodeunit": {
           "version": "0.7.4",
@@ -180,6 +174,78 @@
           }
         }
       }
+    },
+    "restify": {
+      "version": "2.0.0",
+      "from": "git://github.com/mcavage/node-restify.git#41969aa0448f8f765f1401f7fa91b564821b06eb",
+      "dependencies": {
+        "assert-plus": {
+          "version": "0.1.0"
+        },
+        "clone": {
+          "version": "0.1.0"
+        },
+        "byline": {
+          "version": "2.0.2"
+        },
+        "formidable": {
+          "version": "1.0.11"
+        },
+        "lru-cache": {
+          "version": "1.1.0"
+        },
+        "mime": {
+          "version": "1.2.6"
+        },
+        "pooling": {
+          "version": "0.2.2",
+          "dependencies": {
+            "bunyan": {
+              "version": "0.7.0"
+            },
+            "vasync": {
+              "version": "1.1.1",
+              "dependencies": {
+                "verror": {
+                  "version": "1.1.0",
+                  "dependencies": {
+                    "extsprintf": {
+                      "version": "1.0.0"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "qs": {
+          "version": "0.5.0"
+        },
+        "retry": {
+          "version": "0.6.0"
+        },
+        "semver": {
+          "version": "1.0.14"
+        },
+        "verror": {
+          "version": "1.3.3",
+          "from": "git://github.com/davepacheco/node-verror.git",
+          "dependencies": {
+            "extsprintf": {
+              "version": "1.0.0"
+            }
+          }
+        },
+        "dtrace-provider": {
+          "version": "0.0.9"
+        }
+      }
+    },
+    "bunyan": {
+      "version": "0.10.0"
+    },
+    "semver": {
+      "version": "1.0.13"
     },
     "tap": {
       "version": "0.2.4",

@@ -84,11 +84,7 @@ LOG = new Logger({
     level: (PARSED.debug ? 'trace' : 'info'),
     name: 'CloudAPI',
     stream: process.stderr,
-    serializers: {
-        err: Logger.stdSerializers.err,
-        req: Logger.stdSerializers.req,
-        res: restify.bunyan.serializers.response
-    }
+    serializers: restify.bunyan.serializers
 });
 
 if (PARSED.debug) {
