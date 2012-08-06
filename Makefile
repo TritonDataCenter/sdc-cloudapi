@@ -13,7 +13,7 @@
 # other projects too, you should add these to the original versions of the
 # included Makefiles (in eng.git) so that other teams can use them too.
 #
-
+NAME		:= cloudapi
 #
 # Tools
 #
@@ -29,13 +29,24 @@ JSL_FILES_NODE   = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS    = -f tools/jsstyle.conf
 SHRINKWRAP	 = npm-shrinkwrap.json
-SMF_MANIFESTS    = smf/manifests/cloudapi.xml
+SMF_MANIFESTS    = smf/manifests/cloudapi.xml.in
 
 CLEAN_FILES	+= node_modules $(SHRINKWRAP) cscope.files
 
+# The prebuilt sdcnode version we want. See
+# "tools/mk/Makefile.node_prebuilt.targ" for details.
+ifeq ($(shell uname -s),SunOS)
+	NODE_PREBUILT_VERSION=v0.8.5
+	NODE_PREBUILT_TAG=zone
+endif
+
+
 include ./tools/mk/Makefile.defs
-include ./tools/mk/Makefile.node.defs
-include ./tools/mk/Makefile.node_deps.defs
+ifeq ($(shell uname -s),SunOS)
+	include ./tools/mk/Makefile.node_prebuilt.defs
+else
+	include ./tools/mk/Makefile.node.defs
+endif
 include ./tools/mk/Makefile.smf.defs
 
 #
@@ -46,7 +57,7 @@ include ./tools/mk/Makefile.smf.defs
 
 
 ROOT                    := $(shell pwd)
-RELEASE_TARBALL         := cloudapi-pkg-$(STAMP).tar.bz2
+RELEASE_TARBALL         := $(NAME)-pkg-$(STAMP).tar.bz2
 TMPDIR                  := /tmp/$(STAMP)
 
 #
@@ -63,7 +74,7 @@ all: build
 
 .PHONY: build
 build: $(SMF_MANIFESTS) | $(TAP) $(REPO_DEPS)
-	$(NPM) install
+	$(NPM) install && $(NPM) update
 
 $(TAP): | $(NPM_EXEC)
 	$(NPM) install
@@ -95,8 +106,8 @@ publish: release
 	  echo "error: 'BITS_DIR' must be set for 'publish' target"; \
 	  exit 1; \
 	fi
-	mkdir -p $(BITS_DIR)/cloudapi
-	cp $(ROOT)/$(RELEASE_TARBALL) $(BITS_DIR)/cloudapi/$(RELEASE_TARBALL)
+	mkdir -p $(BITS_DIR)/$(NAME)
+	cp $(ROOT)/$(RELEASE_TARBALL) $(BITS_DIR)/$(NAME)/$(RELEASE_TARBALL)
 
 .PHONY: test account_test datacenters_test datasets_test keys_test machines_test packages_test
 
@@ -121,7 +132,10 @@ packages_test: $(TAP)
 test: account_test datacenters_test datasets_test keys_test machines_test packages_test
 
 include ./tools/mk/Makefile.deps
-include ./tools/mk/Makefile.node.targ
-include ./tools/mk/Makefile.node_deps.targ
+ifeq ($(shell uname -s),SunOS)
+	include ./tools/mk/Makefile.node_prebuilt.targ
+else
+	include ./tools/mk/Makefile.node.targ
+endif
 include ./tools/mk/Makefile.smf.targ
 include ./tools/mk/Makefile.targ

@@ -24,9 +24,9 @@
         <exec_method
             type="method"
             name="start"
-            exec="node main.js -f etc/cloudapi.cfg &amp;"
+            exec="@@NODE@@ @@PREFIX@@/main.js -f @@PREFIX@@/etc/cloudapi.cfg &amp;"
             timeout_seconds="60">
-            <method_context working_directory="/opt/smartdc/cloudapi">
+            <method_context working_directory="@@PREFIX@@">
                 <method_credential user="nobody"
                                    group="nobody"
                                    privileges="basic,net_privaddr"/>
@@ -43,14 +43,14 @@
                      name="restart"
                      exec=":kill"
                      timeout_seconds="60">
-            <method_context working_directory="/opt/smartdc/cloudapi" />
+            <method_context working_directory="@@PREFIX@@" />
         </exec_method>
 
         <exec_method type="method"
                      name="stop"
                      exec=":kill"
                      timeout_seconds="60">
-            <method_context working_directory="/opt/smartdc/cloudapi" />
+            <method_context working_directory="@@PREFIX@@" />
         </exec_method>
 
         <property_group name="startd" type="framework">
