@@ -177,7 +177,7 @@
     },
     "restify": {
       "version": "2.0.0",
-      "from": "git://github.com/mcavage/node-restify.git#41969aa0448f8f765f1401f7fa91b564821b06eb",
+      "from": "git://github.com/mcavage/node-restify.git#425c39307a2a91316f06cc3a997e843a4ccae1d7",
       "dependencies": {
         "assert-plus": {
           "version": "0.1.0"
