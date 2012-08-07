@@ -1895,7 +1895,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ sdc-getmachinesnapshot -m 5e42cd1e-34bb-402f-8796-bf5a2cae47db just-booted
+    $ sdc-getmachinesnapshot -n just-booted 5e42cd1e-34bb-402f-8796-bf5a2cae47db
 
 ### Example Request
 
@@ -2120,7 +2120,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ sdc-deletemachinemetadata -m cf055959-d776-482e-bd71-ca510a04bdd7 foo
+    $ sdc-deletemachinemetadata -m foo cf055959-d776-482e-bd71-ca510a04bdd7
 
 ### Example Request
 
@@ -2166,7 +2166,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ sdc-deletemachinemetadata -m cf055959-d776-482e-bd71-ca510a04bdd7 *
+    $ sdc-deletemachinemetadata -m "*" cf055959-d776-482e-bd71-ca510a04bdd7
+
+Note that if you're running in a Unix-like environment, you need to quote the
+wildcard to keep the shell from matching files in the current directory.
 
 ### Example Request
 
@@ -2331,7 +2334,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ sdc-getmachinetag -m 5e42cd1e-34bb-402f-8796-bf5a2cae47db foo
+    $ sdc-getmachinetag -t foo 5e42cd1e-34bb-402f-8796-bf5a2cae47db
 
 ### Example Request
 
@@ -2379,7 +2382,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ sdc-deletemachinetag -m 5e42cd1e-34bb-402f-8796-bf5a2cae47db foo
+    $ sdc-deletemachinetag -t foo 5e42cd1e-34bb-402f-8796-bf5a2cae47db
 
 ### Example Request
 
@@ -2423,7 +2426,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ sdc-deletemachinetag -m 5e42cd1e-34bb-402f-8796-bf5a2cae47db "*"
+    $ sdc-deletemachinetag -t "*" 5e42cd1e-34bb-402f-8796-bf5a2cae47db
 
 Note that if you're running in a Unix-like environment, you need to quote the
 wildcard to keep the shell from matching files in the current directory.
