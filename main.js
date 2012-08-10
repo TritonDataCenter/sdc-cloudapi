@@ -90,8 +90,14 @@ LOG = new Logger({
 if (PARSED.debug) {
     run();
 } else if (cluster.isMaster) {
-    for (var i = 0; i < os.cpus().length; i++)
+    var min_child_ram = 64 * 1024,
+        cpus = os.cpus().length,
+        slots = Math.ceil(os.totalmem() / min_child_ram),
+        max_forks = (cpus >= slots) ? slots : cpus;
+
+    for (var i = 0; i < max_forks; i++) {
         cluster.fork();
+    }
 
     cluster.on('death', function (worker) {
         LOG.error({worker: worker}, 'worker %d exited');
