@@ -13,7 +13,7 @@
         "node-uuid": "1.3.3",
         "nopt": "1.0.10",
         "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#3743c49e1f26b190b0ca513d196ffc19eab240fe",
-        "restify": "git://github.com/mcavage/node-restify.git#425c39307a2a91316f06cc3a997e843a4ccae1d7",
+        "restify": "git://github.com/mcavage/node-restify.git#5ba187a83fd0d047550488d9f002e882798e0241",
         "bunyan": "0.10.0",
         "semver": "1.0.13"
     },
