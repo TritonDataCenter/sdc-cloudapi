@@ -6,10 +6,10 @@
       "version": "0.1.22"
     },
     "dtrace-provider": {
-      "version": "0.0.7"
+      "version": "0.2.0"
     },
     "filed": {
-      "version": "0.0.6"
+      "version": "0.0.7"
     },
     "http-signature": {
       "version": "0.9.9",
@@ -177,13 +177,10 @@
     },
     "restify": {
       "version": "2.0.0",
-      "from": "git://github.com/mcavage/node-restify.git#5ba187a83fd0d047550488d9f002e882798e0241",
+      "from": "git://github.com/mcavage/node-restify.git#8bbd4e6dac2b2be6a3d44256b3b196937600407b",
       "dependencies": {
         "assert-plus": {
           "version": "0.1.0"
-        },
-        "bunyan": {
-          "version": "0.13.5"
         },
         "clone": {
           "version": "0.1.0"
@@ -237,14 +234,11 @@
               "version": "1.0.0"
             }
           }
-        },
-        "dtrace-provider": {
-          "version": "0.2.0"
         }
       }
     },
     "bunyan": {
-      "version": "0.10.0"
+      "version": "0.13.5"
     },
     "semver": {
       "version": "1.0.13"
@@ -283,10 +277,10 @@
           }
         },
         "mkdirp": {
-          "version": "0.3.3"
+          "version": "0.3.4"
         },
         "difflet": {
-          "version": "0.2.1",
+          "version": "0.2.2",
           "dependencies": {
             "traverse": {
               "version": "0.6.3"
