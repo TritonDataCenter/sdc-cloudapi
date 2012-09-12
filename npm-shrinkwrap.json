@@ -38,25 +38,17 @@
     },
     "sdc-clients": {
       "version": "8.0.0",
-      "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#3743c49e1f26b190b0ca513d196ffc19eab240fe",
+      "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#4285ba39b672cf52379e0135a5f993279af502eb",
       "dependencies": {
         "ldapjs": {
           "version": "0.5.4",
+          "from": "git://github.com/kusor/node-ldapjs.git#87061486d1cd0367bc82056fc6c62991538673b1",
           "dependencies": {
             "asn1": {
               "version": "0.1.11"
             },
-            "assert-plus": {
-              "version": "0.1.0"
-            },
             "buffertools": {
               "version": "1.1.0"
-            },
-            "bunyan": {
-              "version": "0.10.0"
-            },
-            "dtrace-provider": {
-              "version": "0.0.9"
             },
             "pooling": {
               "version": "0.2.2",
@@ -84,40 +76,38 @@
         "lru-cache": {
           "version": "1.1.0"
         },
-        "restify": {
-          "version": "1.4.3",
-          "dependencies": {
-            "byline": {
-              "version": "2.0.2"
-            },
-            "formidable": {
-              "version": "1.0.11"
-            },
-            "dtrace-provider": {
-              "version": "0.0.6"
-            },
-            "qs": {
-              "version": "0.5.0"
-            },
-            "retry": {
-              "version": "0.6.0"
-            },
-            "semver": {
-              "version": "1.0.14"
-            }
-          }
-        },
         "clone": {
           "version": "0.1.0"
         },
-        "bunyan": {
-          "version": "0.8.0"
+        "assert-plus": {
+          "version": "0.1.0"
+        },
+        "vasync": {
+          "version": "1.3.1",
+          "dependencies": {
+            "verror": {
+              "version": "1.1.0",
+              "dependencies": {
+                "extsprintf": {
+                  "version": "1.0.0"
+                }
+              }
+            }
+          }
+        },
+        "verror": {
+          "version": "1.3.3",
+          "dependencies": {
+            "extsprintf": {
+              "version": "1.0.0"
+            }
+          }
         },
         "nodeunit": {
           "version": "0.7.4",
           "dependencies": {
             "tap": {
-              "version": "0.2.5",
+              "version": "0.3.1",
               "dependencies": {
                 "inherits": {
                   "version": "1.0.0"
@@ -149,11 +139,19 @@
                     }
                   }
                 },
+                "nopt": {
+                  "version": "2.0.0",
+                  "dependencies": {
+                    "abbrev": {
+                      "version": "1.0.3"
+                    }
+                  }
+                },
                 "mkdirp": {
-                  "version": "0.3.3"
+                  "version": "0.3.4"
                 },
                 "difflet": {
-                  "version": "0.2.1",
+                  "version": "0.2.2",
                   "dependencies": {
                     "traverse": {
                       "version": "0.6.3"
