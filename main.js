@@ -4,7 +4,6 @@ var cluster = require('cluster');
 var os = require('os');
 var path = require('path');
 
-var d = require('dtrace-provider');
 var Logger = require('bunyan');
 var nopt = require('nopt');
 var restify = require('restify');
