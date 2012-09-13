@@ -5,9 +5,6 @@
     "async": {
       "version": "0.1.22"
     },
-    "dtrace-provider": {
-      "version": "0.2.0"
-    },
     "filed": {
       "version": "0.0.7"
     },
@@ -36,6 +33,74 @@
         }
       }
     },
+    "restify": {
+      "version": "2.0.0",
+      "from": "git://github.com/mcavage/node-restify.git#8bbd4e6dac2b2be6a3d44256b3b196937600407b",
+      "dependencies": {
+        "assert-plus": {
+          "version": "0.1.0"
+        },
+        "clone": {
+          "version": "0.1.0"
+        },
+        "byline": {
+          "version": "2.0.2"
+        },
+        "formidable": {
+          "version": "1.0.11"
+        },
+        "lru-cache": {
+          "version": "1.1.0"
+        },
+        "mime": {
+          "version": "1.2.7"
+        },
+        "pooling": {
+          "version": "0.2.2",
+          "dependencies": {
+            "bunyan": {
+              "version": "0.7.0"
+            },
+            "vasync": {
+              "version": "1.1.1",
+              "dependencies": {
+                "verror": {
+                  "version": "1.1.0",
+                  "dependencies": {
+                    "extsprintf": {
+                      "version": "1.0.0"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "qs": {
+          "version": "0.5.0"
+        },
+        "retry": {
+          "version": "0.6.0"
+        },
+        "semver": {
+          "version": "1.0.14"
+        },
+        "verror": {
+          "version": "1.3.3",
+          "dependencies": {
+            "extsprintf": {
+              "version": "1.0.0"
+            }
+          }
+        },
+        "dtrace-provider": {
+          "version": "0.2.0"
+        }
+      }
+    },
+    "bunyan": {
+      "version": "0.13.5"
+    },
     "sdc-clients": {
       "version": "8.0.0",
       "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#4285ba39b672cf52379e0135a5f993279af502eb",
@@ -49,6 +114,9 @@
             },
             "buffertools": {
               "version": "1.1.0"
+            },
+            "dtrace-provider": {
+              "version": "0.2.0"
             },
             "pooling": {
               "version": "0.2.2",
@@ -172,71 +240,6 @@
           }
         }
       }
-    },
-    "restify": {
-      "version": "2.0.0",
-      "from": "git://github.com/mcavage/node-restify.git#8bbd4e6dac2b2be6a3d44256b3b196937600407b",
-      "dependencies": {
-        "assert-plus": {
-          "version": "0.1.0"
-        },
-        "clone": {
-          "version": "0.1.0"
-        },
-        "byline": {
-          "version": "2.0.2"
-        },
-        "formidable": {
-          "version": "1.0.11"
-        },
-        "lru-cache": {
-          "version": "1.1.0"
-        },
-        "mime": {
-          "version": "1.2.7"
-        },
-        "pooling": {
-          "version": "0.2.2",
-          "dependencies": {
-            "bunyan": {
-              "version": "0.7.0"
-            },
-            "vasync": {
-              "version": "1.1.1",
-              "dependencies": {
-                "verror": {
-                  "version": "1.1.0",
-                  "dependencies": {
-                    "extsprintf": {
-                      "version": "1.0.0"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "qs": {
-          "version": "0.5.0"
-        },
-        "retry": {
-          "version": "0.6.0"
-        },
-        "semver": {
-          "version": "1.0.14"
-        },
-        "verror": {
-          "version": "1.3.3",
-          "dependencies": {
-            "extsprintf": {
-              "version": "1.0.0"
-            }
-          }
-        }
-      }
-    },
-    "bunyan": {
-      "version": "0.13.5"
     },
     "semver": {
       "version": "1.0.13"

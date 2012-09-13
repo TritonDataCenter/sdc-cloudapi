@@ -61,7 +61,7 @@ function run() {
     return app.createServer({
         config: PARSED.file || DEFAULT_CFG,
         overrides: PARSED,
-        log: LOG,
+        log: LOG
     }, function (server) {
         server.start(function () {
             LOG.info('CloudAPI listening at %s', server.url);
