@@ -16,7 +16,6 @@ var app = require('./lib').app;
 ///--- Globals
 
 var DEFAULT_CFG = __dirname + '/etc/cloudapi.config.json';
-var DTP = d.createDTraceProvider('cloudapi');
 var LOG;
 var PARSED;
 
@@ -63,9 +62,7 @@ function run() {
         config: PARSED.file || DEFAULT_CFG,
         overrides: PARSED,
         log: LOG,
-        dtrace: DTP
     }, function (server) {
-        DTP.enable();
         server.start(function () {
             LOG.info('CloudAPI listening at %s', server.url);
         });
