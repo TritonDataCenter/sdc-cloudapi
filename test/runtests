@@ -27,11 +27,11 @@ echo $TOP;
 
 #---- guard
 
-if [[ ! -f "${TOP}/.sdc-test-no-production-data" ]]; then
+if [[ ! -f "/lib/sdc/.sdc-test-no-production-data" ]]; then
     cat <<EOF
 To run this test you must create the file:
 
-    ${TOP}/.sdc-test-no-production-data
+    /lib/sdc/.sdc-test-no-production-data
 
 after ensuring you have no production data on this install.
 EOF
