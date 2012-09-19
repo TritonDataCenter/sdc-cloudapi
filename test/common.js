@@ -35,7 +35,7 @@ var user, ufds, client, server;
 
 function setupClient(callback) {
     client = restify.createJsonClient({
-        url: server.url || 'https://127.0.0.1',
+        url: server ? server.url : 'https://127.0.0.1',
         version: '*',
         retryOptions: {
             retry: 0

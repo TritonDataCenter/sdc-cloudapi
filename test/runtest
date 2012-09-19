@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+#
+# Copyright (c) 2012, Joyent, Inc. All rights reserved.
+#
+# Run the Cloud API tests. This is expected to be run from the Cloud API
+# install dir (i.e. "/opt/smartdc/cloudapi" in the cloudapi zone).
+#
+# This creates .tap files in the OUTPUT_DIR (/var/tmp/cloudapitest) that
+# can be processed by a TAP reader. Testing config and log files are
+# also placed in this dir.
+#
+# Run `./runtests -h` for usage info.
+#
+
+if [ "$TRACE" != "" ]; then
+    export PS4='${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+    set -o xtrace
+fi
+set -o errexit
+set -o pipefail
+
+TOP=$(cd $(dirname $0)/../; pwd)
+echo $TOP;
+
+#---- guard
+
+if [[ ! -f "${TOP}/.sdc-test-no-production-data" ]]; then
+    cat <<EOF
+To run this test you must create the file:
+
+    ${TOP}/.sdc-test-no-production-data
+
+after ensuring you have no production data on this install.
+EOF
+    exit 2
+fi
+
+
+#---- support functions
+
+function fatal
+{
+    echo "$(basename $0): fatal error: $*"
+    exit 1
+}
+
+function usage
+{
+    echo "Usage:"
+    echo "  runtests [OPTIONS...]"
+    echo ""
+    echo "Options:"
+    echo "  -f FILTER   Filter pattern (substring match) for test files to run."
+}
+
+
+
+#---- mainline
+
+start_time=$(date +%s)
+
+NODE_INSTALL=$TOP/build/node
+PATH=$TOP/build/node/bin:$TOP/node_modules/.bin:$PATH
+TAP=./node_modules/.bin/tap
+
+# Options.
+opt_test_pattern=
+while getopts "hcqpf:" opt
+do
+    case "$opt" in
+        h)
+            usage
+            exit 0
+            ;;
+        f)
+            opt_test_pattern=$OPTARG
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+
+# Setup a clean output dir.
+OUTPUT_DIR=/var/tmp/cloudapitest
+echo "# Setup a clean output dir ($OUTPUT_DIR)."
+rm -rf /var/tmp/cloudapitest
+mkdir -p /var/tmp/cloudapitest
+
+cd $TOP
+
+# Run the tests.
+echo ""
+test_files=$(ls -1 test/*.test.js)
+if [[ -n "$opt_test_pattern" ]]; then
+    test_files=$(echo "$test_files" | grep "$opt_test_pattern" || true)
+    echo "# Running filtered set of test files: $test_files"
+fi
+# maintenances.test.js needs longer timeout
+if [[ -n "$test_files" ]]; then
+    PATH=$NODE_INSTALL/bin:$PATH SDC_SETUP_TESTS=1 TAP=1 $TAP --timeout 180 $test_files \
+        | tee $OUTPUT_DIR/cloudapi.tap
+fi
+
+echo ""
+echo "# test output:"
+ls $OUTPUT_DIR/*.tap
+
+
+# Colored summary of results (borrowed from smartos-live.git/src/vm/run-tests).
+echo ""
+echo "# test results:"
+
+end_time=$(date +%s)
+elapsed=$((${end_time} - ${start_time}))
+
+tests=$(grep "^# tests [0-9]" $OUTPUT_DIR/*.tap | cut -d ' ' -f3 | xargs | tr ' ' '+' | bc)
+passed=$(grep "^# pass  [0-9]" $OUTPUT_DIR/*.tap | tr -s ' ' | cut -d ' ' -f3 | xargs | tr ' ' '+' | bc)
+[[ -z ${tests} ]] && tests=0
+[[ -z ${passed} ]] && passed=0
+fail=$((${tests} - ${passed}))
+
+echo "# Completed in ${elapsed} seconds."
+echo -e "# \033[32mPASS: ${passed} / ${tests}\033[39m"
+if [[ ${fail} -gt 0 ]]; then
+    echo -e "# \033[31mFAIL: ${fail} / ${tests}\033[39m"
+fi
+echo ""
+
+if [[ ${tests} != ${passed} ]]; then
+    exit 1
+fi
