@@ -35,7 +35,9 @@ test('setup', function (t) {
         t.ifError(err);
         t.ok(_client);
         client = _client;
-        t.ok(_server);
+        if (!process.env.SDC_SETUP_TESTS) {
+            t.ok(_server);
+        }
         server = _server;
         t.end();
     });
@@ -83,8 +85,12 @@ test('GetAccount 404', function (t) {
 test('teardown', function (t) {
     client.teardown(function (err) {
         t.ifError(err);
-        server.close(function () {
+        if (!process.env.SDC_SETUP_TESTS) {
+            server.close(function () {
+                t.end();
+            });
+        } else {
             t.end();
-        });
+        }
     });
 });

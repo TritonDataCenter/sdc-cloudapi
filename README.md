@@ -26,7 +26,7 @@ review.
 
 # Configuration file.
 
-The configuration file `./etc/cloudapi.config.json` needs to be created before
+The configuration file `./etc/cloudapi.cfg` needs to be created before
 the CloudAPI server can run. Consequently, **this file is also required in
 order to run the test suite**.
 
@@ -149,8 +149,10 @@ variables. The following is a list of these variables and their default values:
 - `LOG_LEVEL`: Tests log level. Default `info`.
 - `POLL_INTERVAL`: Value used to check for a vm status change, in milisecs.
   By default, 500 miliseconds.
+- `SDC_SETUP_TESTS`: The tests are running versus an existing SDC setup. (No
+need to boot a server instance, since there's one already running).
 
-Also, the contents of the aforementioned `./etc/cloudapi.config.json` file
+Also, the contents of the aforementioned `./etc/cloudapi.cfg` file
 should have been properly set.
 
 # TODO

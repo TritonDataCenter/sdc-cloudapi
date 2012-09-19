@@ -35,7 +35,9 @@ test('setup', function (t) {
     common.setup(function (err, _client, _server) {
         t.ifError(err);
         t.ok(_client);
-        t.ok(_server);
+        if (!process.env.SDC_SETUP_TESTS) {
+            t.ok(_server);
+        }
         client = _client;
         server = _server;
         t.end();
@@ -85,8 +87,12 @@ test('GetDataset 404', function (t) {
 test('teardown', function (t) {
     client.teardown(function (err) {
         t.ifError(err, 'client teardown error');
-        server.close(function () {
+        if (!process.env.SDC_SETUP_TESTS) {
+            server.close(function () {
+                t.end();
+            });
+        } else {
             t.end();
-        });
+        }
     });
 });

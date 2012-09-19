@@ -5,7 +5,6 @@ var path = require('path');
 var Logger = require('bunyan');
 var restify = require('restify');
 var uuid = require('node-uuid');
-var d = require('dtrace-provider');
 var UFDS = require('sdc-clients').UFDS;
 var VMAPI = require('sdc-clients').VMAPI;
 var Package = require('sdc-clients').Package;
@@ -16,18 +15,91 @@ var fs = require('fs');
 // --- Globals
 
 var PASSWD = 'secret';
-var DEFAULT_CFG = path.join(__dirname, '..', '/etc/cloudapi.config.json');
+var DEFAULT_CFG = path.join(__dirname, '..', '/etc/cloudapi.cfg');
 var LOG =  new Logger({
     level: process.env.LOG_LEVEL || 'info',
     name: 'cloudapi_unit_test',
     stream: process.stderr,
     serializers: restify.bunyan.serializers
 });
-var DTP = d.createDTraceProvider('cloudapi_test');
 var config = {};
 try {
     config = JSON.parse(fs.readFileSync(DEFAULT_CFG, 'utf8'));
 } catch (e) {}
+
+
+var SDC_SETUP_TESTS = process.env.SDC_SETUP_TESTS || false;
+
+var user, ufds, client, server;
+
+
+function setupClient(callback) {
+    client = restify.createJsonClient({
+        url: server.url || 'https://127.0.0.1',
+        version: '*',
+        retryOptions: {
+            retry: 0
+        },
+        log: LOG
+    });
+
+    client.basicAuth(user, PASSWD);
+    client.testUser = user;
+
+    // We need vmapi client to check jobs on tests, given if we
+    // just wait for vmachine status change, we'll be just
+    // hanging forever.
+    client.vmapi = new VMAPI({
+        url: process.env.VMAPI_URL || config.vmapi.url || 'http://10.99.99.21',
+        retry: {
+            retries: 1,
+            minTimeout: 1000
+        },
+        log: client.log
+    });
+
+    ufds = new UFDS({
+        url: (process.env.UFDS_URL || config.ufds.url || 'ldaps://10.99.99.14'),
+        bindDN: (config.ufds.bindDN || 'cn=root'),
+        bindPassword: (config.ufds.bindPassword || 'secret')
+    });
+
+    ufds.on('error', function (err) {
+        return callback(err);
+    });
+
+    ufds.on('ready', function () {
+        var entry = {
+            login: client.testUser,
+            email: client.testUser,
+            userpassword: PASSWD
+        };
+        return ufds.addUser(entry, function (err) {
+            if (err) {
+                return callback(err);
+            }
+
+            client.ufds = ufds;
+            client.pkg = new Package(ufds);
+            client.teardown = function teardown(cb) {
+                client.ufds.deleteUser(client.testUser,
+                    function (err2) {
+                    if (err2) {
+                        // blindly ignore
+                        // return cb(err2);
+                    }
+
+                    return ufds.close(function () {
+                        return cb(null);
+                    });
+                });
+            };
+
+            return callback(null, client, server);
+        });
+    });
+}
+
 
 // --- Library
 
@@ -36,88 +108,25 @@ module.exports = {
     setup: function (callback) {
         assert.ok(callback);
 
-        var user = 'a' + uuid().substr(0, 7) + '@joyent.com',
-            ufds, napi, client,
+        user = 'a' + uuid().substr(0, 7) + '@joyent.com';
+        if (SDC_SETUP_TESTS) {
+            // We already got a running server instance, no need to boot another one:
+            return setupClient(callback);
+        } else {
             server = app.createServer({
                 config: DEFAULT_CFG,
                 log: LOG,
-                dtrace: DTP,
+                name: 'cloudapi_tests',
                 overrides: {},
                 test: true
             }, function (s) {
                 server = s;
                 server.start(function () {
                     LOG.info('CloudAPI listening at %s', server.url);
-
-                    client = restify.createJsonClient({
-                        url: server.url,
-                        version: '*',
-                        retryOptions: {
-                            retry: 0
-                        },
-                        log: LOG
-                    });
-
-                    client.basicAuth(user, PASSWD);
-                    client.testUser = user;
-
-                    // We need vmapi client to check jobs on tests, given if we
-                    // just wait for vmachine status change, we'll be just
-                    // hanging forever.
-                    client.vmapi = new VMAPI({
-                        url: process.env.VMAPI_URL || config.vmapi.url || 'http://10.99.99.21',
-                        retry: {
-                            retries: 1,
-                            minTimeout: 1000
-                        },
-                        log: client.log
-                    });
-
-                    ufds = new UFDS({
-                        url: (process.env.UFDS_URL || config.ufds.url || 'ldaps://10.99.99.14'),
-                        bindDN: (config.ufds.bindDN || 'cn=root'),
-                        bindPassword: (config.ufds.bindPassword || 'secret')
-                    });
-
-                    ufds.on('error', function (err) {
-                        return callback(err);
-                    });
-
-                    ufds.on('ready', function () {
-                        var entry = {
-                            login: client.testUser,
-                            email: client.testUser,
-                            userpassword: PASSWD
-                        };
-                        return ufds.addUser(entry, function (err) {
-                            if (err) {
-                                return callback(err);
-                            }
-
-                            client.ufds = ufds;
-                            client.pkg = new Package(ufds);
-                            client.teardown = function teardown(cb) {
-                                client.ufds.deleteUser(client.testUser,
-                                    function (err2) {
-                                    if (err2) {
-                                        // blindly ignore
-                                        // return cb(err2);
-                                    }
-
-                                    return ufds.close(function () {
-                                        return cb(null);
-                                    });
-                                });
-                            };
-
-                            return callback(null, client, server);
-                        });
-                    });
-
+                    return setupClient(callback);
                 });
-
             });
-
+        }
     },
 
     checkHeaders: function (t, headers) {

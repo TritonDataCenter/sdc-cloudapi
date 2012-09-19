@@ -9,3 +9,4 @@ cscope.out
 cloudapi-*.tar.bz2
 node_modules
 etc/*.json
+.sdc-test-no-production-data

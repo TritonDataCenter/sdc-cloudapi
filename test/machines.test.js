@@ -134,7 +134,9 @@ test('setup', TAP_CONF, function (t) {
         t.ifError(err, 'common setup error');
         t.ok(_client, 'common _client ok');
         client = _client;
-        t.ok(_server);
+        if (!process.env.SDC_SETUP_TESTS) {
+            t.ok(_server);
+        }
         server = _server;
 
         client.post('/my/keys', {
@@ -651,9 +653,13 @@ test('teardown', TAP_CONF, function (t) {
         client.teardown(function (err2) {
             // Ignore err2 here, just means we have not been able to remove
             // something from ufds.
-            server.close(function () {
+            if (!process.env.SDC_SETUP_TESTS) {
+                server.close(function () {
+                    t.end();
+                });
+            } else {
                 t.end();
-            });
+            }
         });
     });
 });
