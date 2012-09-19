@@ -42,6 +42,7 @@
     "ca": {
         "url": "CA_URL"
     },
+    "keyapi": "KEYAPI",
     "datacenters": {
         "DATACENTER_NAME": "CLOUDAPI_EXTERNAL_URL"
     },
