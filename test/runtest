@@ -16,8 +16,11 @@ if [ "$TRACE" != "" ]; then
     export PS4='${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
     set -o xtrace
 fi
-set -o errexit
-set -o pipefail
+
+# With this stuff enabled we'll get not summary at the end of the tests
+# execution if any test wrote to stderr.
+#set -o errexit
+#set -o pipefail
 
 TOP=$(cd $(dirname $0)/../; pwd)
 echo $TOP;
@@ -98,7 +101,7 @@ if [[ -n "$opt_test_pattern" ]]; then
     test_files=$(echo "$test_files" | grep "$opt_test_pattern" || true)
     echo "# Running filtered set of test files: $test_files"
 fi
-# maintenances.test.js needs longer timeout
+
 if [[ -n "$test_files" ]]; then
     PATH=$NODE_INSTALL/bin:$PATH SDC_SETUP_TESTS=1 TAP=1 $TAP --timeout 180 $test_files \
         | tee $OUTPUT_DIR/cloudapi.tap
