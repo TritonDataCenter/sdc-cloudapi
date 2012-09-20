@@ -334,7 +334,7 @@ test('Wait For Rebooted', TAP_CONF,  function (t) {
 test('Prepare resize package', TAP_CONF, function (t) {
     client.pkg.get(sdc_256.urn, function (err, pkg) {
         if (err) {
-            if (err.code === 'ResourceNotFound') {
+            if (err.restCode === 'ResourceNotFound') {
                 // Try to create:
                 client.pkg.add(sdc_256, function (err2, pkg2) {
                     t.ifError(err2, 'Error creating package');
