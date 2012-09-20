@@ -17,8 +17,8 @@ if [ "$TRACE" != "" ]; then
     set -o xtrace
 fi
 
-# With this stuff enabled we'll get not summary at the end of the tests
-# execution if any test wrote to stderr.
+# With this stuff enabled we'll get not summary at the end of the tests
+# execution if any test wrote to stderr.
 #set -o errexit
 #set -o pipefail
 
@@ -103,7 +103,7 @@ if [[ -n "$opt_test_pattern" ]]; then
 fi
 
 if [[ -n "$test_files" ]]; then
-    PATH=$NODE_INSTALL/bin:$PATH SDC_SETUP_TESTS=1 TAP=1 $TAP --timeout 180 $test_files \
+    PATH=$NODE_INSTALL/bin:$PATH SDC_SETUP_TESTS=1 TAP=1 $TAP --timeout 240 $test_files \
         | tee $OUTPUT_DIR/cloudapi.tap
 fi
 
