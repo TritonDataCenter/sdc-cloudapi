@@ -86,7 +86,7 @@ LOG = new Logger({
 if (PARSED.debug) {
     run();
 } else if (cluster.isMaster) {
-    var min_child_ram = 64 * 1024,
+    var min_child_ram = 64 * 1024 * 1024,
         cpus = os.cpus().length,
         slots = Math.ceil(os.totalmem() / min_child_ram),
         max_forks = (cpus >= slots) ? slots : cpus;
