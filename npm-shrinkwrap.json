@@ -281,7 +281,7 @@
           "version": "0.3.4"
         },
         "difflet": {
-          "version": "0.2.2",
+          "version": "0.2.3",
           "dependencies": {
             "traverse": {
               "version": "0.6.3"
