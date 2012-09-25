@@ -141,5 +141,9 @@ module.exports = {
                 'headers server');
         t.equal(headers.connection, 'Keep-Alive', 'headers keep alive');
         t.equal(headers['x-api-version'], '7.0.0', 'headers x-api-version');
+    },
+
+    getCfg: function () {
+        return config;
     }
 };
