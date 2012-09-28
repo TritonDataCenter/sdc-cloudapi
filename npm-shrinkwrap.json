@@ -244,6 +244,9 @@
     "semver": {
       "version": "1.0.13"
     },
+    "sigyan": {
+      "version": "0.2.0"
+    },
     "tap": {
       "version": "0.2.4",
       "dependencies": {
