@@ -103,29 +103,31 @@
     },
     "sdc-clients": {
       "version": "8.0.0",
-      "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#4285ba39b672cf52379e0135a5f993279af502eb",
+      "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#60801e95",
       "dependencies": {
         "ldapjs": {
-          "version": "0.5.4",
-          "from": "git://github.com/kusor/node-ldapjs.git#87061486d1cd0367bc82056fc6c62991538673b1",
+          "version": "0.5.7",
           "dependencies": {
             "asn1": {
               "version": "0.1.11"
             },
+            "assert-plus": {
+              "version": "0.1.2"
+            },
             "buffertools": {
               "version": "1.1.0"
             },
+            "bunyan": {
+              "version": "0.14.0"
+            },
             "dtrace-provider": {
-              "version": "0.2.0"
+              "version": "0.2.1"
             },
             "pooling": {
-              "version": "0.2.2",
+              "version": "0.3.2",
               "dependencies": {
-                "bunyan": {
-                  "version": "0.7.0"
-                },
                 "vasync": {
-                  "version": "1.1.1",
+                  "version": "1.3.2",
                   "dependencies": {
                     "verror": {
                       "version": "1.1.0",
@@ -143,6 +145,32 @@
         },
         "lru-cache": {
           "version": "1.1.0"
+        },
+        "restify": {
+          "version": "1.4.3",
+          "dependencies": {
+            "bunyan": {
+              "version": "0.8.0"
+            },
+            "byline": {
+              "version": "2.0.2"
+            },
+            "formidable": {
+              "version": "1.0.11"
+            },
+            "dtrace-provider": {
+              "version": "0.0.6"
+            },
+            "qs": {
+              "version": "0.5.0"
+            },
+            "retry": {
+              "version": "0.6.0"
+            },
+            "semver": {
+              "version": "1.0.14"
+            }
+          }
         },
         "clone": {
           "version": "0.1.0"
@@ -219,7 +247,7 @@
                   "version": "0.3.4"
                 },
                 "difflet": {
-                  "version": "0.2.2",
+                  "version": "0.2.3",
                   "dependencies": {
                     "traverse": {
                       "version": "0.6.3"
