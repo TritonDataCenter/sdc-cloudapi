@@ -13,8 +13,9 @@
         "nopt": "1.0.10",
         "restify": "git://github.com/mcavage/node-restify.git#c9164c53c40fb4a9279330aad2876c198b0fdd23",
         "bunyan": "0.13.5",
-        "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#4285ba39b672cf52379e0135a5f993279af502eb",
-        "semver": "1.0.13"
+        "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#60801e95",
+        "semver": "1.0.13",
+        "sigyan": "0.2.0"
     },
     "devDependencies": {
         "tap": "0.2.4"

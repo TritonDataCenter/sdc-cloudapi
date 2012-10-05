@@ -9,10 +9,9 @@ var common = require('./common');
 
 // --- Globals
 
-var client, server;
+var client, server, cfg = common.getCfg();
 
-
-
+var DC_NAME = Object.keys(cfg.datacenters)[0];
 // --- Tests
 
 test('setup', function (t) {
@@ -35,14 +34,14 @@ test('ListDatacenters OK', function (t) {
         t.ok(body);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 200);
-        t.ok(body[process.env.DATACENTER || 'coal']);
+        t.ok(body[process.env.DATACENTER || DC_NAME]);
         t.end();
     });
 });
 
 
 test('GetDatacenter OK', function (t) {
-    var dc = process.env.DATACENTER || 'coal';
+    var dc = process.env.DATACENTER || DC_NAME;
     client.get('/my/datacenters/' + dc, function (err, req, res, body) {
         t.ifError(err);
         common.checkHeaders(t, res.headers);

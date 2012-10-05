@@ -356,11 +356,12 @@ test('Prepare resize package', TAP_CONF, function (t) {
 
 test('Resize Machine', TAP_CONF, function (t) {
     t.ok(sdc_256_entry, 'Resize package OK');
+    console.log('Resizing to package: %j', sdc_256_entry);
     client.post('/my/machines/' + machine, {
         action: 'resize',
         'package': sdc_256_entry.name
     }, function (err) {
-        t.ifError(err);
+        t.ifError(err, 'Resize machine error');
         t.end();
     });
 });
@@ -372,12 +373,13 @@ test('Wait For Resized', TAP_CONF,  function (t) {
         task: 'update'
     }, function (err, jobs) {
         t.ifError(err, 'list jobs error');
-        t.ok(jobs);
-        t.ok(jobs.length);
+        t.ok(jobs, 'list jobs OK');
+        t.ok(jobs.length, 'update jobs is array');
         var resize_jobs = jobs.filter(function (job) {
             return (typeof (job.params.max_physical_memory) !== 'undefined');
         });
-        t.ok(resize_jobs.length);
+        t.ok(resize_jobs.length, 'resize jobs is an array');
+        console.log('Resize job: %j', resize_jobs[0]);
         waitForJob(resize_jobs[0].uuid, function (err2) {
             t.ifError(err2, 'Check state error');
             t.end();

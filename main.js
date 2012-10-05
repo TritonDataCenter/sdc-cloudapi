@@ -23,14 +23,16 @@ var opts = {
     'debug': Boolean,
     'file': String,
     'port': Number,
-    'help': Boolean
+    'help': Boolean,
+    'single': Boolean
 };
 
 var shortOpts = {
     'd': ['--debug'],
     'f': ['--file'],
     'p': ['--port'],
-    'h': ['--help']
+    'h': ['--help'],
+    's': ['--single']
 };
 
 
@@ -83,10 +85,10 @@ LOG = new Logger({
     serializers: restify.bunyan.serializers
 });
 
-if (PARSED.debug) {
+if (PARSED.single) {
     run();
 } else if (cluster.isMaster) {
-    var min_child_ram = 64 * 1024 * 1024,
+    var min_child_ram = 128 * 1024 * 1024,
         cpus = os.cpus().length,
         slots = Math.ceil(os.totalmem() / min_child_ram),
         max_forks = (cpus >= slots) ? slots : cpus;
@@ -102,3 +104,7 @@ if (PARSED.debug) {
 } else {
     run();
 }
+
+// Increase/decrease loggers levels using SIGUSR2/SIGUSR1:
+var sigyan = require('sigyan');
+sigyan.add([LOG]);
