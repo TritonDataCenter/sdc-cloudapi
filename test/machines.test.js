@@ -144,7 +144,26 @@ test('setup', TAP_CONF, function (t) {
             name: keyName
         }, function (err2, req, res, body) {
             t.ifError(err2, 'POST /my/keys error');
-            t.end();
+            // We may have been created this on previous test suite runs or not:
+            client.pkg.get(sdc_256.urn, function (err3, pkg) {
+                if (err3) {
+                    if (err3.restCode === 'ResourceNotFound') {
+                        // Try to create:
+                        client.pkg.add(sdc_256, function (err4, pkg2) {
+                            t.ifError(err4, 'Error creating package');
+                            t.ok(pkg2, 'Package created OK');
+                            sdc_256_entry = pkg2;
+                            t.end();
+                        });
+                    } else {
+                        t.ifError(err3, 'Error fetching package');
+                        t.end();
+                    }
+                } else {
+                    sdc_256_entry = pkg;
+                    t.end();
+                }
+            });
         });
     });
 });
@@ -327,30 +346,6 @@ test('Wait For Rebooted', TAP_CONF,  function (t) {
             t.end();
         });
     });
-});
-
-
-// We may have been created this on previous test suite runs or not:
-test('Prepare resize package', TAP_CONF, function (t) {
-    client.pkg.get(sdc_256.urn, function (err, pkg) {
-        if (err) {
-            if (err.restCode === 'ResourceNotFound') {
-                // Try to create:
-                client.pkg.add(sdc_256, function (err2, pkg2) {
-                    t.ifError(err2, 'Error creating package');
-                    t.ok(pkg2);
-                    sdc_256_entry = pkg2;
-                    t.end();
-                });
-            } else {
-                t.ifError(err, 'Error fetching package');
-                t.end();
-            }
-        } else {
-            sdc_256_entry = pkg;
-            t.end();
-        }
-    })
 });
 
 
