@@ -20,7 +20,7 @@
       }
     },
     "mime": {
-      "version": "1.2.5"
+      "version": "1.2.7"
     },
     "node-uuid": {
       "version": "1.3.3"
@@ -35,34 +35,31 @@
     },
     "restify": {
       "version": "2.0.0",
-      "from": "git://github.com/mcavage/node-restify.git#c9164c53c40fb4a9279330aad2876c198b0fdd23",
+      "from": "git://github.com/mcavage/node-restify.git#8b6a619a",
       "dependencies": {
         "assert-plus": {
-          "version": "0.1.0"
+          "version": "0.1.2"
         },
         "clone": {
-          "version": "0.1.0"
+          "version": "0.1.1"
         },
         "byline": {
-          "version": "2.0.2"
+          "version": "2.0.3"
         },
         "formidable": {
           "version": "1.0.11"
         },
         "lru-cache": {
-          "version": "1.1.0"
-        },
-        "mime": {
-          "version": "1.2.7"
+          "version": "2.0.4"
         },
         "pooling": {
-          "version": "0.2.2",
+          "version": "0.3.2",
           "dependencies": {
             "bunyan": {
-              "version": "0.7.0"
+              "version": "0.14.0"
             },
             "vasync": {
-              "version": "1.1.1",
+              "version": "1.3.2",
               "dependencies": {
                 "verror": {
                   "version": "1.1.0",
@@ -77,16 +74,14 @@
           }
         },
         "qs": {
-          "version": "0.5.0"
+          "version": "0.5.1"
         },
         "retry": {
           "version": "0.6.0"
         },
-        "semver": {
-          "version": "1.0.14"
-        },
         "verror": {
           "version": "1.3.3",
+          "from": "git://github.com/davepacheco/node-verror.git#b5cb0be",
           "dependencies": {
             "extsprintf": {
               "version": "1.0.0"
@@ -94,12 +89,12 @@
           }
         },
         "dtrace-provider": {
-          "version": "0.2.0"
+          "version": "0.2.1"
         }
       }
     },
     "bunyan": {
-      "version": "0.13.5"
+      "version": "0.14.5"
     },
     "sdc-clients": {
       "version": "8.0.0",
@@ -161,6 +156,9 @@
             "dtrace-provider": {
               "version": "0.0.6"
             },
+            "mime": {
+              "version": "1.2.5"
+            },
             "qs": {
               "version": "0.5.0"
             },
@@ -177,6 +175,9 @@
         },
         "assert-plus": {
           "version": "0.1.0"
+        },
+        "bunyan": {
+          "version": "0.13.5"
         },
         "vasync": {
           "version": "1.3.1",
@@ -200,89 +201,24 @@
           }
         },
         "nodeunit": {
-          "version": "0.7.4",
-          "dependencies": {
-            "tap": {
-              "version": "0.3.1",
-              "dependencies": {
-                "inherits": {
-                  "version": "1.0.0"
-                },
-                "yamlish": {
-                  "version": "0.0.5"
-                },
-                "slide": {
-                  "version": "1.1.3"
-                },
-                "runforcover": {
-                  "version": "0.0.2",
-                  "dependencies": {
-                    "bunker": {
-                      "version": "0.1.2",
-                      "dependencies": {
-                        "burrito": {
-                          "version": "0.2.12",
-                          "dependencies": {
-                            "traverse": {
-                              "version": "0.5.2"
-                            },
-                            "uglify-js": {
-                              "version": "1.1.1"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "nopt": {
-                  "version": "2.0.0",
-                  "dependencies": {
-                    "abbrev": {
-                      "version": "1.0.3"
-                    }
-                  }
-                },
-                "mkdirp": {
-                  "version": "0.3.4"
-                },
-                "difflet": {
-                  "version": "0.2.3",
-                  "dependencies": {
-                    "traverse": {
-                      "version": "0.6.3"
-                    },
-                    "charm": {
-                      "version": "0.0.8"
-                    }
-                  }
-                },
-                "deep-equal": {
-                  "version": "0.0.0"
-                },
-                "buffer-equal": {
-                  "version": "0.0.0"
-                }
-              }
-            }
-          }
+          "version": "0.7.4"
         }
       }
     },
     "semver": {
-      "version": "1.0.13"
+      "version": "1.1.0"
     },
     "sigyan": {
       "version": "0.2.0"
     },
     "tap": {
-      "version": "0.2.4",
+      "version": "0.3.1",
       "dependencies": {
         "inherits": {
           "version": "1.0.0"
         },
         "yamlish": {
-          "version": "0.0.4"
+          "version": "0.0.5"
         },
         "slide": {
           "version": "1.1.3"
@@ -308,6 +244,14 @@
             }
           }
         },
+        "nopt": {
+          "version": "2.0.0",
+          "dependencies": {
+            "abbrev": {
+              "version": "1.0.3"
+            }
+          }
+        },
         "mkdirp": {
           "version": "0.3.4"
         },
@@ -323,6 +267,9 @@
           }
         },
         "deep-equal": {
+          "version": "0.0.0"
+        },
+        "buffer-equal": {
           "version": "0.0.0"
         }
       }

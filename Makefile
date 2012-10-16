@@ -125,7 +125,7 @@ keys_test: $(TAP)
 	$(TAP) --tap --timeout 120 test/keys.test.js
 
 machines_test: $(TAP)
-	$(TAP) --tap --timeout 120 test/machines.test.js
+	$(TAP) --tap --timeout 480 test/machines.test.js
 
 packages_test: $(TAP)
 	$(TAP) --tap --timeout 120 test/packages.test.js

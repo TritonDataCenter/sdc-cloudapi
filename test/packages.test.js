@@ -131,7 +131,6 @@ test('GetPackage by name OK (7.0)', function (t) {
         common.checkHeaders(t, res.headers);
         checkPackage_7(t, body);
         THE_PACKAGE = body;
-        console.log(util.inspect(THE_PACKAGE, false, 8));
         t.end();
     });
 });

@@ -8,17 +8,17 @@
         "async": "0.1.22",
         "filed": "0.0.7",
         "http-signature": "0.9.9",
-        "mime": "1.2.5",
+        "mime": "1.2.7",
         "node-uuid": "1.3.3",
         "nopt": "1.0.10",
-        "restify": "git://github.com/mcavage/node-restify.git#c9164c53c40fb4a9279330aad2876c198b0fdd23",
-        "bunyan": "0.13.5",
+        "restify": "git://github.com/mcavage/node-restify.git#8b6a619a",
+        "bunyan": "0.14.5",
         "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#60801e95",
-        "semver": "1.0.13",
+        "semver": "1.1.0",
         "sigyan": "0.2.0"
     },
     "devDependencies": {
-        "tap": "0.2.4"
+        "tap": "~0.3"
     },
     "scripts": {
         "start": "node ./main.js",
