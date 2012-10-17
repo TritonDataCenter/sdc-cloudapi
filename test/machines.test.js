@@ -43,22 +43,6 @@ var TAP_CONF = {
     timeout: 'Infinity '
 };
 
-// May or not be created by previous test run or whatever else:
-var sdc_256 = {
-    name: 'sdc_256',
-    version: '1.0.0',
-    max_physical_memory: 256,
-    quota: 10240,
-    max_swap: 512,
-    cpu_cap: 150,
-    max_lwps: 1000,
-    zfs_io_priority: 10,
-    'default': false,
-    vcpus: 1,
-    urn: 'sdc::sdc_256:1.0.0',
-    active: true
-};
-
 var sdc_256_entry;
 
 // --- Helpers
@@ -73,6 +57,7 @@ function checkMachine(t, m) {
     t.ok(m.ips, 'checkMachine ips ok');
     t.ok(m.memory, 'checkMachine memory ok');
     t.ok(m.metadata, 'checkMachine metadata ok');
+    t.ok(m['package'], 'checkMachine package ok');
     // TODO:
     // Intentionally making disk, which is zero first, and created/updated,
     // which are not set at the beginning, fail until we decide how to proceed
@@ -145,22 +130,12 @@ test('setup', TAP_CONF, function (t) {
         }, function (err2, req, res, body) {
             t.ifError(err2, 'POST /my/keys error');
             // We may have been created this on previous test suite runs or not:
-            client.pkg.get(sdc_256.urn, function (err3, pkg) {
+            client.pkg.list(function (err3, packages) {
                 if (err3) {
-                    if (err3.restCode === 'ResourceNotFound') {
-                        // Try to create:
-                        client.pkg.add(sdc_256, function (err4, pkg2) {
-                            t.ifError(err4, 'Error creating package');
-                            t.ok(pkg2, 'Package created OK');
-                            sdc_256_entry = pkg2;
-                            t.end();
-                        });
-                    } else {
-                        t.ifError(err3, 'Error fetching package');
-                        t.end();
-                    }
+                    t.ifError(err3, 'Error fetching packages');
+                    t.end();
                 } else {
-                    sdc_256_entry = pkg;
+                    sdc_256_entry = packages[2];
                     t.end();
                 }
             });
