@@ -1233,6 +1233,11 @@ An array of machine objects, which contain:
 ||created||Date (ISO8601)||When this machine was created||
 ||updated||Date (ISO8601)||When this machine was updated||
 
+Starting at __version 7.0__, a machine will also provide information about the
+associated package.
+
+||package||String||The name of the package used to create this machine.||
+
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
@@ -1333,6 +1338,12 @@ Gets the details for an individual machine.
 ||created||Date (ISO8601)||When this machine was created||
 ||updated||Date (ISO8601)||When this machine was updated||
 ||credentials||Boolean||Whether to include the generated credentials for machines, if present. Defaults to false.||
+
+
+Starting at __version 7.0__, a machine will also provide information about the
+associated package.
+
+||package||String||The name of the package used to create this machine.||
 
 ### Errors
 
