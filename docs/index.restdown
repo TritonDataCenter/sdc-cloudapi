@@ -8,7 +8,7 @@ markdown2extras: wiki-tables, code-friendly
 # Joyent CloudAPI
 
 This is the reference documentation for the CloudAPI that is part of Joyent's
-SmartDataCenter 6 product.  This guide provides descriptions of the APIs
+SmartDataCenter 6.5 & 7.0 product. This guide provides descriptions of the APIs
 available, as well as supporting information such as how to use the SDK(s), 
 command line interface (CLI),
 and where to find more information.
@@ -16,7 +16,7 @@ and where to find more information.
 For more information about this product visit
 [Joyent SmartDataCenter](http://www.joyent.com/software/smartdatacenter).
 
-This document refers to SmartDataCenter 6.5.
+This document refers to SmartDataCenter 6.5 & SmartDataCenter 7.0.
 
 
 ## Conventions
@@ -426,7 +426,7 @@ you can with NPM.   For details on how to specify ranges, check
     X-Api-Version: ~6.5
     X-Api-Version: >=6.5.0
 
-Joyent recommends you set the X-Api-Version header to `~6.5`; each service
+Joyent recommends you set the X-Api-Version header to `~7.0`; each service
 release of SmartDataCenter will increment the `patch` version; any major
 releases of SmartDataCenter will increment either the `minor` or `major`
 version.
@@ -438,7 +438,7 @@ Since [cURL](http://curl.haxx.se/) is commonly used to script requests to web
 services, here's a simple alias you can use to wrap cURL to communicate with
 CloudAPI:
 
-    $ alias cloudapi='curl -is -u demo:secret -H "Accept: application/json" -H "X-Api-Version: ~6.5"'
+    $ alias cloudapi='curl -is -u demo:secret -H "Accept: application/json" -H "X-Api-Version: ~7.0"'
 
 Then you could try:
 
@@ -452,7 +452,7 @@ Signature Authentication, you'll need to do a little scripting of `date`,
       local now=`date -u "+%a, %d %h %Y %H:%M:%S GMT"` ;
       local signature=`echo ${now} | tr -d '\n' | openssl dgst -sha256 -sign ~/.ssh/id_rsa | openssl enc -e -a | tr -d '\n'` ;
 
-      curl -is -H "Accept: application/json" -H "x-api-version: ~6.5" -H "Date: ${now}" -H "Authorization: Signature keyId=\"/demo/keys/id_rsa\",algorithm=\"rsa-sha256\" ${signature}" --url https://api.example.com$@ ;
+      curl -is -H "Accept: application/json" -H "x-api-version: ~7.0" -H "Date: ${now}" -H "Authorization: Signature keyId=\"/demo/keys/id_rsa\",algorithm=\"rsa-sha256\" ${signature}" --url https://api.example.com$@ ;
       echo "";
     }
 
@@ -1035,11 +1035,19 @@ Provides a list of packages available in this datacenter.
 
 An array of objects, of the form:
 
-||name||String||The "friendly name for this package||
+||name||String||The "friendly" name for this package||
 ||memory||Number||How much memory will by available (in Mb)||
 ||disk||Number||How much disk space will be available (in Gb)||
 ||swap||Number||How much swap memory will be available (in Mb)||
 ||default||Boolean||Whether this is the default package in this datacenter||
+
+Starting at SmartDataCenter 7.0, this API also includes the following package
+properties.
+
+||urn||String||URN for this package||
+||UUID||String||Unique UUID for this package||
+||version||String||The version for this package||
+||vcpus||Number||Number of VCPUS for this package||
 
 ### Errors
 
@@ -1122,6 +1130,17 @@ Gets a package by name.
 ||swap||Number||How much swap memory will be available (in Mb)||
 ||default||Boolean||Whether this is the default package in this datacenter||
 
+Starting at SmartDataCenter 7.0, this API also includes the following package
+properties.
+
+||urn||String||URN for this package||
+||UUID||String||Unique UUID for this package||
+||version||String||The version for this package||
+||vcpus||Number||Number of VCPUS for this package||
+
+Also, starting at SmartDataCenter 7.0, packages can be retrieved also by
+UUID and URN.
+
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
@@ -1139,7 +1158,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -1148,8 +1167,8 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Methods: GET
     Server: SmartDataCenter
     Connection: close
-    Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 6.5.0
+    Date: Tue, 16 Oct 2012 23:14:34 GMT
+    X-Api-Version: 7.0.0
     X-RequestId: F01F0DC1-12DE-4D9A-B92B-FB3A041E46B8
     X-Response-Time: 120
     Content-Type: application/json
@@ -1161,7 +1180,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       "memory": 128,
       "swap": 256,
       "disk": 5120,
-      "default": true
+      "default": true,
+      "urn": "sdc:930896af-bf8c-48d4-885c-6573a94b1853:sdc_128:1.0.0",
+      "uuid": "5968a8a4-5bff-4c5e-8034-d79de962e7f6",
+      "vcpus": 1,
+      "version": "1.0.0"
     }
 
 
@@ -1209,6 +1232,11 @@ An array of machine objects, which contain:
 ||metadata||Object[String => String]||Any "extra" metadata this machine has||
 ||created||Date (ISO8601)||When this machine was created||
 ||updated||Date (ISO8601)||When this machine was updated||
+
+Starting at __version 7.0__, a machine will also provide information about the
+associated package.
+
+||package||String||The name of the package used to create this machine.||
 
 ### Errors
 
@@ -1310,6 +1338,12 @@ Gets the details for an individual machine.
 ||created||Date (ISO8601)||When this machine was created||
 ||updated||Date (ISO8601)||When this machine was updated||
 ||credentials||Boolean||Whether to include the generated credentials for machines, if present. Defaults to false.||
+
+
+Starting at __version 7.0__, a machine will also provide information about the
+associated package.
+
+||package||String||The name of the package used to create this machine.||
 
 ### Errors
 
@@ -1664,7 +1698,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If :login does not exist||
-||InvalidState||The machine is in an invalid state to be stopped||
+||InvalidState||The machine is in an invalid state to be resized||
 ||InvalidArgument||If action was invalid or package wasn't a valid name||
 ||MissingParameter||If action wasn't sent or package wasn't sent||
 
@@ -1696,6 +1730,63 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     x-request-id: 3974ead1-0f1d-49ed-974c-1abfd13d6087
     x-response-time: 161
     Content-Length: 0
+
+
+## RenameMachine (POST /:login/machines/:id?action=rename)
+
+### Since Version 7.0
+
+Allows you to rename a machine. POST to the machine id with an action of
+`rename`. You must additionally include a new name for the machine.
+
+### Inputs
+
+||action||String||Use the exact string rename||
+||name||String||The new "friendly" name for this machine||
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+||InvalidState||The machine is in an invalid state to be stopped||
+||InvalidArgument||If action was invalid or name wasn't a valid name||
+||MissingParameter||If action wasn't sent or name wasn't sent||
+
+### CLI Command
+
+    $ sdc-renamemachine -n new_friendly_name 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+
+### Example Request
+
+    POST /my/machines/75cfe125-a5ce-49e8-82ac-09aa31ffdf26 HTTP/1.1
+    Authorization: ...
+    Host: localhost:8080
+    Accept: application/json
+    Content-Length: 12
+    Content-Type: application/x-www-form-urlencoded
+    X-Api-Version: ~7.0
+
+    action=rename&name=new_friendly_name
+
+### Example Response
+
+    HTTP/1.1 202 Accepted
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST, DELETE
+    Connection: close
+    x-api-version: 7.0.0
+    Date: Sat, 11 Jun 2011 18:31:14 GMT
+    Server: SmartDataCenter
+    x-request-id: 3974ead1-0f1d-49ed-974c-1abfd13d6087
+    x-response-time: 161
+    Content-Length: 0
+
 
 ## CreateMachineSnapshot (POST /:login/machines/:id/snapshots)
 

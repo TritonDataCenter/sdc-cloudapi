@@ -31,7 +31,7 @@ JSSTYLE_FLAGS    = -f tools/jsstyle.conf
 SHRINKWRAP	 = npm-shrinkwrap.json
 SMF_MANIFESTS_IN    = smf/manifests/cloudapi.xml.in
 
-CLEAN_FILES	+= node_modules $(SHRINKWRAP) cscope.files
+CLEAN_FILES	+= node_modules cscope.files
 
 # The prebuilt sdcnode version we want. See
 # "tools/mk/Makefile.node_prebuilt.targ" for details.
@@ -125,7 +125,7 @@ keys_test: $(TAP)
 	$(TAP) --tap --timeout 120 test/keys.test.js
 
 machines_test: $(TAP)
-	$(TAP) --tap --timeout 120 test/machines.test.js
+	$(TAP) --tap --timeout 480 test/machines.test.js
 
 packages_test: $(TAP)
 	$(TAP) --tap --timeout 120 test/packages.test.js

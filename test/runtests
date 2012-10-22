@@ -103,7 +103,7 @@ if [[ -n "$opt_test_pattern" ]]; then
 fi
 
 if [[ -n "$test_files" ]]; then
-    PATH=$NODE_INSTALL/bin:$PATH SDC_SETUP_TESTS=1 TAP=1 $TAP --timeout 240 $test_files \
+    PATH=$NODE_INSTALL/bin:$PATH SDC_SETUP_TESTS=1 TAP=1 TAP_TIMEOUT=240 $TAP --timeout 480 $test_files \
         | tee $OUTPUT_DIR/cloudapi.tap
 fi
 
