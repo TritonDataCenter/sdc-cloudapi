@@ -43,7 +43,25 @@ var TAP_CONF = {
     timeout: 'Infinity '
 };
 
-var sdc_256_entry;
+
+// May or not be created by previous test run or whatever else:
+var sdc_256_inactive = {
+    name: 'sdc_256_inactive',
+    version: '1.0.0',
+    max_physical_memory: 256,
+    quota: 10240,
+    max_swap: 512,
+    cpu_cap: 150,
+    max_lwps: 1000,
+    zfs_io_priority: 10,
+    'default': false,
+    vcpus: 1,
+    urn: 'sdc::sdc_256_inactive:1.0.0',
+    active: false
+};
+
+
+var sdc_256_entry, sdc_256_inactive_entry;
 
 // --- Helpers
 
@@ -135,8 +153,29 @@ test('setup', TAP_CONF, function (t) {
                     t.ifError(err3, 'Error fetching packages');
                     t.end();
                 } else {
-                    sdc_256_entry = packages[2];
-                    t.end();
+                    sdc_256_entry = packages.filter(function (p) {
+                        return (p.name === 'sdc_256');
+                    })[0];
+                    client.pkg.get(sdc_256_inactive.urn, function (err4, pkg) {
+                        if (err4) {
+                            if (err4.restCode === 'ResourceNotFound') {
+                                client.pkg.add(sdc_256_inactive, function (err5, pkg2) {
+                                    t.ifError(err5, 'Error creating package');
+                                    t.ok(pkg2, 'Package created OK');
+                                    sdc_256_inactive_entry = pkg2;
+                                    t.end();
+                                });
+                            } else {
+                                t.ifError(err4, 'Error fetching package');
+                                t.end();
+                            }
+
+                        } else {
+                            sdc_256_inactive_entry = pkg;
+                            t.end();
+                        }
+                    });
+                    
                 }
             });
         });
@@ -192,6 +231,21 @@ test('Wait For Running', TAP_CONF,  function (t) {
             t.ifError(err2, 'Check state error');
             t.end();
         });
+    });
+});
+
+
+test('Create machine with inactive package', function (t) {
+    var obj = {
+        dataset: 'smartos',
+        'package': sdc_256_inactive_entry.name,
+        name: 'a' + uuid().substr(0, 7)
+    };
+
+    client.post('/my/machines', obj, function (err, req, res, body) {
+        t.ok(err, 'POST /my/machines with inactive pacakge error');
+        t.equal(res.statusCode, 409);
+        t.end();
     });
 });
 
@@ -320,6 +374,18 @@ test('Wait For Rebooted', TAP_CONF,  function (t) {
             t.ifError(err2, 'Check state error');
             t.end();
         });
+    });
+});
+
+
+test('Resize machine to inactive package', function (t) {
+    client.post('/my/machines/' + machine, {
+        action: 'resize',
+        'package': sdc_256_inactive_entry.name
+    }, function (err, req, res, body) {
+        t.ok(err, 'Resize to inactive package error');
+        t.equal(res.statusCode, 409, 'Resize to inactive pkg status');
+        t.end();
     });
 });
 
