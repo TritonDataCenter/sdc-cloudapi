@@ -130,6 +130,17 @@ function waitForJob(uuid, callback) {
 }
 
 
+function saveKey(t, cb) {
+    return client.post('/my/keys', {
+        key: KEY,
+        name: keyName
+    }, function (err2, req, res, body) {
+        t.ifError(err2, 'POST /my/keys error');
+        return cb();
+    });
+}
+
+
 // --- Tests
 
 test('setup', TAP_CONF, function (t) {
@@ -142,11 +153,7 @@ test('setup', TAP_CONF, function (t) {
         }
         server = _server;
 
-        client.post('/my/keys', {
-            key: KEY,
-            name: keyName
-        }, function (err2, req, res, body) {
-            t.ifError(err2, 'POST /my/keys error');
+        saveKey(t, function () {
             // We may have been created this on previous test suite runs or not:
             client.pkg.list(function (err3, packages) {
                 if (err3) {
