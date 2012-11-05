@@ -216,6 +216,8 @@ test('CreateMachine', TAP_CONF, function (t) {
         t.ifError(err, 'POST /my/machines error');
         t.equal(res.statusCode, 201, 'POST /my/machines status');
         common.checkHeaders(t, res.headers);
+        t.equal(res.headers.location,
+            util.format('/%s/machines/%s', client.testUser, body.id));
         t.ok(body, 'POST /my/machines body');
         checkMachine(t, body);
         machine = body.id;
