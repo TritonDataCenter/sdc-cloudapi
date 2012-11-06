@@ -1044,7 +1044,6 @@ An array of objects, of the form:
 Starting at SmartDataCenter 7.0, this API also includes the following package
 properties.
 
-||urn||String||URN for this package||
 ||UUID||String||Unique UUID for this package||
 ||version||String||The version for this package||
 ||vcpus||Number||Number of VCPUS for this package||
@@ -1133,7 +1132,6 @@ Gets a package by name.
 Starting at SmartDataCenter 7.0, this API also includes the following package
 properties.
 
-||urn||String||URN for this package||
 ||UUID||String||Unique UUID for this package||
 ||version||String||The version for this package||
 ||vcpus||Number||Number of VCPUS for this package||
@@ -1181,7 +1179,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       "swap": 256,
       "disk": 5120,
       "default": true,
-      "urn": "sdc:930896af-bf8c-48d4-885c-6573a94b1853:sdc_128:1.0.0",
       "uuid": "5968a8a4-5bff-4c5e-8034-d79de962e7f6",
       "vcpus": 1,
       "version": "1.0.0"
