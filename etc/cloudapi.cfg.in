@@ -46,6 +46,26 @@
     },
     "plugins": [
         {
+            "name": "provision_limits",
+            "enabled": false,
+            "config": {
+                "datacenter": "DATACENTER_NAME",
+                "defaults":[{
+                   "os": "any",
+                   "dataset": "any",
+                   "check": "os",
+                   "by": "ram",
+                   "value": 51200
+                }, {
+                   "os": "windows",
+                   "dataset": "windows",
+                   "check": "dataset",
+                   "by": "machines",
+                   "value": -1
+                }]
+            }
+        },
+        {
             "name": "capi_limits",
             "enabled": false,
             "config": {
