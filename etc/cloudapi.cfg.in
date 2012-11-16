@@ -20,6 +20,15 @@
             "expiry": 60
         }
     },
+    "cnapi": {
+        "url": "CNAPI_URL",
+        "username": "CNAPI_HTTP_ADMIN_USER",
+        "password": "CNAPI_HTTP_ADMIN_PW",
+        "cache": {
+            "size": 5000,
+            "expiry": 60
+        }
+    },
     "napi": {
         "url": "NAPI_URL",
         "username": "NAPI_HTTP_ADMIN_USER",
