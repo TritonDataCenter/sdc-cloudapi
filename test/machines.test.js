@@ -56,12 +56,14 @@ var sdc_256_inactive = {
     zfs_io_priority: 10,
     'default': false,
     vcpus: 1,
-    urn: 'sdc::sdc_256_inactive:1.0.0',
+    urn: 'sdc:' + uuid() + ':sdc_256_inactive:1.0.0',
     active: false
 };
 
 
 var sdc_256_entry, sdc_256_inactive_entry;
+
+var HEADNODE = null;
 
 // --- Helpers
 
@@ -203,11 +205,29 @@ test('ListMachines (empty)', TAP_CONF, function (t) {
 });
 
 
+test('Get Headnode', function (t) {
+    client.cnapi.listServers(function (err, servers) {
+        t.ifError(err);
+        t.ok(servers);
+        t.ok(Array.isArray(servers));
+        t.ok(servers.length > 0);
+        servers = servers.filter(function (server) {
+            return (server.headnode);
+        });
+        t.ok(servers.length > 0);
+        HEADNODE = servers[0];
+        t.ok(HEADNODE);
+        t.end();
+    });
+});
+
+
 test('CreateMachine', TAP_CONF, function (t) {
     var obj = {
         dataset: 'smartos',
         'package': 'sdc_128',
-        name: 'a' + uuid().substr(0, 7)
+        name: 'a' + uuid().substr(0, 7),
+        server_uuid: HEADNODE.uuid
     };
     obj['metadata.' + META_KEY] = META_VAL;
     obj['tag.' + TAG_KEY] = TAG_VAL;
@@ -248,7 +268,8 @@ test('Create machine with inactive package', function (t) {
     var obj = {
         dataset: 'smartos',
         'package': sdc_256_inactive_entry.name,
-        name: 'a' + uuid().substr(0, 7)
+        name: 'a' + uuid().substr(0, 7),
+        server_uuid: HEADNODE.uuid
     };
 
     client.post('/my/machines', obj, function (err, req, res, body) {
