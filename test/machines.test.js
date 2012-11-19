@@ -11,7 +11,7 @@ var common = require('./common');
 
 // --- Globals
 
-var client, server;
+var client, server, snapshot;
 var keyName = uuid();
 var machine;
 var KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAvad19ePSDckmgmo6Unqmd8' +
@@ -445,7 +445,6 @@ test('Wait For Resized', TAP_CONF,  function (t) {
             return (typeof (job.params.max_physical_memory) !== 'undefined');
         });
         t.ok(resize_jobs.length, 'resize jobs is an array');
-        console.log('Resize job: %j', resize_jobs[0]);
         waitForJob(resize_jobs[0].uuid, function (err2) {
             t.ifError(err2, 'Check state error');
             t.end();
@@ -493,7 +492,6 @@ test('Wait For Renamed', TAP_CONF,  function (t) {
             return (typeof (job.params.alias) !== 'undefined');
         });
         t.ok(rename_jobs.length, 'rename jobs is an array');
-        console.log('Rename job: %j', rename_jobs[0]);
         waitForJob(rename_jobs[0].uuid, function (err2) {
             t.ifError(err2, 'Check state error');
             t.end();
@@ -603,7 +601,6 @@ test('AddMetadataCredentials', TAP_CONF, function (t) {
 // TODO: A good excuse to test credentials on GET /my/machines ... now!
 
 
-
 test('AddMetadata', TAP_CONF, function (t) {
     var path = '/my/machines/' + machine + '/metadata',
     meta = {
@@ -655,21 +652,73 @@ test('DeleteAllMetadata', TAP_CONF, function (t) {
 });
 
 
-
-/*
-test('Take Snapshot', TAP_CONF, function(t) {
+test('Take Snapshot', TAP_CONF, function (t) {
     var url = '/my/machines/' + machine + '/snapshots';
-    client.post(url, {}, function(err, req, res, body) {
+    client.post(url, {}, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 201);
         common.checkHeaders(t, res.headers);
         t.ok(body);
         checkSnapshot(t, body);
+        snapshot = body;
         t.end();
     });
 });
 
 
+test('Wait For Snapshot', TAP_CONF,  function (t) {
+    client.vmapi.listJobs({
+        vm_uuid: machine,
+        task: 'snapshot'
+    }, function (err, jobs) {
+        t.ifError(err, 'list jobs error');
+        t.ok(jobs, 'list jobs OK');
+        t.ok(jobs.length, 'update jobs is array');
+        var snapshot_jobs = jobs.filter(function (job) {
+            return (/^snapshot/.test(job.name));
+        });
+        t.ok(snapshot_jobs.length, 'snapshot jobs is an array');
+        waitForJob(snapshot_jobs[0].uuid, function (err2) {
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
+    });
+});
+
+
+test('Rollback Snapshot', TAP_CONF, function (t) {
+    t.ok(snapshot.name, 'Snapshot name OK');
+    var url = '/my/machines/' + machine + '/snapshots/' + snapshot.name;
+    client.post(url, {}, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 202);
+        common.checkHeaders(t, res.headers);
+        t.end();
+    });
+});
+
+
+test('Wait For Snapshot', TAP_CONF,  function (t) {
+    client.vmapi.listJobs({
+        vm_uuid: machine,
+        task: 'snapshot'
+    }, function (err, jobs) {
+        t.ifError(err, 'list jobs error');
+        t.ok(jobs, 'list jobs OK');
+        t.ok(jobs.length, 'update jobs is array');
+        var snapshot_jobs = jobs.filter(function (job) {
+            return (/^rollback/.test(job.name));
+        });
+        t.ok(snapshot_jobs.length, 'snapshot jobs is an array');
+        waitForJob(snapshot_jobs[0].uuid, function (err2) {
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
+    });
+});
+
+
+/*
 test('List Snapshots', TAP_CONF, function(t) {
     var url = '/my/machines/' + machine + '/snapshots';
     client.get(url, function(err, req, res, body) {
