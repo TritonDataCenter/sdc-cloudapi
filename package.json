@@ -12,8 +12,8 @@
         "node-uuid": "1.4.0",
         "nopt": "1.0.10",
         "restify": "git://github.com/mcavage/node-restify.git#8a1029a",
-        "bunyan": "0.14.6",
-        "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#3f4b9a5",
+        "bunyan": "0.16.5",
+        "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#0ebc8c7",
         "semver": "1.1.0",
         "sigyan": "0.2.0",
         "nodemailer": "0.3.29"
