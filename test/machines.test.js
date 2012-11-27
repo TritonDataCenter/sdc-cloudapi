@@ -91,9 +91,9 @@ function checkMachine(t, m) {
 
 
 function checkSnapshot(t, snap) {
-    t.ok(snap);
-    t.ok(snap.name);
-    t.ok(snap.state);
+    t.ok(snap, 'snapshot ok');
+    t.ok(snap.name, 'snapshot name ok');
+    t.ok(snap.state, 'snapshot state ok');
 }
 
 
@@ -718,17 +718,16 @@ test('Wait For Snapshot', TAP_CONF,  function (t) {
 });
 
 
-/*
-test('List Snapshots', TAP_CONF, function(t) {
+test('List Snapshots', TAP_CONF, function (t) {
     var url = '/my/machines/' + machine + '/snapshots';
-    client.get(url, function(err, req, res, body) {
+    client.get(url, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.ok(Array.isArray(body));
         t.ok(body.length);
-        body.forEach(function(s) {
+        body.forEach(function (s) {
             checkSnapshot(t, s);
         });
         t.end();
@@ -736,6 +735,21 @@ test('List Snapshots', TAP_CONF, function(t) {
 });
 
 
+test('Get Snapshot', TAP_CONF, function (t) {
+    t.ok(snapshot.name, 'Snapshot name OK');
+    var url = '/my/machines/' + machine + '/snapshots/' + snapshot.name;
+    client.get(url, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        checkSnapshot(t, body);
+        t.end();
+    });
+});
+
+
+/*
 // Blocked on PROV-1352, as is the commented out section above
 test('Delete snapshot', TAP_CONF, function(t) {
   var url = '/my/machines/' + machine + '/snapshots';
