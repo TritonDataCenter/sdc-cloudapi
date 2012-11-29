@@ -554,6 +554,24 @@ test('DeleteTag', TAP_CONF, function (t) {
 });
 
 
+test('ReplaceTags', TAP_CONF, function (t) {
+    var path = '/my/machines/' + machine + '/tags',
+    tags = {};
+    tags[TAG_KEY] = TAG_VAL;
+    client.put(path, tags, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.ok(body[TAG_KEY]);
+        t.equal(body[TAG_KEY], TAG_VAL);
+        t.equal(typeof (body[TAG_TWO_KEY]), 'undefined');
+        t.end();
+    });
+
+});
+
+
 test('DeleteAllTags', TAP_CONF, function (t) {
     var url = '/my/machines/' + machine + '/tags';
     client.del(url, function (err, req, res) {
