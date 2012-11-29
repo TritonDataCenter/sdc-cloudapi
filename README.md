@@ -19,7 +19,7 @@ To run the CloudAPI server:
     cd cloudapi
     git submodule update --init
     make all
-    node main.js -f ./etc/cloudapi.config.json 2>&1 | bunyan
+    node main.js -f ./etc/cloudapi.config.json -s 2>&1 | bunyan
 
 Before commiting/pushing run `make prepush` and, if possible, get a code
 review.
