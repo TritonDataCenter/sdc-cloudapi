@@ -1,0 +1,517 @@
+---
+title: Joyent CloudAPI Administrator's Guide
+mediaroot: ./media
+apisections:
+markdown2extras: wiki-tables, code-friendly
+---
+
+# Overview
+
+CloudAPI is the customer-facing API that supports the Customer Portal, as well
+as direct API requests from customers using either the SmartDataCenter CLI or
+custom tooling.  CloudAPI is a REST service written in node.js, and runs on the
+head node.  This document describes configuration and troubleshooting for the
+CloudAPI service.
+
+## Customer Documentation
+
+For the end-user documentation, please visit [CloudAPI documentation](./index.html).
+
+# Layout
+
+CloudAPI is installed in its own zone on the head node.  The name of the zone
+is `cloudapi`.  Within the cloudapi zone, the relevant software is installed
+under `/opt/smartdc/cloudapi`. CloudAPI is installed as an SMF service, so
+log output is placed in:
+`/var/svc/log/smartdc-application-cloudapi:default.log`.
+The CloudAPI configuration file lives at
+`/opt/smartdc/cloudapi/etc/cloudapi.cfg`.
+
+# Configuration
+
+An example "full" configuration, looks like what's below.  The rest of this
+section will explain the configuration file.
+
+    {
+        "port": 443,
+        "certificate": "/opt/smartdc/cloudapi/ssl/cert.pem",
+        "key": "/opt/smartdc/cloudapi/ssl/key.pem",
+        "datacenters": {
+            "coal": "https://10.88.88.131"
+        },
+        "ufds": {
+            "url": "ldaps://10.99.99.14",
+            "bindDN": "cn=root",
+            "bindPassword": "XXX",
+            "cache": {
+                "size": 5000,
+                "expiry": 60
+            }
+        },
+        "vmapi": {
+            "url": "http://10.99.99.22",
+            "username": "admin",
+            "password": "XXX",
+            "cache": {
+                "size": 5000,
+                "expiry": 60
+            }
+        },
+        "napi": {
+            "url": "http://10.99.99.10",
+            "username": "admin",
+            "password": "XXX",
+            "cache": {
+                "size": 5000,
+                "expiry": 300
+            }
+        },
+        "imgapi": {
+            "url": "http://10.99.99.17",
+            "username": "admin",
+            "password": "XXX",
+            "cache": {
+                "size": 5000,
+                "expiry": 300
+            }
+        },
+        "ca": {
+            "url": "http://10.99.99.24:23181"
+        },
+        "plugins": [
+            {
+                "name": "capi_limits",
+                "enabled": false,
+                "config": {
+                    "datacenter": "coal",
+                    "defaults": {
+                        "smartos": 1,
+                        "nodejs": 1,
+                        "ubuntu": 1
+                    }
+                }
+            }, {
+                "name": "machine_email",
+                "enabled": false,
+                "config": {
+                    "datacenter": "coal",
+                    "smtp": {
+                        "host": "127.0.0.1",
+                        "port": 25,
+                        "use_authentication": false,
+                        "user": "",
+                        "pass": ""
+                    },
+                    "from": "nobody@joyent.com",
+                    "subject": "Your SmartDataCenter machine is provisioning",
+                    "body": "Check /my/machines for updates"
+                }
+            }
+        ],
+        "userThrottles": {
+            "all": {
+                "username": true,
+                "burst": 30,
+                "rate": 10,
+                "overrides": {
+                    "admin": {
+                        "burst": 0,
+                        "rate": 0
+                    }
+                }
+            },
+            "analytics": false
+        }
+    }
+
+
+## Top-Level Configuration
+
+    {
+        "port": 443,
+        "certificate": "/opt/smartdc/cloudapi/ssl/cert.pem",
+        "key": "/opt/smartdc/cloudapi/ssl/key.pem",
+        "datacenters": {
+            "coal": "https://10.88.88.131"
+        },
+      ...
+    }
+
+This portion of the configuration file tells CloudAPI how to start up and what
+datacenter this instance is bound to (along with what other datacenters this
+instance should redirect to).
+
+||**Field**||**Type**||**Description**||
+||port||Number||What SSL port to listen on||
+||certificate||String||Path to a PEM encoded SSL certificate; can be relative to /opt/smartdc/cloudapi||
+||key||String||Path to a PEM encoded private key for the SSL certificate; can be relative to /opt/smartdc/cloudapi||
+||datacenters||Object||a k/v pairing of other DC's to URL's this instance should answer with.||
+
+## UFDS
+
+        "ufds": {
+            "url": "ldaps://10.99.99.14",
+            "bindDN": "cn=root",
+            "bindPassword": "XXX",
+            "cache": {
+                "size": 5000,
+                "expiry": 60
+            }
+        },
+
+The `ufds` config block tells CloudAPI how to communicate with UFDS, and what
+cache settings to use.
+
+||**Field**||**Type**||**Description**||
+||url||URL||The fully-qualified URL where UFDS lives||
+||bindDN||String||The DN to bind to UFDS LDAP server with.||
+||bindPassword||String||The password to bind to UFDS LDAP server with||
+||cache||Object||Controls the UFDS client cache size and the time to expire it||
+
+## VMAPI
+
+        "vmapi": {
+            "url": "http://10.99.99.22",
+            "username": "admin",
+            "password": "XXX",
+            "cache": {
+                "size": 5000,
+                "expiry": 60
+            }
+        },
+
+The `vmapi` config block tells CloudAPI how to communicate with VMAPI, and what
+cache settings to use.
+
+||**Field**||**Type**||**Description**||
+||url||URL||The fully-qualified URL where VMAPI lives||
+||username||String||The user to authenticate to VMAPI with (for service communication, not end users).||
+||password||String||The password to authenticate to VMAPI with||
+||cache||Object||Controls the VMAPI client cache size and the time to expire it, (in seconds)||
+
+## CA
+
+      "ca": {
+        "url": "http://10.99.99.24:23181"
+      },
+
+The `ca` config block tells CloudAPI how to communicate with Cloud Analytics, and what
+cache settings to use.
+
+||**Field**||**Type**||**Description**||
+||url||URL||The fully-qualified URL where CA lives||
+
+## NAPI
+
+        "napi": {
+            "url": "http://10.99.99.10",
+            "username": "admin",
+            "password": "XXX",
+            "cache": {
+                "size": 5000,
+                "expiry": 300
+            }
+        },
+
+
+The `napi` config block tells CloudAPI how to communicate with NAPI, and what
+cache settings to use.
+
+||**Field**||**Type**||**Description**||
+||url||URL||The fully-qualified URL where NAPI lives||
+||username||String||The user to authenticate to NAPI with (for service communication, not end users).||
+||password||String||The password to authenticate to NAPI with||
+||cache||Object||Controls the NAPI client cache size and the time to expire it, (in seconds)||
+
+
+## IMGAPI
+
+        "imgapi": {
+            "url": "http://10.99.99.17",
+            "username": "admin",
+            "password": "XXX",
+            "cache": {
+                "size": 5000,
+                "expiry": 300
+            }
+        },
+
+The `napi` config block tells CloudAPI how to communicate with IMGAPI, and what
+cache settings to use.
+
+||**Field**||**Type**||**Description**||
+||url||URL||The fully-qualified URL where IMGAPI lives||
+||username||String||The user to authenticate to IMGAPI with (for service communication, not end users).||
+||password||String||The password to authenticate to IMGAPI with||
+||cache||Object||Controls the IMGAPI client cache size and the time to expire it, (in seconds)||
+
+
+
+## Plugins
+
+        "plugins": [
+            {
+                "name": "capi_limits",
+                "enabled": false,
+                "config": {
+                    "datacenter": "coal",
+                    "defaults": {
+                        "smartos": 1,
+                        "nodejs": 1,
+                        "ubuntu": 1
+                    }
+                }
+            }, {
+                "name": "machine_email",
+                "enabled": false,
+                "config": {
+                    "datacenter": "coal",
+                    "smtp": {
+                        "host": "127.0.0.1",
+                        "port": 25,
+                        "use_authentication": false,
+                        "user": "",
+                        "pass": ""
+                    },
+                    "from": "nobody@joyent.com",
+                    "subject": "Your SmartDataCenter machine is provisioning",
+                    "body": "Check /my/machines for updates"
+                }
+            }
+        ],
+
+
+
+The `plugins` section is present so that CloudAPI can perform custom
+actions **before** and **after** provisioning happens in your environment.  The
+different `plugins` can define either `preProvision` hooks, `postProvision`
+hooks or both. These plugins are dynamically loaded by CloudAPI at
+startup time.  For information on writing a plugin, see
+[Provisioning Plugins](#provisioning-plugins).  By default, CloudAPI ships with
+some example plugins to limit provisioning based into number of customer
+machines, RAM used by customer machines, ...
+
+||**Field**||**Type**||**Description**||
+||name||String||Name of the plugin. Assumption is that the .js file containing the plugin is at `/opt/smartdc/cloudapi/lib/plugins/${name}.js`||
+||enabled||Boolean||Whether or not this plugin should be loaded||
+||config||Object||A free-form object that gets passed into your plugin at creation time||
+
+## Throttles
+
+CloudAPI ships with a completely configurable mechanism for rate limiting
+requests from tenants.  You can throttle by IP address and by username (the
+former running before authentication, the latter after).  Since the different
+internal services CloudAPI protects have different scaling characteristics,
+CloudAPI supports throttling each API 'endpoint' separately.  The general
+syntax is explained here, rather than a complete annotation of what's in the
+configuration file by default.
+
+CloudAPI uses the [Token Bucket](http://en.wikipedia.org/wiki/Token_bucket)
+algorithm, and creates a separate bucket for each throttle definition. As an
+example:
+
+    "ipThrottles": {
+      "all": {
+        "ip": true,
+        "burst": 9,
+        "rate": 3,
+        "overrides": {
+          "10.99.99.14": {
+            "burst": 0,
+            "rate": 0
+          }
+        }
+      },
+      "analytics": {
+        "ip": true,
+        "burst": 100,
+        "rate": 10,
+        "overrides": {
+          "10.99.99.14": {
+            "burst": 0,
+            "rate": 0
+          }
+        }
+      }
+    }
+
+This configuration tells CloudAPI to create one token bucket for all endpoints, and make it
+match on `ip`.  Allow a maximum burst rate of `9` requests from a single IP
+(assuming there are tokens), and refill the bucket at a rate of `3` tokens per
+second.  However, allow any requests coming from the portal to have an unlimited
+request rate.  Now, in addition to that, because the /analytics endpoint is
+likely to get polled at a high velocity (and can support the traffic), we create
+a second token bucket specific to the /analytics endpoints. Here, a single IP
+can burst to 100, and gets 10 tokens/second.  Again, the portal is allowed
+unrestricted access.
+
+The given keys that can be configured in the throttling configuration:
+
+||**Key**||**Description**||
+||account||/account specific throttling||
+||analytics||/analytics specific throttling||
+||keys||/keys specific throttling||
+||machines||/machines specific throttling||
+||datasets||/datasets specific throttling||
+||packages||/packages specific throttling||
+||datacenters||/datacenters specific throttling||
+
+These configurations can live in either the `ipThrottles` or `userThrottles`
+section (or both).  Note that in `ipThrottles`, the type `ip` is literally
+the remote connected address, so if you have placed CloudAPI behind a load
+balancer/reverse-proxy, you'll literally be throttling that device, as
+opposed to the end user (which probably isn't what you want).  Instead, set
+the type to `xff` to throttle on the `X-Forwarded-For` header.
+
+# Provisioning Plugins
+
+In order to facilitate checking a customer for the ability to provision via
+arbitrary systems (i.e., your favorite ERP system here), CloudAPI supports a
+pre-provisioning "hook" that is invoked before CreateMachine actually calls out
+to MAPI.  Additionally, there is support for a 'post' provisioning plugin, so
+that you can send email, or update DNS records.
+
+Assumption is that the .js file containing a plugin with name `${name}`
+is at `/opt/smartdc/cloudapi/lib/plugins/${name}.js`.
+As described above, there is the ability to define free-form configuration to
+your plugin.
+
+For details on writing a plugin, you should be familiar with
+[node.js](http://nodejs.org/), [restify](http://mcavage.github.com/node-restify),
+and the internal SmartDataCenter APIs.  For a reference plugin, see
+`/opt/smartdc/cloudapi/lib/plugins/capi_limits.js` or
+`/opt/smartdc/cloudapi/lib/plugins/machine_email.js`.
+
+In order to write a plugin, you need to define a file that at minimum
+has what's below (this is the equivalent of the "dummy" hook).
+
+    module.exports = {
+
+      /**
+       * Creates a pre-provisioning hook.
+       *
+       * Config is the JS object that was converted from the
+       * free-form config object that is defined in config.json.
+       *
+       * This function must return a restify filter that is run as part
+       * of a restify "pre" chain.
+       *
+       * @param {Object} config free-form config from config.json.
+       * @return {Function} restify 'pre' filter.
+       */
+      preProvision: function(config) {
+
+        return function(req, res, next) {
+          return next();
+        };
+      };
+
+      /**
+       * Creates a post-provisioning hook.
+       *
+       * Config is the JS object that was converted from the
+       * free-form config object that is defined in config.json.
+       *
+       * This function must return a restify filter that is run as part
+       * of a restify "post" chain.
+       *
+       * @param {Object} config free-form config from config.json.
+       * @return {Function} restify 'post' filter.
+       */
+      postProvision: function(config) {
+
+        return function(req, res, next) {
+          return next();
+        };
+      };
+
+    };
+
+The real handiness comes in on the `req` object; CloudAPI will provide you with
+the following handles:
+
+||**Handle**||**Type**||**Description**||
+||ufds||Object||An UFDS client; see node\_modules/sdc-clients/lib/ufds.js for more details||
+||vmapi||Object||A VMAPI client; see node\_modules/sdc-clients/lib/vmapi.js for more details||
+||napi||Object||A NAPI client; see node\_modules/sdc-clients/lib/napi.js for more details||
+||imgapi||Object||A IMGAPI client; see node\_modules/sdc-clients/lib/imgapi.js for more details||
+||account||Object||A complete JS object of the current requested account's UFDS object||
+||dataset||Object||The current dataset that is attempted to be provisioned||
+||package||Object||The current package that is attempted to be provisioned||
+||log||Object||The restify logger that will let you write into the CloudAPI SMF log||
+
+
+Additionally, you can require in your plugin file any of the NPM modules
+available for CloudAPI itself. See `/opt/smartdc/cloudapi/package.json` for
+the complete list of available modules additional to the default NodeJS set.
+
+For more information, inspect the source code of
+`/opt/smartdc/cloudapi/lib/plugins/capi_limits.js`.
+
+## Post Provisioning Plugin
+
+In addition to all items available to you in the `preProvision` Hook, there will
+additionally be a `res.machine` object, which is the provisioned machine, on the
+response.
+
+For more information, inspect the source code of
+`/opt/smartdc/cloudapi/lib/plugins/machine_email.js`.
+
+
+# LogLevels
+
+The logLevel sets the verbosity of debug logging in the SMF log file.  By
+default, CloudAPI logs at `info` level, which means you'll get start/stop and
+error messages (in addition to request logging).  If you are encountering a
+problem with CloudAPI, you'll almost certainly want the level to be set to
+`debug` or `trace`.  See [Troubleshooting](#Troubleshooting) below.
+
+# Troubleshooting
+
+If you are seeing errors/bugs with the CloudAPI CLI, or with the reference
+portal, you can turn on debug logging for CloudAPI in one of two ways (below).
+
+First, you should check the log file by running:
+
+    $ less `svcs -L cloudapi`
+
+And looking for any indication of errors.  Note that CloudAPI logs some amount
+of request information by default, and logs `WARN` level entries anytime there
+is an error sent to the client (including if the error is user initiated). If
+you cannot determine the problem of the error from the default logs, turn on
+debug logging.
+
+## Debug Logging in SMF
+
+In order to be able to change log levels without having to restart CloudAPI
+service, we can increase log level verbosity by sending a SIGUSR2 POSIX signal
+to each one of the processes associated with our Cloud API service.
+
+First, in order to obtain the process PIDs of all the processes associated with
+our Cloud API service, run:
+
+    $ svcs -p cloudapi
+
+This will result in some output like:
+
+    STATE          STIME    FMRI
+    online         12:13:17 svc:/smartdc/application/cloudapi:default
+                   12:13:17    16945 node
+                   12:13:18    16997 node
+                   12:13:18    16999 node
+
+where the numbers right below the FMRI are the processes PIDs. To increase log
+level just run `kill -s SIGUSR2 <PID>` for each of the processes listed above:
+
+    $ kill -s SIGUSR2 16945 16997 16999
+
+Likewise, we can decrease log level verbosity by sending our processes a
+SIGUSR1 POSIX signal:
+
+    $ kill -s SIGUSR1 16945 16997 16999
+
+
+<p style="min-height: 31px; margin-top: 60px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0">
+<a rel="license" href="http://creativecommons.org/licenses/by-nd/3.0/"><img alt="Creative Commons License" style="border-width:0;float:left;margin:4px 8px 0 0;" src="http://i.creativecommons.org/l/by-nd/3.0/88x31.png" /></a> <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Text" property="dct:title" rel="dct:type">Joyent CloudAPI Administrator's Guide</span> by <a xmlns:cc="http://creativecommons.org/ns#" href="http://www.joyent.com" property="cc:attributionName" rel="cc:attributionURL">Joyent, Inc.</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nd/3.0/">Creative Commons Attribution-NoDerivs 3.0 Unported License</a>.
+</p>
+

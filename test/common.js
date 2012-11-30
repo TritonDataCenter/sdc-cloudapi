@@ -7,6 +7,7 @@ var restify = require('restify');
 var uuid = require('node-uuid');
 var UFDS = require('sdc-clients').UFDS;
 var VMAPI = require('sdc-clients').VMAPI;
+var CNAPI = require('sdc-clients').CNAPI;
 var Package = require('sdc-clients').Package;
 var app = require('../lib').app;
 var util = require('util');
@@ -50,14 +51,24 @@ function setupClient(callback) {
     // just wait for vmachine status change, we'll be just
     // hanging forever.
     client.vmapi = new VMAPI({
-        url: process.env.VMAPI_URL || config.vmapi.url || 'http://10.99.99.22',
+        url: process.env.VMAPI_URL || config.vmapi.url || 'http://10.99.99.23',
         retry: {
             retries: 1,
             minTimeout: 1000
         },
         log: client.log
     });
+    // Given DAPI will never pick Headnode as a server to provision to, we need
+    // to explicitly tell we want it:
+    client.cnapi = new CNAPI({
+        url: process.env.CNAPI_URL || config.cnapi.url || 'http://10.99.99.18',
+        retry: {
+            retries: 1,
+            minTimeout: 1000
+        },
+        log: client.log
 
+    });
     ufds = new UFDS({
         url: (process.env.UFDS_URL || config.ufds.url || 'ldaps://10.99.99.14'),
         bindDN: (config.ufds.bindDN || 'cn=root'),

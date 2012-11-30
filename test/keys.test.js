@@ -2,7 +2,7 @@
 
 var test = require('tap').test;
 var uuid = require('node-uuid');
-
+var util = require('util');
 var common = require('./common');
 
 
@@ -15,7 +15,18 @@ var KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAvad19ePSDckmgmo6Unqmd8' +
     '5YwRC51EVhyDuqthVJWjKrYxgDMbHru8fc1oV51l0bKdmvmJWbA/VyeJvstoX+eiSGT3Jge' +
     'egSMVtc= mark@foo.local';
 
+var SSH_KEY_TWO = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDY2qV5e2q8qb+kYtn' +
+'pvRxC5PM6aqPPgWcaXn2gm4jtefGAPuJX9fIkz/KTRRLxdG27IMt6hBXRXvL0Gzw0H0mSUPHAbq' +
+'g4TAyG3/xEHp8iLH/QIf/RwVgjoGB0MLZn7q+L4ThMDo9rIrc5CpfOm/AN9vC4w0Zzu/XpJbzjd' +
+'pTXOh+vmOKkiWCzN+BJ9DvX3iei5NFiSL3rpru0j4CUjBKchUg6X7mdv42g/ZdRT9rilmEP154F' +
+'X/bVsFHitmyyYgba+X90uIR8KGLFZ4eWJNPprJFnCWXrpY5bSOgcS9aWVgCoH8sqHatNKUiQpZ4' +
+'Lsqr+Z4fAf4enldx/KMW91iKn whatever@wherever.local';
 
+var DSA_KEY = 'ssh-dss AAAAB3NzaC1kc3MAAACBAJaDBDG/Wtn6aHgTVVLKF0FydITVdtdzl' +
+'Dp0fgnsD9Z7q4/bNWb83Hmlk2/ppfNJlABX2Yrn9f3iO1KbAz/qZ4YgxxDjStdGnPVTbhcrZe6a/' +
+'O5wZ/Qvxv6CLpm3RWshPBnSv0jcoQVtxuiBK+jpEAneA7dLwJEYnX60CPMoo5Rr6sch3YJGbnpN' +
+'KQQPXiVvX3slNBReVqv6riMsyAju2BEE2azb0o0fE3qkIWbv0/Gc2sKLJK16zDqbccPlHyBfl3x' +
+'WtL pedro@foo.local';
 
 // --- Helpers
 
@@ -78,6 +89,32 @@ test('CreateKey (named) OK', function (t) {
         t.equal(res.statusCode, 201);
         common.checkHeaders(t, res.headers);
         checkKey(t, body);
+        t.end();
+    });
+});
+
+
+test('Create (named) key with duplicate name', function (t) {
+    var key = {
+        key: SSH_KEY_TWO,
+        name: 'id_rsa 1'
+    };
+    client.post('/my/keys', key, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.statusCode, 409);
+        t.end();
+    });
+});
+
+
+test('Create DSA key not allowed', function (t) {
+    var key = {
+        key: DSA_KEY,
+        name: 'id_dsa'
+    };
+    client.post('/my/keys', key, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.statusCode, 409);
         t.end();
     });
 });

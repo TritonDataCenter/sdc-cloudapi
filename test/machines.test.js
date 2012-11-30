@@ -11,7 +11,7 @@ var common = require('./common');
 
 // --- Globals
 
-var client, server;
+var client, server, snapshot;
 var keyName = uuid();
 var machine;
 var KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAvad19ePSDckmgmo6Unqmd8' +
@@ -56,12 +56,14 @@ var sdc_256_inactive = {
     zfs_io_priority: 10,
     'default': false,
     vcpus: 1,
-    urn: 'sdc::sdc_256_inactive:1.0.0',
+    urn: 'sdc:' + uuid() + ':sdc_256_inactive:1.0.0',
     active: false
 };
 
 
 var sdc_256_entry, sdc_256_inactive_entry;
+
+var HEADNODE = null;
 
 // --- Helpers
 
@@ -89,9 +91,9 @@ function checkMachine(t, m) {
 
 
 function checkSnapshot(t, snap) {
-    t.ok(snap);
-    t.ok(snap.name);
-    t.ok(snap.state);
+    t.ok(snap, 'snapshot ok');
+    t.ok(snap.name, 'snapshot name ok');
+    t.ok(snap.state, 'snapshot state ok');
 }
 
 
@@ -130,6 +132,17 @@ function waitForJob(uuid, callback) {
 }
 
 
+function saveKey(t, cb) {
+    return client.post('/my/keys', {
+        key: KEY,
+        name: keyName
+    }, function (err2, req, res, body) {
+        t.ifError(err2, 'POST /my/keys error');
+        return cb();
+    });
+}
+
+
 // --- Tests
 
 test('setup', TAP_CONF, function (t) {
@@ -142,11 +155,7 @@ test('setup', TAP_CONF, function (t) {
         }
         server = _server;
 
-        client.post('/my/keys', {
-            key: KEY,
-            name: keyName
-        }, function (err2, req, res, body) {
-            t.ifError(err2, 'POST /my/keys error');
+        saveKey(t, function () {
             // We may have been created this on previous test suite runs or not:
             client.pkg.list(function (err3, packages) {
                 if (err3) {
@@ -196,11 +205,29 @@ test('ListMachines (empty)', TAP_CONF, function (t) {
 });
 
 
+test('Get Headnode', function (t) {
+    client.cnapi.listServers(function (err, servers) {
+        t.ifError(err);
+        t.ok(servers);
+        t.ok(Array.isArray(servers));
+        t.ok(servers.length > 0);
+        servers = servers.filter(function (server) {
+            return (server.headnode);
+        });
+        t.ok(servers.length > 0);
+        HEADNODE = servers[0];
+        t.ok(HEADNODE);
+        t.end();
+    });
+});
+
+
 test('CreateMachine', TAP_CONF, function (t) {
     var obj = {
         dataset: 'smartos',
         'package': 'sdc_128',
-        name: 'a' + uuid().substr(0, 7)
+        name: 'a' + uuid().substr(0, 7),
+        server_uuid: HEADNODE.uuid
     };
     obj['metadata.' + META_KEY] = META_VAL;
     obj['tag.' + TAG_KEY] = TAG_VAL;
@@ -209,6 +236,8 @@ test('CreateMachine', TAP_CONF, function (t) {
         t.ifError(err, 'POST /my/machines error');
         t.equal(res.statusCode, 201, 'POST /my/machines status');
         common.checkHeaders(t, res.headers);
+        t.equal(res.headers.location,
+            util.format('/%s/machines/%s', client.testUser, body.id));
         t.ok(body, 'POST /my/machines body');
         checkMachine(t, body);
         machine = body.id;
@@ -239,7 +268,8 @@ test('Create machine with inactive package', function (t) {
     var obj = {
         dataset: 'smartos',
         'package': sdc_256_inactive_entry.name,
-        name: 'a' + uuid().substr(0, 7)
+        name: 'a' + uuid().substr(0, 7),
+        server_uuid: HEADNODE.uuid
     };
 
     client.post('/my/machines', obj, function (err, req, res, body) {
@@ -415,7 +445,6 @@ test('Wait For Resized', TAP_CONF,  function (t) {
             return (typeof (job.params.max_physical_memory) !== 'undefined');
         });
         t.ok(resize_jobs.length, 'resize jobs is an array');
-        console.log('Resize job: %j', resize_jobs[0]);
         waitForJob(resize_jobs[0].uuid, function (err2) {
             t.ifError(err2, 'Check state error');
             t.end();
@@ -463,7 +492,6 @@ test('Wait For Renamed', TAP_CONF,  function (t) {
             return (typeof (job.params.alias) !== 'undefined');
         });
         t.ok(rename_jobs.length, 'rename jobs is an array');
-        console.log('Rename job: %j', rename_jobs[0]);
         waitForJob(rename_jobs[0].uuid, function (err2) {
             t.ifError(err2, 'Check state error');
             t.end();
@@ -526,6 +554,24 @@ test('DeleteTag', TAP_CONF, function (t) {
 });
 
 
+test('ReplaceTags', TAP_CONF, function (t) {
+    var path = '/my/machines/' + machine + '/tags',
+    tags = {};
+    tags[TAG_KEY] = TAG_VAL;
+    client.put(path, tags, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.ok(body[TAG_KEY]);
+        t.equal(body[TAG_KEY], TAG_VAL);
+        t.equal(typeof (body[TAG_TWO_KEY]), 'undefined');
+        t.end();
+    });
+
+});
+
+
 test('DeleteAllTags', TAP_CONF, function (t) {
     var url = '/my/machines/' + machine + '/tags';
     client.del(url, function (err, req, res) {
@@ -571,7 +617,6 @@ test('AddMetadataCredentials', TAP_CONF, function (t) {
 });
 */
 // TODO: A good excuse to test credentials on GET /my/machines ... now!
-
 
 
 test('AddMetadata', TAP_CONF, function (t) {
@@ -625,13 +670,95 @@ test('DeleteAllMetadata', TAP_CONF, function (t) {
 });
 
 
-
-/*
-test('Take Snapshot', TAP_CONF, function(t) {
+test('Take Snapshot', TAP_CONF, function (t) {
     var url = '/my/machines/' + machine + '/snapshots';
-    client.post(url, {}, function(err, req, res, body) {
+    client.post(url, {}, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 201);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        checkSnapshot(t, body);
+        snapshot = body;
+        t.end();
+    });
+});
+
+
+test('Wait For Snapshot', TAP_CONF,  function (t) {
+    client.vmapi.listJobs({
+        vm_uuid: machine,
+        task: 'snapshot'
+    }, function (err, jobs) {
+        t.ifError(err, 'list jobs error');
+        t.ok(jobs, 'list jobs OK');
+        t.ok(jobs.length, 'update jobs is array');
+        var snapshot_jobs = jobs.filter(function (job) {
+            return (/^snapshot/.test(job.name));
+        });
+        t.ok(snapshot_jobs.length, 'snapshot jobs is an array');
+        waitForJob(snapshot_jobs[0].uuid, function (err2) {
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
+    });
+});
+
+
+test('Rollback Snapshot', TAP_CONF, function (t) {
+    t.ok(snapshot.name, 'Snapshot name OK');
+    var url = '/my/machines/' + machine + '/snapshots/' + snapshot.name;
+    client.post(url, {}, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 202);
+        common.checkHeaders(t, res.headers);
+        t.end();
+    });
+});
+
+
+test('Wait For Snapshot', TAP_CONF,  function (t) {
+    client.vmapi.listJobs({
+        vm_uuid: machine,
+        task: 'snapshot'
+    }, function (err, jobs) {
+        t.ifError(err, 'list jobs error');
+        t.ok(jobs, 'list jobs OK');
+        t.ok(jobs.length, 'update jobs is array');
+        var snapshot_jobs = jobs.filter(function (job) {
+            return (/^rollback/.test(job.name));
+        });
+        t.ok(snapshot_jobs.length, 'snapshot jobs is an array');
+        waitForJob(snapshot_jobs[0].uuid, function (err2) {
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
+    });
+});
+
+
+test('List Snapshots', TAP_CONF, function (t) {
+    var url = '/my/machines/' + machine + '/snapshots';
+    client.get(url, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.ok(Array.isArray(body));
+        t.ok(body.length);
+        body.forEach(function (s) {
+            checkSnapshot(t, s);
+        });
+        t.end();
+    });
+});
+
+
+test('Get Snapshot', TAP_CONF, function (t) {
+    t.ok(snapshot.name, 'Snapshot name OK');
+    var url = '/my/machines/' + machine + '/snapshots/' + snapshot.name;
+    client.get(url, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
         t.ok(body);
         checkSnapshot(t, body);
@@ -640,23 +767,7 @@ test('Take Snapshot', TAP_CONF, function(t) {
 });
 
 
-test('List Snapshots', TAP_CONF, function(t) {
-    var url = '/my/machines/' + machine + '/snapshots';
-    client.get(url, function(err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
-        common.checkHeaders(t, res.headers);
-        t.ok(body);
-        t.ok(Array.isArray(body));
-        t.ok(body.length);
-        body.forEach(function(s) {
-            checkSnapshot(t, s);
-        });
-        t.end();
-    });
-});
-
-
+/*
 // Blocked on PROV-1352, as is the commented out section above
 test('Delete snapshot', TAP_CONF, function(t) {
   var url = '/my/machines/' + machine + '/snapshots';

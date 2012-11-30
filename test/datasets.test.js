@@ -51,7 +51,7 @@ test('ListDatasets OK', function (t) {
         t.equal(res.statusCode, 200, 'GET /my/datasets status');
         common.checkHeaders(t, res.headers);
         t.ok(body, 'GET /my/datasets body');
-        t.ok(util.isArray(body), 'GET /my/datasets body is an array');
+        t.ok(Array.isArray(body), 'GET /my/datasets body is an array');
         t.ok(body.length, 'GET /my/datasets body array has elements');
         body.forEach(function (d) {
             checkDataset(t, d);

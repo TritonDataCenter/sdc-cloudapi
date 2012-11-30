@@ -22,7 +22,7 @@ TAP		:= ./node_modules/.bin/tap
 #
 # Files
 #
-DOC_FILES	 = index.restdown
+DOC_FILES	 = index.restdown admin.restdown
 JS_FILES	:= $(shell ls *.js) $(shell find lib -name '*.js')
 JSL_CONF_NODE	 = tools/jsl.node.conf
 JSL_FILES_NODE   = $(JS_FILES)
@@ -36,7 +36,7 @@ CLEAN_FILES	+= node_modules cscope.files
 # The prebuilt sdcnode version we want. See
 # "tools/mk/Makefile.node_prebuilt.targ" for details.
 ifeq ($(shell uname -s),SunOS)
-	NODE_PREBUILT_VERSION=v0.8.11
+	NODE_PREBUILT_VERSION=v0.8.14
 	NODE_PREBUILT_TAG=zone
 endif
 

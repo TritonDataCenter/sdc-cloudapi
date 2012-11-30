@@ -18,7 +18,6 @@ var client, server, THE_PACKAGE;
 function checkPackage_6_5(t, pkg) {
     t.ok(pkg, 'Package OK');
     t.ok(pkg.name, 'Package name');
-    t.notOk(pkg.urn, 'Package URN not OK');
     t.notOk(pkg.uuid, 'Package UUID not OK');
     t.ok(pkg.memory, 'Package memory');
     t.ok(pkg.disk, 'Package Disk');
@@ -32,7 +31,6 @@ function checkPackage_6_5(t, pkg) {
 function checkPackage_7(t, pkg) {
     t.ok(pkg, 'Package OK');
     t.ok(pkg.name, 'Package name');
-    t.ok(pkg.urn, 'Package URN OK');
     t.ok(pkg.uuid, 'Package UUID OK');
     t.ok(pkg.memory, 'Package memory');
     t.ok(pkg.disk, 'Package Disk');
@@ -139,23 +137,6 @@ test('GetPackage by name OK (7.0)', function (t) {
 test('GetPackage by UUID OK (7.0)', function (t) {
     client.get({
         path: '/my/packages/' + THE_PACKAGE.uuid,
-        headers: {
-            'accept-version': '~7.0'
-        }
-    }, function (err, req, res, body) {
-        t.ifError(err);
-        t.ok(body);
-        t.equal(res.statusCode, 200);
-        common.checkHeaders(t, res.headers);
-        checkPackage_7(t, body);
-        t.end();
-    });
-});
-
-
-test('GetPackage by URN OK (7.0)', function (t) {
-    client.get({
-        path: '/my/packages/' + THE_PACKAGE.urn.replace(/:/g, "%3A"),
         headers: {
             'accept-version': '~7.0'
         }
