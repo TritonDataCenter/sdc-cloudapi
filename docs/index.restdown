@@ -1510,6 +1510,14 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     }
 
 
+### User-script
+
+The special value `metadata.user-script` can be specified to provide a custom
+script which will be executed by the machine right after creation. This script
+can also be specified using the command line option `-s` or `--script`, which
+should point to the absolute path to the file we want to upload to our machine.
+
+
 ## StopMachine (POST /:login/machines/:id?action=stop)
 
 Allows you to shut down a machine.  POST to the machine name
