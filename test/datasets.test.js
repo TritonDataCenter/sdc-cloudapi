@@ -22,7 +22,6 @@ function checkDataset(t, dataset, version) {
     t.ok(dataset.name, 'dataset.name');
     t.ok(dataset.version, 'dataset.version');
     t.ok(dataset.type, 'dataset.type');
-    t.ok(dataset.description, 'dataset.description');
     t.ok(dataset.requirements, 'dataset.requirements');
     t.ok(dataset.created, 'dataset.created');
 
