@@ -35,7 +35,7 @@
     },
     "restify": {
       "version": "2.0.0",
-      "from": "git://github.com/mcavage/node-restify.git#de1fc77",
+      "from": "git://github.com/mcavage/node-restify.git#d688b4a",
       "dependencies": {
         "assert-plus": {
           "version": "0.1.2"
@@ -240,7 +240,7 @@
                   "version": "0.1.5",
                   "dependencies": {
                     "iconv-lite": {
-                      "version": "0.2.6"
+                      "version": "0.2.7"
                     }
                   }
                 },

@@ -222,7 +222,7 @@ test('Get Headnode', function (t) {
 });
 
 
-test('CreateMachine', TAP_CONF, function (t) {
+test('CreateMachine (6.5)', TAP_CONF, function (t) {
     var obj = {
         dataset: 'smartos',
         'package': 'sdc_128',
@@ -234,7 +234,12 @@ test('CreateMachine', TAP_CONF, function (t) {
 
     obj['metadata.credentials'] = META_CREDS;
 
-    client.post('/my/machines', obj, function (err, req, res, body) {
+    client.post({
+        path: '/my/machines',
+        headers: {
+            'accept-version': '~6.5'
+        }
+    }, obj, function (err, req, res, body) {
         t.ifError(err, 'POST /my/machines error');
         t.equal(res.statusCode, 201, 'POST /my/machines status');
         common.checkHeaders(t, res.headers);
@@ -274,9 +279,39 @@ test('Create machine with inactive package', function (t) {
         server_uuid: HEADNODE.uuid
     };
 
-    client.post('/my/machines', obj, function (err, req, res, body) {
+    client.post({
+        path: '/my/machines',
+        headers: {
+            'accept-version': '~6.5'
+        }
+    }, obj, function (err, req, res, body) {
         t.ok(err, 'POST /my/machines with inactive pacakge error');
         t.equal(res.statusCode, 409);
+        t.end();
+    });
+});
+
+
+test('CreateMachine (7.0) w/o dataset fails', TAP_CONF, function (t) {
+    var obj = {
+        'package': 'sdc_128',
+        name: 'a' + uuid().substr(0, 7),
+        server_uuid: HEADNODE.uuid
+    };
+    obj['metadata.' + META_KEY] = META_VAL;
+    obj['tag.' + TAG_KEY] = TAG_VAL;
+
+    obj['metadata.credentials'] = META_CREDS;
+
+    client.post({
+        path: '/my/machines',
+        headers: {
+            'accept-version': '~7.0'
+        }
+    }, obj, function (err, req, res, body) {
+        t.ok(err, 'create machine w/o dataset error');
+        t.equal(res.statusCode, 409, 'create machine w/o dataset status');
+        t.ok(/image/.test(err.message));
         t.end();
     });
 });
@@ -475,7 +510,12 @@ test('Wait For Resized', TAP_CONF,  function (t) {
 
 
 test('Rename Machine 6.5.0', TAP_CONF, function (t) {
-    client.post('/my/machines/' + machine, {
+    client.post({
+        path: '/my/machines/' + machine,
+        headers: {
+            'accept-version': '~6.5'
+        }
+    }, {
         action: 'rename',
         name: 'b' + uuid().substr(0, 7)
     }, function (err) {

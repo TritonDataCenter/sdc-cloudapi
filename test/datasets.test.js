@@ -10,21 +10,27 @@ var common = require('./common');
 // --- Globals
 
 var client, server;
-
+var DATASET_UUID = null;
 
 
 // --- Helpers
 
-function checkDataset(t, dataset) {
+function checkDataset(t, dataset, version) {
     t.ok(dataset, 'dataset object ok');
     t.ok(dataset.id, 'dataset.id');
-    t.ok(dataset.urn, 'dataset.urn');
+
     t.ok(dataset.name, 'dataset.name');
+    t.ok(dataset.version, 'dataset.version');
     t.ok(dataset.type, 'dataset.type');
     t.ok(dataset.description, 'dataset.description');
     t.ok(dataset.requirements, 'dataset.requirements');
-    t.ok(dataset.version, 'dataset.version');
     t.ok(dataset.created, 'dataset.created');
+
+    if (/6\.5/.test(version)) {
+        t.ok(dataset.urn, 'dataset.urn');
+    } else {
+        t.equal(typeof (dataset.urn), 'undefined', 'dataset.urn');
+    }
 }
 
 
@@ -45,6 +51,45 @@ test('setup', function (t) {
 });
 
 
+test('ListDatasets OK (6.5)', function (t) {
+    client.get({
+        path: '/my/datasets',
+        headers: {
+            'accept-version': '~6.5'
+        }
+    }, function (err, req, res, body) {
+        t.ifError(err, 'GET /my/datasets error');
+        t.equal(res.statusCode, 200, 'GET /my/datasets status');
+        common.checkHeaders(t, res.headers);
+        t.ok(body, 'GET /my/datasets body');
+        t.ok(Array.isArray(body), 'GET /my/datasets body is an array');
+        t.ok(body.length, 'GET /my/datasets body array has elements');
+        body.forEach(function (d) {
+            checkDataset(t, d, '6.5.0');
+        });
+        DATASET_UUID = body[0].id;
+        t.end();
+    });
+});
+
+
+test('GetDataset OK (6.5)', function (t) {
+    client.get({
+        path: '/my/datasets/smartos',
+        headers: {
+            'accept-version': '~6.5'
+        }
+    }, function (err, req, res, body) {
+        t.ifError(err, 'GET /my/datasets/smartos error');
+        t.equal(res.statusCode, 200, 'GET /my/datasets/smartos status');
+        common.checkHeaders(t, res.headers);
+        t.ok(body, 'GET /my/datasets/smartos body');
+        checkDataset(t, body, '6.5.0');
+        t.end();
+    });
+});
+
+
 test('ListDatasets OK', function (t) {
     client.get('/my/datasets', function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets error');
@@ -54,7 +99,7 @@ test('ListDatasets OK', function (t) {
         t.ok(Array.isArray(body), 'GET /my/datasets body is an array');
         t.ok(body.length, 'GET /my/datasets body array has elements');
         body.forEach(function (d) {
-            checkDataset(t, d);
+            checkDataset(t, d, '7.0.0');
         });
         t.end();
     });
@@ -62,12 +107,12 @@ test('ListDatasets OK', function (t) {
 
 
 test('GetDataset OK', function (t) {
-    client.get('/my/datasets/smartos', function (err, req, res, body) {
-        t.ifError(err, 'GET /my/datasets/smartos error');
+    client.get('/my/datasets/' + DATASET_UUID, function (err, req, res, body) {
+        t.ifError(err, 'GET /my/datasets/' + DATASET_UUID + ' error');
         t.equal(res.statusCode, 200, 'GET /my/datasets/smartos status');
         common.checkHeaders(t, res.headers);
         t.ok(body, 'GET /my/datasets/smartos body');
-        checkDataset(t, body);
+        checkDataset(t, body, '7.0.0');
         t.end();
     });
 });
