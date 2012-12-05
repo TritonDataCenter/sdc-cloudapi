@@ -19,7 +19,7 @@ To run the CloudAPI server:
     cd cloudapi
     git submodule update --init
     make all
-    node main.js -f ./etc/cloudapi.config.json -s 2>&1 | bunyan
+    node main.js -f ./etc/cloudapi.config.json 2>&1 | bunyan
 
 Before commiting/pushing run `make prepush` and, if possible, get a code
 review.
@@ -65,8 +65,6 @@ and the required DN and password to bind to the LDAP server.
 
       "vmapi": {
           "url": "VMAPI_URL",
-          "username": "VMAPI_HTTP_ADMIN_USER",
-          "password": "VMAPI_HTTP_ADMIN_PW",
           "cache": {
               "size": 5000,
               "expiry": 60
@@ -74,16 +72,24 @@ and the required DN and password to bind to the LDAP server.
       },
 
 
-VMAPI section. Right now, the username and password members can be safely
-removed, since we agreed that internal APIs will not provide HTTP Basic Auth.
+VMAPI section. Right now internal APIs will not provide HTTP Basic Auth.
 `VMAPI_URL` must be the __complete__ HTTP address for VMAPI's HTTP server
 running into vmapi zone.
 
 
       "napi": {
           "url": "NAPI_URL",
-          "username": "NAPI_HTTP_ADMIN_USER",
-          "password": "NAPI_HTTP_ADMIN_PW",
+          "cache": {
+              "size": 5000,
+              "expiry": 300
+          }
+      },
+
+
+Same than the VMAPI section, but for CNAPI.
+
+      "cnapi": {
+          "url": "CNAPI_URL",
           "cache": {
               "size": 5000,
               "expiry": 300
@@ -94,10 +100,9 @@ running into vmapi zone.
 Same than the VMAPI section, but for NAPI. 
 
 
+
       "imgapi": {
           "url": "IMGAPI_URL",
-          "username": "IMGAPI_HTTP_ADMIN_USER",
-          "password": "IMGAPI_HTTP_ADMIN_PW",
           "cache": {
               "size": 5000,
               "expiry": 300
@@ -105,9 +110,7 @@ Same than the VMAPI section, but for NAPI.
       },
 
 
-And the same thing for IMGAPI. For now, we are still using global Dataset API,
-instead of a private instance of the new IMGAPI.
-
+And the same thing for IMGAPI. We are using local IMGAPI instance.
 
       "ca": {
           "url": "CA_URL"
