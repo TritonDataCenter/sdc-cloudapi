@@ -23,7 +23,6 @@ function checkDataset(t, dataset, version) {
     t.ok(dataset.version, 'dataset.version');
     t.ok(dataset.type, 'dataset.type');
     t.ok(dataset.requirements, 'dataset.requirements');
-    t.ok(dataset.created, 'dataset.created');
 
     if (/6\.5/.test(version)) {
         t.ok(dataset.urn, 'dataset.urn');
