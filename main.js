@@ -1,7 +1,5 @@
 // Copyright 2012 Joyent, Inc.  All rights reserved.
 
-var cluster = require('cluster');
-var os = require('os');
 var path = require('path');
 
 var Logger = require('bunyan');
@@ -23,16 +21,14 @@ var opts = {
     'debug': Boolean,
     'file': String,
     'port': Number,
-    'help': Boolean,
-    'single': Boolean
+    'help': Boolean
 };
 
 var shortOpts = {
     'd': ['--debug'],
     'f': ['--file'],
     'p': ['--port'],
-    'h': ['--help'],
-    's': ['--single']
+    'h': ['--help']
 };
 
 
@@ -44,7 +40,9 @@ function usage(code, message) {
     Object.keys(shortOpts).forEach(function (k) {
         var longOpt = shortOpts[k][0].replace('--', '');
         var type = opts[longOpt].name || 'string';
-        if (type && type === 'boolean') type = '';
+        if (type && type === 'boolean') {
+            type = '';
+        }
         type = type.toLowerCase();
 
         _opts += ' [--' + longOpt + ' ' + type + ']';
@@ -75,8 +73,9 @@ function run() {
 ///--- Mainline
 
 PARSED = nopt(opts, shortOpts, process.argv, 2);
-if (PARSED.help)
+if (PARSED.help) {
     usage(0);
+}
 
 LOG = new Logger({
     level: (PARSED.debug ? 'trace' : 'info'),
@@ -85,25 +84,8 @@ LOG = new Logger({
     serializers: restify.bunyan.serializers
 });
 
-if (PARSED.single) {
-    run();
-} else if (cluster.isMaster) {
-    var min_child_ram = 128 * 1024 * 1024,
-        cpus = os.cpus().length,
-        slots = Math.ceil(os.totalmem() / min_child_ram),
-        max_forks = (cpus >= slots) ? slots : cpus;
-
-    for (var i = 0; i < max_forks; i++) {
-        cluster.fork();
-    }
-
-    cluster.on('death', function (worker) {
-        LOG.error({worker: worker}, 'worker %d exited');
-    });
-
-} else {
-    run();
-}
+// There we go!:
+run();
 
 // Increase/decrease loggers levels using SIGUSR2/SIGUSR1:
 var sigyan = require('sigyan');

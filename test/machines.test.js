@@ -28,16 +28,16 @@ var TAG_TWO_VAL = 'none';
 var META_KEY = 'foo';
 var META_VAL = 'bar';
 
-var META_CREDS = [
-    {
-        username: 'root',
-        password: 'secret'
-    },
-    {
-        username: 'admin',
-        password: 'secret'
-    }
-];
+var META_CREDS = {
+    'root': 'secret',
+    'admin': 'secret'
+};
+
+var META_CREDS_TWO = {
+    'root': 'secret',
+    'admin': 'secret',
+    'jill': 'secret'
+};
 
 var TAP_CONF = {
     timeout: 'Infinity '
@@ -222,7 +222,7 @@ test('Get Headnode', function (t) {
 });
 
 
-test('CreateMachine', TAP_CONF, function (t) {
+test('CreateMachine (6.5)', TAP_CONF, function (t) {
     var obj = {
         dataset: 'smartos',
         'package': 'sdc_128',
@@ -232,7 +232,14 @@ test('CreateMachine', TAP_CONF, function (t) {
     obj['metadata.' + META_KEY] = META_VAL;
     obj['tag.' + TAG_KEY] = TAG_VAL;
 
-    client.post('/my/machines', obj, function (err, req, res, body) {
+    obj['metadata.credentials'] = META_CREDS;
+
+    client.post({
+        path: '/my/machines',
+        headers: {
+            'accept-version': '~6.5'
+        }
+    }, obj, function (err, req, res, body) {
         t.ifError(err, 'POST /my/machines error');
         t.equal(res.statusCode, 201, 'POST /my/machines status');
         common.checkHeaders(t, res.headers);
@@ -272,9 +279,39 @@ test('Create machine with inactive package', function (t) {
         server_uuid: HEADNODE.uuid
     };
 
-    client.post('/my/machines', obj, function (err, req, res, body) {
+    client.post({
+        path: '/my/machines',
+        headers: {
+            'accept-version': '~6.5'
+        }
+    }, obj, function (err, req, res, body) {
         t.ok(err, 'POST /my/machines with inactive pacakge error');
         t.equal(res.statusCode, 409);
+        t.end();
+    });
+});
+
+
+test('CreateMachine (7.0) w/o dataset fails', TAP_CONF, function (t) {
+    var obj = {
+        'package': 'sdc_128',
+        name: 'a' + uuid().substr(0, 7),
+        server_uuid: HEADNODE.uuid
+    };
+    obj['metadata.' + META_KEY] = META_VAL;
+    obj['tag.' + TAG_KEY] = TAG_VAL;
+
+    obj['metadata.credentials'] = META_CREDS;
+
+    client.post({
+        path: '/my/machines',
+        headers: {
+            'accept-version': '~7.0'
+        }
+    }, obj, function (err, req, res, body) {
+        t.ok(err, 'create machine w/o dataset error');
+        t.equal(res.statusCode, 409, 'create machine w/o dataset status');
+        t.ok(/image/.test(err.message));
         t.end();
     });
 });
@@ -307,8 +344,27 @@ test('Get Machine', function (t) {
         var tags = {};
         tags[TAG_KEY] = TAG_VAL;
         t.equivalent(body.tags, tags);
+        // Make sure we are not including credentials:
+        t.equal(typeof (body.metadata.credentials), 'undefined');
         t.end();
     })
+});
+
+
+test('Get Machine Include Credentials', function (t) {
+    var url = '/my/machines/' + machine + '?credentials=true';
+    client.get(url, function (err, req, res, body) {
+        t.ifError(err, 'GET /my/machines/:id error');
+        t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
+        common.checkHeaders(t, res.headers);
+        t.ok(body, 'GET /my/machines/:id body');
+        checkMachine(t, body);
+        t.equal(typeof (body.metadata.credentials), 'object');
+        Object.keys(META_CREDS).forEach(function (k) {
+            t.equal(body.metadata.credentials[k + '_pw'], META_CREDS[k]);
+        });
+        t.end();
+    });
 });
 
 
@@ -454,7 +510,12 @@ test('Wait For Resized', TAP_CONF,  function (t) {
 
 
 test('Rename Machine 6.5.0', TAP_CONF, function (t) {
-    client.post('/my/machines/' + machine, {
+    client.post({
+        path: '/my/machines/' + machine,
+        headers: {
+            'accept-version': '~6.5'
+        }
+    }, {
         action: 'rename',
         name: 'b' + uuid().substr(0, 7)
     }, function (err) {
@@ -589,34 +650,69 @@ test('ListMetadata', TAP_CONF, function (t) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
-        t.ok(body);
+        t.ok(body); 
         t.ok(body[META_KEY]);
         t.equal(body[META_KEY], META_VAL);
+        t.equal(typeof (body.credentials), 'undefined');
         t.end();
     });
 });
 
 
-// TODO: Waiting to discuss why we cannot add anything else than strings,
-// booleans and numbers to metadata.
-/*
 test('AddMetadataCredentials', TAP_CONF, function (t) {
     var path = '/my/machines/' + machine + '/metadata',
-    tags = {};
-    tags.credentials = META_CREDS;
-    client.post(path, tags, function (err, req, res, body) {
+    meta = {};
+    meta.credentials = JSON.stringify(META_CREDS_TWO);
+    client.post(path, meta, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
         t.ok(body);
-        console.log(body);
-        t.ok(body.credentials);
-        t.equal(body.credentials, META_CREDS);
+        t.equal(typeof (body.credentials), 'undefined');
         t.end();
     });
 });
-*/
-// TODO: A good excuse to test credentials on GET /my/machines ... now!
+
+
+test('Wait For Credentials Job', TAP_CONF,  function (t) {
+    client.vmapi.listJobs({
+        vm_uuid: machine,
+        task: 'update'
+    }, function (err, jobs) {
+        t.ifError(err, 'list jobs error');
+        t.ok(jobs, 'list jobs OK');
+        t.ok(jobs.length, 'update jobs is array');
+        var cred_jobs = jobs.filter(function (job) {
+            return (
+                typeof (job.params.set_customer_metadata) !==
+                'undefined' &&
+                typeof (job.params.set_customer_metadata.credentials) !==
+                'undefined');
+        });
+        t.ok(cred_jobs.length, 'credentials jobs is an array');
+        waitForJob(cred_jobs[0].uuid, function (err2) {
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
+    });
+});
+
+
+test('Get Machine Include Credentials', function (t) {
+    var url = '/my/machines/' + machine + '?credentials=true';
+    client.get(url, function (err, req, res, body) {
+        t.ifError(err, 'GET /my/machines/:id error');
+        t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
+        common.checkHeaders(t, res.headers);
+        t.ok(body, 'GET /my/machines/:id body');
+        checkMachine(t, body);
+        t.equal(typeof (body.metadata.credentials), 'object');
+        //Object.keys(META_CREDS_TWO).forEach(function (k) {
+        //    t.equal(body.metadata.credentials[k + '_pw'], META_CREDS_TWO[k]);
+        //});
+        t.end();
+    });
+});
 
 
 test('AddMetadata', TAP_CONF, function (t) {
@@ -654,6 +750,16 @@ test('DeleteMetadata', TAP_CONF, function (t) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
         common.checkHeaders(t, res.headers);
+        t.end();
+    });
+});
+
+
+test('DeleteMetadataCredentials', TAP_CONF, function (t) {
+    var url = '/my/machines/' + machine + '/metadata/credentials';
+    client.del(url, function (err, req, res) {
+        t.ok(err);
+        t.equal(res.statusCode, 409);
         t.end();
     });
 });

@@ -11,8 +11,6 @@
     },
     "vmapi": {
         "url": "VMAPI_URL",
-        "username": "VMAPI_HTTP_ADMIN_USER",
-        "password": "VMAPI_HTTP_ADMIN_PW",
         "cache": {
             "size": 5000,
             "expiry": 60
@@ -20,17 +18,20 @@
     },
     "napi": {
         "url": "NAPI_URL",
-        "username": "NAPI_HTTP_ADMIN_USER",
-        "password": "NAPI_HTTP_ADMIN_PW",
         "cache": {
             "size": 5000,
             "expiry": 300
         }
     },
+    "cnapi": {
+        "url": "CNAPI_URL",
+        "cache": {
+            "size": 5000,
+            "expiry": 60
+        }
+    },
     "imgapi": {
         "url": "IMGAPI_URL",
-        "username": "IMGAPI_HTTP_ADMIN_USER",
-        "password": "IMGAPI_HTTP_ADMIN_PW",
         "cache": {
             "size": 5000,
             "expiry": 300
