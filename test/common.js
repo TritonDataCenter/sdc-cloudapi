@@ -33,6 +33,7 @@ var SDC_SETUP_TESTS = process.env.SDC_SETUP_TESTS || false;
 
 var user, ufds, client, server;
 
+config.keyapi = config.keyapi || process.env.KEYAPI_URL;
 
 function setupClient(callback) {
     client = restify.createJsonClient({
