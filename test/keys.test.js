@@ -22,12 +22,6 @@ var SSH_KEY_TWO = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDY2qV5e2q8qb+kYtn' +
 'X/bVsFHitmyyYgba+X90uIR8KGLFZ4eWJNPprJFnCWXrpY5bSOgcS9aWVgCoH8sqHatNKUiQpZ4' +
 'Lsqr+Z4fAf4enldx/KMW91iKn whatever@wherever.local';
 
-var DSA_KEY = 'ssh-dss AAAAB3NzaC1kc3MAAACBAJaDBDG/Wtn6aHgTVVLKF0FydITVdtdzl' +
-'Dp0fgnsD9Z7q4/bNWb83Hmlk2/ppfNJlABX2Yrn9f3iO1KbAz/qZ4YgxxDjStdGnPVTbhcrZe6a/' +
-'O5wZ/Qvxv6CLpm3RWshPBnSv0jcoQVtxuiBK+jpEAneA7dLwJEYnX60CPMoo5Rr6sch3YJGbnpN' +
-'KQQPXiVvX3slNBReVqv6riMsyAju2BEE2azb0o0fE3qkIWbv0/Gc2sKLJK16zDqbccPlHyBfl3x' +
-'WtL pedro@foo.local';
-
 // --- Helpers
 
 function checkKey(t, key) {
@@ -98,19 +92,6 @@ test('Create (named) key with duplicate name', function (t) {
     var key = {
         key: SSH_KEY_TWO,
         name: 'id_rsa 1'
-    };
-    client.post('/my/keys', key, function (err, req, res, body) {
-        t.ok(err);
-        t.equal(err.statusCode, 409);
-        t.end();
-    });
-});
-
-
-test('Create DSA key not allowed', function (t) {
-    var key = {
-        key: DSA_KEY,
-        name: 'id_dsa'
     };
     client.post('/my/keys', key, function (err, req, res, body) {
         t.ok(err);
