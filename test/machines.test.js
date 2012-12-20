@@ -799,39 +799,7 @@ test('Wait For Snapshot', TAP_CONF,  function (t) {
         t.ok(jobs, 'list jobs OK');
         t.ok(jobs.length, 'update jobs is array');
         var snapshot_jobs = jobs.filter(function (job) {
-            return (/^snapshot/.test(job.name));
-        });
-        t.ok(snapshot_jobs.length, 'snapshot jobs is an array');
-        waitForJob(snapshot_jobs[0].uuid, function (err2) {
-            t.ifError(err2, 'Check state error');
-            t.end();
-        });
-    });
-});
-
-
-test('Rollback Snapshot', TAP_CONF, function (t) {
-    t.ok(snapshot.name, 'Snapshot name OK');
-    var url = '/my/machines/' + machine + '/snapshots/' + snapshot.name;
-    client.post(url, {}, function (err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 202);
-        common.checkHeaders(t, res.headers);
-        t.end();
-    });
-});
-
-
-test('Wait For Snapshot', TAP_CONF,  function (t) {
-    client.vmapi.listJobs({
-        vm_uuid: machine,
-        task: 'snapshot'
-    }, function (err, jobs) {
-        t.ifError(err, 'list jobs error');
-        t.ok(jobs, 'list jobs OK');
-        t.ok(jobs.length, 'update jobs is array');
-        var snapshot_jobs = jobs.filter(function (job) {
-            return (/^rollback/.test(job.name));
+            return (job.params.action === 'create_snapshot');
         });
         t.ok(snapshot_jobs.length, 'snapshot jobs is an array');
         waitForJob(snapshot_jobs[0].uuid, function (err2) {
@@ -873,22 +841,68 @@ test('Get Snapshot', TAP_CONF, function (t) {
 });
 
 
-/*
-// Blocked on PROV-1352, as is the commented out section above
-test('Delete snapshot', TAP_CONF, function(t) {
-  var url = '/my/machines/' + machine + '/snapshots';
-  client.get(url, function(err, req, res, body) {
-    t.ifError(err);
-    body.forEach(function(s) {
-      client.del(url + '/' + s.name, function(err2) {
-        t.ifError(err2);
+test('Rollback Snapshot', TAP_CONF, function (t) {
+    t.ok(snapshot.name, 'Snapshot name OK');
+    var url = '/my/machines/' + machine + '/snapshots/' + snapshot.name;
+    client.post(url, {}, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 202);
+        common.checkHeaders(t, res.headers);
         t.end();
-      });
     });
-  });
 });
 
-*/
+
+test('Wait For Snapshot', TAP_CONF,  function (t) {
+    client.vmapi.listJobs({
+        vm_uuid: machine,
+        task: 'snapshot'
+    }, function (err, jobs) {
+        t.ifError(err, 'list jobs error');
+        t.ok(jobs, 'list jobs OK');
+        t.ok(jobs.length, 'update jobs is array');
+        var snapshot_jobs = jobs.filter(function (job) {
+            return (job.params.action === 'rollback_snapshot');
+        });
+        t.ok(snapshot_jobs.length, 'snapshot jobs is an array');
+        waitForJob(snapshot_jobs[0].uuid, function (err2) {
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
+    });
+});
+
+
+test('Delete snapshot', TAP_CONF, function (t) {
+    t.ok(snapshot.name, 'Snapshot name OK');
+    var url = '/my/machines/' + machine + '/snapshots/' + snapshot.name;
+    client.del(url, function (err, req, res) {
+        t.ifError(err);
+        t.equal(res.statusCode, 204);
+        common.checkHeaders(t, res.headers);
+        t.end();
+    });
+});
+
+
+test('Wait For Deleted Snapshot', TAP_CONF,  function (t) {
+    client.vmapi.listJobs({
+        vm_uuid: machine,
+        task: 'snapshot'
+    }, function (err, jobs) {
+        t.ifError(err, 'list jobs error');
+        t.ok(jobs, 'list jobs OK');
+        t.ok(jobs.length, 'update jobs is array');
+        var snapshot_jobs = jobs.filter(function (job) {
+            return (job.params.action === 'delete_snapshot');
+        });
+        t.ok(snapshot_jobs.length, 'snapshot jobs is an array');
+        waitForJob(snapshot_jobs[0].uuid, function (err2) {
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
+    });
+});
 
 
 test('DeleteMachine', TAP_CONF, function (t) {
