@@ -1,5 +1,6 @@
 {
     "port": 8080,
+    "read_only": false,
     "ufds": {
         "url": "UFDS_URL",
         "bindDN": "UFDS_ROOT_DN",
