@@ -36,6 +36,7 @@ section will explain the configuration file.
         "port": 443,
         "certificate": "/opt/smartdc/cloudapi/ssl/cert.pem",
         "key": "/opt/smartdc/cloudapi/ssl/key.pem",
+        "read_only": false,
         "datacenters": {
             "coal": "https://10.88.88.131"
         },
@@ -50,8 +51,6 @@ section will explain the configuration file.
         },
         "vmapi": {
             "url": "http://10.99.99.22",
-            "username": "admin",
-            "password": "XXX",
             "cache": {
                 "size": 5000,
                 "expiry": 60
@@ -59,8 +58,6 @@ section will explain the configuration file.
         },
         "napi": {
             "url": "http://10.99.99.10",
-            "username": "admin",
-            "password": "XXX",
             "cache": {
                 "size": 5000,
                 "expiry": 300
@@ -68,8 +65,6 @@ section will explain the configuration file.
         },
         "imgapi": {
             "url": "http://10.99.99.17",
-            "username": "admin",
-            "password": "XXX",
             "cache": {
                 "size": 5000,
                 "expiry": 300
@@ -131,6 +126,7 @@ section will explain the configuration file.
         "port": 443,
         "certificate": "/opt/smartdc/cloudapi/ssl/cert.pem",
         "key": "/opt/smartdc/cloudapi/ssl/key.pem",
+        "read_only": false,
         "datacenters": {
             "coal": "https://10.88.88.131"
         },
@@ -145,6 +141,7 @@ instance should redirect to).
 ||port||Number||What SSL port to listen on||
 ||certificate||String||Path to a PEM encoded SSL certificate; can be relative to /opt/smartdc/cloudapi||
 ||key||String||Path to a PEM encoded private key for the SSL certificate; can be relative to /opt/smartdc/cloudapi||
+||read_only||Boolean||When set to true, the API will deny all the POST/PUT/DELETE requests. Provided for review right after upgrading Smart DataCenter||
 ||datacenters||Object||a k/v pairing of other DC's to URL's this instance should answer with.||
 
 ## UFDS
@@ -172,8 +169,6 @@ cache settings to use.
 
         "vmapi": {
             "url": "http://10.99.99.22",
-            "username": "admin",
-            "password": "XXX",
             "cache": {
                 "size": 5000,
                 "expiry": 60
@@ -205,8 +200,6 @@ cache settings to use.
 
         "napi": {
             "url": "http://10.99.99.10",
-            "username": "admin",
-            "password": "XXX",
             "cache": {
                 "size": 5000,
                 "expiry": 300
@@ -228,8 +221,6 @@ cache settings to use.
 
         "imgapi": {
             "url": "http://10.99.99.17",
-            "username": "admin",
-            "password": "XXX",
             "cache": {
                 "size": 5000,
                 "expiry": 300
