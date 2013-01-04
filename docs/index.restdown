@@ -1,7 +1,7 @@
 ---
 title: Joyent CloudAPI
 mediaroot: ./media
-apisections: Keys, Datacenters, Datasets, Packages, Machines, Analytics
+apisections: Keys, Datacenters, Datasets, Images, Packages, Machines, Analytics
 markdown2extras: wiki-tables, code-friendly
 ---
 
@@ -62,8 +62,10 @@ the SDK and in the REST API.
 The CloudAPI command line interface (CLI) requires Node.js and npm to run.
 
 You can get Node.js from [nodejs.org](http://nodejs.org) as source code
-and as precompiled packages for Windows and Macintosh. (npm has been included
-in the Node.js distribution since version 0.6.3.)
+and as precompiled packages for Windows and Macintosh.
+
+Given the required Node.js version should be greater or equal than v0.8.14,
+npm will be included with the Node.js distribution.
 
 Once you've installed Node.js and npm, install the CloudAPI CLI like this:
 
@@ -118,7 +120,9 @@ Use the login for your SmartDataCenter account and the password that goes with
 it.  For the SSH public key, the default is ~/.ssh/id_rsa.pub; if you're using
 a different key with SmartDataCenter, enter the path to the *public* key.
 
-If you get an error message that says `This ssh key is in use`, it means that the key is already associated with your SmartDataCenter account. Go ahead an set up the environment variables described next.
+If you get an error message that says `This ssh key is in use`, it means that
+the key is already associated with your SmartDataCenter account. Go ahead an
+set up the environment variables described next.
 
 `sdc-setup` will print some messages about setting environment variables.
 While these are optional, we recommend you set them so you don't need to enter
@@ -149,15 +153,22 @@ can use the `-a` or the `--account` flag.
 
 ## Provision a new SmartMachine
 
-To provision a new SmartMachine with the default settings, you can simply run:
+To provision a new SmartMachine with the default settings, you first need to get
+the `id` for the image you want to use as the base for your machine.
 
-    $ sdc-createmachine -n getting-started
+You can get the list of available images using the `sdc-listimages` command.
+See the [ListImages](#ListImages) section below for a detailed explanation of
+this command.
+
+Then, to provision the new SmartMachine the you can simply run:
+
+    $ sdc-createmachine -n getting-started -e 3390ca7c-f2e7-11e1-8818-c36e0b12e58b
 
 You can use the `-n` flag to name your machine.
 If you do not specify a name, SmartDataCenter will generate a name for you.  You
 can retrieve the status of your SmartMachine like:
 
-    $ sdc-listmachines -n getting-started
+    $ sdc-listmachines -n getting-started -e 3390ca7c-f2e7-11e1-8818-c36e0b12e58b
 
     [
       {
@@ -166,7 +177,7 @@ can retrieve the status of your SmartMachine like:
         "owner": demo",
         "type": "smartmachine",
         "state": "running",
-        "dataset": "smartos-1.3.13",
+        "dataset": "standard-1.0.7",
         "ips": [
           "10.88.88.50"
         ],
@@ -199,20 +210,31 @@ concepts in case you want to be cooler than the defaults.
 ### Datasets
 
 Datasets can be any image available in your SmartDataCenter cloud.  By
-default, you can use SmartOS or node.js datasets (the node.js dataset being a
-superset of SmartOS).  Your SmartDataCenter cloud may have other datasets
-available, such as Linux or Windows datasets.  To list what datasets are
-available in your datacenter, run:
+default, you can use SmartOS datasets.  Your SmartDataCenter cloud may
+have other datasets available, such as Linux or Windows datasets.  To list
+what datasets are available in your datacenter, run:
 
     $ sdc-listdatasets
 
-Datasets are the SmartDataCenter name for the "image" of your machine. To
-specify a dataset, use the special dataset urn syntax recognized by
+Datasets are the deprecated SmartDataCenter name for the "image" of your
+machine. To specify a dataset, use the special dataset urn syntax recognized by
 SmartDataCenter.  The urn syntax is specified as: `cloud:vendor:name:version`.
 
 For example, to provision a node.js machine, use:
 
     $ sdc-createmachine -e sdc:sdc:nodejs:1.2.0 -n getting-started-nodejs
+
+<a name="image-description"></a>
+### Images
+
+Starting with SmartDatacenter 7.0, the term "dataset" is deprecated, and
+"image" must be used instead. The list of available images can be obtained
+with:
+
+    $ sdc-listimages
+
+Main difference with datasets is that images will not provide an URN, but just
+an unique id which must be used to identify our image of choice.
 
 <a name="packages-description"></a>
 ### Packages
@@ -226,7 +248,13 @@ are provided so that you do not need to select individual settings, such as
 memory or disk.  To provision a new SmartMachine with more memory, for example,
 try:
 
-    $ sdc-createmachine -e sdc:sdc:nodejs:1.2.0 -n big-nodejs -p regular_1024
+    $ sdc-createmachine -e 3390ca7c-f2e7-11e1-8818-c36e0b12e58b -n big-one -p regular_1024
+
+Please, note the previous example assumes the package `regular_1024` exists in
+the SmartDataCenter setup you are interacting with. That may or not be the case,
+given packages may change from one setup to a different one. Just make sure
+you try the previous example with either an existing package name or package
+`uuid` from those ones you obtained using `sdc-listpackages`.
 
 ## Managing SSH keys
 
@@ -1015,6 +1043,148 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       "created": "2011-06-27T18:41:39+00:00",
       "default": true
     }
+
+
+# Images
+
+An [image](#image-description) contains the software packages that will be available on newly provisioned machines. In the case of virtual machines, the dataset also includes the operating system. 
+
+## ListImages (GET /:login/images)
+
+Provides a list of images available in this datacenter.
+
+### Inputs
+
+* None
+
+### Returns
+
+An array of images. Image objects are:
+
+||id||String||a unique identifier for this image||
+||name||String||The "friendly name for this image||
+||os||String||The underlying operating system for this image||
+||version||String||The version for this image||
+||type||String||Whether this is a smartmachine or virtualmachine dataset||
+||requirements||Object||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+### CLI Command
+
+    $ sdc-listimages
+
+### Example Request
+
+    GET /my/images HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~7.0
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET
+    Server: SmartDataCenter
+    Connection: close
+    Date: Tue, 28 Jun 2011 23:14:34 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
+    X-Response-Time: 257
+    Content-Type: application/json
+    Content-Length: 402
+    Content-MD5: y7YOeXG98DYchC96s46yRw==
+
+    [
+      {
+        "name": "nodejs",
+        "version": "1.1.3",
+        "os": "smartos",
+        "id": "7456f2b0-67ac-11e0-b5ec-832e6cf079d5",
+        "urn": "sdc:sdc:nodejs:1.1.3",
+        "default": true,
+        "type": "smartmachine",
+        "created": "2011-04-15T22:04:12+00:00"
+      },
+      {
+        "name": "smartos",
+        "version": "1.3.12",
+        "os": "smartos",
+        "id": "febaa412-6417-11e0-bc56-535d219f2590",
+        "urn": "sdc:sdc:smartos:1.3.23",
+        "default": false,
+        "type": "smartmachine",
+        "created": "2011-04-11T08:45:00+00:00"
+      }
+    ]
+
+## GetImage (GET /:login/images/:id)
+
+Gets an individual image by id.
+
+### Inputs
+
+* None
+
+### Returns
+
+||id||String||a unique identifier for this image||
+||name||String||The "friendly name for this image||
+||version||String||The version for this image||
+||type||String||Whether this is a smartmachine or virtualmachine image||
+||requirements||Object||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or the dataset specified does not exist||
+
+### CLI Command
+
+    $ sdc-getimage 63ce06d8-7ae7-11e0-b0df-1fcf8f45c5d5
+
+#### Example Request
+
+    GET /my/images/63ce06d8-7ae7-11e0-b0df-1fcf8f45c5d5 HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~6.5
+
+#### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET
+    Server: Joyent
+    Connection: close
+    Date: Tue, 28 Jun 2011 23:14:34 GMT
+    X-Api-Version: 6.5.0
+    X-RequestId: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
+    X-Response-Time: 257
+    Content-Type: application/json
+    Content-Length: 402
+    Content-MD5: y7YOeXG98DYchC96s46yRw==
+
+    {
+      "id": "63ce06d8-7ae7-11e0-b0df-1fcf8f45c5d5",
+      "name": "smartos",
+      "os": "smartos",
+      "type": "smartmachine",
+      "version": "1.3.13",
+      "created": "2011-06-27T18:41:39+00:00",
+      "default": true
+    }
+
 
 
 # Packages
@@ -3525,6 +3695,8 @@ The following is the state diagram for a machine:
 At any point the state can also be `offline`, if there is a network/power
 event to the machine.
 
+Since version 7.0 of this API, `failed` is used to signify a failed provision.
+
 # Appendix B: Cloud Analytics
 
 Cloud Analytics (CA) provides deep observability for systems and applications in
@@ -4064,6 +4236,7 @@ follows.
 ||[sdc-deletemachinetag](#DeleteMachineTag)||Deletes a single tag from this machine.||
 ||[sdc-describeanalytics](#DescribeAnalytics)||Retrieves the "schema" for instrumentations that can be created using the analytics endpoint.||
 ||[sdc-getdataset](#GetDataset)||Gets an individual dataset by id.||
+||[sdc-getimage](#GetImage)||Gets an individual image by id.||
 ||[sdc-getinstrumentation](#GetInstrumentation)||Retrieves the configuration for an instrumentation.||
 ||[sdc-getkey](#GetKey)||Retrieves an individual key record.||
 ||[sdc-getmachine](#GetMachine)||Gets the details for an individual machine.||
@@ -4073,6 +4246,7 @@ follows.
 ||[sdc-getpackage](#GetPackage)||Gets a package by name.||
 ||[sdc-listdatacenters](#ListDatacenters)||Provides a list of all datacenters this cloud is aware of.||
 ||[sdc-listdatasets](#ListDatasets)||Provides a list of datasets available in this datacenter.||
+||[sdc-listimages](#ListImages)||Provides a list of images available in this datacenter.||
 ||[sdc-listinstrumentations](#ListInstrumentations)||Retrieves all currently created instrumentations.||
 ||[sdc-listkeys](#ListKeys)||Lists all public keys we have on record for the specified account.||
 ||[sdc-listmachines](#ListMachines)||Lists all machines on record for an account.||
@@ -4086,6 +4260,43 @@ follows.
 ||[sdc-startmachinefromsnapshot](#StartMachineFromSnapshot)||Starts a stopped machine from the referenced snapshot.||
 ||[sdc-stopmachine](#StopMachine)||Allows you to shut down a machine.||
 ||[sdc-updatemachinemetadata](#UpdateMachineMetadata)||Allows you to update the metadata for a given machine.||
+
+
+# Appendix E: SDC 7 Changelog
+
+Cloud API and SmartDC CLI have been completely rewritten for SDC 7.0. Notably,
+required version of Node.js to run the CLI is now greater or equal than 0.8.14.
+
+Most of the commands remain the same, taking exactly the same options and
+returning exactly the same JSON information in an attempt to preserve backwards
+compatibility between 6.5 and 7.0 API clients, and software built for 6.5.
+
+There are, anyway, some important differences between SDC 7.0 and the previous
+version, where the main one is:
+
+* The request version of SDC 7.0 CLI is, obviously, `~7.0` instead of `6.5`.
+
+* This means that the parameter `--dataset` (or the equivalent `-e` short option)
+is mandatory for the command `sdc-createmachine`. On previous versions of the
+API, it was possible to provision a machine without specifying an image to the
+create machine command. This behavior has been deprecated, and the desired
+image _must_ be specified.
+
+* Also, starting at version 7.0, there isn't a `default` dataset. For backward
+compatibility purposes, when a request using `~6.5` is received, the latest
+version of the `smartos` dataset will become the default one.
+
+
+
+
+# Appendix F: SDC 6.5 Support
+
+Version 6.5 of the API will not be supported longer than a period of 6 months
+after the public release of SDC 7.0.
+
+During this period, backwards compatibility will be granted in order to give
+3rd party software built on top of the previous API version time enough to
+migrate to the new version.
 
 
 <p style="min-height: 31px; margin-top: 60px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0">
