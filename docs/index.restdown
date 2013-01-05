@@ -254,7 +254,7 @@ Please, note the previous example assumes the package `regular_1024` exists in
 the SmartDataCenter setup you are interacting with. That may or not be the case,
 given packages may change from one setup to a different one. Just make sure
 you try the previous example with either an existing package name or package
-`uuid` from those ones you obtained using `sdc-listpackages`.
+`id` from those ones you obtained using `sdc-listpackages`.
 
 ## Managing SSH keys
 
@@ -1214,7 +1214,7 @@ An array of objects, of the form:
 Starting at SmartDataCenter 7.0, this API also includes the following package
 properties.
 
-||UUID||String||Unique UUID for this package||
+||id||String||Unique identifier for this package||
 ||version||String||The version for this package||
 ||vcpus||Number||Number of VCPUS for this package||
 
@@ -1302,12 +1302,11 @@ Gets a package by name.
 Starting at SmartDataCenter 7.0, this API also includes the following package
 properties.
 
-||UUID||String||Unique UUID for this package||
+||id||String||Unique identifier for this package||
 ||version||String||The version for this package||
 ||vcpus||Number||Number of VCPUS for this package||
 
-Also, starting at SmartDataCenter 7.0, packages can be retrieved also by
-UUID and URN.
+Also, starting at SmartDataCenter 7.0, packages can be retrieved also by id.
 
 ### Errors
 
@@ -1349,7 +1348,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       "swap": 256,
       "disk": 5120,
       "default": true,
-      "uuid": "5968a8a4-5bff-4c5e-8034-d79de962e7f6",
+      "id": "5968a8a4-5bff-4c5e-8034-d79de962e7f6",
       "vcpus": 1,
       "version": "1.0.0"
     }
@@ -1521,7 +1520,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-Getting the details for the machine whose UUID is 75cfe125-a5ce-49e8-82ac-09aa31ffdf26:
+Getting the details for the machine whose id is 75cfe125-a5ce-49e8-82ac-09aa31ffdf26:
 
     $ sdc-getmachine 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
 

@@ -18,7 +18,7 @@ var client, server, THE_PACKAGE;
 function checkPackage_6_5(t, pkg) {
     t.ok(pkg, 'Package OK');
     t.ok(pkg.name, 'Package name');
-    t.notOk(pkg.uuid, 'Package UUID not OK');
+    t.notOk(pkg.id, 'Package id not OK');
     t.ok(pkg.memory, 'Package memory');
     t.ok(pkg.disk, 'Package Disk');
     t.notOk(pkg.vcpus, 'Package VCPUs not OK');
@@ -31,7 +31,7 @@ function checkPackage_6_5(t, pkg) {
 function checkPackage_7(t, pkg) {
     t.ok(pkg, 'Package OK');
     t.ok(pkg.name, 'Package name');
-    t.ok(pkg.uuid, 'Package UUID OK');
+    t.ok(pkg.id, 'Package id OK');
     t.ok(pkg.memory, 'Package memory');
     t.ok(pkg.disk, 'Package Disk');
     t.ok(pkg.vcpus, 'Package VCPUs OK');
@@ -134,9 +134,9 @@ test('GetPackage by name OK (7.0)', function (t) {
 });
 
 
-test('GetPackage by UUID OK (7.0)', function (t) {
+test('GetPackage by id OK (7.0)', function (t) {
     client.get({
-        path: '/my/packages/' + THE_PACKAGE.uuid,
+        path: '/my/packages/' + THE_PACKAGE.id,
         headers: {
             'accept-version': '~7.0'
         }
