@@ -904,6 +904,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 A [dataset](#dataset-description) is the image of the software on your machine. It contains the software packages that will be available on newly provisioned machines. In the case of virtual machines, the dataset also includes the operating system. 
 
+Please, note that starting with *version 7.0* of CloudAPI datasets are not
+supported, and their usage should be replaced with [images](#image-description).
+Specially, note the lack of `urn` attribute for images when compared with
+datasets.
+
 ## ListDatasets (GET /:login/datasets)
 
 Provides a list of datasets available in this datacenter.
@@ -1095,7 +1100,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
     X-Response-Time: 257
     Content-Type: application/json
@@ -1168,7 +1173,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: Joyent
     Connection: close
     Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
     X-Response-Time: 257
     Content-Type: application/json
@@ -1306,7 +1311,7 @@ properties.
 ||version||String||The version for this package||
 ||vcpus||Number||Number of VCPUS for this package||
 
-Also, starting at SmartDataCenter 7.0, packages can be retrieved also by id.
+Also, starting at SmartDataCenter 7.0, packages can also be retrieved by id.
 
 ### Errors
 
@@ -1399,10 +1404,11 @@ An array of machine objects, which contain:
 ||created||Date (ISO8601)||When this machine was created||
 ||updated||Date (ISO8601)||When this machine was updated||
 
-Starting at __version 7.0__, a machine will also provide information about the
+Starting at **version 7.0**, a machine will also provide information about the
 associated package.
 
 ||package||String||The name of the package used to create this machine.||
+||image||String||The image id this machine was provisioned with||
 
 ### Errors
 
@@ -1506,10 +1512,11 @@ Gets the details for an individual machine.
 ||credentials||Boolean||Whether to include the generated credentials for machines, if present. Defaults to false.||
 
 
-Starting at __version 7.0__, a machine will also provide information about the
+Starting at **version 7.0**, a machine will also provide information about the
 associated package.
 
 ||package||String||The name of the package used to create this machine.||
+||image||String||The image id this machine was provisioned with||
 
 ### Errors
 
@@ -1851,8 +1858,14 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ## ResizeMachine (POST /:login/machines/:id?action=resize)
 
-Allows you to resize a SmartMachine (this operation is not supported on
-virtual machines).  POST to the machine id with an action of `resize`.
+Allows you to resize a SmartMachine.  POST to the machine id with an action of `resize`.
+
+This operation is not supported on virtual machines before version 7.0.
+
+Starting with version 7.0, virtual machines can also be resized but,
+**only resizing virtual machines to a higher capacity package is supported**.
+
+
 
 You must additionally include a new package name, as you can only resize a
 machine to another package.
@@ -4279,19 +4292,22 @@ version, where the main one is:
 is mandatory for the command `sdc-createmachine`. On previous versions of the
 API, it was possible to provision a machine without specifying an image to the
 create machine command. This behavior has been deprecated, and the desired
-image _must_ be specified.
+image **must** be specified.
 
 * Also, starting at version 7.0, there isn't a `default` dataset. For backward
 compatibility purposes, when a request using `~6.5` is received, the latest
 version of the `smartos` dataset will become the default one.
 
+* Starting with version 7.0, virtual machines can also be resized but, **only
+resizing virtual machines to a higher capacity/package is supported**.
 
-
+* Version 7.0 also deprecates the `URN` attribute for any entity, either Images
+or Packages. URN support will finish with SDC 6.5 support.
 
 # Appendix F: SDC 6.5 Support
 
-Version 6.5 of the API will not be supported longer than a period of 6 months
-after the public release of SDC 7.0.
+**Version 6.5 of the API will not be supported longer than a period of 6 months
+after the public release of SDC 7.0.**
 
 During this period, backwards compatibility will be granted in order to give
 3rd party software built on top of the previous API version time enough to
