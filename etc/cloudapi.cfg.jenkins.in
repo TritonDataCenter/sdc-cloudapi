@@ -41,6 +41,12 @@
     "ca": {
         "url": "CA_URL"
     },
+    "usageapi": {
+        "url": "USAGEAPI_URL",
+        "username": "USAGEAPI_USERNAME",
+        "password": "USAGEAPI_PASSWORD"
+    },
+    "keyapi": "KEYAPI",
     "datacenters": {
         "DATACENTER_NAME": "CLOUDAPI_EXTERNAL_URL"
     },
