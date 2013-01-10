@@ -386,6 +386,23 @@ test('ListMachines by tag', function (t) {
 });
 
 
+// This is to make sure we're not getting machines from a different customer
+// when searching by tags:
+test('ListMachines with other owner tag', function (t) {
+    // Admin user will always have all of the HN zones with this tag:
+    var url = '/my/machines?tag.smartdc_type=core';
+    client.get(url, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.ok(Array.isArray(body));
+        console.log(body.length);
+        t.end();
+    });
+});
+
+
 test('StopMachine', TAP_CONF, function (t) {
     client.post('/my/machines/' + machine, {
         action: 'stop'
