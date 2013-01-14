@@ -194,7 +194,7 @@ test('teardown', { timeout: 'Infinity' }, function (t) {
         client.teardown(function (err) {
             if (err) {
                 return setTimeout(function () {
-                    return nuke(callback); 
+                    return nuke(callback);
                 }, 500);
             }
 

@@ -101,8 +101,8 @@ function checkSnapshot(t, snap) {
 // jobs execution directly. Former approach of checking vms status changes
 // assumes that jobs which may cause machine status changes will always
 // succeed, which is not the case.
-function checkJob(uuid, callback) {
-    return client.vmapi.getJob(uuid, function (err, job) {
+function checkJob(id, callback) {
+    return client.vmapi.getJob(id, function (err, job) {
         if (err) {
             return callback(err);
         }
@@ -112,19 +112,19 @@ function checkJob(uuid, callback) {
         }
 
         return callback(null, (job ? job.execution === 'succeeded' : false));
-    })
+    });
 }
 
 
-function waitForJob(uuid, callback) {
+function waitForJob(id, callback) {
     // console.log('waiting for job with uuid: %s', uuid);
-    return checkJob(uuid, function (err, ready) {
+    return checkJob(id, function (err, ready) {
         if (err) {
             return callback(err);
         }
         if (!ready) {
             return setTimeout(function () {
-                waitForJob(uuid, callback);
+                waitForJob(id, callback);
             }, (process.env.POLL_INTERVAL || 500));
         }
         return callback(null);
@@ -168,12 +168,14 @@ test('setup', TAP_CONF, function (t) {
                     client.pkg.get(sdc_256_inactive.urn, function (err4, pkg) {
                         if (err4) {
                             if (err4.restCode === 'ResourceNotFound') {
-                                client.pkg.add(sdc_256_inactive, function (err5, pkg2) {
-                                    t.ifError(err5, 'Error creating package');
-                                    t.ok(pkg2, 'Package created OK');
-                                    sdc_256_inactive_entry = pkg2;
-                                    t.end();
-                                });
+                                client.pkg.add(sdc_256_inactive,
+                                    function (err5, pkg2) {
+                                        t.ifError(err5,
+                                            'Error creating package');
+                                        t.ok(pkg2, 'Package created OK');
+                                        sdc_256_inactive_entry = pkg2;
+                                        t.end();
+                                    });
                             } else {
                                 t.ifError(err4, 'Error fetching package');
                                 t.end();
@@ -184,7 +186,7 @@ test('setup', TAP_CONF, function (t) {
                             t.end();
                         }
                     });
-                    
+
                 }
             });
         });
@@ -211,8 +213,8 @@ test('Get Headnode', function (t) {
         t.ok(servers);
         t.ok(Array.isArray(servers));
         t.ok(servers.length > 0);
-        servers = servers.filter(function (server) {
-            return (server.headnode);
+        servers = servers.filter(function (s) {
+            return (s.headnode);
         });
         t.ok(servers.length > 0);
         HEADNODE = servers[0];
@@ -249,7 +251,7 @@ test('CreateMachine (6.5)', TAP_CONF, function (t) {
         checkMachine(t, body);
         machine = body.id;
         // Handy to output this to stdout in order to poke around COAL:
-        console.log("Requested provision of machine: %s", machine);
+        console.log('Requested provision of machine: %s', machine);
         t.end();
     });
 });
@@ -347,7 +349,7 @@ test('Get Machine', function (t) {
         // Make sure we are not including credentials:
         t.equal(typeof (body.metadata.credentials), 'undefined');
         t.end();
-    })
+    });
 });
 
 
@@ -667,7 +669,7 @@ test('ListMetadata', TAP_CONF, function (t) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
-        t.ok(body); 
+        t.ok(body);
         t.ok(body[META_KEY]);
         t.equal(body[META_KEY], META_VAL);
         t.equal(typeof (body.credentials), 'undefined');

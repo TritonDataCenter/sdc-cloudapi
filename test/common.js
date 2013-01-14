@@ -96,15 +96,10 @@ function setupClient(callback) {
             client.teardown = function teardown(cb) {
                 client.ufds.deleteUser(client.testUser,
                     function (err2) {
-                    if (err2) {
-                        // blindly ignore
-                        // return cb(err2);
-                    }
-
-                    return ufds.close(function () {
-                        return cb(null);
+                        return ufds.close(function () {
+                            return cb(null);
+                        });
                     });
-                });
             };
 
             return callback(null, client, server);
@@ -122,7 +117,8 @@ module.exports = {
 
         user = 'a' + uuid().substr(0, 7) + '@joyent.com';
         if (SDC_SETUP_TESTS) {
-            // We already got a running server instance, no need to boot another one:
+            // We already got a running server instance,
+            // no need to boot another one:
             return setupClient(callback);
         } else {
             server = app.createServer({
@@ -138,6 +134,7 @@ module.exports = {
                     return setupClient(callback);
                 });
             });
+            return server;
         }
     },
 
