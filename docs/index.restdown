@@ -496,9 +496,15 @@ the following headers:
 
 ||**Header**||**Description**||
 ||Date||When the response was sent (RFC 1123 format)||
-||X-Api-Version||The exact version of the CloudAPI server you talked to||
-||X-RequestId||A unique id for this request; you should log this||
-||X-Response-Time||How long the server took to process your request (ms)||
+||Api-Version||The exact version of the CloudAPI server you talked to||
+||Request-Id||A unique id for this request; you should log this||
+||Response-Time||How long the server took to process your request (ms)||
+
+Note that for backwards compatibility with `~6.5` version, the headers
+`X-Api-Version`, `X-Request-Id` and `X-Response-Time` are also provided with
+exactly the same values than their counterparts without the `X-` prefix. These
+`X-` prefixed headers will be unsupported and removed when we remove
+[support for version 6.5 of Cloud API](#appendix-f-sdc-65-support).
 
 If there is content, you can expect:
 
