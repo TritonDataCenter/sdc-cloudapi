@@ -116,6 +116,28 @@ test('ListPackages OK (7.0)', function (t) {
 });
 
 
+test('search packages (7.0)', function (t) {
+    client.get({
+        path: '/my/packages?memory=128',
+        headers: {
+            'accept-version': '~7.0'
+        }
+    }, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.ok(Array.isArray(body));
+        t.ok(body.length);
+        console.log(util.inspect(body, false, 8));
+        body.forEach(function (p) {
+            checkPackage_7(t, p);
+            t.equal('128', p.memory);
+        });
+        t.end();
+    });
+});
+
 test('GetPackage by name OK (7.0)', function (t) {
     client.get({
         path: '/my/packages/sdc_128',

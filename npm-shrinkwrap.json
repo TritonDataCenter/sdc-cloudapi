@@ -100,7 +100,7 @@
     },
     "sdc-clients": {
       "version": "8.0.0",
-      "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#28bbf7",
+      "from": "git+ssh://git@git.joyent.com:node-sdc-clients.git#6fd8123",
       "dependencies": {
         "ldapjs": {
           "version": "0.5.7",
@@ -204,7 +204,7 @@
           }
         },
         "simplesmtp": {
-          "version": "0.1.30",
+          "version": "0.2.1",
           "dependencies": {
             "rai": {
               "version": "0.1.6"

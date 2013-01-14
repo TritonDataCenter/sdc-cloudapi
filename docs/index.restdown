@@ -1204,7 +1204,19 @@ Provides a list of packages available in this datacenter.
 
 ### Inputs
 
-* None
+* None for SDC 6.5
+
+* Starting with SDC 7.0, the following are all optional accepted inputs:
+
+||name||String||The "friendly" name for this package||
+||memory||Number||How much memory will by available (in Mb)||
+||disk||Number||How much disk space will be available (in Gb)||
+||swap||Number||How much swap memory will be available (in Mb)||
+||version||String||The version for this package||
+||vcpus||Number||Number of VCPUS for this package||
+
+When any value is provided for one or more of the aforementioned values, the
+retrieved packages must match all of them.
 
 ### Returns
 
@@ -4303,6 +4315,10 @@ resizing virtual machines to a higher capacity/package is supported**.
 
 * Version 7.0 also deprecates the `URN` attribute for any entity, either Images
 or Packages. URN support will finish with SDC 6.5 support.
+
+* Starting with version 7.0, packages listed by GET `/my/packages` accept
+search filters. Additionally, the package members `vcpus`, `id` and `version`
+are included on packages, as explained into [packages section](#packages-description).
 
 # Appendix F: SDC 6.5 Support
 
