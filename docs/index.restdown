@@ -1066,7 +1066,16 @@ Provides a list of images available in this datacenter.
 
 ### Inputs
 
-* None
+* None for SDC 6.5
+
+* Starting with SDC 7.0, the following are all optional accepted inputs:
+
+||name||String||The "friendly" name for this image||
+||os||String||The underlying operating system for this image||
+||version||String||The version for this image||
+
+When any value is provided for one or more of the aforementioned inputs, the
+retrieved images must match all of them.
 
 ### Returns
 
@@ -1221,7 +1230,7 @@ Provides a list of packages available in this datacenter.
 ||version||String||The version for this package||
 ||vcpus||Number||Number of VCPUS for this package||
 
-When any value is provided for one or more of the aforementioned values, the
+When any value is provided for one or more of the aforementioned inputs, the
 retrieved packages must match all of them.
 
 ### Returns
