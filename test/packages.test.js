@@ -129,7 +129,6 @@ test('search packages (7.0)', function (t) {
         t.ok(body);
         t.ok(Array.isArray(body));
         t.ok(body.length);
-        console.log(util.inspect(body, false, 8));
         body.forEach(function (p) {
             checkPackage_7(t, p);
             t.equal('128', p.memory);

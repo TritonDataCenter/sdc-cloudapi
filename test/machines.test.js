@@ -388,6 +388,24 @@ test('ListMachines by tag', function (t) {
 });
 
 
+test('ListMachines all tagged machines', function (t) {
+    var url = '/my/machines?tags=*';
+    client.get(url, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.ok(Array.isArray(body));
+        t.ok(body.length);
+        body.forEach(function (m) {
+            checkMachine(t, m);
+            machine = m.id;
+        });
+        t.end();
+    });
+});
+
+
 // This is to make sure we're not getting machines from a different customer
 // when searching by tags:
 test('Attempt to list other owner machines by tag', function (t) {

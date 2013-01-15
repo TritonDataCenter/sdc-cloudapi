@@ -1415,6 +1415,10 @@ retrieve the number of machines.
 ||tag.$name||String||An arbitrary set of tags can be used to query on, assuming they are prefixed with "tag."||
 ||credentials||Boolean||Whether to include the generated credentials for machines, if present. Defaults to false.||
 
+Also, **starting with 7.0 version of CloudAPI**, if the special input `tags=*` is
+provided, any other input will be completely ignored and the response will
+return all the machines with any tag. 
+
 ### Returns
 
 An array of machine objects, which contain:
@@ -1466,6 +1470,13 @@ Getting all SmartMachines that are currently running and have 256 Mb of memory:
 Getting all SmartMachines that are currently running, with 256 Mb of memory tagged 'test':
 
     $ sdc-listmachines -y smartmachine -s running -m 256 -t group=test
+
+Getting all tagged machines (SDC 7.0+):
+
+    $ sdc-listmachines -t \*
+
+(Note depending on your shell you may need to escape the asterisk char. BASH
+for example, requires it escaped).
 
 Basically, the CLI has sane parameters that let you filter on anything in the
 API, and you can combine them.  run `$ sdc-listmachines -h` to see all the
