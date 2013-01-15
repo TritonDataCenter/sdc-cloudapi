@@ -283,7 +283,7 @@ some example plugins to limit provisioning based into number of customer
 machines, RAM used by customer machines, ...
 
 ||**Field**||**Type**||**Description**||
-||name||String||Name of the plugin. Assumption is that the .js file containing the plugin is at `/opt/smartdc/cloudapi/lib/plugins/${name}.js`||
+||name||String||Name of the plugin. Assumption is that the .js file containing the plugin is at `/opt/smartdc/cloudapi/plugins/${name}.js`||
 ||enabled||Boolean||Whether or not this plugin should be loaded||
 ||config||Object||A free-form object that gets passed into your plugin at creation time||
 
@@ -363,15 +363,15 @@ to MAPI.  Additionally, there is support for a 'post' provisioning plugin, so
 that you can send email, or update DNS records.
 
 Assumption is that the .js file containing a plugin with name `${name}`
-is at `/opt/smartdc/cloudapi/lib/plugins/${name}.js`.
+is at `/opt/smartdc/cloudapi/plugins/${name}.js`.
 As described above, there is the ability to define free-form configuration to
 your plugin.
 
 For details on writing a plugin, you should be familiar with
 [node.js](http://nodejs.org/), [restify](http://mcavage.github.com/node-restify),
 and the internal SmartDataCenter APIs.  For a reference plugin, see
-`/opt/smartdc/cloudapi/lib/plugins/capi_limits.js` or
-`/opt/smartdc/cloudapi/lib/plugins/machine_email.js`.
+`/opt/smartdc/cloudapi/plugins/capi_limits.js` or
+`/opt/smartdc/cloudapi/plugins/machine_email.js`.
 
 In order to write a plugin, you need to define a file that at minimum
 has what's below (this is the equivalent of the "dummy" hook).
@@ -437,7 +437,7 @@ available for CloudAPI itself. See `/opt/smartdc/cloudapi/package.json` for
 the complete list of available modules additional to the default NodeJS set.
 
 For more information, inspect the source code of
-`/opt/smartdc/cloudapi/lib/plugins/capi_limits.js`.
+`/opt/smartdc/cloudapi/plugins/capi_limits.js`.
 
 # Post Provisioning Plugins
 
@@ -446,7 +446,7 @@ additionally be a `res.machine` object, which is the provisioned machine, on the
 response.
 
 For more information, inspect the source code of
-`/opt/smartdc/cloudapi/lib/plugins/machine_email.js`.
+`/opt/smartdc/cloudapi/plugins/machine_email.js`.
 
 
 # LogLevels
