@@ -110,7 +110,10 @@ publish: release
 	mkdir -p $(BITS_DIR)/$(NAME)
 	cp $(ROOT)/$(RELEASE_TARBALL) $(BITS_DIR)/$(NAME)/$(RELEASE_TARBALL)
 
-.PHONY: test account_test datacenters_test datasets_test keys_test machines_test packages_test
+.PHONY: test auth_test account_test datacenters_test datasets_test keys_test machines_test packages_test
+
+auth_test: $(TAP)
+	$(TAP) --tap --timeout 120 test/auth.test.js
 
 account_test: $(TAP)
 	$(TAP) --tap --timeout 120 test/account.test.js
@@ -130,7 +133,7 @@ machines_test: $(TAP)
 packages_test: $(TAP)
 	$(TAP) --tap --timeout 120 test/packages.test.js
 
-test: account_test datacenters_test datasets_test keys_test machines_test packages_test
+test: auth_test account_test datacenters_test datasets_test keys_test machines_test packages_test
 
 include ./tools/mk/Makefile.deps
 ifeq ($(shell uname -s),SunOS)
