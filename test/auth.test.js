@@ -24,71 +24,20 @@ var SDC_SSO_URI, TOKEN;
 
 test('setup', function (t) {
     common.setup(function (err, _client, _server) {
-        t.ifError(err, 'Commot setup error');
-        t.ok(_client, '_client ok');
+        t.ifError(err);
+        t.ok(_client);
         client = _client;
-        KEY_ID = '/' + client.testUser + '/keys/id_rsa';
         if (!process.env.SDC_SETUP_TESTS) {
-            t.ok(_server, '_server ok');
+            t.ok(_server);
         }
         server = _server;
-        client.ufds.getUser(client.testUser, function (er0, customer) {
-            t.ifError(er0, 'Get UFDS User error');
-            t.ok(customer, 'UFDS user ok');
-            account = customer;
-            fs.readFile('./id_rsa.pub', 'ascii', function (er1, data) {
-                t.ifError(er1, 'Read public key error');
-                t.ok(data, 'Public Key OK');
-                publicKey = data;
-                var obj = {
-                    openssh: publicKey,
-                    name: 'id_rsa'
-                };
-                account.addKey(obj, function (er2, key) {
-                    t.ifError(er2, 'Add key error');
-                    t.ok(key, 'Public key added OK');
-                    fs.readFile('./id_rsa', 'ascii', function (er3, d) {
-                        t.ifError(er3, 'Read private key error');
-                        t.ok(data, 'Private Key OK');
-                        privateKey = d;
-                        t.end();
-                    });
-                });
-            });
-        });
-
+        t.end();
     });
 });
 
 
 test('signature auth', function (t) {
-    var now = new Date().toUTCString();
-    var alg = 'RSA-SHA256';
-
-    var obj = {
-        path: '/my/keys',
-        headers: {
-            Date: now
-        }
-    };
-
-    var signer = crypto.createSign(alg);
-    signer.update(now);
-    obj.headers.Authorization = util.format(SIGNATURE,
-                                        KEY_ID,
-                                        alg.toLowerCase(),
-                                        signer.sign(privateKey, 'base64'));
-
-    var sigClient = restify.createJsonClient({
-        url: server ? server.url : 'https://127.0.0.1',
-        version: '*',
-        retryOptions: {
-            retry: 0
-        },
-        log: client.log
-    });
-
-    sigClient.get(obj, function (err, req, res, body) {
+    client.get('/my/keys', function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -215,17 +164,14 @@ test('teardown', { timeout: 'Infinity' }, function (t) {
         });
     }
 
-    return account.deleteKey('id_rsa', function (err) {
-        t.ifError(err, 'Delete key error');
-        return nuke(function (er2) {
-            t.ifError(er2, 'nuke tests error');
-            if (!process.env.SDC_SETUP_TESTS) {
-                server.close(function () {
-                    t.end();
-                });
-            } else {
+    return nuke(function (er2) {
+        t.ifError(er2, 'nuke tests error');
+        if (!process.env.SDC_SETUP_TESTS) {
+            server.close(function () {
                 t.end();
-            }
-        });
+            });
+        } else {
+            t.end();
+        }
     });
 });

@@ -31,9 +31,46 @@ try {
 
 var SDC_SETUP_TESTS = process.env.SDC_SETUP_TESTS || false;
 
-var user, ufds, client, server;
+var user, ufds, client, server, account;
 
 config.keyapi = config.keyapi || process.env.KEYAPI_URL;
+var SIGNATURE = 'Signature keyId="%s",algorithm="%s" %s';
+var KEY_ID;
+var fingerprint = '66:ca:1c:09:75:99:35:69:be:91:08:25:03:c0:17:c0';
+var privateKey, publicKey;
+
+
+
+function getAuthHeaders() {
+    var now = new Date().toUTCString();
+    var alg = 'RSA-SHA256';
+    var signer = crypto.createSign(alg);
+    signer.update(now);
+    return {
+        Date: now,
+        Authorization: util.format(SIGNATURE,
+                                    KEY_ID,
+                                    alg.toLowerCase(),
+                                    signer.sign(privateKey, 'base64'))
+    };
+}
+
+function requestSigner(req) {
+    var d = req.getHeader('Date');
+
+    if (!d) {
+        d = new Date().toUTCString();
+        req.setHeader('Date', d);
+    }
+
+    var alg = 'RSA-SHA256';
+    var signer = crypto.createSign(alg);
+    signer.update(d);
+    req.setHeader('Authorization', util.format(SIGNATURE,
+                                    KEY_ID,
+                                    alg.toLowerCase(),
+                                    signer.sign(privateKey, 'base64')));
+}
 
 function setupClient(callback) {
     client = restify.createJsonClient({
@@ -42,12 +79,13 @@ function setupClient(callback) {
         retryOptions: {
             retry: 0
         },
-        log: LOG
+        log: LOG,
+        signRequest: requestSigner
     });
 
-    client.basicAuth(user, PASSWD);
+    // client.basicAuth(user, PASSWD);
     client.testUser = user;
-
+    KEY_ID = '/' + client.testUser + '/keys/id_rsa';
     // We need vmapi client to check jobs on tests, given if we
     // just wait for vmachine status change, we'll be just
     // hanging forever.
@@ -86,23 +124,49 @@ function setupClient(callback) {
             email: client.testUser,
             userpassword: PASSWD
         };
-        return ufds.addUser(entry, function (err) {
+        return ufds.addUser(entry, function (err, customer) {
             if (err) {
                 return callback(err);
             }
 
-            client.ufds = ufds;
-            client.pkg = new Package(ufds);
-            client.teardown = function teardown(cb) {
-                client.ufds.deleteUser(client.testUser,
-                    function (err2) {
-                        return ufds.close(function () {
-                            return cb(null);
-                        });
-                    });
-            };
+            account = customer;
+            var p = __dirname + '/id_rsa';
+            return fs.readFile(p + '.pub', 'ascii', function (er1, data) {
+                if (er1) {
+                    return callback(er1);
+                }
+                publicKey = data;
+                var obj = {
+                    openssh: publicKey,
+                    name: 'id_rsa'
+                };
+                return account.addKey(obj, function (er2, key) {
+                    if (er2) {
+                        return callback(er2);
+                    }
+                    return fs.readFile(p, 'ascii', function (er3, d) {
+                        if (er3) {
+                            return callback(er3);
+                        }
+                        privateKey = d;
+                        client.ufds = ufds;
+                        client.pkg = new Package(ufds);
+                        client.teardown = function teardown(cb) {
+                            client.ufds.deleteKey(client.testUser, 'id_rsa',
+                                function (er4) {
+                                    client.ufds.deleteUser(client.testUser,
+                                        function (err2) {
+                                            return ufds.close(function () {
+                                                return cb(null);
+                                            });
+                                        });
+                                });
+                        };
 
-            return callback(null, client, server);
+                        return callback(null, client, server);
+                    });
+                });
+            });
         });
     });
 }
