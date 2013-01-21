@@ -55,7 +55,7 @@ test('ListKeys (empty) OK', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.ok(Array.isArray(body));
-        t.ok(!body.length);
+        t.ok(body.length);
         t.end();
     });
 });
