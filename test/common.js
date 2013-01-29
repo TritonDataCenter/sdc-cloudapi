@@ -15,7 +15,7 @@ var fs = require('fs');
 
 // --- Globals
 
-var PASSWD = 'secret';
+var PASSWD = 'secret123';
 var DEFAULT_CFG = path.join(__dirname, '..', '/etc/cloudapi.cfg');
 var LOG =  new Logger({
     level: process.env.LOG_LEVEL || 'info',
