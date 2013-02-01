@@ -1005,15 +1005,15 @@ test('teardown', TAP_CONF, function (t) {
         t.equal(res.statusCode, 204);
         common.checkHeaders(t, res.headers);
         client.teardown(function (err2) {
-            Object.keys(server._clients).forEach(function (c) {
-                if (typeof (server._clients[c].client) !== 'undefined' &&
-                    typeof (server._clients[c].client.close) === 'function') {
-                    server._clients[c].client.close();
-                    }
-            });
             // Ignore err2 here, just means we have not been able to remove
             // something from ufds.
             if (!process.env.SDC_SETUP_TESTS) {
+                Object.keys(server._clients).forEach(function (c) {
+                    if (typeof (server._clients[c].client) !== 'undefined' &&
+                        typeof (server._clients[c].client.close) === 'function') {
+                        server._clients[c].client.close();
+                        }
+                });
                 server.close(function () {
                     t.end();
                 });
