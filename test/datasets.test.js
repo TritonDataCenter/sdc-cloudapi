@@ -144,6 +144,12 @@ test('teardown', function (t) {
     client.teardown(function (err) {
         t.ifError(err, 'client teardown error');
         if (!process.env.SDC_SETUP_TESTS) {
+            Object.keys(server._clients).forEach(function (c) {
+                if (typeof (server._clients[c].client) !== 'undefined' &&
+                    typeof (server._clients[c].client.close) === 'function') {
+                    server._clients[c].client.close();
+                    }
+            });
             server.close(function () {
                 t.end();
             });

@@ -40,7 +40,6 @@ var fingerprint = '66:ca:1c:09:75:99:35:69:be:91:08:25:03:c0:17:c0';
 var privateKey, publicKey;
 
 
-
 function getAuthHeaders() {
     var now = new Date().toUTCString();
     var alg = 'RSA-SHA256';
@@ -80,6 +79,7 @@ function setupClient(callback) {
             retry: 0
         },
         log: LOG,
+        agent: false,
         signRequest: requestSigner
     });
 
@@ -95,7 +95,8 @@ function setupClient(callback) {
             retries: 1,
             minTimeout: 1000
         },
-        log: client.log
+        log: client.log,
+        agent: false
     });
     // Given DAPI will never pick Headnode as a server to provision to, we need
     // to explicitly tell we want it:
@@ -105,9 +106,10 @@ function setupClient(callback) {
             retries: 1,
             minTimeout: 1000
         },
-        log: client.log
-
+        log: client.log,
+        agent: false
     });
+
     ufds = new UFDS({
         url: (process.env.UFDS_URL || config.ufds.url || 'ldaps://10.99.99.14'),
         bindDN: (config.ufds.bindDN || 'cn=root'),
@@ -212,7 +214,7 @@ module.exports = {
         t.ok(headers['x-response-time'] >= 0, 'headers response time');
         t.equal(headers.server, 'Joyent SmartDataCenter 7.0.0',
                 'headers server');
-        t.equal(headers.connection, 'Keep-Alive', 'headers keep alive');
+        t.equal(headers.connection, 'close', 'headers close');
         t.equal(headers['x-api-version'], '7.0.0', 'headers x-api-version');
     },
 
