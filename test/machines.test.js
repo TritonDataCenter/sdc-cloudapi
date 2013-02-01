@@ -1010,7 +1010,8 @@ test('teardown', TAP_CONF, function (t) {
             if (!process.env.SDC_SETUP_TESTS) {
                 Object.keys(server._clients).forEach(function (c) {
                     if (typeof (server._clients[c].client) !== 'undefined' &&
-                        typeof (server._clients[c].client.close) === 'function') {
+                        typeof (server._clients[c].client.close) ===
+                            'function') {
                         server._clients[c].client.close();
                         }
                 });
