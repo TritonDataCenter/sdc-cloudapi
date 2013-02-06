@@ -97,36 +97,21 @@ file called ~/.ssh/id_rsa.
 
 ## Set Up your CLI
 
-This step is optional if you've already uploaded an SSH key to your account.
-Otherwise, this step will 'bootstrap' your account using your SmartDataCenter
-username and password so you can leverage the rest of the CLI.
+You need to know the following information in order to interact with CloudAPI:
 
-    $ sdc-setup https://api.example.com
-    Username (login): demo
-    Password:
-    SSH public key: (/Users/demo/.ssh/id_rsa.pub)
-
-The URL is the URL of the CloudAPI endpoint. For example, one of the CloudAPI
-endpoints for the JoyentCloud is `https://us-west-1.api.joyentcloud.com`.
-(Each datacenter in a cloud has its own CloudAPI endpoint.)
-A different cloud that uses SmartDataCenter
-would have a different endpoint. In this document, we'll use
-`api.example.com` as the endpoint.
-
-Note that CloudAPI always uses secure HTTP, which means that the endpoint URL
-must begin with `https`.
-
-Use the login for your SmartDataCenter account and the password that goes with
-it.  For the SSH public key, the default is ~/.ssh/id_rsa.pub; if you're using
-a different key with SmartDataCenter, enter the path to the *public* key.
-
-If you get an error message that says `This ssh key is in use`, it means that
-the key is already associated with your SmartDataCenter account. Go ahead an
-set up the environment variables described next.
-
-`sdc-setup` will print some messages about setting environment variables.
-While these are optional, we recommend you set them so you don't need to enter
-additional parameters to the CLI for future requests.
+* `SDC_CLI_ACCOUNT`: Your username. The login you use for SDC.
+* `SDC_CLI_URL`: The URL is the URL of the CloudAPI endpoint. For example,
+  one of the CloudAPI endpoints for the JoyentCloud is
+  `https://us-west-1.api.joyentcloud.com`. (Each datacenter in a cloud has
+  its own CloudAPI endpoint.)
+  A different cloud that uses SmartDataCenter would have a different endpoint.
+  In this document, we'll use `api.example.com` as the endpoint.
+  Note that CloudAPI always uses secure HTTP, which means that the endpoint URL
+  must begin with `https`.
+* `SDC_CLI_KEY_ID` and `SDC_CLI_IDENTITY`: By default `id_rsa` and `~/.ssh/id_rsa`.
+  If you've uploaded a key different than the default ` ~/.ssh/id_rsa.pub` to
+  SDC when signing in through SDC Portal, you should specify the appropriated
+  values here.
 
 ## Working with the CLI
 
@@ -404,20 +389,10 @@ JSON in the body:
 
 All API calls to the CloudAPI require an Authorization header, which supports
 multiple ["schemes"](http://tools.ietf.org/html/rfc2617). Currently CloudAPI
-supports two Authentication mechanisms:
+supports only one Authentication mechanism due to PCI compliance restrictions:
 
-* Basic Authentication Scheme
-* HTTP Signature Authentication Scheme
-
-The Basic Authentication Scheme is outlined in
-[RFC 2617](http://tools.ietf.org/html/rfc2617).  The HTTP Signature
-Authentication Scheme is outlined in [Appendix C](#Appendix-C).
-
-In order to leverage Basic Authentication, simply use your SmartDataCenter login
-and password.  For example, if your username is `demo` and your password is
-`secret`, the value of the Authorization header would be:
-
-    Authorization: Basic ${Base64(demo:secret)}
+* HTTP Signature Authentication Scheme. This Scheme is outlined
+in [Appendix C](#Appendix-C).
 
 In order to leverage HTTP Signature Authentication, only RSA signing mechanisms
 are supported, and your keyId must be equal to the path returned from a
@@ -434,9 +409,7 @@ CloudAPI using the Signature authentication scheme *must* send a Date header.
 Note that clock skew will be enforced to 300s (positive or negative) of the
 value sent.
 
-Because the security value of HTTP Signature Authentication is much stronger
-than HTTP Basic Authentication, Joyent recommends you send all requests using
-the Signature mechanism.  Full support for this authentication scheme is in the
+Full support for HTTP Signature Authentication scheme is in the
 CloudAPI SDK; additionally, a reference implementation for node.js is available
 in the NPM `http-signature`, which you can install with:
 
@@ -446,7 +419,7 @@ in the NPM `http-signature`, which you can install with:
 
 The CloudAPI is strongly versioned, and all requests *must* specify a version of
 the API.  The `X-Api-Version` header is expected to carry a
-[semver](http://semver.org/) string that the client wants to use,with the
+[semver](http://semver.org/) string that the client wants to use, with the
 additional twist that your client can specify ranges of versions to support, as
 you can with NPM.   For details on how to specify ranges, check
 [node-semver](https://github.com/isaacs/node-semver).  A couple examples:
@@ -463,18 +436,8 @@ version.
 ### Using cURL with CloudAPI
 
 Since [cURL](http://curl.haxx.se/) is commonly used to script requests to web
-services, here's a simple alias you can use to wrap cURL to communicate with
+services, here's a simple function you can use to wrap cURL to communicate with
 CloudAPI:
-
-    $ alias cloudapi='curl -is -u demo:secret -H "Accept: application/json" -H "X-Api-Version: ~7.0"'
-
-Then you could try:
-
-    $ cloudapi https://api.example.com/my/machines
-
-That step will use Basic Authentication; if you want to leverage cURL and HTTP
-Signature Authentication, you'll need to do a little scripting of `date`,
-`openssl` and `curl`.  Here's a sample function:
 
     $ function cloudapi() {
       local now=`date -u "+%a, %d %h %Y %H:%M:%S GMT"` ;
