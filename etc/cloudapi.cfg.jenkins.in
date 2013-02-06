@@ -42,9 +42,7 @@
         "url": "CA_URL"
     },
     "usageapi": {
-        "url": "USAGEAPI_URL",
-        "username": "USAGEAPI_USERNAME",
-        "password": "USAGEAPI_PASSWORD"
+        "url": "USAGEAPI_URL"
     },
     "keyapi": "KEYAPI",
     "datacenters": {
