@@ -158,6 +158,26 @@ need to boot a server instance, since there's one already running).
 Also, the contents of the aforementioned `./etc/cloudapi.cfg` file
 should have been properly set.
 
+# COAL headnode provisinability
+
+For testing changes on a COAL headnode-only configuration you will need to
+set the `SERVER_UUID` environment variable in the SMF manifest for the cloudapi
+service. This should be the UUID of the headnode which can be found through
+
+    sysinfo | json UUID
+
+this should be placed in the `method_environment` subsection of the start
+method in the SMF manifest. For instance:
+
+    <envvar name='SERVER_UUID' value='564dafc4-73fa-b009-ce16-c93e487fbaa6'/>
+
+To edit the SMF manifest:
+
+    svccfg export cloudapi > cloudapi.xml
+    ... edit service ...
+    svccfg import cloudapi.xml
+    svcadm restart cloudapi
+
 # TODO
 
 Remaining work for this repo:
