@@ -3740,7 +3740,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 # Appendix A: Machine States
 
-## Machine States
+## Machine State Diagram
 
 The following is the state diagram for a machine:
 
