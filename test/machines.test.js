@@ -968,6 +968,26 @@ test('Wait For Destroyed', TAP_CONF,  function (t) {
 });
 
 
+test('machine audit', TAP_CONF, function (t) {
+    var p = '/my/machines/' + machine + '/audit';
+    client.get(p, function (err, req, res, body) {
+        t.ifError(err);
+        t.ok(Array.isArray(body));
+        t.ok(body.length);
+        var f = body.reverse()[0];
+        t.ok(f.success);
+        t.ok(f.time);
+        t.ok(f.action);
+        t.ok(f.caller);
+        t.ok(f.caller.type);
+        t.equal(f.caller.type, 'signature');
+        t.ok(f.caller.ip);
+        t.ok(f.caller.keyId);
+        t.end();
+    });
+});
+
+
 test('ListMachines tombstone', TAP_CONF, function (t) {
     client.get('/my/machines?tombstone=20', function (err, req, res, body) {
         t.ifError(err, 'GET /my/machines error');

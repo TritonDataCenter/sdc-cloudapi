@@ -2842,6 +2842,83 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Content-Length: 0
 
 
+## MachineAudit (GET /:login/machines/:id/audit)
+
+**Since SDC 7.0**.
+
+Provides a list of machine's accomplished actions, (sorted from latest to older
+one).
+
+### Inputs
+
+* None
+
+### Returns
+
+* An array of action objects, which contain:
+
+||action||String||The name of the action||
+||parameters||Object||The original set of parameters sent when the action was requested||
+||time||Date (ISO8601)||When the action finished||
+||success||String||Either "yes" or "no", depending on the action successfulness||
+||caller||Object||Account requesting the action||
+
+Depending on the account requesting the action, caller can have the following members:
+
+||type||String||Authentication type for the action request. One of "basic", "operator", "signature" or "token"||
+||user||String||When the authentication type is "basic", this member will be present and include user login||
+||ip||String||The IP addresses this from which the action was requested. Not present if type is "operator"||
+||keyId||String||When authentication type is either "signature" or "token", SSH key identifier||
+
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or :machine does not exist||
+
+### CLI Command
+
+    $ sdc-getmachineaudit 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+
+### Example Request
+
+    GET /my/machines/75cfe125-a5ce-49e8-82ac-09aa31ffdf26/audit HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~7.0
+
+#### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET
+    Server: SmartDataCenter
+    Connection: close
+    Date: Wed, 13 Apr 2013 23:38:03 GMT
+    X-Api-Version: 7.0.0
+    X-RequestId: 762C3F37-8ACA-4A49-AF10-84CEC8137B1D
+    X-Response-Time: 72
+    Content-Length: 0
+
+    [{
+      success: 'yes',
+      time: '2013-02-14T11:05:58.609Z',
+      action: 'stop',
+      caller: { type: 'operator' }
+    },{
+      success: 'yes',
+      time: '2013-02-14T11:05:39.233Z',
+      action: 'provision',
+      caller:
+      {
+          type: 'signature',
+          ip: '127.0.0.1',
+          keyId: '/whoever/keys/id_rsa'
+      }
+    }, ...]
 
 # Analytics
 
@@ -3661,7 +3738,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 
 
-# Appendix A: Machine Provisioning
+# Appendix A: Machine States
 
 ## Machine States
 
@@ -3709,6 +3786,123 @@ At any point the state can also be `offline`, if there is a network/power
 event to the machine.
 
 Since version 7.0 of this API, `failed` is used to signify a failed provision.
+
+## Polling machine state
+
+As suggested into [CreateMachine](#CreateMachine), you can poll a machine state
+to check when that machine provisioning has either successfully finished or
+failed. Consider the following code using [node.js SDK](https://github.com/joyent/node-smartdc):
+
+    var sdc = smartdc.createClient({ ... });
+
+    function checkMachineStatus(id, state, callback) {
+        return sdc.getMachine(id, function (err, machine) {
+            if (err) {
+                if (err.statusCode && err.statusCode === 410 && state === 'deleted') {
+                    return callback(null, true);
+                }
+                return callback(err);
+            }
+            if ((machine.state === 'deleted' && state !== 'deleted') ||
+                machine.state === 'failed') {
+                return callback(new Error('Provisioning Job failed'));
+            }
+            return callback(null, (machine ? machine.state === state : false));
+        }, true);
+    }
+
+    function waitForMachine(id, state, callback) {
+        return checkMachineStatus(id, state, function (err, ready) {
+            if (err) {
+                return callback(err);
+            }
+            if (!ready) {
+                return setTimeout(function () {
+                    waitForMachine(id, state, callback);
+                }, (process.env.POLL_INTERVAL || 2500));
+            }
+            return callback(null);
+        });
+    }
+
+with this code, you can poll, for example, when a machine with a given uuid is
+running by just doing:
+
+    var machine = 'd19432ff-d921-4d6c-b5f9-6b0e4de6665c';
+    waitForMachine(machine, 'running', function (err) {
+        if (err) {
+            console.error('Exiting because machine provisioning failed');
+            process.exit(1);
+        }
+        // ... do your stuff here, machine is running now ...
+    });
+
+
+## Polling machine audit
+
+There are some cases where polling for machine state change will not work
+either because there will not be such change for the requested action, "rename"
+for example, or because there is a high risk of do not be able to *"capture"*
+the machine on the desired state, like during a "reboot" action.
+
+On such cases, is more interesting to poll machine historical list of actions
+available through machine's [Machine Audit](#MachineAudit), wait for the desired
+action to appear on that list, and check successfulness there. Taking our
+example from previous section, this is how we could check for a reboot:
+
+    function checkMachineAction(id, action, time, cb) {
+        return sdc.getMachineAudit(id, function (err, actions) {
+            if (err) {
+                return cb(err);
+            }
+
+            var acts = actions.filter(function (a) {
+                return (a.action === action && (new Date(a.time) > time));
+            });
+
+            if (acts.length === 0) {
+                return cb(null, false);
+            }
+
+            var act = acts[0];
+            if (act.success !== 'yes') {
+                return cb(action + ' failed');
+            }
+            return cb(null, true);
+            
+
+        }, true);
+    }
+
+
+
+    function waitForAction(id, action, time, cb) {
+        console.log('Waiting for machine \'%s\' %s to complete',
+                id, action);
+
+        return checkMachineAction(id, action, time, function (err, ready) {
+            if (err) {
+                return cb(err);
+            }
+
+            if (!ready) {
+                return setTimeout(function () {
+                    waitForAction(id, action, time, cb);
+                }, (process.env.POLL_INTERVAL || 2500));
+            }
+            return cb(null);
+        });
+    }
+
+
+    waitForAction(machine, 'reboot', (new Date()), function (err) {
+        if (err) {
+            // .. something failed
+        } else {
+            // ...all good, reboot happened successfully and machine is running
+        }
+    });
+
 
 # Appendix B: Cloud Analytics
 
@@ -4305,9 +4499,12 @@ resizing virtual machines to a higher capacity/package is supported**.
 * Version 7.0 also deprecates the `URN` attribute for any entity, either Images
 or Packages. URN support will finish with SDC 6.5 support.
 
-* Starting with version 7.0, packages listed by GET `/my/packages` accept
+* Starting with version 7.0, packages listed by GET `/:account/packages` accept
 search filters. Additionally, the package members `vcpus`, `id` and `version`
 are included on packages, as explained into [packages section](#packages-description).
+
+* Since Version 7.0 historical list of machine accomplished actions is available
+through request `GET /:account/machines/:id/audit`.
 
 # Appendix F: SDC 6.5 Support
 
