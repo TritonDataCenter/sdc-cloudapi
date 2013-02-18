@@ -853,9 +853,9 @@ test('List Snapshots', TAP_CONF, function (t) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
-        t.ok(body);
-        t.ok(Array.isArray(body));
-        t.ok(body.length);
+        t.ok(body, 'snapshots body');
+        t.ok(Array.isArray(body), 'snapshots is an array');
+        t.ok(body.length, 'there are snapshots');
         body.forEach(function (s) {
             checkSnapshot(t, s);
         });
@@ -871,7 +871,7 @@ test('Get Snapshot', TAP_CONF, function (t) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
-        t.ok(body);
+        t.ok(body, 'snapshot body');
         checkSnapshot(t, body);
         t.end();
     });
@@ -890,7 +890,7 @@ test('Rollback Snapshot', TAP_CONF, function (t) {
 });
 
 
-test('Wait For Snapshot', TAP_CONF,  function (t) {
+test('Wait For Snapshot Rollback', TAP_CONF,  function (t) {
     client.vmapi.listJobs({
         vm_uuid: machine,
         task: 'snapshot'
@@ -902,6 +902,7 @@ test('Wait For Snapshot', TAP_CONF,  function (t) {
             return (job.params.action === 'rollback_snapshot');
         });
         t.ok(snapshot_jobs.length, 'snapshot jobs is an array');
+        console.log(util.inspect(snapshot_jobs, false, 8));
         waitForJob(snapshot_jobs[0].uuid, function (err2) {
             t.ifError(err2, 'Check state error');
             t.end();
