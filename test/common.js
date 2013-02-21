@@ -83,7 +83,16 @@ function setupClient(callback) {
         signRequest: requestSigner
     });
 
-    // client.basicAuth(user, PASSWD);
+    client.wfapi = restify.createJsonClient({
+        url: process.env.WFAPI_URL || config.wfapi.url || 'http://10.99.99.15',
+        version: '*',
+        retryOptions: {
+            retry: 0
+        },
+        log: LOG,
+        agent: false
+    });
+
     client.testUser = user;
     KEY_ID = '/' + client.testUser + '/keys/id_rsa';
     // We need vmapi client to check jobs on tests, given if we
