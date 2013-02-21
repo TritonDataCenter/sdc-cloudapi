@@ -952,7 +952,7 @@ var RULE_JOB_UUID;
 function checkRule(t, rule) {
     t.ok(rule.id, 'rule id ok');
     t.ok(rule.rule, 'rule text ok');
-    t.ok(typeof(rule.enabled) !== 'undefined', 'rule enabled defined');
+    t.ok(typeof (rule.enabled) !== 'undefined', 'rule enabled defined');
 }
 
 
@@ -986,7 +986,8 @@ test('AddRule', function (t) {
 
 
 function checkWfJob(id, callback) {
-    return client.wfapi.get(sprintf('/jobs/%s', id), function (err, req, res, job) {
+    return client.wfapi.get(sprintf('/jobs/%s', id),
+                            function (err, req, res, job) {
         if (err) {
             return callback(err);
         }
