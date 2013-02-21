@@ -56,10 +56,24 @@ section will explain the configuration file.
                 "expiry": 60
             }
         },
+        "cnapi": {
+            "url": "http://10.99.99.18",
+            "cache": {
+                "size": 1000,
+                "expiry": 300
+            }
+        },
         "napi": {
             "url": "http://10.99.99.10",
             "cache": {
                 "size": 5000,
+                "expiry": 300
+            }
+        },
+        "fwapi": {
+            "url": "http://10.99.99.22",
+            "cache": {
+                "size": 1000,
                 "expiry": 300
             }
         },
@@ -180,9 +194,27 @@ cache settings to use.
 
 ||**Field**||**Type**||**Description**||
 ||url||URL||The fully-qualified URL where VMAPI lives||
-||username||String||The user to authenticate to VMAPI with (for service communication, not end users).||
-||password||String||The password to authenticate to VMAPI with||
 ||cache||Object||Controls the VMAPI client cache size and the time to expire it, (in seconds)||
+
+
+## CNAPI
+
+        "cnapi": {
+            "url": "http://10.99.99.18",
+            "cache": {
+                "size": 5000,
+                "expiry": 300
+            }
+        },
+
+
+The `cnapi` config block tells CloudAPI how to communicate with CNAPI, and what
+cache settings to use.
+
+||**Field**||**Type**||**Description**||
+||url||URL||The fully-qualified URL where CNAPI lives||
+||cache||Object||Controls the CNAPI client cache size and the time to expire it, (in seconds)||
+
 
 ## CA
 
@@ -212,9 +244,26 @@ cache settings to use.
 
 ||**Field**||**Type**||**Description**||
 ||url||URL||The fully-qualified URL where NAPI lives||
-||username||String||The user to authenticate to NAPI with (for service communication, not end users).||
-||password||String||The password to authenticate to NAPI with||
 ||cache||Object||Controls the NAPI client cache size and the time to expire it, (in seconds)||
+
+
+## FWAPI
+
+        "fwapi": {
+            "url": "http://10.99.99.22",
+            "cache": {
+                "size": 5000,
+                "expiry": 300
+            }
+        },
+
+
+The `fwapi` config block tells CloudAPI how to communicate with FWAPI, and what
+cache settings to use.
+
+||**Field**||**Type**||**Description**||
+||url||URL||The fully-qualified URL where FWAPI lives||
+||cache||Object||Controls the FWAPI client cache size and the time to expire it, (in seconds)||
 
 
 ## IMGAPI
@@ -227,13 +276,11 @@ cache settings to use.
             }
         },
 
-The `napi` config block tells CloudAPI how to communicate with IMGAPI, and what
+The `imgapi` config block tells CloudAPI how to communicate with IMGAPI, and what
 cache settings to use.
 
 ||**Field**||**Type**||**Description**||
 ||url||URL||The fully-qualified URL where IMGAPI lives||
-||username||String||The user to authenticate to IMGAPI with (for service communication, not end users).||
-||password||String||The password to authenticate to IMGAPI with||
 ||cache||Object||Controls the IMGAPI client cache size and the time to expire it, (in seconds)||
 
 

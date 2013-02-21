@@ -48,7 +48,6 @@ and their expected values:
 These are pretty straightforward, port where the application HTTP server should
 listen to and, in case of HTTPS, path to certificate & key. 
 
-
       "ufds": {
           "url": "UFDS_URL",
           "bindDN": "UFDS_ROOT_DN",
@@ -62,7 +61,6 @@ listen to and, in case of HTTPS, path to certificate & key.
 The UFDS section. It should include the __complete__ ldap(s) address for UFDS,
 and the required DN and password to bind to the LDAP server.
 
-
       "vmapi": {
           "url": "VMAPI_URL",
           "cache": {
@@ -71,11 +69,9 @@ and the required DN and password to bind to the LDAP server.
           }
       },
 
-
 VMAPI section. Right now internal APIs will not provide HTTP Basic Auth.
 `VMAPI_URL` must be the __complete__ HTTP address for VMAPI's HTTP server
 running into vmapi zone.
-
 
       "napi": {
           "url": "NAPI_URL",
@@ -85,8 +81,7 @@ running into vmapi zone.
           }
       },
 
-
-Same than the VMAPI section, but for CNAPI.
+Same than the VMAPI section, but for NAPI.
 
       "cnapi": {
           "url": "CNAPI_URL",
@@ -96,10 +91,17 @@ Same than the VMAPI section, but for CNAPI.
           }
       },
 
+Same than the VMAPI section, but for CNAPI.
 
-Same than the VMAPI section, but for NAPI. 
+      "fwapi": {
+          "url": "FWAPI_URL",
+          "cache": {
+              "size": 5000,
+              "expiry": 300
+          }
+      },
 
-
+Same than the VMAPI section, but for FWAPI.
 
       "imgapi": {
           "url": "IMGAPI_URL",
@@ -109,21 +111,17 @@ Same than the VMAPI section, but for NAPI.
           }
       },
 
-
 And the same thing for IMGAPI. We are using local IMGAPI instance.
 
       "ca": {
           "url": "CA_URL"
       },
 
-
 The Cloud Analytics section. Like always, where we say URL we mean __complete__.
-
 
       "datacenters": {
           "DATACENTER_NAME": "CLOUDAPI_EXTERNAL_URL"
       },
-
 
 The name of this datacenter, and the URL we can use to access CLOUDAPI from the
 outside world, if any.
