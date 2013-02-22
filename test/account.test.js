@@ -82,6 +82,34 @@ test('GetAccount 404', function (t) {
 });
 
 
+test('PostAccount', function (t) {
+    var path = '/' + encodeURIComponent(client.testUser);
+    client.post(path, {
+        cn: 'James',
+        sn: 'Bond',
+        company: 'liltingly, Inc.',
+        address: '6165 pyrophyllite Street',
+        city: 'benzoylation concoctive',
+        state: 'SP',
+        postalCode: '4967',
+        country: 'BAT',
+        phone: '+1 891 657 5818'
+    }, function (err, req, res, obj) {
+        t.ifError(err);
+        checkOk(t, err, req, res, obj);
+        t.ok(obj.companyName);
+        t.ok(obj.firstName);
+        t.ok(obj.lastName);
+        t.ok(obj.postalCode);
+        t.ok(obj.city);
+        t.ok(obj.state);
+        t.ok(obj.country);
+        t.ok(obj.phone);
+        t.end();
+    });
+});
+
+
 test('teardown', function (t) {
     client.teardown(function (err) {
         t.ifError(err);
