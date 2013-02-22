@@ -109,9 +109,11 @@ You need to know the following information in order to interact with CloudAPI:
   Note that CloudAPI always uses secure HTTP, which means that the endpoint URL
   must begin with `https`.
 * `SDC_KEY_ID`: Fingerprint for the key you uploaded to SmartDC through portal.
-  You can quickly get your key fingerprint by running:
 
-      ssh-keygen -l -f ~/.ssh/id_rsa.pub | awk '{print $2}' | tr -d '\n'
+
+You can quickly get your key fingerprint by running:
+
+        ssh-keygen -l -f ~/.ssh/id_rsa.pub | awk '{print $2}' | tr -d '\n'
 
 where you obviously replace `~/.ssh/id_rsa.pub` with the path to your the
 public key you wan to use for signing requests.
@@ -568,11 +570,49 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### Example Request
 
-    TODO
+    GET /login HTTP/1.1
+    authorization: Signature keyId="..."
+    accept: application/json
+    accept-version: ~7.0
+    host: api.example.com
 
 ### Example Response
 
-    TODO
+    HTTP/1.1 200 OK
+    content-type: application/json
+    content-length: 316
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    connection: Keep-Alive
+    content-md5: F7ACwRAC1+7//jajYKbvYw==
+    server: Joyent SmartDataCenter 7.0.0
+    api-version: 7.0.0
+    request-id: 29be67c0-7d0c-11e2-8048-5195b6159808
+    response-time: 164
+    x-request-id: 29be67c0-7d0c-11e2-8048-5195b6159808
+    x-api-version: 7.0.0
+    x-response-time: 164
+
+    {
+      "id": "cc71f8bb-f310-4746-8e36-afd7c6dd2895",
+      "login": "login",
+      "email": "login@example.com",
+      "companyName": "Example",
+      "firstName": "Name",
+      "lastName": "Surname",
+      "postalCode": "4967",
+      "address": [
+        "liltingly, Inc.",
+        "6165 pyrophyllite Street"
+      ],
+      "city": "benzoylation concoctive",
+      "state": "SP",
+      "country": "BAT",
+      "phone": "+1 891 657 5818"
+    }
+
 
 ## UpdateAccount (POST /:login)
 
@@ -619,15 +659,58 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ sdc-getaccount
+    $ sdc-updateaccount --postal-code=12345 --phone='1 (234) 567 890'
 
 ### Example Request
 
-    TODO
+    POST /login HTTP/1.1
+    authorization: Signature keyId="...
+    accept: application/json
+    content-type: application/json
+    accept-version: ~7.0
+    content-length: 48
+    content-md5: 6kCHdE651hsI9N82TUkU/g==
+    host: api.example.com
+    connection: keep-alive
+
+    postal-code=12345&phone=1%20(234)%20567%20890
 
 ### Example Response
 
-    TODO
+    HTTP/1.1 200 OK
+    content-type: application/json
+    content-length: 317
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    connection: Keep-Alive
+    content-md5: dRwQeA63/aCqc43sGyyheg==
+    server: Joyent SmartDataCenter 7.0.0
+    api-version: 7.0.0
+    request-id: be62e5b0-7d0f-11e2-918f-912e9d0235c1
+    response-time: 326
+    x-request-id: be62e5b0-7d0f-11e2-918f-912e9d0235c1
+    x-api-version: 7.0.0
+    x-response-time: 326
+
+    {
+      "id": "cc71f8bb-f310-4746-8e36-afd7c6dd2895",
+      "login": "login",
+      "email": "login@example.com",
+      "companyName": "Example",
+      "firstName": "Name",
+      "lastName": "Surname",
+      "postalCode": "12345",
+      "address": [
+        "liltingly, Inc.",
+        "6165 pyrophyllite Street"
+      ],
+      "city": "benzoylation concoctive",
+      "state": "SP",
+      "country": "BAT",
+      "phone": "1 (234) 567 890"
+    }
 
 
 # Keys
@@ -2996,32 +3079,33 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 #### Example Response
 
     HTTP/1.1 200 OK
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET
-    Server: SmartDataCenter
-    Connection: close
-    Date: Wed, 13 Apr 2013 23:38:03 GMT
-    X-Api-Version: 7.0.0
-    X-RequestId: 762C3F37-8ACA-4A49-AF10-84CEC8137B1D
-    X-Response-Time: 72
-    Content-Length: 0
+    content-type: application/json
+    content-length: 191
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    connection: Keep-Alive
+    content-md5: GRmOq/dAdKZJ4wVpEelRrQ==
+    date: Fri, 22 Feb 2013 15:19:37 GMT
+    server: Joyent SmartDataCenter 7.0.0
+    api-version: 7.0.0
+    request-id: 453aee00-7d03-11e2-8048-5195b6159808
+    response-time: 34
+    x-request-id: 453aee00-7d03-11e2-8048-5195b6159808
+    x-api-version: 7.0.0
+    x-response-time: 34
 
     [{
-      success: 'yes',
-      time: '2013-02-14T11:05:58.609Z',
-      action: 'stop',
-      caller: { type: 'operator' }
-    },{
-      success: 'yes',
-      time: '2013-02-14T11:05:39.233Z',
-      action: 'provision',
-      caller:
-      {
-          type: 'signature',
-          ip: '127.0.0.1',
-          keyId: '/whoever/keys/id_rsa'
-      }
-    }, ...]
+        "success": "yes",
+        "time": "2013-02-22T15:19:32.522Z",
+        "action": "provision",
+        "caller": {
+          "type": "signature",
+          "ip": "127.0.0.1",
+          "keyId": "/:login/keys/:fingerprint"
+        }
+      }, ...]
 
 # Analytics
 
