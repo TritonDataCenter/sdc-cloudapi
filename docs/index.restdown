@@ -1,7 +1,7 @@
 ---
 title: Joyent CloudAPI
 mediaroot: ./media
-apisections: Keys, Datacenters, Datasets, Images, Packages, Machines, Analytics, Firewall Rules
+apisections: Account, Keys, Datacenters, Datasets, Images, Packages, Machines, Analytics, FirewallRules
 markdown2extras: wiki-tables, code-friendly
 ---
 
@@ -525,6 +525,113 @@ Where the code element is one of:
 Clients are expected to check HTTP status code first, and if in the 4xx range,
 they can leverage the codes above.
 
+
+# Account
+
+You can obtain your account details and update them through Cloud API, with
+the notable exception of `login` - modifications of `login` are not permitted
+at all - and `password`. Any password modification should happen through SDC
+Portal.
+
+## GetAccount (GET /:login)
+
+Retrieves your account details
+
+### Inputs
+
+* None
+
+### Returns
+
+Account object:
+
+||**Field**||**Type**||**Description**||
+||id||String||Unique id for you||
+||login||String||Your login name||
+||email||String||Email address||
+||companyName||String||...||
+||firstName||String||...||
+||lastName||String||...||
+||address||String||...||
+||postalCode||String||...||
+||city||String||...||
+||state||String||...||
+||country||String||...||
+||phone||String||...||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+### CLI Command
+
+    $ sdc-getaccount
+
+### Example Request
+
+    TODO
+
+### Example Response
+
+    TODO
+
+## UpdateAccount (POST /:login)
+
+Update your account details with the given parameters
+
+### Inputs
+
+||**Field**||**Type**||**Description**||
+||email||String||Email address||
+||companyName||String||...||
+||firstName||String||...||
+||lastName||String||...||
+||address||String||...||
+||postalCode||String||...||
+||city||String||...||
+||state||String||...||
+||country||String||...||
+||phone||String||...||
+
+### Returns
+
+Account object:
+
+||**Field**||**Type**||**Description**||
+||id||String||Unique id for you||
+||login||String||Your login name||
+||email||String||Email address||
+||companyName||String||...||
+||firstName||String||...||
+||lastName||String||...||
+||address||String||...||
+||postalCode||String||...||
+||city||String||...||
+||state||String||...||
+||country||String||...||
+||phone||String||...||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+### CLI Command
+
+    $ sdc-getaccount
+
+### Example Request
+
+    TODO
+
+### Example Response
+
+    TODO
 
 
 # Keys
@@ -3738,7 +3845,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 
 
-# Firewall Rules
+# FirewallRules
 
 Starting with *SDC 7.0* it's possible to manage Firewall Rules for your
 machines through Cloud API.
@@ -4819,6 +4926,15 @@ are included on packages, as explained into [packages section](#packages-descrip
 
 * Since Version 7.0 historical list of machine accomplished actions is available
 through request `GET /:account/machines/:id/audit`.
+
+* Version 7.0 adds the ability for customers to manage Firewall Rules through
+`/:account/fwrules` resource, as explained into
+[Firewall Rules section](#FirewallRules).
+
+* Version 7.0 exposes account details through `GET /:account`, and allows the
+modification of the account properties - with the exception of `password` and
+`login` - through `POST /:account`. Details are explained into the
+[Account section](#Account)
 
 # Appendix F: SDC 6.5 Support
 
