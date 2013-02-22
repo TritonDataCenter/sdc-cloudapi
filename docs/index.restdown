@@ -99,8 +99,8 @@ file called ~/.ssh/id_rsa.
 
 You need to know the following information in order to interact with CloudAPI:
 
-* `SDC_CLI_ACCOUNT`: Your username. The login you use for SDC.
-* `SDC_CLI_URL`: The URL is the URL of the CloudAPI endpoint. For example,
+* `SDC_ACCOUNT`: Your username. The login you use for SDC.
+* `SDC_URL`: The URL is the URL of the CloudAPI endpoint. For example,
   one of the CloudAPI endpoints for the JoyentCloud is
   `https://us-west-1.api.joyentcloud.com`. (Each datacenter in a cloud has
   its own CloudAPI endpoint.)
@@ -108,10 +108,13 @@ You need to know the following information in order to interact with CloudAPI:
   In this document, we'll use `api.example.com` as the endpoint.
   Note that CloudAPI always uses secure HTTP, which means that the endpoint URL
   must begin with `https`.
-* `SDC_CLI_KEY_ID` and `SDC_CLI_IDENTITY`: By default `id_rsa` and `~/.ssh/id_rsa`.
-  If you've uploaded a key different than the default ` ~/.ssh/id_rsa.pub` to
-  SDC when signing in through SDC Portal, you should specify the appropriated
-  values here.
+* `SDC_KEY_ID`: Fingerprint for the key you uploaded to SmartDC through portal.
+  You can quickly get your key fingerprint by running:
+
+      ssh-keygen -l -f ~/.ssh/id_rsa.pub | awk '{print $2}' | tr -d '\n'
+
+where you obviously replace `~/.ssh/id_rsa.pub` with the path to your the
+public key you wan to use for signing requests.
 
 ## Working with the CLI
 
@@ -121,16 +124,15 @@ To get help on command, use the `--help` flag. For example:
 
     $ sdc-listdatacenters --help
     sdc-listdatacenters [--account string] [--debug boolean] [--help boolean]
-    [--identity path] [--keyId string] [--url url] 
+    [--keyId string] [--url url]
 
 You can set environment variables for the following flags so that you don't have
 to type them for each request:
 
 || **CLI Flag** || **Description** || **Environment Variable** ||
-||--account<br/>-a||Login name (account)||SDC\_CLI\_ACCOUNT||
-||--keyId<br/>-k||Name of the key to use for signing||SDC\_CLI\_KEY\_ID||
-||--url<br/>-u||URL of the CloudAPI endpoint||SDC\_CLI\_URL||
-||--identity<br/>-i||Path to the location of your SSH key.<br/>On a Macintosh, this is usually `/Users/username/.ssh/id_rsa`||SDC\_CLI\_IDENTITY||
+||--account<br/>-a||Login name (account)||SDC\_ACCOUNT||
+||--keyId<br/>-k||Fingerprint of the key to use for signing||SDC\_KEY\_ID||
+||--url<br/>-u||URL of the CloudAPI endpoint||SDC\_URL||
 
 Note that you can use the short form of flags as well. For instance, you 
 can use the `-a` or the `--account` flag.
@@ -255,13 +257,7 @@ sets it to the name of the file. In this case `my_other_rsa_key.pub`.
 
 To use the new key, you will need to update the environment variables:
 
-    $ export SDC_CLI_KEY_ID=my_other_rsa_key
-
-If the key is stored in a file other than `~/.ssh/id_rsa`, you will also need
-to add it to the SSH Agent and to set the `SDC_CLI_IDENTITY` variable:
-
-    $ export SDC_CLI_IDENTITY=~/.ssh/my_other_rsa_key
-    $ ssh-add $SDC_CLI_IDENTITY
+    $ export SDC_KEY_ID=my_other_rsa_key
 
 At this point you could delete your other key from the system; see [Cleaning Up](#cleaning-up)
 for a quick example.
