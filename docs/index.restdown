@@ -1,7 +1,7 @@
 ---
 title: Joyent CloudAPI
 mediaroot: ./media
-apisections: Keys, Datacenters, Datasets, Images, Packages, Machines, Analytics
+apisections: Keys, Datacenters, Datasets, Images, Packages, Machines, Analytics, Firewall Rules
 markdown2extras: wiki-tables, code-friendly
 ---
 
@@ -3735,6 +3735,320 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     X-RequestId: E4DD448D-F491-4A88-9237-DAF6C4DC782C
     X-Response-Time: 49
     Content-Length: 0
+
+
+
+# Firewall Rules
+
+Starting with *SDC 7.0* it's possible to manage Firewall Rules for your
+machines through Cloud API.
+
+## Firewall Rule Syntax
+
+In general, the firewall rule is composed of the following pieces:
+
+    FROM <target a> TO <target b> <action> <protocol> <port>
+
+where `target` can be one of `wildcard`, `ip`, `subnet`, `tag` or `vm`,
+`action` is either `ALLOW` or `BLOCK`, `protocol` will be one between
+`tcp`, `udp` and `icmp`, and `port` is a valid port number.
+
+The following are examples of different possibilities for firewall rules syntax:
+
+### Allow incoming http traffic to a VM:
+
+    {
+        "enabled": true,
+        "rule": "FROM subnet 10.99.99.0/24 TO vm 0abeae82-c040-4080-ac60-b60d3e3890a7 ALLOW tcp port 80"
+    }
+
+
+### Block outgoing SMTP traffic from a VM to a subnet:
+
+    {
+        "enabled": true,
+        "rule": "FROM vm 0abeae82-c040-4080-ac60-b60d3e3890a7 TO subnet 10.99.99.0/24 BLOCK tcp port 25"
+    }
+
+
+### Allow an IP HTTP and HTTPS access to all VMs tagged www or testwww:
+
+    {
+        "enabled": true,
+        "rule": "FROM ip 10.99.99.7 TO (tag www OR tag testwww) ALLOW tcp (port 80 AND port 443)"
+    }
+
+
+### Allow syslog traffic from VMs tagged www to VMs taged mon:
+
+    {
+        "enabled": true,
+        "rule": "FROM tag www TO tag mon ALLOW udp port 514"
+    }
+
+## ListFirewallRules (GET /:login/fwrules)
+
+List all the firewall rules we have on record for the specified account
+
+### Inputs
+
+* None
+
+### Returns
+
+An array of firewall rule objects. Firewall Rules are:
+
+||**Field**||**Type**||**Description**||
+||id||String||Unique identifier for this rule||
+||enabled||Boolean||Indicates if the rule is or not enabled||
+||rule||String||Firewall Rule text||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+### CLI
+
+    $ sdc-listfirewallrules
+
+#### Example Request
+
+    TODO
+
+#### Example Response
+
+    TODO
+
+## GetFirewallRule (GET /:login/fwrules/:id)
+
+Retrieves an individual firewall rule record.
+
+### Inputs
+
+* None
+
+### Returns
+
+||**Field**||**Type**||**Description**||
+||id||String||Unique identifier for this rule||
+||enabled||Boolean||Indicates if the rule is or not enabled||
+||rule||String||Firewall Rule text||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+### CLI
+
+    $ sdc-getfirewallrule fwruleid
+
+#### Example Request
+
+    TODO
+
+#### Example Response
+
+    TODO
+
+
+## CreateFirewallRule (POST /:login/fwrules)
+
+Adds a new firewall rule for the specified account. Note that this rule will be
+added to all the account machines where it may be necessary.
+
+### Inputs
+
+||**Field**||**Type**||**Description**||
+||enabled||Boolean||Indicates if the rule is or not enabled (optional, false by default)||
+||rule||String||Firewall Rule text (mandatory)||
+
+### Returns
+
+Firewall rule object.
+
+||**Field**||**Type**||**Description**||
+||id||String||Unique identifier for this rule||
+||enabled||Boolean||Indicates if the rule is or not enabled||
+||rule||String||Firewall Rule text||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||InvalidArgument||If rule is invalid||
+||MissingParameter||If you didn't send a rule||
+||ResourceNotFound||If :login does not exist||
+
+### CLI
+
+    $ sdc-createfirewallrule TODO
+
+#### Example Request
+
+    TODO
+
+#### Example Response
+
+    TODO
+
+
+## UpdateFirewallRule (POST /:login/fwrules/:id)
+
+Updates the given rule record and, depending on rule contents, adds/removes/updates
+the rule from all the required account machines.
+
+### Inputs
+
+||**Field**||**Type**||**Description**||
+||rule||String||Firewall Rule text (mandatory)||
+
+### Returns
+
+Firewall rule object.
+
+||**Field**||**Type**||**Description**||
+||id||String||Unique identifier for this rule||
+||enabled||Boolean||Indicates if the rule is or not enabled||
+||rule||String||Firewall Rule text||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||InvalidArgument||If rule is invalid||
+||MissingParameter||If you didn't send a rule||
+||ResourceNotFound||If :login does not exist or rule with :id does not exist||
+
+### CLI
+
+    $ sdc-updatefirewallrule fwruleid
+
+#### Example Request
+
+    TODO
+
+#### Example Response
+
+    TODO
+
+
+## ActivateFirewallRule (POST /:login/fwrules/:id/activate)
+
+Activates the given firewall rule record if it is deactivated.
+
+### Inputs
+
+* None
+
+### Returns
+
+Firewall rule
+
+||**Field**||**Type**||**Description**||
+||id||String||Unique identifier for this rule||
+||enabled||Boolean||Indicates if the rule is or not enabled||
+||rule||String||Firewall Rule text||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or rule with :id does not exist||
+
+### CLI
+
+    $ sdc-activatefirewallrule fwruleid
+
+#### Example Request
+
+    TODO
+
+#### Example Response
+
+    TODO
+
+
+
+## DeactivateFirewallRule (POST /:login/fwrules/:id/deactivate)
+
+Deactivates the given firewall rule record if it is activated.
+
+
+### Inputs
+
+* None
+
+### Returns
+
+Firewall rule
+
+||**Field**||**Type**||**Description**||
+||id||String||Unique identifier for this rule||
+||enabled||Boolean||Indicates if the rule is or not enabled||
+||rule||String||Firewall Rule text||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or rule with :id does not exist||
+
+### CLI
+
+    $ sdc-deactivatefirewallrule fwruleid
+
+#### Example Request
+
+    TODO
+
+#### Example Response
+
+    TODO
+
+
+## DeleteFirewallRule (DELETE /:login/fwrules/:id)
+
+Removes the given firewall rule record from all the required account machines.
+
+
+### Inputs
+
+* None
+
+### Returns
+
+An array of firewall rule objects. Firewall Rules are:
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or rule with :id does not exist||
+
+### CLI
+
+    $ sdc-deletefirewallrule fwruleid
+
+#### Example Request
+
+    TODO
+
+#### Example Response
+
+    TODO
 
 
 
