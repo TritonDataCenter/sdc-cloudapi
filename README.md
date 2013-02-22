@@ -73,6 +73,16 @@ VMAPI section. Right now internal APIs will not provide HTTP Basic Auth.
 `VMAPI_URL` must be the __complete__ HTTP address for VMAPI's HTTP server
 running into vmapi zone.
 
+      "wfapi": {
+          "url": "WFAPI_URL",
+          "cache": {
+              "size": 1000,
+              "expiry": 300
+          }
+      },
+
+Same than the VMAPI section, but for Workflow API.
+
       "napi": {
           "url": "NAPI_URL",
           "cache": {
