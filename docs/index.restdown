@@ -4003,11 +4003,39 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 #### Example Request
 
-    TODO
+    GET /login/fwrules HTTP/1.1
+    authorization: Signature keyId="...
+    accept: application/json
+    accept-version: ~7.0
+    host: api.example.com
+    connection: keep-alive
 
 #### Example Response
 
-    TODO
+    HTTP/1.1 200 OK
+    content-type: application/json
+    content-length: 158
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    connection: Keep-Alive
+    content-md5: v6s92rl/nTS2Ts5CNDcgQw==
+    server: Joyent SmartDataCenter 7.0.0
+    api-version: 7.0.0
+    request-id: 35147710-7f49-11e2-8585-bd5fc323c72c
+    response-time: 134
+    x-request-id: 35147710-7f49-11e2-8585-bd5fc323c72c
+    x-api-version: 7.0.0
+    x-response-time: 134
+
+    [
+      {
+        "id": "38de17c4-39e8-48c7-a168-0f58083de860",
+        "rule": "FROM vm 3d51f2d5-46f2-4da5-bb04-3238f2f64768 TO subnet 10.99.99.0/24 BLOCK tcp PORT 25",
+        "enabled": true
+      }
+    ]
 
 ## GetFirewallRule (GET /:login/fwrules/:id)
 
@@ -4037,12 +4065,35 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 #### Example Request
 
-    TODO
+    GET /login/fwrules/38de17c4-39e8-48c7-a168-0f58083de860 HTTP/1.1
+    authorization: Signature keyId="...
+    accept: application/json
+    accept-version: ~7.0
+    host: api.example.com
+
 
 #### Example Response
 
-    TODO
+    HTTP/1.1 200 OK
+    content-type: application/json
+    content-length: 156
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    server: Joyent SmartDataCenter 7.0.0
+    api-version: 7.0.0
+    request-id: cf1c1340-7f49-11e2-8585-bd5fc323c72c
+    response-time: 203
+    x-request-id: cf1c1340-7f49-11e2-8585-bd5fc323c72c
+    x-api-version: 7.0.0
+    x-response-time: 203
 
+    {
+      "id": "38de17c4-39e8-48c7-a168-0f58083de860",
+      "rule": "FROM vm 3d51f2d5-46f2-4da5-bb04-3238f2f64768 TO subnet 10.99.99.0/24 BLOCK tcp PORT 25",
+      "enabled": true
+    }
 
 ## CreateFirewallRule (POST /:login/fwrules)
 
@@ -4075,16 +4126,40 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI
 
-    $ sdc-createfirewallrule TODO
+    $ sdc-createfirewallrule --rule='...' --enabled=true
 
 #### Example Request
 
-    TODO
+    POST /login/fwrules HTTP/1.1
+    authorization: Signature keyId="...
+    accept: application/json
+    content-type: application/json
+    accept-version: ~7.0
+    content-length: 112
+    host: api.example.com
 
 #### Example Response
 
-    TODO
+    HTTP/1.1 201 Created
+    content-type: application/json
+    content-length: 156
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    server: Joyent SmartDataCenter 7.0.0
+    api-version: 7.0.0
+    request-id: 2c0a2a20-7f49-11e2-8585-bd5fc323c72c
+    response-time: 36
+    x-request-id: 2c0a2a20-7f49-11e2-8585-bd5fc323c72c
+    x-api-version: 7.0.0
+    x-response-time: 36
 
+    {
+      "id": "38de17c4-39e8-48c7-a168-0f58083de860",
+      "rule": "FROM vm 3d51f2d5-46f2-4da5-bb04-3238f2f64768 TO subnet 10.99.99.0/24 BLOCK tcp PORT 25",
+      "enabled": true
+    }
 
 ## UpdateFirewallRule (POST /:login/fwrules/:id)
 
@@ -4120,16 +4195,40 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 #### Example Request
 
-    TODO
+    POST /login/fwrules/38de17c4-39e8-48c7-a168-0f58083de860 HTTP/1.1
+    authorization: Signature keyId="...
+    accept: application/json
+    content-type: application/json
+    accept-version: ~7.0
+    content-length: 111
+    host: api.example.com
 
 #### Example Response
 
-    TODO
+    HTTP/1.1 200 OK
+    content-type: application/json
+    content-length: 170
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    server: Joyent SmartDataCenter 7.0.0
+    api-version: 7.0.0
+    request-id: 284907d0-7f67-11e2-8585-bd5fc323c72c
+    response-time: 225
+    x-request-id: 284907d0-7f67-11e2-8585-bd5fc323c72c
+    x-api-version: 7.0.0
+    x-response-time: 225
 
+    {
+      "id": "38de17c4-39e8-48c7-a168-0f58083de860",
+      "rule": "FROM vm 3d51f2d5-46f2-4da5-bb04-3238f2f64768 TO subnet 10.99.99.0/24 BLOCK tcp (PORT 25 AND PORT 80)",
+      "enabled": true
+    }
 
-## ActivateFirewallRule (POST /:login/fwrules/:id/activate)
+## EnableFirewallRule (POST /:login/fwrules/:id/enable)
 
-Activates the given firewall rule record if it is deactivated.
+Enables the given firewall rule record if it is disabled.
 
 ### Inputs
 
@@ -4153,21 +4252,45 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI
 
-    $ sdc-activatefirewallrule fwruleid
+    $ sdc-enablefirewallrule fwruleid
 
 #### Example Request
 
-    TODO
+    POST /login/fwrules/38de17c4-39e8-48c7-a168-0f58083de860/enable HTTP/1.1
+    authorization: Signature keyId="...
+    accept: application/json
+    content-type: application/json
+    accept-version: ~7.0
+    content-length: 2
+    host: api.example.com
 
 #### Example Response
 
-    TODO
+    HTTP/1.1 200 OK
+    content-type: application/json
+    content-length: 170
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    connection: Keep-Alive
+    server: Joyent SmartDataCenter 7.0.0
+    api-version: 7.0.0
+    request-id: 1ebe23c0-7f68-11e2-8585-bd5fc323c72c
+    response-time: 232
+    x-request-id: 1ebe23c0-7f68-11e2-8585-bd5fc323c72c
+    x-api-version: 7.0.0
+    x-response-time: 232
 
+    {
+      "id": "38de17c4-39e8-48c7-a168-0f58083de860",
+      "rule": "FROM vm 3d51f2d5-46f2-4da5-bb04-3238f2f64768 TO subnet 10.99.99.0/24 BLOCK tcp (PORT 25 AND PORT 80)",
+      "enabled": true
+    }
 
+## DisableFirewallRule (POST /:login/fwrules/:id/disable)
 
-## DeactivateFirewallRule (POST /:login/fwrules/:id/deactivate)
-
-Deactivates the given firewall rule record if it is activated.
+Disables the given firewall rule record if it is enabled.
 
 
 ### Inputs
@@ -4192,16 +4315,41 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI
 
-    $ sdc-deactivatefirewallrule fwruleid
+    $ sdc-disablefirewallrule fwruleid
 
 #### Example Request
 
-    TODO
+    POST /login/fwrules/38de17c4-39e8-48c7-a168-0f58083de860/disable HTTP/1.1
+    authorization: Signature keyId="...
+    accept: application/json
+    content-type: application/json
+    accept-version: ~7.0
+    content-length: 2
+    host: api.example.com
 
 #### Example Response
 
-    TODO
+    HTTP/1.1 200 OK
+    content-type: application/json
+    content-length: 171
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    content-md5: E7I47cYr/F7S4J68NbK1AQ==
+    server: Joyent SmartDataCenter 7.0.0
+    api-version: 7.0.0
+    request-id: 8a2d7490-7f67-11e2-8585-bd5fc323c72c
+    response-time: 234
+    x-request-id: 8a2d7490-7f67-11e2-8585-bd5fc323c72c
+    x-api-version: 7.0.0
+    x-response-time: 234
 
+    {
+      "id": "38de17c4-39e8-48c7-a168-0f58083de860",
+      "rule": "FROM vm 3d51f2d5-46f2-4da5-bb04-3238f2f64768 TO subnet 10.99.99.0/24 BLOCK tcp (PORT 25 AND PORT 80)",
+      "enabled": false
+    }
 
 ## DeleteFirewallRule (DELETE /:login/fwrules/:id)
 
@@ -4231,11 +4379,27 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 #### Example Request
 
-    TODO
+    DELETE /login/fwrules/38de17c4-39e8-48c7-a168-0f58083de860 HTTP/1.1
+    authorization: Signature keyId="...
+    accept: application/json
+    accept-version: ~7.0
+    host: api.example.com
 
 #### Example Response
 
-    TODO
+    HTTP/1.1 204 No Content
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    connection: Keep-Alive
+    server: Joyent SmartDataCenter 7.0.0
+    api-version: 7.0.0
+    request-id: 50a78b60-7f68-11e2-8585-bd5fc323c72c
+    response-time: 219
+    x-request-id: 50a78b60-7f68-11e2-8585-bd5fc323c72c
+    x-api-version: 7.0.0
+    x-response-time: 219
 
 
 
