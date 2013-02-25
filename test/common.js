@@ -84,7 +84,7 @@ function setupClient(callback) {
     });
 
     client.wfapi = restify.createJsonClient({
-        url: process.env.WFAPI_URL || config.wfapi.url || 'http://10.99.99.15',
+        url: process.env.WFAPI_URL || config.wfapi.url || 'http://10.99.99.19',
         version: '*',
         retryOptions: {
             retry: 0
@@ -99,7 +99,7 @@ function setupClient(callback) {
     // just wait for vmachine status change, we'll be just
     // hanging forever.
     client.vmapi = new VMAPI({
-        url: process.env.VMAPI_URL || config.vmapi.url || 'http://10.99.99.23',
+        url: process.env.VMAPI_URL || config.vmapi.url || 'http://10.99.99.27',
         retry: {
             retries: 1,
             minTimeout: 1000
@@ -110,7 +110,7 @@ function setupClient(callback) {
     // Given DAPI will never pick Headnode as a server to provision to, we need
     // to explicitly tell we want it:
     client.cnapi = new CNAPI({
-        url: process.env.CNAPI_URL || config.cnapi.url || 'http://10.99.99.18',
+        url: process.env.CNAPI_URL || config.cnapi.url || 'http://10.99.99.22',
         retry: {
             retries: 1,
             minTimeout: 1000
@@ -120,7 +120,7 @@ function setupClient(callback) {
     });
 
     ufds = new UFDS({
-        url: (process.env.UFDS_URL || config.ufds.url || 'ldaps://10.99.99.14'),
+        url: (process.env.UFDS_URL || config.ufds.url || 'ldaps://10.99.99.18'),
         bindDN: (config.ufds.bindDN || 'cn=root'),
         bindPassword: (config.ufds.bindPassword || 'secret')
     });
