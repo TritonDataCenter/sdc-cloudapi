@@ -44,8 +44,8 @@
     },
     "restify": {
       "version": "2.3.2",
-      "from": "restify@git://github.com/mcavage/node-restify.git#46b03dc385c04c0bf77a9de6478f372360983fd3",
-      "resolved": "git://github.com/mcavage/node-restify.git#46b03dc385c04c0bf77a9de6478f372360983fd3",
+      "from": "restify@git://github.com/mcavage/node-restify.git#05d3765a4f6250015b4cecb7c09e2c62bf6692a5",
+      "resolved": "git://github.com/mcavage/node-restify.git#05d3765a4f6250015b4cecb7c09e2c62bf6692a5",
       "dependencies": {
         "assert-plus": {
           "version": "0.1.2",

@@ -4418,6 +4418,15 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     x-api-version: 7.0.0
     x-response-time: 219
 
+## ListMachineFirewallRules (GET /:login/machines/:machine/fwrules)
+
+Exactly with the same input and output than [List Firewall Rules](#ListFirewallRules)
+but just for the rules affecting the given `:machine`.
+
+## ListFirewallRuleMachines (GET /:login/fwrules/:id/machines)
+
+Will return the collection of machines affected by the firewall rule given by
+`:id`. The output will be exactly the same than for [List Machines](#ListMachines).
 
 
 # Appendix A: Machine States

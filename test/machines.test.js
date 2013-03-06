@@ -1037,6 +1037,33 @@ test('ListRules (not empty set)', TAP_CONF, function (t) {
 });
 
 
+test('List Rule Machines (not empty set)', TAP_CONF, function (t) {
+    client.get(sprintf(RULE_URL, RULE_UUID) + '/machines', function (err, req, res, body) {
+        t.ifError(err, 'Error');
+        t.equal(200, res.statusCode, 'Status Code');
+        t.ok(Array.isArray(body), 'isArray(machines)');
+        t.ok(body.length, 'machines length');
+        body.forEach(function (m) {
+            checkMachine(t, m);
+        });
+        t.end();
+    });
+});
+
+
+test('List Machine Rules (not empty set)', TAP_CONF, function (t) {
+    var u = '/my/machines/' + machine + '/fwrules';
+    client.get(u, function (err, req, res, body) {
+        t.ifError(err, 'Error');
+        t.equal(200, res.statusCode, 'Status Code');
+        t.ok(Array.isArray(body), 'isArray(rules)');
+        t.ok(body.length, 'rules length');
+        checkRule(t, body[0]);
+        t.end();
+    });
+});
+
+
 test('GetRule', function (t) {
     client.get(sprintf(RULE_URL, RULE_UUID), function (err, req, res, body) {
         t.ifError(err);
