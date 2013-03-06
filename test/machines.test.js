@@ -1038,7 +1038,8 @@ test('ListRules (not empty set)', TAP_CONF, function (t) {
 
 
 test('List Rule Machines (not empty set)', TAP_CONF, function (t) {
-    client.get(sprintf(RULE_URL, RULE_UUID) + '/machines', function (err, req, res, body) {
+    var p = sprintf(RULE_URL, RULE_UUID) + '/machines';
+    client.get(p, function (err, req, res, body) {
         t.ifError(err, 'Error');
         t.equal(200, res.statusCode, 'Status Code');
         t.ok(Array.isArray(body), 'isArray(machines)');
