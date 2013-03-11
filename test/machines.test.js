@@ -1225,6 +1225,16 @@ test('ListMachines exclude tombstone', TAP_CONF, function (t) {
 });
 
 
+test('Delete already deleted machine', TAP_CONF, function (t) {
+    client.del('/my/machines/' + machine, function (err, req, res) {
+        t.ok(err, 'DELETE /my/machines/ error');
+        t.equal(res.statusCode, 410, 'DELETE /my/machines/ statusCode');
+        common.checkHeaders(t, res.headers);
+        t.end();
+    });
+});
+
+
 test('teardown', TAP_CONF, function (t) {
     client.del('/my/keys/' + keyName, function (err, req, res) {
         t.ifError(err, 'delete key error');
