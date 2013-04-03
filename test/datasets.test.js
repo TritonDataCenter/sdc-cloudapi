@@ -105,7 +105,7 @@ test('ListDatasets OK', function (t) {
 
 
 test('Search datasets (7.0)', function (t) {
-    client.get('/my/datasets?os=linux', function (err, req, res, body) {
+    client.get('/my/datasets?os=plan9', function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets error');
         t.equal(res.statusCode, 200, 'GET /my/datasets status');
         common.checkHeaders(t, res.headers);
