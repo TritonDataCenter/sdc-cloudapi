@@ -64,6 +64,7 @@
     "datacenters": {
         "DATACENTER_NAME": "CLOUDAPI_EXTERNAL_URL"
     },
+    "ufds_admin_uuid": "UFDS_ADMIN_UUID",
     "plugins": [
         {
             "name": "provision_limits",
