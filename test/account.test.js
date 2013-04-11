@@ -85,8 +85,9 @@ test('GetAccount 404', function (t) {
 test('PostAccount', function (t) {
     var path = '/' + encodeURIComponent(client.testUser);
     client.post(path, {
-        cn: 'James',
+        givenName: 'James',
         sn: 'Bond',
+        cn: 'James Bond',
         company: 'liltingly, Inc.',
         address: '6165 pyrophyllite Street',
         city: 'benzoylation concoctive',
