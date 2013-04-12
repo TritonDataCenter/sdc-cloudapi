@@ -90,6 +90,7 @@ release: check build docs
 	cp -r	$(ROOT)/build \
 		$(ROOT)/etc \
 		$(ROOT)/lib \
+		$(ROOT)/plugins \
 		$(ROOT)/main.js \
 		$(ROOT)/node_modules \
 		$(ROOT)/package.json \
