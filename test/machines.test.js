@@ -286,8 +286,9 @@ test('Create machine with inactive package', function (t) {
         headers: {
             'accept-version': '~6.5'
         }
-    }, obj, function (err, req, res, body) {
-        t.ok(err, 'POST /my/machines with inactive pacakge error');
+    }, obj, function (err, req, res, body) { 
+        t.ok(err, 'POST /my/machines with inactive package error');
+        console.log('Status Code: ' + res.statusCode);
         t.equal(res.statusCode, 409);
         t.end();
     });
