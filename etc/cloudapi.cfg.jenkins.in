@@ -8,7 +8,8 @@
         "cache": {
             "size": 5000,
             "expiry": 60
-        }
+        },
+        "clientTimeout": 3000
     },
     "wfapi": {
         "url": "WFAPI_URL",

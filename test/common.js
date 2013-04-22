@@ -122,7 +122,8 @@ function setupClient(callback) {
     ufds = new UFDS({
         url: (process.env.UFDS_URL || config.ufds.url || 'ldaps://10.99.99.18'),
         bindDN: (config.ufds.bindDN || 'cn=root'),
-        bindPassword: (config.ufds.bindPassword || 'secret')
+        bindPassword: (config.ufds.bindPassword || 'secret'),
+        log: LOG
     });
 
     ufds.on('error', function (err) {
