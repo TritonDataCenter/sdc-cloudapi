@@ -93,8 +93,6 @@ rm -rf /var/tmp/cloudapitest
 mkdir -p /var/tmp/cloudapitest
 
 # Gather DC setup info for the test files.
-export SDC_SSO_ADMIN_IP=$(bash /lib/sdc/config.sh -json | json sdcsso_admin_ips | cut -d, -f1)
-echo ""
 echo "# Datacenter config:"
 echo "#     SDC_SSO_ADMIN_IP is $SDC_SSO_ADMIN_IP"
 
