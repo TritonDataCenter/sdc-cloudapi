@@ -79,7 +79,7 @@ function setupClient(callback) {
             retry: 0
         },
         log: LOG,
-        agent: false,
+        rejectUnauthorized: false,
         signRequest: requestSigner
     });
 
@@ -123,7 +123,10 @@ function setupClient(callback) {
         url: (process.env.UFDS_URL || config.ufds.url || 'ldaps://10.99.99.18'),
         bindDN: (config.ufds.bindDN || 'cn=root'),
         bindPassword: (config.ufds.bindPassword || 'secret'),
-        log: LOG
+        log: LOG,
+        tlsOptions: {
+            rejectUnauthorized: false
+        }
     });
 
     ufds.on('error', function (err) {
@@ -164,11 +167,12 @@ function setupClient(callback) {
                         client.ufds = ufds;
                         client.pkg = new Package(ufds);
                         client.teardown = function teardown(cb) {
+                            client.close();
                             client.ufds.deleteKey(client.testUser, 'id_rsa',
                                 function (er4) {
                                     client.ufds.deleteUser(client.testUser,
                                         function (err2) {
-                                            return ufds.close(function () {
+                                            ufds.close(function () {
                                                 return cb(null);
                                             });
                                         });
@@ -224,7 +228,7 @@ module.exports = {
         t.ok(headers['x-response-time'] >= 0, 'headers response time');
         t.equal(headers.server, 'Joyent SmartDataCenter 7.0.0',
                 'headers server');
-        t.equal(headers.connection, 'close', 'headers close');
+        t.equal(headers.connection, 'Keep-Alive', 'headers connection');
         t.equal(headers['x-api-version'], '7.0.0', 'headers x-api-version');
     },
 
