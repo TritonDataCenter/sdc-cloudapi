@@ -13,7 +13,7 @@
         "nopt": "2.0.0",
         "restify": "2.4.1",
         "bunyan": "0.21.1",
-        "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#77ff166726d5b1ffed76d57b895f87ec2bac843a",
+        "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#5ad97a4acfc498aa73c5927fcf7d15b3b0024285",
         "semver": "1.1.0",
         "sigyan": "0.2.0",
         "nodemailer": "0.3.29",

@@ -64,8 +64,7 @@
     },
     "node-uuid": {
       "version": "1.4.0",
-      "from": "node-uuid@1.4.0",
-      "resolved": "https://registry.npmjs.org/node-uuid/-/node-uuid-1.4.0.tgz"
+      "from": "node-uuid@1.4.0"
     },
     "nopt": {
       "version": "2.0.0",
@@ -80,6 +79,7 @@
     "restify": {
       "version": "2.4.1",
       "from": "restify@2.4.1",
+      "resolved": "https://registry.npmjs.org/restify/-/restify-2.4.1.tgz",
       "dependencies": {
         "assert-plus": {
           "version": "0.1.2",
@@ -119,7 +119,8 @@
         },
         "qs": {
           "version": "0.5.5",
-          "from": "qs@0.5.5"
+          "from": "qs@0.5.5",
+          "resolved": "https://registry.npmjs.org/qs/-/qs-0.5.5.tgz"
         },
         "semver": {
           "version": "1.1.4",
@@ -127,8 +128,7 @@
         },
         "spdy": {
           "version": "1.7.1",
-          "from": "spdy@1.7.1",
-          "resolved": "https://registry.npmjs.org/spdy/-/spdy-1.7.1.tgz"
+          "from": "spdy@1.7.1"
         },
         "verror": {
           "version": "1.3.6",
@@ -162,8 +162,8 @@
     },
     "sdc-clients": {
       "version": "8.0.0",
-      "from": "sdc-clients@git+ssh://git@git.joyent.com:node-sdc-clients.git#77ff166726d5b1ffed76d57b895f87ec2bac843a",
-      "resolved": "git+ssh://git@git.joyent.com:node-sdc-clients.git#77ff166726d5b1ffed76d57b895f87ec2bac843a",
+      "from": "sdc-clients@git+ssh://git@git.joyent.com:node-sdc-clients.git#5ad97a4acfc498aa73c5927fcf7d15b3b0024285",
+      "resolved": "git+ssh://git@git.joyent.com:node-sdc-clients.git#5ad97a4acfc498aa73c5927fcf7d15b3b0024285",
       "dependencies": {
         "ldapjs": {
           "version": "0.6.2",
@@ -246,7 +246,8 @@
         },
         "async": {
           "version": "0.1.22",
-          "from": "async@0.1.22"
+          "from": "async@0.1.22",
+          "resolved": "https://registry.npmjs.org/async/-/async-0.1.22.tgz"
         },
         "once": {
           "version": "1.1.1",
@@ -269,7 +270,6 @@
     "nodemailer": {
       "version": "0.3.29",
       "from": "nodemailer@0.3.29",
-      "resolved": "https://registry.npmjs.org/nodemailer/-/nodemailer-0.3.29.tgz",
       "dependencies": {
         "mailcomposer": {
           "version": "0.1.31",
@@ -342,8 +342,9 @@
           "version": "0.0.5"
         },
         "slide": {
-          "version": "1.1.3",
-          "from": "slide@*"
+          "version": "1.1.4",
+          "from": "slide@*",
+          "resolved": "https://registry.npmjs.org/slide/-/slide-1.1.4.tgz"
         },
         "runforcover": {
           "version": "0.0.2",
