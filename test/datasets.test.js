@@ -103,6 +103,22 @@ test('ListDatasets OK', function (t) {
     });
 });
 
+// PUBAPI-549
+test('ListImages OK', function (t) {
+    client.get('/my/images', function (err, req, res, body) {
+        t.ifError(err, 'GET /my/images error');
+        t.equal(res.statusCode, 200, 'GET /my/images status');
+        common.checkHeaders(t, res.headers);
+        t.ok(body, 'GET /my/images body');
+        t.ok(Array.isArray(body), 'GET /my/images body is an array');
+        t.ok(body.length, 'GET /my/images body array has elements');
+        body.forEach(function (d) {
+            checkDataset(t, d, '7.0.0');
+        });
+        t.end();
+    });
+});
+
 
 test('Search datasets (7.0)', function (t) {
     client.get('/my/datasets?os=plan9', function (err, req, res, body) {
