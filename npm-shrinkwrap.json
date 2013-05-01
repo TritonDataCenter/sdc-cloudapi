@@ -69,6 +69,7 @@
     "nopt": {
       "version": "2.0.0",
       "from": "nopt@2.0.0",
+      "resolved": "https://registry.npmjs.org/nopt/-/nopt-2.0.0.tgz",
       "dependencies": {
         "abbrev": {
           "version": "1.0.4",
@@ -79,7 +80,6 @@
     "restify": {
       "version": "2.4.1",
       "from": "restify@2.4.1",
-      "resolved": "https://registry.npmjs.org/restify/-/restify-2.4.1.tgz",
       "dependencies": {
         "assert-plus": {
           "version": "0.1.2",
@@ -119,8 +119,7 @@
         },
         "qs": {
           "version": "0.5.5",
-          "from": "qs@0.5.5",
-          "resolved": "https://registry.npmjs.org/qs/-/qs-0.5.5.tgz"
+          "from": "qs@0.5.5"
         },
         "semver": {
           "version": "1.1.4",
@@ -162,13 +161,13 @@
     },
     "sdc-clients": {
       "version": "8.0.0",
-      "from": "sdc-clients@git+ssh://git@git.joyent.com:node-sdc-clients.git#5ad97a4acfc498aa73c5927fcf7d15b3b0024285",
-      "resolved": "git+ssh://git@git.joyent.com:node-sdc-clients.git#5ad97a4acfc498aa73c5927fcf7d15b3b0024285",
+      "from": "sdc-clients@git+ssh://git@git.joyent.com:node-sdc-clients.git#9867c4de83edd828afa6cbef904bc7bbcd980d5e",
+      "resolved": "git+ssh://git@git.joyent.com:node-sdc-clients.git#9867c4de83edd828afa6cbef904bc7bbcd980d5e",
       "dependencies": {
         "ldapjs": {
-          "version": "0.6.2",
-          "from": "ldapjs@git://github.com/mcavage/node-ldapjs.git#7f330812",
-          "resolved": "git://github.com/mcavage/node-ldapjs.git#7f330812407eda04df8b7b0acc193ecff0e28653",
+          "version": "0.6.3",
+          "from": "ldapjs@0.6.3",
+          "resolved": "https://registry.npmjs.org/ldapjs/-/ldapjs-0.6.3.tgz",
           "dependencies": {
             "asn1": {
               "version": "0.1.11",
@@ -178,20 +177,6 @@
               "version": "1.1.0",
               "from": "buffertools@1.1.0"
             },
-            "bunyan": {
-              "version": "0.18.2",
-              "from": "bunyan@0.18.2",
-              "dependencies": {
-                "dtrace-provider": {
-                  "version": "0.2.7",
-                  "from": "dtrace-provider@0.2.7"
-                },
-                "mv": {
-                  "version": "0.0.4",
-                  "from": "mv@0.0.4"
-                }
-              }
-            },
             "dtrace-provider": {
               "version": "0.2.8",
               "from": "dtrace-provider@0.2.8"
@@ -199,6 +184,7 @@
             "nopt": {
               "version": "2.1.1",
               "from": "nopt@2.1.1",
+              "resolved": "https://registry.npmjs.org/nopt/-/nopt-2.1.1.tgz",
               "dependencies": {
                 "abbrev": {
                   "version": "1.0.4",
@@ -207,8 +193,8 @@
               }
             },
             "pooling": {
-              "version": "0.4.1",
-              "from": "pooling@0.4.1"
+              "version": "0.4.4",
+              "from": "pooling@0.4.4"
             }
           }
         },
@@ -343,8 +329,7 @@
         },
         "slide": {
           "version": "1.1.4",
-          "from": "slide@*",
-          "resolved": "https://registry.npmjs.org/slide/-/slide-1.1.4.tgz"
+          "from": "slide@*"
         },
         "runforcover": {
           "version": "0.0.2",
