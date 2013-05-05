@@ -187,6 +187,7 @@ test('teardown', function (t) {
     client.teardown(function (err) {
         t.ifError(err, 'client teardown error');
         if (!process.env.SDC_SETUP_TESTS) {
+            server._clients.ufds.client.removeAllListeners('close');
             server.close(function () {
                 t.end();
             });

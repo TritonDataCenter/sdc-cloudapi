@@ -166,6 +166,7 @@ test('teardown', function (t) {
                     server._clients[c].client.close();
                     }
             });
+            server._clients.ufds.client.removeAllListeners('close');
             server.close(function () {
                 t.end();
             });

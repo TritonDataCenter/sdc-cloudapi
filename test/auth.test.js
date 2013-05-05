@@ -167,6 +167,7 @@ test('teardown', { timeout: 'Infinity' }, function (t) {
     return nuke(function (er2) {
         t.ifError(er2, 'nuke tests error');
         if (!process.env.SDC_SETUP_TESTS) {
+            server._clients.ufds.client.removeAllListeners('close');
             server.close(function () {
                 t.end();
             });

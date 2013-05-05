@@ -73,7 +73,7 @@ function checkMachine(t, m) {
     t.ok(m.name, 'checkMachine name ok');
     t.ok(m.type, 'checkMachine type ok');
     t.ok(m.state, 'checkMachine state ok');
-    t.ok(m.dataset, 'checkMachine dataset ok');
+    t.ok((m.dataset || m.image), 'checkMachine dataset ok');
     t.ok(m.ips, 'checkMachine ips ok');
     t.ok(m.memory, 'checkMachine memory ok');
     t.ok(m.metadata, 'checkMachine metadata ok');
@@ -1235,6 +1235,121 @@ test('Delete already deleted machine', TAP_CONF, function (t) {
     });
 });
 
+var LINUX_DS = false;
+var KVM_MACHINE = false;
+
+test('KVM dataset', function (t) {
+    client.get('/my/images?os=linux', function (er1, req1, res1, body1) {
+        t.ifError(er1, 'GET /my/images error');
+        t.equal(res1.statusCode, 200, 'GET /my/images status');
+        common.checkHeaders(t, res1.headers);
+        t.ok(body1, 'GET /my/images body');
+        t.ok(Array.isArray(body1), 'GET /my/images body is an array');
+        // Do nothing if we haven't got a Linux image already imported
+        if (body1.length === 0) {
+            console.log('No KVM images imported, skipping KVM provisioning');
+        } else {
+            LINUX_DS = body1[0].id;
+        }
+        t.end();
+    });
+});
+
+
+test('Create KVM machine (7.0)', TAP_CONF, function (t) {
+    if (LINUX_DS) {
+        var obj = {
+            image: LINUX_DS,
+            'package': 'sdc_128',
+            name: 'a' + uuid().substr(0, 7),
+            server_uuid: HEADNODE.uuid
+        };
+        client.post({
+            path: '/my/machines',
+            headers: {
+                'accept-version': '~7.0'
+            }
+        }, obj, function (err, req, res, body) {
+            t.ifError(err, 'POST /my/machines error');
+            t.equal(res.statusCode, 201, 'POST /my/machines status');
+            common.checkHeaders(t, res.headers);
+            t.equal(res.headers.location,
+                util.format('/%s/machines/%s', client.testUser, body.id));
+            t.ok(body, 'POST /my/machines body');
+            checkMachine(t, body);
+            KVM_MACHINE = body.id;
+            // Handy to output this to stdout in order to poke around COAL:
+            console.log('Requested provision of KVM machine: %s', KVM_MACHINE);
+            t.end();
+        });
+    } else {
+        t.end();
+    }
+});
+
+
+
+test('Wait For KVM machine Running', TAP_CONF,  function (t) {
+    if (KVM_MACHINE) {
+        client.vmapi.listJobs({
+            vm_uuid: KVM_MACHINE,
+            task: 'provision'
+        }, function (err, jobs) {
+            if (err) {
+                KVM_MACHINE = false;
+            }
+            t.ifError(err, 'list jobs error');
+            t.ok(jobs, 'list jobs ok');
+            t.ok(jobs.length, 'list jobs is an array');
+            waitForJob(jobs[0].uuid, function (err2) {
+                if (err2) {
+                    KVM_MACHINE = false;
+                }
+                t.ifError(err2, 'Check state error');
+                t.end();
+            });
+        });
+    } else {
+        t.end();
+    }
+});
+
+
+
+test('Delete KVM machine (7.0)', function (t) {
+    if (KVM_MACHINE) {
+        client.del('/my/machines/' + KVM_MACHINE, function (err, req, res) {
+            t.ifError(err, 'DELETE /my/machines error');
+            t.equal(res.statusCode, 204, 'DELETE /my/machines status');
+            common.checkHeaders(t, res.headers);
+            t.end();
+        });
+    } else {
+        t.end();
+    }
+});
+
+
+test('Wait For KVM machine Destroyed', TAP_CONF,  function (t) {
+    if (KVM_MACHINE) {
+        client.vmapi.listJobs({
+            vm_uuid: KVM_MACHINE,
+            task: 'destroy'
+        }, function (err, jobs) {
+            t.ifError(err, 'list jobs error');
+            t.ok(jobs);
+            t.ok(jobs.length);
+            waitForJob(jobs[0].uuid, function (err2) {
+                t.ifError(err2, 'Check state error');
+                t.end();
+            });
+        });
+    } else {
+        t.end();
+    }
+});
+
+
 
 test('teardown', TAP_CONF, function (t) {
     client.del('/my/keys/' + keyName, function (err, req, res) {
@@ -1252,6 +1367,7 @@ test('teardown', TAP_CONF, function (t) {
                         server._clients[c].client.close();
                         }
                 });
+                server._clients.ufds.client.removeAllListeners('close');
                 server.close(function () {
                     t.end();
                 });
