@@ -166,7 +166,7 @@ function setupClient(callback) {
                         privateKey = d;
                         client.ufds = ufds;
                         client.pkg = new Package(ufds);
-                        client.teardown = function teardown(cb) { 
+                        client.teardown = function teardown(cb) {
                             client.close();
                             client.ufds.deleteKey(client.testUser, 'id_rsa',
                                 function (er4) {
