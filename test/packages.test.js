@@ -11,6 +11,25 @@ var common = require('./common');
 
 var client, server, THE_PACKAGE;
 
+// May or not be created by previous test run or whatever else:
+var sdc_512_ownership = {
+    name: 'sdc_512_ownership',
+    version: '1.0.0',
+    max_physical_memory: 512,
+    quota: 10240,
+    max_swap: 1024,
+    cpu_cap: 150,
+    max_lwps: 1000,
+    zfs_io_priority: 10,
+    'default': false,
+    vcpus: 1,
+    urn: 'sdc:' + uuid() + ':sdc_512_ownership:1.0.0',
+    active: true,
+    owner_uuid: uuid()
+};
+
+
+var sdc_512_ownership_entry;
 
 
 ///--- Helpers
@@ -52,7 +71,28 @@ test('setup', function (t) {
             t.ok(_server);
         }
         server = _server;
-        t.end();
+
+        client.pkg.get(sdc_512_ownership.urn, function (err4, pkg) {
+            if (err4) {
+                if (err4.restCode === 'ResourceNotFound') {
+                    client.pkg.add(sdc_512_ownership,
+                        function (err5, pkg2) {
+                            t.ifError(err5,
+                                'Error creating package');
+                            t.ok(pkg2, 'Package created OK');
+                            sdc_512_ownership_entry = pkg2;
+                            t.end();
+                        });
+                } else {
+                    t.ifError(err4, 'Error fetching package');
+                    t.end();
+                }
+
+            } else {
+                sdc_512_ownership_entry = pkg;
+                t.end();
+            }
+        });
     });
 });
 
@@ -72,6 +112,7 @@ test('ListPackages OK (6.5)', function (t) {
         t.ok(body.length);
         body.forEach(function (p) {
             checkPackage_6_5(t, p);
+            t.ok(p.id !== sdc_512_ownership_entry.uuid);
         });
         t.end();
     });
@@ -110,6 +151,7 @@ test('ListPackages OK (7.0)', function (t) {
         t.ok(body.length);
         body.forEach(function (p) {
             checkPackage_7(t, p);
+            t.ok(p.id !== sdc_512_ownership_entry.uuid);
         });
         t.end();
     });
@@ -187,6 +229,13 @@ test('teardown', function (t) {
     client.teardown(function (err) {
         t.ifError(err, 'client teardown error');
         if (!process.env.SDC_SETUP_TESTS) {
+            Object.keys(server._clients).forEach(function (c) {
+                if (typeof (server._clients[c].client) !== 'undefined' &&
+                    typeof (server._clients[c].client.close) ===
+                        'function') {
+                    server._clients[c].client.close();
+                    }
+            });
             server._clients.ufds.client.removeAllListeners('close');
             server.close(function () {
                 t.end();
