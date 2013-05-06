@@ -331,6 +331,28 @@ test('Create machine with invalid network', function (t) {
     });
 });
 
+// PUBAPI-567: Verify it has been fixed as side effect of PUBAPI-566
+test('Create machine with invalid package', function (t) {
+    var obj = {
+        dataset: DATASET,
+        'package': uuid().substr(0, 7),
+        name: 'a' + uuid().substr(0, 7),
+        server_uuid: HEADNODE.uuid
+    };
+
+    client.post({
+        path: '/my/machines',
+        headers: {
+            'accept-version': '~7.0'
+        }
+    }, obj, function (err, req, res, body) {
+        t.ok(err, 'POST /my/machines with invalid package error');
+        console.log('Status Code: ' + res.statusCode);
+        t.equal(res.statusCode, 409);
+        t.end();
+    });
+});
+
 
 test('CreateMachine (7.0) w/o dataset fails', TAP_CONF, function (t) {
     var obj = {
