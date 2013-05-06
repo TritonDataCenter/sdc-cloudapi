@@ -294,6 +294,43 @@ test('Create machine with inactive package', function (t) {
     });
 });
 
+var DATASET;
+
+test('get smartos dataset', function (t) {
+    client.get('/my/datasets?os=smartos', function (err, req, res, body) {
+        t.ifError(err, 'GET /my/datasets error');
+        t.equal(res.statusCode, 200, 'GET /my/datasets status');
+        common.checkHeaders(t, res.headers);
+        t.ok(body, 'GET /my/datasets body');
+        t.ok(Array.isArray(body), 'GET /my/datasets body is an array');
+        t.ok(body.length, 'GET /my/datasets body array has elements');
+        DATASET = body[0].id;
+        t.end();
+    });
+});
+
+test('Create machine with invalid network', function (t) {
+    var obj = {
+        dataset: DATASET,
+        'package': sdc_256_entry,
+        name: 'a' + uuid().substr(0, 7),
+        server_uuid: HEADNODE.uuid,
+        networks: [uuid()]
+    };
+
+    client.post({
+        path: '/my/machines',
+        headers: {
+            'accept-version': '~7.0'
+        }
+    }, obj, function (err, req, res, body) {
+        t.ok(err, 'POST /my/machines with invalid network error');
+        console.log('Status Code: ' + res.statusCode);
+        t.equal(res.statusCode, 409);
+        t.end();
+    });
+});
+
 
 test('CreateMachine (7.0) w/o dataset fails', TAP_CONF, function (t) {
     var obj = {
