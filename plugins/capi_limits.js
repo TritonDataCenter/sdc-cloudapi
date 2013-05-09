@@ -63,7 +63,7 @@ module.exports = {
                 req.limits = limits;
                 req.limit = cfg.defaults[req.dataset.name] || 0;
                 for (var i = 0; i < limits.length; i++) {
-                    if (limits[i].data_center !== cfg.datacenter) {
+                    if (limits[i].datacenter !== cfg.datacenter) {
                         continue;
                     }
 
