@@ -92,7 +92,8 @@ module.exports = {
                 // by dataset name, since that's not added at all to our VMs
                 // representation on VMAPI, neither to vmadm itself.
                 var params = {
-                    owner_uuid: req.account.uuid
+                    owner_uuid: req.account.uuid,
+                    state: 'active'
                 };
 
                 return req.sdc.vmapi.countVms(params, function (err2, count) {
