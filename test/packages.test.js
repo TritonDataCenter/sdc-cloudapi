@@ -173,7 +173,7 @@ test('search packages (7.0)', function (t) {
         t.ok(body.length);
         body.forEach(function (p) {
             checkPackage_7(t, p);
-            t.equal('128', p.memory);
+            t.equal(128, p.memory);
         });
         t.end();
     });
