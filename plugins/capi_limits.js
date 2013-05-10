@@ -67,15 +67,16 @@ module.exports = {
                         continue;
                     }
 
-                    if (limits[i].type === req.dataset.name) {
-                        req.limit = parseInt(limits[i].value, 10);
+                    if (limits[i][req.dataset.name]) {
+                        req.limit = parseInt(limits[i][req.dataset.name], 10);
                         break;
                     }
                 }
 
-                log.debug({
+                log.info({
                     dataset: req.dataset.name,
-                    limit: req.limit
+                    limit: req.limit,
+                    limits: req.limits,
                 }, 'capi_limits: dataset limits');
 
                 if (req.limit < 0) {
