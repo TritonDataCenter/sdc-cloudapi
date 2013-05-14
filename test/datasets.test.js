@@ -1,4 +1,4 @@
-// Copyright 2012 Joyent, Inc.  All rights reserved.
+// Copyright 2013 Joyent, Inc.  All rights reserved.
 
 var test = require('tap').test;
 var uuid = require('node-uuid');
@@ -26,8 +26,10 @@ function checkDataset(t, dataset, version) {
 
     if (/6\.5/.test(version)) {
         t.ok(dataset.urn, 'dataset.urn');
+        t.notEqual(typeof (dataset['default']), 'undefined', 'dataset.default');
     } else {
         t.equal(typeof (dataset.urn), 'undefined', 'dataset.urn');
+        t.equal(typeof (dataset['default']), 'undefined', 'dataset.default');
     }
 }
 
