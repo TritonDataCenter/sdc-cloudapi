@@ -430,7 +430,7 @@ test('Get Machine Include Credentials', function (t) {
         checkMachine(t, body);
         t.equal(typeof (body.metadata.credentials), 'object');
         Object.keys(META_CREDS).forEach(function (k) {
-            t.equal(body.metadata.credentials[k + '_pw'], META_CREDS[k]);
+            t.equal(body.metadata.credentials[k], META_CREDS[k]);
         });
         t.end();
     });
@@ -758,62 +758,6 @@ test('ListMetadata', TAP_CONF, function (t) {
         t.ok(body[META_KEY]);
         t.equal(body[META_KEY], META_VAL);
         t.equal(typeof (body.credentials), 'undefined');
-        t.end();
-    });
-});
-
-
-test('AddMetadataCredentials', TAP_CONF, function (t) {
-    var path = '/my/machines/' + machine + '/metadata',
-    meta = {};
-    meta.credentials = JSON.stringify(META_CREDS_TWO);
-    client.post(path, meta, function (err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
-        common.checkHeaders(t, res.headers);
-        t.ok(body);
-        t.equal(typeof (body.credentials), 'undefined');
-        t.end();
-    });
-});
-
-
-test('Wait For Credentials Job', TAP_CONF,  function (t) {
-    client.vmapi.listJobs({
-        vm_uuid: machine,
-        task: 'update'
-    }, function (err, jobs) {
-        t.ifError(err, 'list jobs error');
-        t.ok(jobs, 'list jobs OK');
-        t.ok(jobs.length, 'update jobs is array');
-        var cred_jobs = jobs.filter(function (job) {
-            return (
-                typeof (job.params.set_customer_metadata) !==
-                'undefined' &&
-                typeof (job.params.set_customer_metadata.credentials) !==
-                'undefined');
-        });
-        t.ok(cred_jobs.length, 'credentials jobs is an array');
-        waitForJob(cred_jobs[0].uuid, function (err2) {
-            t.ifError(err2, 'Check state error');
-            t.end();
-        });
-    });
-});
-
-
-test('Get Machine Include Credentials', function (t) {
-    var url = '/my/machines/' + machine + '?credentials=true';
-    client.get(url, function (err, req, res, body) {
-        t.ifError(err, 'GET /my/machines/:id error');
-        t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/machines/:id body');
-        checkMachine(t, body);
-        t.equal(typeof (body.metadata.credentials), 'object');
-        //Object.keys(META_CREDS_TWO).forEach(function (k) {
-        //    t.equal(body.metadata.credentials[k + '_pw'], META_CREDS_TWO[k]);
-        //});
         t.end();
     });
 });
