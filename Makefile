@@ -88,6 +88,7 @@ release: check build docs
 	@mkdir -p $(TMPDIR)/root
 	@mkdir -p $(tmpdir)/root/opt/smartdc/cloudapi/ssl
 	cp -r	$(ROOT)/build \
+		$(ROOT)/bin \
 		$(ROOT)/etc \
 		$(ROOT)/lib \
 		$(ROOT)/plugins \
