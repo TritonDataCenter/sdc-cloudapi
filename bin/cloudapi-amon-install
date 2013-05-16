@@ -149,13 +149,13 @@ putprobe $account "{
 putprobe $account "{
     \"skipauthz\": true,
     \"group\": \"$group_uuid\",
-    \"name\": \"duplicate UUID detected\",
+    \"name\": \"cloudapi service stopping\",
     \"type\": \"bunyan-log-scan\",
     \"agent\": \"$zonename\",
     \"config\": {
         \"smfServiceName\": \"cloudapi\",
         \"match\": {
-            \"pattern\": \"Found duplicate VM UUIDs\"
+            \"pattern\": \"Executing stop method\"
         }
     }
 }"
@@ -164,7 +164,7 @@ putprobe $account "{
 putprobe $account "{
     \"skipauthz\": true,
     \"group\": \"$group_uuid\",
-    \"name\": \"root dataset running low on space\",
+    \"name\": \"cloudapi root dataset running low on space\",
     \"type\": \"disk-usage\",
     \"agent\": \"$zonename\",
     \"config\": {
