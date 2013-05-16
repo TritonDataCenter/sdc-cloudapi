@@ -139,6 +139,13 @@ outside world, if any.
 
 # Testing
 
+Before testing, you need to import smartos-1.6.3 dataset as follows from the
+headnode:
+
+    /opt/smartdc/bin/sdc-imgadm import \
+    -m /usbkey/datasets/smartos-1.6.3.dsmanifest \
+    -f /usbkey/datasets/smartos-1.6.3.zfs.bz2
+
     make test
 
 or, individually:
