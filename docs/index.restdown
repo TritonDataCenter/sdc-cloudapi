@@ -167,9 +167,7 @@ can retrieve the status of your SmartMachine like:
         "type": "smartmachine",
         "state": "running",
         "dataset": "standard-1.0.7",
-        "ips": [
-          "10.88.88.50"
-        ],
+        "ips": [],
         "memory": 128,
         "disk": 5120,
         "metadata": {},
@@ -1786,16 +1784,22 @@ and/or dataset, you'll get the datacenter defaults for each.  If you do not
 specify a name, CloudAPI will generate a random one for you.  Your machine
 will initially be not available for login (SmartDataCenter must provision and
 boot it).  You can poll [GetMachine](#GetMachine) for status.  When the `state`
-field is equal to `running`, you can login.
+field is equal to `running`, you can log in.
+
+> **NOTE:**<br />
+CreateMachine no longer returns IP addresses as of SDC 7.0. To obtain the IP
+address of a newly-provisioned machine, poll [ListMachines](#ListMachines) or
+[GetMachine](#GetMachine) until the machine state is `running` or a failure. 
+
 
 With regards to login, if the machine is of type `smartmachine`, you can use any
 of the SSH keys managed under the keys section of CloudAPI to login, as any
 POSIX user on the OS.  You can add/remove them over time, and the machine will
 automatically work with that set.
 
-If the the machine is a virtualmachine, and of a UNIX-derived OS (e.g. Linux),
+If the the machine is a `virtualmachine`, and of a UNIX-derived OS (e.g. Linux),
 you *must* have keys uploaded before provisioning; that entire set of keys will
-be written out to /root/.ssh/authorized_keys, and you can ssh in using one of
+be written out to `/root/.ssh/authorized_keys`, and you can ssh in using one of
 those.  Changing the keys over time under your account will not affect the
 running virtual machine in any way; those keys are statically written at
 provisioning-time only, and you will need to manually manage them.
@@ -1886,9 +1890,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       "dataset": nodejs-1.1.4",
       "memory": 128,
       "disk": 5120,
-      "ips": [
-        "10.88.88.51"
-      ],
+      "ips": [],
       "metadata": {},
       "created": "2011-06-03T00:02:31+00:00",
       "updated": "2011-06-03T00:02:31+00:00",
@@ -2073,8 +2075,6 @@ This operation is not supported on virtual machines before version 7.0.
 
 Starting with version 7.0, virtual machines can also be resized but,
 **only resizing virtual machines to a higher capacity package is supported**.
-
-
 
 You must additionally include a new package name, as you can only resize a
 machine to another package.
@@ -4485,7 +4485,7 @@ Since version 7.0 of this API, `failed` is used to signify a failed provision.
 
 ## Polling machine state
 
-As suggested into [CreateMachine](#CreateMachine), you can poll a machine state
+As suggested in [CreateMachine](#CreateMachine), you can poll a machine state
 to check when that machine provisioning has either successfully finished or
 failed. Consider the following code using [node.js SDK](https://github.com/joyent/node-smartdc):
 
