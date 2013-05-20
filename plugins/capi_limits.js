@@ -76,6 +76,8 @@ module.exports = {
                 log.info({
                     dataset: req.dataset.name,
                     limit: req.limit,
+                    owner_uuid: req.account.uuid,
+                    params: req.params,
                     limits: req.limits,
                 }, 'capi_limits: dataset limits');
 
