@@ -129,13 +129,16 @@ datasets_test: $(TAP)
 keys_test: $(TAP)
 	$(TAP) --tap --timeout 120 test/keys.test.js
 
+networks_test: $(TAP)
+	$(TAP) --tap --timeout 120 test/networks.test.js
+
 machines_test: $(TAP)
 	$(TAP) --tap --timeout 480 test/machines.test.js
 
 packages_test: $(TAP)
 	$(TAP) --tap --timeout 120 test/packages.test.js
 
-test: auth_test account_test datacenters_test datasets_test keys_test machines_test packages_test
+test: auth_test account_test datacenters_test datasets_test keys_test networks_test machines_test packages_test
 
 include ./tools/mk/Makefile.deps
 ifeq ($(shell uname -s),SunOS)
