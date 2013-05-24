@@ -23,12 +23,11 @@ function checkDataset(t, dataset, version) {
     t.ok(dataset.version, 'dataset.version');
     t.ok(dataset.type, 'dataset.type');
     t.ok(dataset.requirements, 'dataset.requirements');
+    t.ok(dataset.urn, 'dataset.urn');
 
     if (/6\.5/.test(version)) {
-        t.ok(dataset.urn, 'dataset.urn');
         t.notEqual(typeof (dataset['default']), 'undefined', 'dataset.default');
     } else {
-        t.equal(typeof (dataset.urn), 'undefined', 'dataset.urn');
         t.equal(typeof (dataset['default']), 'undefined', 'dataset.default');
     }
 }
