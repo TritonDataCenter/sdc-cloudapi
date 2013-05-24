@@ -11,7 +11,7 @@ var common = require('./common');
 
 var client, server;
 var DATASET_UUID = null;
-
+var DATASET = null;
 
 // --- Helpers
 
@@ -68,6 +68,7 @@ test('ListDatasets OK (6.5)', function (t) {
             checkDataset(t, d, '6.5.0');
         });
         DATASET_UUID = body[0].id;
+        DATASET = body[0];
         t.end();
     });
 });
@@ -144,6 +145,20 @@ test('GetDataset OK', function (t) {
         checkDataset(t, body, '7.0.0');
         t.end();
     });
+});
+
+
+test('Get Image By URN OK', function (t) {
+    client.get('/my/images/' + encodeURIComponent(DATASET.urn),
+        function (err, req, res, body) {
+            t.ifError(err, 'GET /my/images/' + DATASET.urn + ' error');
+            t.equal(res.statusCode, 200, 'GET /my/images/' + DATASET.urn +
+                ' status');
+            common.checkHeaders(t, res.headers);
+            t.ok(body, 'GET /my/images/' + DATASET.urn + ' body');
+            checkDataset(t, body, '7.0.0');
+            t.end();
+        });
 });
 
 
