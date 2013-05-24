@@ -9,7 +9,7 @@ markdown2extras: wiki-tables, code-friendly
 
 This is the reference documentation for the CloudAPI that is part of Joyent's
 SmartDataCenter 6.5 & 7.0 product. This guide provides descriptions of the APIs
-available, as well as supporting information such as how to use the SDK(s), 
+available, as well as supporting information such as how to use the SDK(s),
 command line interface (CLI),
 and where to find more information.
 
@@ -136,7 +136,7 @@ to type them for each request:
 ||--keyId<br/>-k||Fingerprint of the key to use for signing||SDC\_KEY\_ID||
 ||--url<br/>-u||URL of the CloudAPI endpoint||SDC\_URL||
 
-Note that you can use the short form of flags as well. For instance, you 
+Note that you can use the short form of flags as well. For instance, you
 can use the `-a` or the `--account` flag.
 
 
@@ -1072,7 +1072,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 # Datasets
 
-A [dataset](#dataset-description) is the image of the software on your machine. It contains the software packages that will be available on newly provisioned machines. In the case of virtual machines, the dataset also includes the operating system. 
+A [dataset](#dataset-description) is the image of the software on your machine. It contains the software packages that will be available on newly provisioned machines. In the case of virtual machines, the dataset also includes the operating system.
 
 Please, note that starting with *version 7.0* of CloudAPI datasets are not
 supported, and their usage should be replaced with [images](#image-description).
@@ -1222,7 +1222,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 # Images
 
-An [image](#image-description) contains the software packages that will be available on newly provisioned machines. In the case of virtual machines, the dataset also includes the operating system. 
+An [image](#image-description) contains the software packages that will be available on newly provisioned machines. In the case of virtual machines, the dataset also includes the operating system.
 
 ## ListImages (GET /:login/images)
 
@@ -1586,7 +1586,7 @@ retrieve the number of machines.
 
 Also, **starting with 7.0 version of CloudAPI**, if the special input `tags=*` is
 provided, any other input will be completely ignored and the response will
-return all the machines with any tag. 
+return all the machines with any tag.
 
 ### Returns
 
@@ -1789,7 +1789,7 @@ field is equal to `running`, you can log in.
 > **NOTE:**<br />
 CreateMachine no longer returns IP addresses as of SDC 7.0. To obtain the IP
 address of a newly-provisioned machine, poll [ListMachines](#ListMachines) or
-[GetMachine](#GetMachine) until the machine state is `running` or a failure. 
+[GetMachine](#GetMachine) until the machine state is `running` or a failure.
 
 
 With regards to login, if the machine is of type `smartmachine`, you can use any
@@ -1826,7 +1826,8 @@ object.
 
 ||name||String||friendly name for this machine; default is a randomly generated name||
 ||package||String||Name of the package to use on provisioning; default is indicated in ListPackages||
-||dataset||String||dataset URN; default is indicated in ListDatasets||
+||image||String||(Added in SDC 7.0.) The image UUID (the "id" field in [ListImages](#ListImages)) or URN (the "urn" field; not all images have a URN field because it is deprecated in SDC 7). In SDC 6.5 this may also be the image "name". If multiple images have that same name, the latest by "version" (semver semantics) is selected. This defaults per the `"default": true` image in ListImages.||
+||dataset||String||(Deprecated in SDC 7.0.) Backward compatible alternative to 'image' field.||
 ||networks||Array||desired networks ids, obtained from ListNetworks||
 ||metadata.$name||String||An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata."||
 ||tag.$name||String||An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag."||
@@ -2274,8 +2275,8 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ sdc-startmachinefromsnapshot -n just-booted 5e42cd1e-34bb-402f-8796-bf5a2cae47db 
-    
+    $ sdc-startmachinefromsnapshot -n just-booted 5e42cd1e-34bb-402f-8796-bf5a2cae47db
+
 ### Example Request
 
     POST /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/snapshots/just-booted HTTP/1.1
@@ -4696,7 +4697,7 @@ example from previous section, this is how we could check for a reboot:
                 return cb(action + ' failed');
             }
             return cb(null, true);
-            
+
 
         }, true);
     }

@@ -1,0 +1,44 @@
+#!/bin/bash
+#
+# Rsync the cloudapi build in this working copy to the install on the given
+# HN. If there are multiple cloudapi instances and/or the instance isn't
+# on the HN, this'll fail.
+#
+
+#set -o xtrace
+set -o errexit
+
+TOP=$(cd $(dirname $0)/../; pwd)
+NODE=$1
+
+if [[ -z "$CLOUDAPI_ZONE" ]]; then
+    CLOUDAPI_ZONE=$(ssh $NODE "/opt/smartdc/bin/sdc-vmapi /vms" 2>/dev/null \
+        | json -H -c 'this.tags && this.tags.smartdc_role === "cloudapi"' \
+            -c 'this.state === "running"' 0.uuid)
+fi
+echo "CLOUDAPI_ZONE: $CLOUDAPI_ZONE"
+
+extraOpts=
+if [[ $(uname -s) != "SunOS" ]]; then
+    extraOpts="--exclude *.node --exclude build"
+else
+    # Clean node_modules everytime.
+    ssh $NODE rm -rf /zones/$CLOUDAPI_ZONE/root/opt/smartdc/cloudapi/node_modules
+fi
+
+rsync -av ${TOP}/ \
+    $NODE:/zones/$CLOUDAPI_ZONE/root/opt/smartdc/cloudapi/ \
+    $extraOpts \
+    --exclude .git/ \
+    --exclude /etc/ \
+    --exclude /deps/ \
+    --exclude /doc/ \
+    --exclude /tools/ \
+    --exclude /tmp/
+
+state=$(ssh ${NODE} svcs -z ${CLOUDAPI_ZONE} -H -o state cloudapi)
+if [[ "$state" == "maintenance" ]]; then
+    ssh ${NODE} svcadm -z ${CLOUDAPI_ZONE} clear cloudapi
+else
+    ssh ${NODE} svcadm -z ${CLOUDAPI_ZONE} restart cloudapi
+fi
