@@ -1,7 +1,7 @@
 ---
 title: Joyent CloudAPI
 mediaroot: ./media
-apisections: Account, Keys, Datacenters, Datasets, Images, Packages, Machines, Analytics, FirewallRules
+apisections: Account, Keys, Datacenters, Datasets, Images, Packages, Machines, Analytics, FirewallRules, Networks
 markdown2extras: wiki-tables, code-friendly
 ---
 
@@ -1827,6 +1827,7 @@ object.
 ||name||String||friendly name for this machine; default is a randomly generated name||
 ||package||String||Name of the package to use on provisioning; default is indicated in ListPackages||
 ||dataset||String||dataset URN; default is indicated in ListDatasets||
+||networks||Array||desired networks ids, obtained from ListNetworks||
 ||metadata.$name||String||An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata."||
 ||tag.$name||String||An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag."||
 
@@ -4434,6 +4435,136 @@ Will return the collection of machines affected by the firewall rule given by
 `:id`. The output will be exactly the same than for [List Machines](#ListMachines).
 
 
+# Networks
+
+Starting with *SDC 7.0* it's possible to get the details for public and
+customer especific networks through Cloud API.
+
+## ListNetworks (GET /:login/networks)
+
+List all the networks which can be used by the given account
+
+### Inputs
+
+* None
+
+### Returns
+
+An array of network objects. Networks are:
+
+||**Field**||**Type**||**Description**||
+||id||String||Unique identifier for this network||
+||name||String||The network name||
+||public||Boolean||Is this a public or private (rfc1918) network||
+||description||String||Optional description for this network, when name is not enough||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+### CLI
+
+    $ sdc-listnetworks
+
+#### Example Request
+
+    GET /login/networks HTTP/1.1
+    authorization: Signature keyId="...
+    accept: application/json
+    accept-version: ~7.0
+    host: api.example.com
+    connection: keep-alive
+
+#### Example Response
+
+    HTTP/1.1 200 OK
+    content-type: application/json
+    content-length: 158
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET, HEAD
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    connection: Keep-Alive
+    content-md5: v6s92rl/nTS2Ts5CNDcgQw==
+    server: Joyent SmartDataCenter 7.0.0
+    api-version: 7.0.0
+    request-id: 35147710-7f49-11e2-8585-bd5fc323c72c
+    response-time: 134
+    x-request-id: 35147710-7f49-11e2-8585-bd5fc323c72c
+    x-api-version: 7.0.0
+    x-response-time: 134
+
+    [
+      {
+        "id": "daeb93a2-532e-4bd4-8788-b6b30f10ac17",
+        "name": "external",
+        "public": true
+      }
+    ]
+
+## GetNetwork (GET /:login/networks/:id)
+
+Retrieves an individual network record.
+
+### Inputs
+
+* None
+
+### Returns
+
+||**Field**||**Type**||**Description**||
+||id||String||Unique identifier for this network||
+||name||String||The network name||
+||public||Boolean||Is this a public or private (rfc1918) network||
+||description||String||Optional description for this network, when name is not enough||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login or the network with the given :id does not exist||
+
+### CLI
+
+    $ sdc-getnetwork networkid
+
+#### Example Request
+
+    GET /login/networks/daeb93a2-532e-4bd4-8788-b6b30f10ac17 HTTP/1.1
+    authorization: Signature keyId="...
+    accept: application/json
+    accept-version: ~7.0
+    host: api.example.com
+
+
+#### Example Response
+
+    HTTP/1.1 200 OK
+    content-type: application/json
+    content-length: 156
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET, HEAD
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    server: Joyent SmartDataCenter 7.0.0
+    api-version: 7.0.0
+    request-id: cf1c1340-7f49-11e2-8585-bd5fc323c72c
+    response-time: 203
+    x-request-id: cf1c1340-7f49-11e2-8585-bd5fc323c72c
+    x-api-version: 7.0.0
+    x-response-time: 203
+
+    {
+      "id": "daeb93a2-532e-4bd4-8788-b6b30f10ac17",
+      "name": "external",
+      "public": true
+    }
+
+
 # Appendix A: Machine States
 
 ## Machine State Diagram
@@ -5146,6 +5277,7 @@ follows.
 ||[sdc-getmachinemetadata](#GetMachineMetadata)||Returns the complete set of metadata associated with this machine.||
 ||[sdc-getmachinesnapshot](#GetMachineSnapshot)||Gets the state of the named snapshot.||
 ||[sdc-getmachinetag](#GetMachineTag)||Returns the value for a single tag on this machine.||
+||[sdc-getnetwork](#GetNetwork)||Gets a network by the given id.||
 ||[sdc-getpackage](#GetPackage)||Gets a package by name.||
 ||[sdc-listdatacenters](#ListDatacenters)||Provides a list of all datacenters this cloud is aware of.||
 ||[sdc-listdatasets](#ListDatasets)||Provides a list of datasets available in this datacenter.||
@@ -5155,6 +5287,7 @@ follows.
 ||[sdc-listmachines](#ListMachines)||Lists all machines on record for an account.||
 ||[sdc-listmachinesnapshots](#ListMachineSnapshots)||Lists all snapshots taken for a given machine.||
 ||[sdc-listmachinetags](#ListMachineTags)||Returns the complete set of tags associated with this machine.||
+||[sdc-listnetworks](#ListNetworks)||Provides a list of networks available to the user in this datacenter.||
 ||[sdc-listpackages](#ListPackages)||Provides a list of packages available in this datacenter.||
 ||[sdc-rebootmachine](#RebootMachine)||Allows you to 'reboot' a machine.||
 ||[sdc-resizemachine](#ResizeMachine)||Allows you to resize a SmartMachine.||
@@ -5210,6 +5343,14 @@ through request `GET /:account/machines/:id/audit`.
 modification of the account properties - with the exception of `password` and
 `login` - through `POST /:account`. Details are explained into the
 [Account section](#Account)
+
+* Version 7.0 exposes Networks details through `/:account/networks` resource,
+as explained into [Networks section](#Networks).
+
+* Since Version `7.0.0` node-smartdc's `sdc-createmachine` accepts an optional
+`--networks|-w` argument, which can be set to the `id` of one or more of the
+networks retrieved from `/:account/networks`.
+
 
 # Appendix F: SDC 6.5 Support
 
