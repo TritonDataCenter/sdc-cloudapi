@@ -28,8 +28,67 @@ var sdc_512_ownership = {
     owner_uuid: uuid()
 };
 
+var sdc_128_ok = {
+    name: 'sdc_128_ok',
+    version: '1.0.0',
+    max_physical_memory: 128,
+    quota: 10240,
+    max_swap: 512,
+    cpu_cap: 150,
+    max_lwps: 1000,
+    zfs_io_priority: 10,
+    'default': false,
+    vcpus: 1,
+    urn: 'sdc:' + uuid() + ':sdc_128_ok:1.0.0',
+    active: true
+};
 
-var sdc_512_ownership_entry;
+var sdc_512_ownership_entry, sdc_128_ok_entry;
+
+// Add custom packages, given "sdc_" default ones will be owner by admin user.
+function add128Ok(t, cb) {
+    return client.pkg.get(sdc_128_ok.urn, function (err, pkg) {
+        if (err) {
+            if (err.restCode === 'ResourceNotFound') {
+                return client.pkg.add(sdc_128_ok, function (err2, pkg2) {
+                    t.ifError(err2, 'Error creating package');
+                    t.ok(pkg2, 'Package created OK');
+                    sdc_128_ok_entry = pkg2;
+                    return cb();
+                });
+            } else {
+                t.ifError(err, 'Error fetching package');
+                return cb();
+            }
+        } else {
+            sdc_128_ok_entry = pkg;
+            return cb();
+        }
+    });
+}
+
+
+function add512Ownership(t, cb) {
+    return client.pkg.get(sdc_512_ownership.urn, function (err4, pkg) {
+        if (err4) {
+            if (err4.restCode === 'ResourceNotFound') {
+                return client.pkg.add(sdc_512_ownership,
+                    function (err5, pkg2) {
+                    t.ifError(err5, 'Error creating package');
+                    t.ok(pkg2, 'Package created OK');
+                    sdc_512_ownership_entry = pkg2;
+                    return cb();
+                });
+            } else {
+                t.ifError(err4, 'Error fetching package');
+                return cb();
+            }
+        } else {
+            sdc_512_ownership_entry = pkg;
+            return cb();
+        }
+    });
+}
 
 
 ///--- Helpers
@@ -71,28 +130,12 @@ test('setup', function (t) {
             t.ok(_server);
         }
         server = _server;
-
-        client.pkg.get(sdc_512_ownership.urn, function (err4, pkg) {
-            if (err4) {
-                if (err4.restCode === 'ResourceNotFound') {
-                    client.pkg.add(sdc_512_ownership,
-                        function (err5, pkg2) {
-                            t.ifError(err5,
-                                'Error creating package');
-                            t.ok(pkg2, 'Package created OK');
-                            sdc_512_ownership_entry = pkg2;
-                            t.end();
-                        });
-                } else {
-                    t.ifError(err4, 'Error fetching package');
-                    t.end();
-                }
-
-            } else {
-                sdc_512_ownership_entry = pkg;
+        add128Ok(t, function () {
+            add512Ownership(t, function () {
                 t.end();
-            }
+            });
         });
+
     });
 });
 
@@ -121,7 +164,7 @@ test('ListPackages OK (6.5)', function (t) {
 
 test('GetPackage OK (6.5)', function (t) {
     client.get({
-        path: '/my/packages/sdc_128',
+        path: '/my/packages/sdc_128_ok',
         headers: {
             'accept-version': '~6.5'
         }
@@ -181,7 +224,7 @@ test('search packages (7.0)', function (t) {
 
 test('GetPackage by name OK (7.0)', function (t) {
     client.get({
-        path: '/my/packages/sdc_128',
+        path: '/my/packages/sdc_128_ok',
         headers: {
             'accept-version': '~7.0'
         }

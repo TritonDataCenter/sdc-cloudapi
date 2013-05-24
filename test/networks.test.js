@@ -123,7 +123,6 @@ test('list networks', function (t) {
         t.ok(body, 'GET /my/networks body');
         t.ok(Array.isArray(body), 'GET /my/networks body is an array');
         t.ok(body.length, 'GET /my/networks body array has elements');
-        console.log(util.inspect(body, false, 8, true));
         body.forEach(function (n) {
             checkNetwork(t, n);
             if (n.id === POOL.uuid) {

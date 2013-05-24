@@ -60,8 +60,23 @@ var sdc_256_inactive = {
     active: false
 };
 
+var sdc_128_ok = {
+    name: 'sdc_128_ok',
+    version: '1.0.0',
+    max_physical_memory: 128,
+    quota: 10240,
+    max_swap: 512,
+    cpu_cap: 150,
+    max_lwps: 1000,
+    zfs_io_priority: 10,
+    'default': false,
+    vcpus: 1,
+    urn: 'sdc:' + uuid() + ':sdc_128_ok:1.0.0',
+    active: true
+};
 
-var sdc_256_entry, sdc_256_inactive_entry;
+
+var sdc_256_entry, sdc_256_inactive_entry, sdc_128_ok_entry;
 
 var HEADNODE = null;
 
@@ -142,6 +157,48 @@ function saveKey(t, cb) {
     });
 }
 
+// Add custom packages, given "sdc_" default ones will be owner by admin user.
+function add128Ok(t, cb) {
+    return client.pkg.get(sdc_128_ok.urn, function (err, pkg) {
+        if (err) {
+            if (err.restCode === 'ResourceNotFound') {
+                return client.pkg.add(sdc_128_ok, function (err2, pkg2) {
+                    t.ifError(err2, 'Error creating package');
+                    t.ok(pkg2, 'Package created OK');
+                    sdc_128_ok_entry = pkg2;
+                    return cb();
+                });
+            } else {
+                t.ifError(err, 'Error fetching package');
+                return cb();
+            }
+        } else {
+            sdc_128_ok_entry = pkg;
+            return cb();
+        }
+    });
+}
+
+function add256Inactive(t, cb) {
+    return client.pkg.get(sdc_256_inactive.urn, function (err4, pkg) {
+        if (err4) {
+            if (err4.restCode === 'ResourceNotFound') {
+                return client.pkg.add(sdc_256_inactive, function (err5, pkg2) {
+                    t.ifError(err5, 'Error creating package');
+                    t.ok(pkg2, 'Package created OK');
+                    sdc_256_inactive_entry = pkg2;
+                    return cb();
+                });
+            } else {
+                t.ifError(err4, 'Error fetching package');
+                return cb();
+            }
+        } else {
+            sdc_256_inactive_entry = pkg;
+            return cb();
+        }
+    });
+}
 
 // --- Tests
 
@@ -156,38 +213,10 @@ test('setup', TAP_CONF, function (t) {
         server = _server;
 
         saveKey(t, function () {
-            // We may have been created this on previous test suite runs or not:
-            client.pkg.list(function (err3, packages) {
-                if (err3) {
-                    t.ifError(err3, 'Error fetching packages');
+            add128Ok(t, function () {
+                add256Inactive(t, function () {
                     t.end();
-                } else {
-                    sdc_256_entry = packages.filter(function (p) {
-                        return (p.name === 'sdc_256');
-                    })[0];
-                    client.pkg.get(sdc_256_inactive.urn, function (err4, pkg) {
-                        if (err4) {
-                            if (err4.restCode === 'ResourceNotFound') {
-                                client.pkg.add(sdc_256_inactive,
-                                    function (err5, pkg2) {
-                                        t.ifError(err5,
-                                            'Error creating package');
-                                        t.ok(pkg2, 'Package created OK');
-                                        sdc_256_inactive_entry = pkg2;
-                                        t.end();
-                                    });
-                            } else {
-                                t.ifError(err4, 'Error fetching package');
-                                t.end();
-                            }
-
-                        } else {
-                            sdc_256_inactive_entry = pkg;
-                            t.end();
-                        }
-                    });
-
-                }
+                });
             });
         });
     });
@@ -227,7 +256,7 @@ test('Get Headnode', function (t) {
 test('CreateMachine (6.5)', TAP_CONF, function (t) {
     var obj = {
         dataset: 'smartos',
-        'package': 'sdc_128',
+        'package': 'sdc_128_ok',
         name: 'a' + uuid().substr(0, 7),
         server_uuid: HEADNODE.uuid
     };
@@ -319,7 +348,7 @@ test('get smartos dataset', function (t) {
 test('Create machine with invalid network', function (t) {
     var obj = {
         dataset: DATASET,
-        'package': sdc_256_entry,
+        'package': 'sdc_128_ok',
         name: 'a' + uuid().substr(0, 7),
         server_uuid: HEADNODE.uuid,
         networks: [uuid()]
@@ -363,7 +392,7 @@ test('Create machine with invalid package', function (t) {
 
 test('CreateMachine (7.0) w/o dataset fails', TAP_CONF, function (t) {
     var obj = {
-        'package': 'sdc_128',
+        'package': 'sdc_128_ok',
         name: 'a' + uuid().substr(0, 7),
         server_uuid: HEADNODE.uuid
     };
@@ -581,11 +610,11 @@ test('Resize machine to inactive package', function (t) {
 
 
 test('Resize Machine', TAP_CONF, function (t) {
-    t.ok(sdc_256_entry, 'Resize package OK');
-    console.log('Resizing to package: %j', sdc_256_entry);
+    t.ok(sdc_128_ok_entry, 'Resize package OK');
+    console.log('Resizing to package: %j', sdc_128_ok_entry);
     client.post('/my/machines/' + machine, {
         action: 'resize',
-        'package': sdc_256_entry.name
+        'package': sdc_128_ok_entry.name
     }, function (err) {
         t.ifError(err, 'Resize machine error');
         t.end();
@@ -1270,7 +1299,7 @@ test('Create KVM machine (7.0)', TAP_CONF, function (t) {
     if (LINUX_DS) {
         var obj = {
             image: LINUX_DS,
-            'package': 'sdc_128',
+            'package': 'sdc_128_ok',
             name: 'a' + uuid().substr(0, 7),
             server_uuid: HEADNODE.uuid
         };
