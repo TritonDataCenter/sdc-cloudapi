@@ -1596,7 +1596,7 @@ An array of machine objects, which contain:
 ||name||String||The "friendly" name for this machine||
 ||type||String||Whether this is a smartmachine or virtualmachine||
 ||state||String||The current state of this machine||
-||dataset||URN||The dataset urn this machine was provisioned with||
+||dataset||URN||The dataset urn this machine was provisioned with (note that for new images/datasets w/o an URN, this value will be the dataset id, i.e, same value than the image attribute)||
 ||memory||Number||The amount of memory this machine has (Mb)||
 ||disk||Number||The amount of disk this machine has (Gb)||
 ||ips||Array[String]||The IP addresses this machine has||
@@ -1709,7 +1709,7 @@ Gets the details for an individual machine.
 ||name||String||The "friendly" name for this machine||
 ||type||String||Whether this is a smartmachine or virtualmachine||
 ||state||String||The current state of this machine||
-||dataset||URN||The dataset urn this machine was provisioned with||
+||dataset||URN||The dataset urn this machine was provisioned with (note that for new images/datasets w/o an URN, this value will be the dataset id, i.e, same value than the image attribute)||
 ||memory||Number||The amount of memory this machine has (Mb)||
 ||disk||Number||The amount of disk this machine has (Gb)||
 ||ips||Array[String]||The IP addresses this machine has||
@@ -1838,7 +1838,7 @@ object.
 ||name||String||The "friendly" name for this machine||
 ||type||String||Whether this is a smartmachine or virtualmachine||
 ||state||String||The current state of this machine||
-||dataset||URN||The dataset urn this machine was provisioned with||
+||dataset||URN||The dataset urn this machine was provisioned with (note that for new images/datasets w/o an URN, this value will be the dataset id, i.e, same value than the image attribute)||
 ||memory||Number||The amount of memory this machine has (Mb)||
 ||disk||Number||The amount of disk this machine has (Gb)||
 ||ips||Array[String]||The IP addresses this machine has||
