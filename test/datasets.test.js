@@ -73,7 +73,7 @@ test('ListDatasets OK (6.5)', function (t) {
 });
 
 
-test('GetDataset OK (6.5)', function (t) {
+test('GetDataset by name OK (6.5)', function (t) {
     client.get({
         path: '/my/datasets/smartos',
         headers: {
