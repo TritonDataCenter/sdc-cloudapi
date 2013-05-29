@@ -140,11 +140,11 @@ function setupClient(callback) {
         }
     });
 
-    ufds.on('error', function (err) {
+    ufds.once('error', function (err) {
         return callback(err);
     });
 
-    ufds.on('ready', function () {
+    ufds.once('connect', function () {
         var entry = {
             login: client.testUser,
             email: client.testUser,
