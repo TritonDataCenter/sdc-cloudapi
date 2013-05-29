@@ -69,7 +69,7 @@ var sdc_128_ok = {
     cpu_cap: 150,
     max_lwps: 1000,
     zfs_io_priority: 10,
-    fss: 12.5625,
+    fss: 25,
     'default': false,
     vcpus: 1,
     urn: 'sdc:' + uuid() + ':sdc_128_ok:1.0.0',
