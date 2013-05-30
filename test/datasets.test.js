@@ -15,7 +15,11 @@ var DATASET = null;
 
 // --- Helpers
 
-function checkDataset(t, dataset, version) {
+function checkDataset(t, dataset, version, path) {
+    if (typeof (path) === 'undefined') {
+        path = '/my/datasets';
+    }
+
     t.ok(dataset, 'dataset object ok');
     t.ok(dataset.id, 'dataset.id');
 
@@ -23,7 +27,12 @@ function checkDataset(t, dataset, version) {
     t.ok(dataset.version, 'dataset.version');
     t.ok(dataset.type, 'dataset.type');
     t.ok(dataset.requirements, 'dataset.requirements');
-    t.ok(dataset.urn, 'dataset.urn');
+
+    if (/\/images/.test(path)) {
+        t.equal(typeof (dataset.urn), 'undefined', 'dataset.urn');
+    } else {
+        t.ok(dataset.urn, 'dataset.urn');
+    }
 
     if (/6\.5/.test(version)) {
         t.notEqual(typeof (dataset['default']), 'undefined', 'dataset.default');
@@ -115,7 +124,7 @@ test('ListImages OK', function (t) {
         t.ok(Array.isArray(body), 'GET /my/images body is an array');
         t.ok(body.length, 'GET /my/images body array has elements');
         body.forEach(function (d) {
-            checkDataset(t, d, '7.0.0');
+            checkDataset(t, d, '7.0.0', '/my/images');
         });
         t.end();
     });
@@ -155,7 +164,7 @@ test('Get Image By URN OK', function (t) {
                 ' status');
             common.checkHeaders(t, res.headers);
             t.ok(body, 'GET /my/images/' + DATASET.urn + ' body');
-            checkDataset(t, body, '7.0.0');
+            checkDataset(t, body, '7.0.0', '/my/images');
             t.end();
         });
 });
