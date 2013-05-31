@@ -115,7 +115,6 @@ test('setup', function (t) {
 
 test('list networks', function (t) {
     var pool_found = false;
-    var test_net_found = false;
     client.get('/my/networks', function (err, req, res, body) {
         t.ifError(err, 'GET /my/networks error');
         t.equal(res.statusCode, 200, 'GET /my/networks status');
@@ -127,12 +126,8 @@ test('list networks', function (t) {
             checkNetwork(t, n);
             if (n.id === POOL.uuid) {
                 pool_found = true;
-            } else if (n.id === NETWORK.uuid) {
-                test_net_found = true;
-            }
-        });
+            }        });
         t.ok(pool_found);
-        t.ok(test_net_found);
         // This will likely be our default setup external network
         NET_UUID = body[0].id;
         t.end();
