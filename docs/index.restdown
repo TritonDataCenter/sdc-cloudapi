@@ -1410,6 +1410,7 @@ An array of objects, of the form:
 ||memory||Number||How much memory will by available (in Mb)||
 ||disk||Number||How much disk space will be available (in Gb)||
 ||swap||Number||How much swap memory will be available (in Mb)||
+||vcpus||Number||Number of VCPUS for this package||
 ||default||Boolean||Whether this is the default package in this datacenter||
 
 Starting at SmartDataCenter 7.0, this API also includes the following package
@@ -1417,7 +1418,6 @@ properties.
 
 ||id||String||Unique identifier for this package||
 ||version||String||The version for this package||
-||vcpus||Number||Number of VCPUS for this package||
 ||group||String||The group this package belongs to||
 ||description||String||An Human friendly description for this package||
 
@@ -1500,6 +1500,7 @@ Gets a package by name.
 ||memory||Number||How much memory will by available (in Mb)||
 ||disk||Number||How much disk space will be available (in Gb)||
 ||swap||Number||How much swap memory will be available (in Mb)||
+||vcpus||Number||Number of VCPUS for this package||
 ||default||Boolean||Whether this is the default package in this datacenter||
 
 Starting at SmartDataCenter 7.0, this API also includes the following package
@@ -1507,7 +1508,6 @@ properties.
 
 ||id||String||Unique identifier for this package||
 ||version||String||The version for this package||
-||vcpus||Number||Number of VCPUS for this package||
 ||group||String||The group this package belongs to||
 ||description||String||An Human friendly description for this package||
 
