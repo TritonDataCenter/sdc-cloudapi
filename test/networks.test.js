@@ -126,7 +126,8 @@ test('list networks', function (t) {
             checkNetwork(t, n);
             if (n.id === POOL.uuid) {
                 pool_found = true;
-            }        });
+            }
+        });
         t.ok(pool_found);
         // This will likely be our default setup external network
         NET_UUID = body[0].id;
