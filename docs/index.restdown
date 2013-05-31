@@ -1251,6 +1251,8 @@ An array of images. Image objects are:
 ||version||String||The version for this image||
 ||type||String||Whether this is a smartmachine or virtualmachine dataset||
 ||requirements||Object||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
+||homepage||String||The URL for a web page including detailed information for this image||
+||published_at||String (ISO 8859 Timestamp)||The time this image has been made publicly available||
 
 ### Errors
 
@@ -1324,6 +1326,8 @@ Gets an individual image by id.
 ||version||String||The version for this image||
 ||type||String||Whether this is a smartmachine or virtualmachine image||
 ||requirements||Object||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
+||homepage||String||The URL for a web page including detailed information for this image||
+||published_at||String (ISO 8859 Timestamp)||The time this image has been made publicly available||
 
 ### Errors
 
