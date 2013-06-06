@@ -1275,6 +1275,82 @@ test('Delete already deleted machine', TAP_CONF, function (t) {
     });
 });
 
+
+// Test using IMAGE.uuid instead of IMAGE.name due to PUBAPI-625:
+test('CreateMachine (7.0)', TAP_CONF, function (t) {
+    var obj = {
+        image: DATASET,
+        'package': 'sdc_128_ok',
+        name: 'a' + uuid().substr(0, 7),
+        server_uuid: HEADNODE.uuid
+    };
+    obj['metadata.' + META_KEY] = META_VAL;
+    obj['tag.' + TAG_KEY] = TAG_VAL;
+
+    obj['metadata.credentials'] = META_CREDS;
+
+    client.post({
+        path: '/my/machines',
+        headers: {
+            'accept-version': '~7.0'
+        }
+    }, obj, function (err, req, res, body) {
+        t.ifError(err, 'POST /my/machines error');
+        t.equal(res.statusCode, 201, 'POST /my/machines status');
+        common.checkHeaders(t, res.headers);
+        t.equal(res.headers.location,
+            util.format('/%s/machines/%s', client.testUser, body.id));
+        t.ok(body, 'POST /my/machines body');
+        checkMachine(t, body);
+        machine = body.id;
+        // Handy to output this to stdout in order to poke around COAL:
+        console.log('Requested provision of machine: %s', machine);
+        t.end();
+    });
+});
+
+
+test('Wait For Running', TAP_CONF,  function (t) {
+    client.vmapi.listJobs({
+        vm_uuid: machine,
+        task: 'provision'
+    }, function (err, jobs) {
+        t.ifError(err, 'list jobs error');
+        t.ok(jobs, 'list jobs ok');
+        t.ok(jobs.length, 'list jobs is an array');
+        waitForJob(jobs[0].uuid, function (err2) {
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
+    });
+});
+
+
+test('DeleteMachine', TAP_CONF, function (t) {
+    client.del('/my/machines/' + machine, function (err, req, res) {
+        t.ifError(err, 'DELETE /my/machines error');
+        t.equal(res.statusCode, 204, 'DELETE /my/machines status');
+        common.checkHeaders(t, res.headers);
+        t.end();
+    });
+});
+
+
+test('Wait For Destroyed', TAP_CONF,  function (t) {
+    client.vmapi.listJobs({
+        vm_uuid: machine,
+        task: 'destroy'
+    }, function (err, jobs) {
+        t.ifError(err, 'list jobs error');
+        t.ok(jobs);
+        t.ok(jobs.length);
+        waitForJob(jobs[0].uuid, function (err2) {
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
+    });
+});
+
 var LINUX_DS = false;
 var KVM_MACHINE = false;
 
