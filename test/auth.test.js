@@ -36,6 +36,96 @@ test('setup', function (t) {
 });
 
 
+test('basic auth (accept-version: ~6.5)', function (t) {
+    var user = client.testUser;
+    var pwd = 'secret123';
+    var cli = restify.createJsonClient({
+        url: server ? server.url : 'https://127.0.0.1',
+        version: '*',
+        retryOptions: {
+            retry: 0
+        },
+        log: client.log,
+        rejectUnauthorized: false
+    });
+
+    cli.basicAuth(user, pwd);
+
+    cli.get({
+        path: '/my',
+        headers: {
+            'accept-version': '~6.5'
+        }
+    }, function (err, req, res, obj) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        t.ok(obj);
+        t.equal(obj.login, user);
+        cli.close();
+        t.end();
+    });
+});
+
+
+test('basic auth (x-api-version: ~6.5)', function (t) {
+    var user = client.testUser;
+    var pwd = 'secret123';
+    var cli = restify.createJsonClient({
+        url: server ? server.url : 'https://127.0.0.1',
+        retryOptions: {
+            retry: 0
+        },
+        log: client.log,
+        rejectUnauthorized: false
+    });
+
+    cli.basicAuth(user, pwd);
+
+    cli.get({
+        path: '/my',
+        headers: {
+            'x-api-version': '~6.5'
+        }
+    }, function (err, req, res, obj) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        t.ok(obj);
+        t.equal(obj.login, user);
+        cli.close();
+        t.end();
+    });
+});
+
+
+test('basic auth (accept-version: ~7.0)', function (t) {
+    var user = client.testUser;
+    var pwd = 'secret123';
+    var cli = restify.createJsonClient({
+        url: server ? server.url : 'https://127.0.0.1',
+        retryOptions: {
+            retry: 0
+        },
+        log: client.log,
+        rejectUnauthorized: false
+    });
+
+    cli.basicAuth(user, pwd);
+
+    cli.get({
+        path: '/my',
+        headers: {
+            'accept-version': '~7.0'
+        }
+    }, function (err, req, res, obj) {
+        t.ok(err);
+        t.equal(res.statusCode, 401);
+        t.ok(/authorization scheme/.test(err.message));
+        cli.close();
+        t.end();
+    });
+});
+
+
 test('signature auth', function (t) {
     client.get('/my/keys', function (err, req, res, body) {
         t.ifError(err);
