@@ -341,7 +341,11 @@ test('get smartos dataset', function (t) {
         t.ok(body, 'GET /my/datasets body');
         t.ok(Array.isArray(body), 'GET /my/datasets body is an array');
         t.ok(body.length, 'GET /my/datasets body array has elements');
-        DATASET = body[0].id;
+        body.forEach(function (d) {
+            if (d.version && d.version === '1.6.3') {
+                DATASET = body[0].id;
+            }
+        });
         t.end();
     });
 });
