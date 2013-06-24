@@ -334,7 +334,7 @@ test('Create machine with inactive package', function (t) {
 var DATASET;
 
 test('get smartos dataset', function (t) {
-    client.get('/my/datasets?os=smartos', function (err, req, res, body) {
+    client.get('/my/datasets?name=smartos', function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets error');
         t.equal(res.statusCode, 200, 'GET /my/datasets status');
         common.checkHeaders(t, res.headers);
