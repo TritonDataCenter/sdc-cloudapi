@@ -699,6 +699,76 @@ test('Wait For Renamed', TAP_CONF,  function (t) {
 });
 
 
+test('Enable firewall 7.0.0', TAP_CONF, function (t) {
+    client.post({
+        path: '/my/machines/' + machine,
+        headers: {
+            'accept-version': '~7.0'
+        }
+    }, {
+        action: 'enable_firewall'
+    }, function (err) {
+        t.ifError(err, 'Enable firewall error');
+        t.end();
+    });
+});
+
+
+test('Wait For Firewall Enabled', TAP_CONF,  function (t) {
+    client.vmapi.listJobs({
+        vm_uuid: machine,
+        task: 'update'
+    }, function (err, jobs) {
+        t.ifError(err, 'list jobs error');
+        t.ok(jobs, 'list jobs OK');
+        t.ok(jobs.length, 'update jobs is array');
+        var firewall_jobs = jobs.filter(function (job) {
+            return (typeof (job.params.firewall_enabled) !== 'undefined');
+        });
+        t.ok(firewall_jobs.length, 'firewall jobs is an array');
+        waitForJob(firewall_jobs[0].uuid, function (err2) {
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
+    });
+});
+
+
+test('Disable firewall 7.0.0', TAP_CONF, function (t) {
+    client.post({
+        path: '/my/machines/' + machine,
+        headers: {
+            'accept-version': '~7.0'
+        }
+    }, {
+        action: 'disable_firewall'
+    }, function (err) {
+        t.ifError(err, 'Enable firewall error');
+        t.end();
+    });
+});
+
+
+test('Wait For Firewall Disabled', TAP_CONF,  function (t) {
+    client.vmapi.listJobs({
+        vm_uuid: machine,
+        task: 'update'
+    }, function (err, jobs) {
+        t.ifError(err, 'list jobs error');
+        t.ok(jobs, 'list jobs OK');
+        t.ok(jobs.length, 'update jobs is array');
+        var firewall_jobs = jobs.filter(function (job) {
+            return (typeof (job.params.firewall_enabled) !== 'undefined');
+        });
+        t.ok(firewall_jobs.length, 'firewall jobs is an array');
+        waitForJob(firewall_jobs[0].uuid, function (err2) {
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
+    });
+});
+
+
 test('ListTags', TAP_CONF, function (t) {
     var url = '/my/machines/' + machine + '/tags';
     client.get(url, function (err, req, res, body) {
@@ -1286,7 +1356,8 @@ test('CreateMachine (7.0)', TAP_CONF, function (t) {
         image: DATASET,
         'package': 'sdc_128_ok',
         name: 'a' + uuid().substr(0, 7),
-        server_uuid: HEADNODE.uuid
+        server_uuid: HEADNODE.uuid,
+        firewall_enabled: true
     };
     obj['metadata.' + META_KEY] = META_VAL;
     obj['tag.' + TAG_KEY] = TAG_VAL;
@@ -1326,6 +1397,18 @@ test('Wait For Running', TAP_CONF,  function (t) {
             t.ifError(err2, 'Check state error');
             t.end();
         });
+    });
+});
+
+test('Get Machine Firewall Enabled', function (t) {
+    client.get('/my/machines/' + machine, function (err, req, res, body) {
+        t.ifError(err, 'GET /my/machines/:id error');
+        t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
+        common.checkHeaders(t, res.headers);
+        t.ok(body, 'GET /my/machines/:id body');
+        checkMachine(t, body);
+        t.ok(body.firewall_enabled);
+        t.end();
     });
 });
 

@@ -100,7 +100,7 @@ function setupClient(callback) {
     // just wait for vmachine status change, we'll be just
     // hanging forever.
     client.vmapi = new VMAPI({
-        url: process.env.VMAPI_URL || config.vmapi.url || 'http://10.99.99.27',
+        url: process.env.VMAPI_URL || config.vmapi.url || 'http://10.99.99.28',
         retry: {
             retries: 1,
             minTimeout: 1000
