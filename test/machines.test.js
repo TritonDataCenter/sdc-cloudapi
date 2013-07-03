@@ -14,6 +14,7 @@ var common = require('./common');
 var client, server, snapshot;
 var keyName = uuid();
 var machine;
+var image_uuid;
 var KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAvad19ePSDckmgmo6Unqmd8' +
     'n2G7o1794VN3FazVhV09yooXIuUhA+7OmT7ChiHueayxSubgL2MrO/HvvF/GGVUs/t3e0u4' +
     '5YwRC51EVhyDuqthVJWjKrYxgDMbHru8fc1oV51l0bKdmvmJWbA/VyeJvstoX+eiSGT3Jge' +
@@ -141,6 +142,38 @@ function waitForJob(id, callback) {
         if (!ready) {
             return setTimeout(function () {
                 waitForJob(id, callback);
+            }, (process.env.POLL_INTERVAL || 500));
+        }
+        return callback(null);
+    });
+}
+
+
+function checkWfJob(id, callback) {
+    return client.wfapi.get(sprintf('/jobs/%s', id),
+                            function (err, req, res, job) {
+        if (err) {
+            return callback(err);
+        }
+
+        if (job.execution === 'failed') {
+            return callback(new Error('Job failed'));
+        }
+
+        return callback(null, (job ? job.execution === 'succeeded' : false));
+    });
+}
+
+
+function waitForWfJob(id, callback) {
+    // console.log('waiting for job with uuid: %s', id);
+    return checkWfJob(id, function (err, ready) {
+        if (err) {
+            return callback(err);
+        }
+        if (!ready) {
+            return setTimeout(function () {
+                waitForWfJob(id, callback);
             }, (process.env.POLL_INTERVAL || 500));
         }
         return callback(null);
@@ -524,6 +557,45 @@ test('Attempt to list other owner machines by tag', function (t) {
 });
 
 
+var IMG_JOB_UUID;
+
+test('Attempt to create image from running machine', function (t) {
+    if (common.getCfg().create_images === true) {
+        var obj = {
+            machine: machine,
+            name: uuid(),
+            version: '1.0.0'
+        };
+        client.post({
+            path: '/my/images',
+            headers: {
+                'accept-version': '~7.0'
+            }
+        }, obj, function (err, req, res, body) {
+            t.ifError(err);
+            t.ok(body);
+            t.ok(res.headers['x-joyent-jobid'], 'jobid header');
+            IMG_JOB_UUID = res.headers['x-joyent-jobid'];
+            t.end();
+        });
+    } else {
+        t.end();
+    }
+});
+
+test('Wait for img create from running machine job', function (t) {
+    if (common.getCfg().create_images === true) {
+        waitForWfJob(IMG_JOB_UUID, function (err) {
+            t.ok(err, 'Image job error');
+            t.equal(err.message, 'Job failed');
+            t.end();
+        });
+    } else {
+        t.end();
+    }
+});
+
+
 test('StopMachine', TAP_CONF, function (t) {
     client.post('/my/machines/' + machine, {
         action: 'stop'
@@ -549,6 +621,79 @@ test('Wait For Stopped', TAP_CONF,  function (t) {
     });
 });
 
+
+test('Create image from machine (missing params)', function (t) {
+    if (common.getCfg().create_images === true) {
+        // Missing name attribute:
+        var obj = {
+            machine: machine,
+            version: '1.0.0'
+        };
+        client.post({
+            path: '/my/images',
+            headers: {
+                'accept-version': '~7.0'
+            }
+        }, obj, function (err, req, res, body) {
+            t.ok(err, 'missing parameters error');
+            t.equal(res.statusCode, 409);
+            t.ok(err.message);
+            t.end();
+        });
+    } else {
+        t.end();
+    }
+});
+
+test('Create image from machine OK', TAP_CONF, function (t) {
+    if (common.getCfg().create_images === true) {
+        var obj = {
+            machine: machine,
+            name: uuid(),
+            version: '1.0.0'
+        };
+        client.post({
+            path: '/my/images',
+            headers: {
+                'accept-version': '~7.0'
+            }
+        }, obj, function (err, req, res, body) {
+            t.ifError(err);
+            t.ok(body);
+            image_uuid = body.id;
+            t.ok(res.headers['x-joyent-jobid'], 'jobid header');
+            IMG_JOB_UUID = res.headers['x-joyent-jobid'];
+            t.end();
+        });
+    } else {
+        t.end();
+    }
+});
+
+
+
+test('Wait for img create job', TAP_CONF, function (t) {
+    if (common.getCfg().create_images === true) {
+        waitForWfJob(IMG_JOB_UUID, function (err) {
+            t.ifError(err, 'create image job');
+            t.end();
+        });
+    } else {
+        t.end();
+    }
+});
+
+
+test('Delete image', function (t) {
+    if (common.getCfg().create_images === true && image_uuid) {
+        client.imgapi.deleteImage(image_uuid, function (err, res) {
+            t.ifError(err, 'Delete Image error');
+            t.end();
+        });
+    } else {
+        t.end();
+    }
+});
 
 test('StartMachine', TAP_CONF, function (t) {
     client.post('/my/machines/' + machine, {
@@ -1098,38 +1243,6 @@ test('AddRule', function (t) {
         t.end();
     });
 });
-
-
-function checkWfJob(id, callback) {
-    return client.wfapi.get(sprintf('/jobs/%s', id),
-                            function (err, req, res, job) {
-        if (err) {
-            return callback(err);
-        }
-
-        if (job.execution === 'failed') {
-            return callback(new Error('Job failed'));
-        }
-
-        return callback(null, (job ? job.execution === 'succeeded' : false));
-    });
-}
-
-
-function waitForWfJob(id, callback) {
-    // console.log('waiting for job with uuid: %s', id);
-    return checkWfJob(id, function (err, ready) {
-        if (err) {
-            return callback(err);
-        }
-        if (!ready) {
-            return setTimeout(function () {
-                waitForWfJob(id, callback);
-            }, (process.env.POLL_INTERVAL || 500));
-        }
-        return callback(null);
-    });
-}
 
 
 test('RuleAdd Job', TAP_CONF, function (t) {

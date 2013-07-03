@@ -9,6 +9,7 @@ var UFDS = require('sdc-clients').UFDS;
 var VMAPI = require('sdc-clients').VMAPI;
 var CNAPI = require('sdc-clients').CNAPI;
 var NAPI = require('sdc-clients').NAPI;
+var IMGAPI = require('sdc-clients').IMGAPI;
 var Package = require('sdc-clients').Package;
 var app = require('../lib').app;
 var util = require('util');
@@ -122,6 +123,17 @@ function setupClient(callback) {
 
     client.napi = new NAPI({
         url: process.env.NAPI_URL || config.napi.url || 'http://10.99.99.10',
+        retry: {
+            retries: 1,
+            minTimeout: 1000
+        },
+        log: client.log,
+        agent: false
+    });
+
+    client.imgapi = new IMGAPI({
+        url: process.env.IMGAPI_URL || config.imgapi.url ||
+            'http://10.99.99.21',
         retry: {
             retries: 1,
             minTimeout: 1000
