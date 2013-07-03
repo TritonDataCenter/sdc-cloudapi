@@ -1,6 +1,7 @@
 {
     "port": 8080,
     "read_only": false,
+    "create_images": true,
     "ufds": {
         "url": "UFDS_URL",
         "bindDN": "UFDS_ROOT_DN",

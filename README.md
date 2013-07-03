@@ -151,10 +151,12 @@ headnode:
 or, individually:
 
     make account_test
+    make auth_test
     make datacenters_test
     make datasets_test
     make keys_test
     make machines_test
+    make networks_test
     make packages_test
 
 Optimistic, isn't it?. Reality is that, while it may works, that command
@@ -193,10 +195,4 @@ To edit the SMF manifest:
     svccfg import cloudapi.xml
     svcadm restart cloudapi
 
-# TODO
-
-Remaining work for this repo:
-
-- Make it work with SDC 7.0, providing same API than 6.5 did.
-- New 7.0 version of the API, once we're done with the previous task.
 

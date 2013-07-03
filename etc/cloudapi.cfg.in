@@ -3,6 +3,7 @@
     "certificate": "/opt/smartdc/cloudapi/ssl/cert.pem",
     "key": "/opt/smartdc/cloudapi/ssl/key.pem",
     "read_only": false,
+    "create_images": false,
     "ufds": {
         "url": "ldaps://127.0.0.1",
         "bindDN": "UFDS_ROOT_DN",
