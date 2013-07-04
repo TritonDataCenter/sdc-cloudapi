@@ -3,7 +3,14 @@
     "certificate": "/opt/smartdc/cloudapi/ssl/cert.pem",
     "key": "/opt/smartdc/cloudapi/ssl/key.pem",
     "read_only": {{{CLOUDAPI_READONLY}}},
-    "create_images": {{^CLOUDAPI_CREATE_IMAGES}}false{{/CLOUDAPI_CREATE_IMAGES}}{{{CLOUDAPI_CREATE_IMAGES}}},
+
+    {{^CLOUDAPI_CREATE_IMAGES}}
+    "create_images": false,
+    {{/CLOUDAPI_CREATE_IMAGES}}
+    {{#CLOUDAPI_CREATE_IMAGES}}
+    "create_images": {{{CLOUDAPI_CREATE_IMAGES}}},
+    {{/CLOUDAPI_CREATE_IMAGES}}
+
     "ufds": {
         "url": "ldaps://{{{ufds_domain}}}",
         "bindDN": "{{{ufds_ldap_root_dn}}}",
