@@ -1096,7 +1096,7 @@ test('Wait For Snapshot', TAP_CONF,  function (t) {
         t.ok(jobs, 'list jobs OK');
         t.ok(jobs.length, 'update jobs is array');
         var snapshot_jobs = jobs.filter(function (job) {
-            return (job.params.action === 'create_snapshot');
+            return (/^snapshot/.test(job.name));
         });
         t.ok(snapshot_jobs.length, 'snapshot jobs is an array');
         waitForJob(snapshot_jobs[0].uuid, function (err2) {
@@ -1159,10 +1159,9 @@ test('Wait For Snapshot Rollback', TAP_CONF,  function (t) {
         t.ok(jobs, 'list jobs OK');
         t.ok(jobs.length, 'update jobs is array');
         var snapshot_jobs = jobs.filter(function (job) {
-            return (job.params.action === 'rollback_snapshot');
+            return (/^rollback/.test(job.name));
         });
         t.ok(snapshot_jobs.length, 'snapshot jobs is an array');
-        console.log(util.inspect(snapshot_jobs, false, 8));
         waitForJob(snapshot_jobs[0].uuid, function (err2) {
             t.ifError(err2, 'Check state error');
             t.end();
@@ -1192,7 +1191,7 @@ test('Wait For Deleted Snapshot', TAP_CONF,  function (t) {
         t.ok(jobs, 'list jobs OK');
         t.ok(jobs.length, 'update jobs is array');
         var snapshot_jobs = jobs.filter(function (job) {
-            return (job.params.action === 'delete_snapshot');
+            return (/^delete-snapshot/.test(job.name));
         });
         t.ok(snapshot_jobs.length, 'snapshot jobs is an array');
         waitForJob(snapshot_jobs[0].uuid, function (err2) {
