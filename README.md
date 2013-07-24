@@ -11,6 +11,14 @@ Tickets/bugs: <https://devhub.joyent.com/jira/browse/PUBAPI>
 
 CloudAPI is the API that customers use to interact with SmartDataCenter product
 
+# Adding CloudAPI zone to SDC 7.0
+
+`cloudapi` zone is not created by default as a core zone. If your setup lacks
+of cloudapi zone, you can create it by running:
+
+    sdc-sapi /instances -X POST \
+    -d "{\"service_uuid\": \"$(sdc-sapi --no-headers /services?name=cloudapi | json -a uuid)\", \"params\": { \"alias\" : \"cloudapi0\" }}"
+
 # Development
 
 To run the CloudAPI server:
