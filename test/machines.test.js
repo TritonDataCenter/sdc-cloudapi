@@ -29,6 +29,9 @@ var TAG_TWO_VAL = 'none';
 var META_KEY = 'foo';
 var META_VAL = 'bar';
 
+var META_64_KEY = 'sixtyfour';
+var META_64_VAL = new Buffer('Hello World').toString('base64');
+
 var META_CREDS = {
     'root': 'secret',
     'admin': 'secret'
@@ -295,6 +298,7 @@ test('CreateMachine (6.5)', TAP_CONF, function (t) {
         server_uuid: HEADNODE.uuid
     };
     obj['metadata.' + META_KEY] = META_VAL;
+    obj['metadata.' + META_64_KEY] = META_64_VAL;
     obj['tag.' + TAG_KEY] = TAG_VAL;
 
     obj['metadata.credentials'] = META_CREDS;
@@ -645,6 +649,7 @@ test('Create image from machine (missing params)', function (t) {
     }
 });
 
+
 test('Create image from machine OK', TAP_CONF, function (t) {
     if (common.getCfg().create_images === true) {
         var obj = {
@@ -671,7 +676,6 @@ test('Create image from machine OK', TAP_CONF, function (t) {
 });
 
 
-
 test('Wait for img create job', TAP_CONF, function (t) {
     if (common.getCfg().create_images === true) {
         waitForWfJob(IMG_JOB_UUID, function (err) {
@@ -694,6 +698,7 @@ test('Delete image', function (t) {
         t.end();
     }
 });
+
 
 test('StartMachine', TAP_CONF, function (t) {
     client.post('/my/machines/' + machine, {
@@ -1006,6 +1011,8 @@ test('ListMetadata', TAP_CONF, function (t) {
         t.ok(body);
         t.ok(body[META_KEY]);
         t.equal(body[META_KEY], META_VAL);
+        t.ok(body[META_64_KEY]);
+        t.equal(body[META_64_KEY], META_64_VAL);
         t.equal(typeof (body.credentials), 'undefined');
         t.end();
     });
