@@ -35,8 +35,9 @@ CLEAN_FILES	+= node_modules cscope.files
 
 # The prebuilt sdcnode version we want. See
 # "tools/mk/Makefile.node_prebuilt.targ" for details.
+NODE_PREBUILT_VERSION=v0.8.23
 ifeq ($(shell uname -s),SunOS)
-	NODE_PREBUILT_VERSION=v0.8.23
+	NODE_PREBUILT_CC_VERSION=4.6.2
 	NODE_PREBUILT_TAG=zone
 endif
 
@@ -48,6 +49,7 @@ else
 	include ./tools/mk/Makefile.node.defs
 endif
 include ./tools/mk/Makefile.smf.defs
+
 
 #
 # Variables
