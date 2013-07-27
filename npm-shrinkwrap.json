@@ -171,7 +171,7 @@
     "sdc-clients": {
       "version": "8.1.0",
       "from": "sdc-clients@git+ssh://git@git.joyent.com:node-sdc-clients.git#ec708d3",
-      "resolved": "git+ssh://git@git.joyent.com/:node-sdc-clients.git#ec708d39fdce0864629fa2f470d4385f749d7e50",
+      "resolved": "git+ssh://git@git.joyent.com/node-sdc-clients.git#ec708d39fdce0864629fa2f470d4385f749d7e50",
       "dependencies": {
         "assert-plus": {
           "version": "0.1.3",
