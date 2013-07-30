@@ -31,7 +31,7 @@ JSSTYLE_FLAGS    = -f tools/jsstyle.conf
 SHRINKWRAP	 = npm-shrinkwrap.json
 SMF_MANIFESTS_IN    = smf/manifests/cloudapi.xml.in
 
-CLEAN_FILES	+= node_modules cscope.files
+CLEAN_FILES	+= node_modules cscope.files docs/index.restdown
 
 # The prebuilt sdcnode version we want. See
 # "tools/mk/Makefile.node_prebuilt.targ" for details.
@@ -80,6 +80,19 @@ build: $(SMF_MANIFESTS) | $(TAP) $(REPO_DEPS)
 
 $(TAP): | $(NPM_EXEC)
 	$(NPM) install
+
+# Doc preprocessing to enable getting public and bleeding-edge
+# docs out of the same index.restdown.in.
+docs/index.restdown: docs/index.restdown.in
+	python tools/preprocess.py -o $@ $(DOCS_PREPROCESS_FLAGS) $<
+
+DOC_CLEAN_FILES = docs/{index,admin}.{html,json} \
+	docs/index.restdown build/docs
+.PHONY: clean-docs
+clean-docs:
+	-$(RMTREE) $(DOC_CLEAN_FILES)
+clean:: clean-docs
+
 
 .PHONY: release
 release: check build docs

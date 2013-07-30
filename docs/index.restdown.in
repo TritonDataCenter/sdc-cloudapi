@@ -1375,6 +1375,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 
 
+<!-- #ifdef BLEEDING_EDGE -->
 
 ## CreateImageFromMachine (POST /:login/images)
 
@@ -1390,13 +1391,27 @@ The typical process for creating a new custom image is as follows:
 
 ### Inputs
 
-TODO: XXX
+All inputs except `machine` are image manifest fields as defined by
+[the IMGAPI docs](https://images.joyent.com/docs/#image-manifests). Note that
+not all fields listed there can be specified here.
+
+||**Field**||**Type**||**Required?**||**Default**||**Notes**||
+||machine||UUID||Yes||-||The prepared and stopped machine UUID from which the image is to be created.||
+||name||String||Yes||-||The name of the custom image, e.g. "my-image". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-name) for details.||
+||version||String||Yes||-||The version of the custom image, e.g. "1.0.0". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-version) for details.||
+||description||String||No||-||The image [description](https://images.joyent.com/docs/#manifest-description).||
+
+TODO: list other optional fields
 
 ### Returns
 
-TODO: XXX
+||**Field**||**Type**||**Notes**||
+||id||String||The image UUID||
+||name||String||The image UUID||
+||version||String||The image UUID||
+||type||String||"smartmachine" (corresponds to ["zone-dataset" in IMGAPI](https://images.joyent.com/docs/#manifest-type)) or "virtualmachine" (corresponds to ["zvol" in IMGAPI](https://images.joyent.com/docs/#manifest-type))||
+||requirements||String||Image requirements (TODO: clarify)||
 
-||id||String||a unique identifier for this image||
 
 ### Errors
 
@@ -1404,45 +1419,60 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-TODO: XXX
+TODO: Does not yet exist. Not sure of the following syntax.
+
+    echo '{
+        "machine": "a44f2b9b-e7af-f548-b0ba-4d9270423f1a",
+        "name": "my-custom-image",
+        "version": "1.0.0",
+    }' | sdc-createimagefrommachine
+
 
 #### Example Request
 
-TODO: XXX
-
-    GET /my/images/63ce06d8-7ae7-11e0-b0df-1fcf8f45c5d5 HTTP/1.1
+    POST /my/images HTTP/1.1
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
+
+    {
+      "machine": "a44f2b9b-e7af-f548-b0ba-4d9270423f1a",
+      "name": "my-custom-image",
+      "version": "1.0.0"
+    }
 
 #### Example Response
 
-TODO: XXX
-
-    HTTP/1.1 200 OK
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET
-    Server: Joyent
-    Connection: close
-    Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 7.0.0
-    X-RequestId: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
-    X-Response-Time: 257
+    HTTP/1.1 201 Created
+    x-joyent-jobid: 0b30ef20-d622-436a-9c30-7376ba7d904c
+    Location: /admin/images/b87616a2-7a49-4e02-a71d-2e0ce5a2f037
     Content-Type: application/json
-    Content-Length: 402
-    Content-MD5: y7YOeXG98DYchC96s46yRw==
+    Content-Length: 125
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: 2sEZ45LmhRiretMPn5sqVA==
+    Date: Tue, 30 Jul 2013 19:59:25 GMT
+    Server: Joyent SmartDataCenter 7.0.0
+    Api-Version: 7.0.0
+    Request-Id: 88af23b0-f952-11e2-8f2c-fff0ec35f4ce
+    Response-Time: 160
+    X-Request-Id: 88af23b0-f952-11e2-8f2c-fff0ec35f4ce
+    X-Api-Version: 7.0.0
+    X-Response-Time: 160
 
     {
-      "id": "63ce06d8-7ae7-11e0-b0df-1fcf8f45c5d5",
-      "name": "smartos",
-      "os": "smartos",
+      "id": "b87616a2-7a49-4e02-a71d-2e0ce5a2f037",
+      "name": "my-custom-image",
       "type": "smartmachine",
-      "version": "1.3.13",
-      "created": "2011-06-27T18:41:39+00:00",
-      "default": true
+      "requirements": {},
+      "version": "1.0.0"
     }
 
+<!-- #endif -->
 
 
 # Packages
