@@ -130,6 +130,14 @@ section will explain the configuration file.
                 }
             },
             "analytics": false
+        },
+        "bleeding_edge_features": {
+            "img_mgmt": true,
+            "": false
+        },
+        "bleeding_edge_login_whitelist": {
+            "admin": true,
+            "": false
         }
     }
 
@@ -157,6 +165,27 @@ instance should redirect to).
 ||key||String||Path to a PEM encoded private key for the SSL certificate; can be relative to /opt/smartdc/cloudapi||
 ||read_only||Boolean||When set to true, the API will deny all the POST/PUT/DELETE requests. Provided for review right after upgrading Smart DataCenter||
 ||datacenters||Object||a k/v pairing of other DC's to URL's this instance should answer with.||
+
+
+## Bleeding Edge Features
+
+    ...
+        "bleeding_edge_features": {
+            "img_mgmt": true,
+            "": false
+        },
+        "bleeding_edge_login_whitelist": {
+            "admin": true,
+            "": false
+        }
+    ...
+
+One can define bleeding edge features by name and then set a whitelist of
+user login's allowed to access those features. See "img_mgmt" in the code for
+how to implement this. Currently the "metadata.BLEEDING_EDGE_FEATURES" and
+"metadata.BLEEDING_EDGE_LOGIN_WHITELIST" arrays on the "cloudapi" SAPI service
+set the features and whitelist.
+
 
 ## UFDS
 
@@ -602,7 +631,7 @@ Possible values for every config member are:
 ||${value}||Number. A value for the previous "limit_by" member||Negative Integer|Zero|Positive Integer||
 
 You can specify as many "defaults" entries as you want. For example, the
-following config fragment means: 
+following config fragment means:
 
 > *Disallow provisioning any windows machine and for any other image, allow
 > provisioning machines until RAM reaches a limit of 51200, whatever is the

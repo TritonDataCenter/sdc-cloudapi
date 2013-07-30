@@ -42,3 +42,4 @@ if [[ "$state" == "maintenance" ]]; then
 else
     ssh ${NODE} svcadm -z ${CLOUDAPI_ZONE} restart cloudapi
 fi
+ssh ${NODE} svcadm -z ${CLOUDAPI_ZONE} restart config-agent

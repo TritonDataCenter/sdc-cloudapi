@@ -3,14 +3,6 @@
     "certificate": "/opt/smartdc/cloudapi/ssl/cert.pem",
     "key": "/opt/smartdc/cloudapi/ssl/key.pem",
     "read_only": {{{CLOUDAPI_READONLY}}},
-
-    {{^CLOUDAPI_CREATE_IMAGES}}
-    "create_images": false,
-    {{/CLOUDAPI_CREATE_IMAGES}}
-    {{#CLOUDAPI_CREATE_IMAGES}}
-    "create_images": {{{CLOUDAPI_CREATE_IMAGES}}},
-    {{/CLOUDAPI_CREATE_IMAGES}}
-
     "ufds": {
         "url": "ldaps://{{{ufds_domain}}}",
         "bindDN": "{{{ufds_ldap_root_dn}}}",
@@ -98,5 +90,17 @@
             }
         },
         "analytics": false
+    },
+    "bleeding_edge_features": {
+        {{#CLOUDAPI_BLEEDING_EDGE_FEATURES}}
+        "{{{.}}}": true,
+        {{/CLOUDAPI_BLEEDING_EDGE_FEATURES}}
+        "": false
+    },
+    "bleeding_edge_login_whitelist": {
+        {{#CLOUDAPI_BLEEDING_EDGE_LOGIN_WHITELIST}}
+        "{{{.}}}": true,
+        {{/CLOUDAPI_BLEEDING_EDGE_LOGIN_WHITELIST}}
+        "": false
     }
 }
