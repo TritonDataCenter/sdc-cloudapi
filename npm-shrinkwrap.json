@@ -436,6 +436,78 @@
     "clone": {
       "version": "0.1.5",
       "from": "clone@0.1.5"
+    },
+    "tap": {
+      "version": "0.3.3",
+      "from": "tap@~0.3",
+      "dependencies": {
+        "inherits": {
+          "version": "1.0.0"
+        },
+        "yamlish": {
+          "version": "0.0.5"
+        },
+        "slide": {
+          "version": "1.1.4",
+          "from": "slide@*"
+        },
+        "runforcover": {
+          "version": "0.0.2",
+          "from": "runforcover@~0.0.2",
+          "dependencies": {
+            "bunker": {
+              "version": "0.1.2",
+              "from": "bunker@0.1.X",
+              "dependencies": {
+                "burrito": {
+                  "version": "0.2.12",
+                  "from": "burrito@>=0.2.5 <0.3",
+                  "dependencies": {
+                    "traverse": {
+                      "version": "0.5.2",
+                      "from": "traverse@~0.5.1"
+                    },
+                    "uglify-js": {
+                      "version": "1.1.1",
+                      "from": "uglify-js@~1.1.1"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "mkdirp": {
+          "version": "0.3.5",
+          "from": "mkdirp@~0.3"
+        },
+        "difflet": {
+          "version": "0.2.5",
+          "from": "difflet@~0.2.0",
+          "dependencies": {
+            "traverse": {
+              "version": "0.6.3",
+              "from": "traverse@0.6.x"
+            },
+            "charm": {
+              "version": "0.0.8",
+              "from": "charm@0.0.x"
+            },
+            "deep-is": {
+              "version": "0.1.2",
+              "from": "deep-is@0.1.x"
+            }
+          }
+        },
+        "deep-equal": {
+          "version": "0.0.0",
+          "from": "deep-equal@~0.0.0"
+        },
+        "buffer-equal": {
+          "version": "0.0.0",
+          "from": "buffer-equal@~0.0.0"
+        }
+      }
     }
   }
 }
