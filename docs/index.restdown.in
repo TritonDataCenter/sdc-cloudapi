@@ -1079,7 +1079,10 @@ datasets are not supported, and their usage should be replaced with
 [images](#image-description). Specially, note the lack of `urn` attribute for
 images when compared with datasets.
 
+
 ## ListDatasets (GET /:login/datasets)
+
+**Deprecated in SDC 7.0. Use [ListImages](#ListImages).**
 
 Provides a list of datasets available in this datacenter.
 
@@ -1157,7 +1160,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       }
     ]
 
+
 ## GetDataset (GET /:login/datasets/:id)
+
+**Deprecated in SDC 7.0. Use [GetImage](#GetImage).**
 
 Gets an individual dataset by id.
 
@@ -1222,7 +1228,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 # Images
 
-An [image](#image-description) contains the software packages that will be available on newly provisioned machines. In the case of virtual machines, the dataset also includes the operating system.
+An [image](#image-description) contains the software packages that will be
+available on newly provisioned machines. In the case of virtual machines, the
+dataset also includes the operating system.
 
 ## ListImages (GET /:login/images)
 
@@ -1230,29 +1238,35 @@ Provides a list of images available in this datacenter.
 
 ### Inputs
 
-* None for SDC 6.5
-
-* Starting with SDC 7.0, the following are all optional accepted inputs:
+None for SDC 6.5. Starting with SDC 7.0, the following optional inputs are
+available to filter the list of images:
 
 ||name||String||The "friendly" name for this image||
 ||os||String||The underlying operating system for this image||
 ||version||String||The version for this image||
 
-When any value is provided for one or more of the aforementioned inputs, the
-retrieved images must match all of them.
 
 ### Returns
 
-An array of images. Image objects are:
+An array of images. Image objects include the following fields:
 
-||id||String||a unique identifier for this image||
-||name||String||The "friendly name for this image||
-||os||String||The underlying operating system for this image||
-||version||String||The version for this image||
-||type||String||Whether this is a smartmachine or virtualmachine dataset||
-||requirements||Object||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
-||homepage||String||The URL for a web page including detailed information for this image||
-||published_at||String (ISO 8859 Timestamp)||The time this image has been made publicly available||
+|| id           || String ||a unique identifier for this image||
+|| name         || String ||The "friendly name for this image||
+|| os           || String ||The underlying operating system for this image||
+|| version      || String ||The version for this image||
+|| type         || String ||Whether this is a smartmachine or virtualmachine dataset||
+|| requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
+|| homepage     || String ||(New in 7.0.) The URL for a web page including detailed information for this image||
+|| created      || String (ISO-8859) ||(Only in 6.5.) The time this image has been made publicly available. This has been obsoleted by the 'published_at' field.||
+|| published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
+<!-- #ifdef BLEEDING_EDGE -->
+|| public       || Boolean ||(New in 7.0.) Indicates if this image is publicly available.||
+|| state        || String ||(New in 7.0.) The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed'.||
+|| tags         || Object ||(New in 7.0.) An object of key/value pairs that allows clients to categorize images by any given criteria.||
+|| eula         || String ||(New in 7.0.) URL of the End User License Agreement (EULA) for the image.||
+|| acl          || Array ||(New in 7.0.) Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
+<!-- #endif -->
+
 
 ### Errors
 
@@ -1297,7 +1311,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
         "urn": "sdc:sdc:nodejs:1.1.3",
         "default": true,
         "type": "smartmachine",
-        "created": "2011-04-15T22:04:12+00:00"
+        "published_at": "2011-04-15T22:04:12+00:00"
       },
       {
         "name": "smartos",
@@ -1307,7 +1321,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
         "urn": "sdc:sdc:smartos:1.3.23",
         "default": false,
         "type": "smartmachine",
-        "created": "2011-04-11T08:45:00+00:00"
+        "published_at": "2011-04-11T08:45:00+00:00"
       }
     ]
 
@@ -1317,17 +1331,26 @@ Gets an individual image by id.
 
 ### Inputs
 
-* None
+None
 
 ### Returns
 
-||id||String||a unique identifier for this image||
-||name||String||The "friendly name for this image||
-||version||String||The version for this image||
-||type||String||Whether this is a smartmachine or virtualmachine image||
-||requirements||Object||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
-||homepage||String||The URL for a web page including detailed information for this image||
-||published_at||String (ISO 8859 Timestamp)||The time this image has been made publicly available||
+|| id           || String ||a unique identifier for this image||
+|| name         || String ||The "friendly name for this image||
+|| os           || String ||The underlying operating system for this image||
+|| version      || String ||The version for this image||
+|| type         || String ||Whether this is a smartmachine or virtualmachine dataset||
+|| requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
+|| homepage     || String ||(New in 7.0.) The URL for a web page including detailed information for this image||
+|| created      || String (ISO-8859) ||(Only in 6.5.) The time this image has been made publicly available. This has been obsoleted by the 'published_at' field.||
+|| published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
+<!-- #ifdef BLEEDING_EDGE -->
+|| public       || Boolean ||(New in 7.0.) Indicates if this image is publicly available.||
+|| state        || String ||(New in 7.0.) The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed'.||
+|| tags         || Object ||(New in 7.0.) An object of key/value pairs that allows clients to categorize images by any given criteria.||
+|| eula         || String ||(New in 7.0.) URL of the End User License Agreement (EULA) for the image.||
+|| acl          || Array ||(New in 7.0.) Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
+<!-- #endif -->
 
 ### Errors
 
@@ -1338,39 +1361,47 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ sdc-getimage 63ce06d8-7ae7-11e0-b0df-1fcf8f45c5d5
+    $ sdc-getimage e42f8c84-bbea-11e2-b920-078fab2aab1f
 
 #### Example Request
 
-    GET /my/images/63ce06d8-7ae7-11e0-b0df-1fcf8f45c5d5 HTTP/1.1
+    GET /my/images/e42f8c84-bbea-11e2-b920-078fab2aab1f HTTP/1.1
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 #### Example Response
 
     HTTP/1.1 200 OK
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET
-    Server: Joyent
-    Connection: close
-    Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 7.0.0
-    X-RequestId: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
-    X-Response-Time: 257
     Content-Type: application/json
-    Content-Length: 402
-    Content-MD5: y7YOeXG98DYchC96s46yRw==
+    Content-Length: 340
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: Q4ibyY8+ckGrTqyr/sbYLw==
+    Date: Thu, 08 Aug 2013 06:02:49 GMT
+    Server: Joyent SmartDataCenter 7.0.0
+    Api-Version: 7.0.0
+    Request-Id: 27431d80-fff0-11e2-b61a-f51841e5d1bd
+    Response-Time: 491
+    X-Request-Id: 27431d80-fff0-11e2-b61a-f51841e5d1bd
+    X-Api-Version: 7.0.0
+    X-Response-Time: 491
 
     {
-      "id": "63ce06d8-7ae7-11e0-b0df-1fcf8f45c5d5",
-      "name": "smartos",
-      "os": "smartos",
-      "type": "smartmachine",
-      "version": "1.3.13",
-      "created": "2011-06-27T18:41:39+00:00",
-      "default": true
+      "id": "e42f8c84-bbea-11e2-b920-078fab2aab1f",
+      "name": "fedora",
+      "version": "2.4.2",
+      "os": "linux",
+      "type": "virtualmachine",
+      "requirements": {},
+      "description": "Fedora 18 64-bit image with just essential...",
+      "published_at": "2013-05-17T18:18:36.472Z",
+      "public": true
+      "state": "active",
     }
 
 
@@ -1930,7 +1961,7 @@ object.
 
 ||name||String||friendly name for this machine; default is a randomly generated name||
 ||package||String||Name of the package to use on provisioning; default is indicated in ListPackages||
-||image||String||(Added in SDC 7.0.) The image UUID (the "id" field in [ListImages](#ListImages)) or URN (the "urn" field; not all images have a URN field because it is deprecated in SDC 7). In SDC 6.5 this may also be the image "name". If multiple images have that same name, the latest by "version" (semver semantics) is selected. This defaults per the `"default": true` image in ListImages.||
+||image||String||(Added in SDC 7.0.) The image UUID (the "id" field in [ListImages](#ListImages)) or URN (the "urn" field; not all images have a URN field because it is deprecated in SDC 7). In SDC 6.5 this may also be the image "name". If multiple images have that same name, the latest by "version" (semver semantics) is selected. This defaults per the `"default": true` image in ListDatasets.||
 ||dataset||String||(Deprecated in SDC 7.0.) Backward compatible alternative to 'image' field.||
 ||networks||Array||desired networks ids, obtained from ListNetworks||
 ||metadata.$name||String||An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata."||
