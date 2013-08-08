@@ -1,8 +1,9 @@
 build
 *.node
 *.pdf
-docs/*.json
-docs/*.html
+/docs/*.json
+/docs/*.html
+/docs/index.restdown
 cscope.in.out
 cscope.po.out
 cscope.out

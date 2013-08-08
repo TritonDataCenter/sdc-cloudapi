@@ -83,6 +83,9 @@ $(TAP): | $(NPM_EXEC)
 
 # Doc preprocessing to enable getting public and bleeding-edge
 # docs out of the same index.restdown.in.
+#
+# To make the bleeding edge docs:
+# 	make clean-docs docs DOCS_PREPROCESS_FLAGS="-D BLEEDING_EDGE"
 docs/index.restdown: docs/index.restdown.in
 	python tools/preprocess.py -o $@ $(DOCS_PREPROCESS_FLAGS) $<
 
