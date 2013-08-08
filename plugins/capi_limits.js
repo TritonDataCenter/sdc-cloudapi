@@ -94,27 +94,58 @@ module.exports = {
                 // Note we have no way right now to filter customer machines
                 // by dataset name, since that's not added at all to our VMs
                 // representation on VMAPI, neither to vmadm itself.
-                var params = {
-                    owner_uuid: req.account.uuid,
-                    state: 'active'
-                };
-
-                return req.sdc.vmapi.countVms(params, function (err2, count) {
+                // In order to get a reasonably good filter, we need to query
+                // IMGAPI for all the machines with a given name, then build a
+                // VMAPI query including all those images UUIDs into an LDAP
+                // search filter.
+                return req.sdc.imgapi.listImages({
+                    name: req.dataset.name,
+                    state: 'all'
+                }, function (err2, images, r) {
                     if (err2) {
-                        log.error({err: err2},
-                            'capi_limits: unable to count VMs.');
-                        return next(new restify.InternalError(
-                                'capi_limits: unable to count VMs.'));
+                        log.error({err: err3},
+                            'capi_limits: unable to list Images');
                     }
 
-                    log.debug('capi_limits: limit=%d, count=%d',
-                        req.limit, count);
-
-                    if (count >= req.limit) {
-                        return next(new restify.NotAuthorizedError(
-                                util.format('%s: %s', CODE, MESSAGE)));
+                    if (!images) {
+                        log.info('No images found with name ' +
+                            req.dataset.name);
+                        return next();
                     }
-                    return next();
+
+                    var filter = '(&(owner_uuid=' + req.account.uuid +
+                            ')(&(!(state=destroyed))(!(state=failed)))(|(' +
+                    images.map(function (i) {
+                        return ('image_uuid=' + i.uuid);
+                    }).join(')(') + ')))';
+
+
+                    log.debug({filter: filter}, 'VMAPI search machines filter');
+
+                    return req.sdc.vmapi.client.head({
+                        path: '/vms',
+                        query: {query: filter}
+                    }, function (err3, req3, res3) {
+                        if (err3) {
+                            log.error({err: err3},
+                                'capi_limits: unable to count VMs.');
+                            return next(new restify.InternalError(
+                                    'capi_limits: unable to count VMs.'));
+                        }
+
+                        var count = Number(
+                            res3.headers['x-joyent-resource-count']) || 0;
+
+                        log.debug('capi_limits: limit=%d, count=%d',
+                            req.limit, count);
+
+                        if (count >= req.limit) {
+                            return next(new restify.NotAuthorizedError(
+                                    util.format('%s: %s', CODE, MESSAGE)));
+                        }
+                        return next();
+
+                    });
                 });
             });
         };
