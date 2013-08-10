@@ -1088,7 +1088,7 @@ Provides a list of datasets available in this datacenter.
 
 ### Inputs
 
-* None
+None
 
 ### Returns
 
@@ -1325,6 +1325,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       }
     ]
 
+
 ## GetImage (GET /:login/images/:id)
 
 Gets an individual image by id.
@@ -1345,11 +1346,12 @@ None
 || created      || String (ISO-8859) ||(Only in 6.5.) The time this image has been made publicly available. This has been obsoleted by the 'published_at' field.||
 || published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
 <!-- #ifdef BLEEDING_EDGE -->
+|| owner        || String ||(New in 7.0.) The UUID of the user who owns this image.||
 || public       || Boolean ||(New in 7.0.) Indicates if this image is publicly available.||
 || state        || String ||(New in 7.0.) The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed'.||
 || tags         || Object ||(New in 7.0.) An object of key/value pairs that allows clients to categorize images by any given criteria.||
 || eula         || String ||(New in 7.0.) URL of the End User License Agreement (EULA) for the image.||
-|| acl          || Array ||(New in 7.0.) Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
+|| acl          || Array  ||(New in 7.0.) Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
 <!-- #endif -->
 
 ### Errors
@@ -1407,6 +1409,55 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 
 <!-- #ifdef BLEEDING_EDGE -->
+
+## DeleteImage (DELETE /:login/images/:id)
+
+Delete an image. One must be the owner of the image to delete it.
+
+### Inputs
+
+None
+
+### Returns
+
+Responds with HTTP 204 'No Content'.
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or the image specified does not exist||
+
+### CLI Command
+
+    $ sdc-deleteimage 0c428eb9-7f03-4bb0-ac9f-c0718945d604
+
+#### Example Request
+
+    DELETE /my/images/e42f8c84-bbea-11e2-b920-078fab2aab1f HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~7.0
+
+#### Example Response
+
+    HTTP/1.1 204 No Content
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, DELETE
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Date: Sat, 10 Aug 2013 00:43:33 GMT
+    Server: Joyent SmartDataCenter 7.0.0
+    Api-Version: 7.0.0
+    Request-Id: e23eeef0-0155-11e3-8fd4-39aa5371c390
+    Response-Time: 244
+    X-Request-Id: e23eeef0-0155-11e3-8fd4-39aa5371c390
+    X-Api-Version: 7.0.0
+    X-Response-Time: 244
+
 
 ## CreateImageFromMachine (POST /:login/images)
 
