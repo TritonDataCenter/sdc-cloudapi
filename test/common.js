@@ -1,4 +1,4 @@
-// Copyright 2012 Joyent, Inc. All rights reserved.
+// Copyright 2013 Joyent, Inc. All rights reserved.
 var assert = require('assert');
 var crypto = require('crypto');
 var path = require('path');
@@ -257,7 +257,14 @@ module.exports = {
         t.equal(headers.server, 'Joyent SmartDataCenter 7.0.0',
                 'headers server');
         t.equal(headers.connection, 'Keep-Alive', 'headers connection');
-        t.equal(headers['x-api-version'], '7.0.0', 'headers x-api-version');
+        t.ok(headers['x-api-version'], 'headers x-api-version OK');
+    },
+
+    checkVersionHeader: function (t, version, headers) {
+        assert.ok(t);
+        assert.ok(version);
+        t.equal(headers['x-api-version'], version,
+                util.format('headers x-api-version %s', version));
     },
 
     getCfg: function () {
