@@ -469,28 +469,10 @@ test('Wait for img create from running machine job', function (t) {
 });
 
 
-test('StopMachine', TAP_CONF, function (t) {
-    client.post('/my/machines/' + machine, {
-        action: 'stop'
-    }, function (err) {
-        t.ifError(err);
+test('Stop test', function (t) {
+    var stopTest = require('./machines/stop');
+    stopTest(t, client, machine, function () {
         t.end();
-    });
-});
-
-
-test('Wait For Stopped', TAP_CONF,  function (t) {
-    client.vmapi.listJobs({
-        vm_uuid: machine,
-        task: 'stop'
-    }, function (err, jobs) {
-        t.ifError(err, 'list jobs error');
-        t.ok(jobs);
-        t.ok(jobs.length);
-        waitForJob(client, jobs[0].uuid, function (err2) {
-            t.ifError(err2, 'Check state error');
-            t.end();
-        });
     });
 });
 
@@ -569,56 +551,21 @@ test('Delete image', function (t) {
 });
 
 
-test('StartMachine', TAP_CONF, function (t) {
-    client.post('/my/machines/' + machine, {
-        action: 'start'
-    }, function (err) {
-        t.ifError(err);
+test('Start test', function (t) {
+    var startTest = require('./machines/start');
+    startTest(t, client, machine, function () {
         t.end();
     });
 });
 
 
-test('Wait For Started', TAP_CONF,  function (t) {
-    client.vmapi.listJobs({
-        vm_uuid: machine,
-        task: 'start'
-    }, function (err, jobs) {
-        t.ifError(err, 'list jobs error');
-        t.ok(jobs);
-        t.ok(jobs.length);
-        waitForJob(client, jobs[0].uuid, function (err2) {
-            t.ifError(err2, 'Check state error');
-            t.end();
-        });
-    });
-});
-
-
-test('RebootMachine', TAP_CONF, function (t) {
-    client.post('/my/machines/' + machine, {
-        action: 'reboot'
-    }, function (err) {
-        t.ifError(err);
+test('Reboot test', function (t) {
+    var rebootTest = require('./machines/reboot');
+    rebootTest(t, client, machine, function () {
         t.end();
     });
 });
 
-
-test('Wait For Rebooted', TAP_CONF,  function (t) {
-    client.vmapi.listJobs({
-        vm_uuid: machine,
-        task: 'reboot'
-    }, function (err, jobs) {
-        t.ifError(err, 'list jobs error');
-        t.ok(jobs);
-        t.ok(jobs.length);
-        waitForJob(client, jobs[0].uuid, function (err2) {
-            t.ifError(err2, 'Check state error');
-            t.end();
-        });
-    });
-});
 
 
 test('Resize machine to inactive package', function (t) {
@@ -821,28 +768,10 @@ test('Firewall Rules tests', function (t) {
 
 
 
-test('DeleteMachine', TAP_CONF, function (t) {
-    client.del('/my/machines/' + machine, function (err, req, res) {
-        t.ifError(err, 'DELETE /my/machines error');
-        t.equal(res.statusCode, 204, 'DELETE /my/machines status');
-        common.checkHeaders(t, res.headers);
+test('Delete tests', function (t) {
+    var deleteTest = require('./machines/delete');
+    deleteTest(t, client, machine, function () {
         t.end();
-    });
-});
-
-
-test('Wait For Destroyed', TAP_CONF,  function (t) {
-    client.vmapi.listJobs({
-        vm_uuid: machine,
-        task: 'destroy'
-    }, function (err, jobs) {
-        t.ifError(err, 'list jobs error');
-        t.ok(jobs);
-        t.ok(jobs.length);
-        waitForJob(client, jobs[0].uuid, function (err2) {
-            t.ifError(err2, 'Check state error');
-            t.end();
-        });
     });
 });
 
@@ -971,30 +900,13 @@ test('Get Machine Firewall Enabled', function (t) {
 });
 
 
-test('DeleteMachine', TAP_CONF, function (t) {
-    client.del('/my/machines/' + machine, function (err, req, res) {
-        t.ifError(err, 'DELETE /my/machines error');
-        t.equal(res.statusCode, 204, 'DELETE /my/machines status');
-        common.checkHeaders(t, res.headers);
+test('Delete 7.0.0 tests', function (t) {
+    var deleteTest = require('./machines/delete');
+    deleteTest(t, client, machine, function () {
         t.end();
     });
 });
 
-
-test('Wait For Destroyed', TAP_CONF,  function (t) {
-    client.vmapi.listJobs({
-        vm_uuid: machine,
-        task: 'destroy'
-    }, function (err, jobs) {
-        t.ifError(err, 'list jobs error');
-        t.ok(jobs);
-        t.ok(jobs.length);
-        waitForJob(client, jobs[0].uuid, function (err2) {
-            t.ifError(err2, 'Check state error');
-            t.end();
-        });
-    });
-});
 
 var LINUX_DS = false;
 var KVM_MACHINE = false;
@@ -1075,41 +987,16 @@ test('Wait For KVM machine Running', TAP_CONF,  function (t) {
     }
 });
 
-
-
-test('Delete KVM machine (7.0)', function (t) {
+test('Delete KVM tests', function (t) {
     if (KVM_MACHINE) {
-        client.del('/my/machines/' + KVM_MACHINE, function (err, req, res) {
-            t.ifError(err, 'DELETE /my/machines error');
-            t.equal(res.statusCode, 204, 'DELETE /my/machines status');
-            common.checkHeaders(t, res.headers);
+        var deleteTest = require('./machines/delete');
+        deleteTest(t, client, KVM_MACHINE, function () {
             t.end();
         });
     } else {
         t.end();
     }
 });
-
-
-test('Wait For KVM machine Destroyed', TAP_CONF,  function (t) {
-    if (KVM_MACHINE) {
-        client.vmapi.listJobs({
-            vm_uuid: KVM_MACHINE,
-            task: 'destroy'
-        }, function (err, jobs) {
-            t.ifError(err, 'list jobs error');
-            t.ok(jobs);
-            t.ok(jobs.length);
-            waitForJob(client, jobs[0].uuid, function (err2) {
-                t.ifError(err2, 'Check state error');
-                t.end();
-            });
-        });
-    } else {
-        t.end();
-    }
-});
-
 
 
 test('teardown', TAP_CONF, function (t) {

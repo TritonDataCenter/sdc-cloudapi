@@ -5,6 +5,7 @@ var common = require('../common');
 var machinesCommon = require('./common');
 var checkJob = machinesCommon.checkJob;
 var waitForJob = machinesCommon.waitForJob;
+
 var TAP_CONF = {
     timeout: 'Infinity '
 };

@@ -154,6 +154,9 @@ headnode:
     -m /usbkey/datasets/smartos-1.6.3.dsmanifest \
     -f /usbkey/datasets/smartos-1.6.3.zfs.bz2
 
+(Note you can also scp the file `tools/coal-setup.sh` and run it on the headnode,
+which will create the CloudAPI zone and import the aforementioned dataset).
+
     make test
 
 or, individually:
