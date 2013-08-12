@@ -58,7 +58,8 @@ module.exports = function (suite, client, machine, callback) {
 
     // This is to make sure we're not getting machines from a different customer
     // when searching by tags:
-    suite.test('Attempt to list other owner machines by tag', TAP_CONF, function (t) {
+    suite.test('Attempt to list other owner machines by tag', TAP_CONF,
+        function (t) {
         // Admin user will always have all of the HN zones with this tag:
         var url = '/my/machines?tag.smartdc_type=core';
         client.get(url, function (err, req, res, body) {
