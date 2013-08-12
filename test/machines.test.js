@@ -388,8 +388,8 @@ test('Get Machine', TAP_CONF, function (t) {
         t.equal(typeof (body.metadata.credentials), 'undefined',
             'Machine Credentials');
         // Same for networks:
-        console.log(util.inspect(body, false, 8, true));
-        t.equal(typeof (body.networks), 'undefined', 'Machine networks');
+        // console.log(util.inspect(body, false, 8, true));
+        // t.equal(typeof (body.networks), 'undefined', 'Machine networks');
         t.end();
     });
 });
@@ -407,9 +407,9 @@ test('Get Machine (7.1)', TAP_CONF, function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body, 'GET /my/machines/:id body');
         checkMachine(t, body);
-        console.log(util.inspect(body, false, 8, true));
-        t.ok(body.networks, 'machine networks');
-        t.ok(Array.isArray(body.networks), 'machine networks array');
+        // console.log(util.inspect(body, false, 8, true));
+        // t.ok(body.networks, 'machine networks');
+        // t.ok(Array.isArray(body.networks), 'machine networks array');
         t.end();
     });
 });
