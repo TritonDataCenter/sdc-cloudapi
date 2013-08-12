@@ -73,10 +73,15 @@ function requestSigner(req) {
                                     signer.sign(privateKey, 'base64')));
 }
 
-function setupClient(callback) {
+function setupClient(version, callback) {
+    if (typeof (version) === 'function') {
+        callback = version;
+        version = '*';
+    }
+
     client = restify.createJsonClient({
         url: server ? server.url : 'https://127.0.0.1',
-        version: '*',
+        version: version,
         retryOptions: {
             retry: 0
         },
@@ -220,14 +225,18 @@ function setupClient(callback) {
 
 module.exports = {
 
-    setup: function (callback) {
+    setup: function (version, callback) {
+        if (typeof (version) === 'function') {
+            callback = version;
+            version = '*';
+        }
         assert.ok(callback);
 
         user = 'a' + uuid().substr(0, 7) + '@joyent.com';
         if (SDC_SETUP_TESTS) {
             // We already got a running server instance,
             // no need to boot another one:
-            return setupClient(callback);
+            return setupClient(version, callback);
         } else {
             server = app.createServer({
                 config: DEFAULT_CFG,
