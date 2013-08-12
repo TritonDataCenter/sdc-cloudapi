@@ -60,6 +60,9 @@ module.exports = function (suite, client, machine, callback) {
 
     suite.test('RuleAdd Job', TAP_CONF, function (t) {
         waitForWfJob(client, RULE_JOB_UUID, function (err) {
+            if (err) {
+                TAP_CONF.skip = true;
+            }
             t.ifError(err, 'error');
             t.end();
         });
