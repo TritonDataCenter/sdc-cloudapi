@@ -16,6 +16,9 @@ var META_64_VAL = new Buffer('Hello World').toString('base64');
 
 
 module.exports = function (suite, client, machine, callback) {
+    if (!machine) {
+        TAP_CONF.skip = true;
+    }
     suite.test('ListMetadata', TAP_CONF, function (t) {
         var url = '/my/machines/' + machine + '/metadata';
         client.get(url, function (err, req, res, body) {

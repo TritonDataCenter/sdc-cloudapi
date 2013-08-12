@@ -16,7 +16,11 @@ var TAG_TWO_VAL = 'none';
 
 module.exports = function (suite, client, machine, callback) {
 
-    suite.test('ListMachines by tag', function (t) {
+    if (!machine) {
+        TAP_CONF.skip = true;
+    }
+
+    suite.test('ListMachines by tag', TAP_CONF, function (t) {
         var url = '/my/machines?tag.' + TAG_KEY + '=' + TAG_VAL;
         client.get(url, function (err, req, res, body) {
             t.ifError(err);
@@ -34,7 +38,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('ListMachines all tagged machines', function (t) {
+    suite.test('ListMachines all tagged machines', TAP_CONF, function (t) {
         var url = '/my/machines?tags=*';
         client.get(url, function (err, req, res, body) {
             t.ifError(err);
@@ -54,7 +58,7 @@ module.exports = function (suite, client, machine, callback) {
 
     // This is to make sure we're not getting machines from a different customer
     // when searching by tags:
-    suite.test('Attempt to list other owner machines by tag', function (t) {
+    suite.test('Attempt to list other owner machines by tag', TAP_CONF, function (t) {
         // Admin user will always have all of the HN zones with this tag:
         var url = '/my/machines?tag.smartdc_type=core';
         client.get(url, function (err, req, res, body) {

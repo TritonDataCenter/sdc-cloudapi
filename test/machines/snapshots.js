@@ -18,6 +18,9 @@ function checkSnapshot(t, snap) {
 }
 
 module.exports = function (suite, client, machine, callback) {
+    if (!machine) {
+        TAP_CONF.skip = true;
+    }
     var snapshot;
 
     suite.test('Take Snapshot', TAP_CONF, function (t) {

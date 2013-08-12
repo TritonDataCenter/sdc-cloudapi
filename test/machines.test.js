@@ -168,7 +168,7 @@ test('ListMachines (empty)', TAP_CONF, function (t) {
 });
 
 
-test('Get Headnode', function (t) {
+test('Get Headnode', TAP_CONF, function (t) {
     client.cnapi.listServers(function (err, servers) {
         t.ifError(err);
         t.ok(servers);
@@ -235,7 +235,7 @@ test('Wait For Running', TAP_CONF,  function (t) {
 });
 
 
-test('Create machine with inactive package', function (t) {
+test('Create machine with inactive package', TAP_CONF, function (t) {
     var obj = {
         dataset: 'smartos',
         'package': sdc_256_inactive_entry.name,
@@ -265,7 +265,7 @@ test('Create machine with inactive package', function (t) {
 
 var DATASET;
 
-test('get smartos dataset', function (t) {
+test('get smartos dataset', TAP_CONF, function (t) {
     client.get('/my/datasets?name=smartos', function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets error');
         t.equal(res.statusCode, 200, 'GET /my/datasets status');
@@ -282,7 +282,7 @@ test('get smartos dataset', function (t) {
     });
 });
 
-test('Create machine with invalid network', function (t) {
+test('Create machine with invalid network', TAP_CONF, function (t) {
     var obj = {
         dataset: DATASET,
         'package': 'sdc_128_ok',
@@ -305,7 +305,7 @@ test('Create machine with invalid network', function (t) {
 });
 
 // PUBAPI-567: Verify it has been fixed as side effect of PUBAPI-566
-test('Create machine with invalid package', function (t) {
+test('Create machine with invalid package', TAP_CONF, function (t) {
     var obj = {
         dataset: DATASET,
         'package': uuid().substr(0, 7),
@@ -368,7 +368,7 @@ test('ListMachines all', TAP_CONF, function (t) {
 });
 
 
-test('Get Machine', function (t) {
+test('Get Machine', TAP_CONF, function (t) {
     client.get({
         path: '/my/machines/' + machine,
         headers: {
@@ -395,7 +395,7 @@ test('Get Machine', function (t) {
 });
 
 
-test('Get Machine (7.1)', function (t) {
+test('Get Machine (7.1)', TAP_CONF, function (t) {
     client.get({
         path: '/my/machines/' + machine,
         headers: {
@@ -414,7 +414,7 @@ test('Get Machine (7.1)', function (t) {
     });
 });
 
-test('Get Machine Include Credentials', function (t) {
+test('Get Machine Include Credentials', TAP_CONF, function (t) {
     var url = '/my/machines/' + machine + '?credentials=true';
     client.get(url, function (err, req, res, body) {
         t.ifError(err, 'GET /my/machines/:id error');
@@ -432,7 +432,7 @@ test('Get Machine Include Credentials', function (t) {
 
 var IMG_JOB_UUID;
 
-test('Attempt to create image from running machine', function (t) {
+test('Attempt to create image from running machine', TAP_CONF, function (t) {
     if (common.getCfg().create_images === true) {
         var obj = {
             machine: machine,
@@ -456,7 +456,7 @@ test('Attempt to create image from running machine', function (t) {
     }
 });
 
-test('Wait for img create from running machine job', function (t) {
+test('Wait for img create from running machine job', TAP_CONF, function (t) {
     if (common.getCfg().create_images === true) {
         waitForWfJob(client, IMG_JOB_UUID, function (err) {
             t.ok(err, 'Image job error');
@@ -469,7 +469,7 @@ test('Wait for img create from running machine job', function (t) {
 });
 
 
-test('Stop test', function (t) {
+test('Stop test', TAP_CONF, function (t) {
     var stopTest = require('./machines/stop');
     stopTest(t, client, machine, function () {
         t.end();
@@ -477,7 +477,7 @@ test('Stop test', function (t) {
 });
 
 
-test('Create image from machine (missing params)', function (t) {
+test('Create image from machine (missing params)', TAP_CONF, function (t) {
     if (common.getCfg().create_images === true) {
         // Missing name attribute:
         var obj = {
@@ -539,7 +539,7 @@ test('Wait for img create job', TAP_CONF, function (t) {
 });
 
 
-test('Delete image', function (t) {
+test('Delete image', TAP_CONF, function (t) {
     if (common.getCfg().create_images === true && image_uuid) {
         client.imgapi.deleteImage(image_uuid, function (err, res) {
             t.ifError(err, 'Delete Image error');
@@ -551,7 +551,7 @@ test('Delete image', function (t) {
 });
 
 
-test('Start test', function (t) {
+test('Start test', TAP_CONF, function (t) {
     var startTest = require('./machines/start');
     startTest(t, client, machine, function () {
         t.end();
@@ -559,7 +559,7 @@ test('Start test', function (t) {
 });
 
 
-test('Reboot test', function (t) {
+test('Reboot test', TAP_CONF, function (t) {
     var rebootTest = require('./machines/reboot');
     rebootTest(t, client, machine, function () {
         t.end();
@@ -568,7 +568,7 @@ test('Reboot test', function (t) {
 
 
 
-test('Resize machine to inactive package', function (t) {
+test('Resize machine to inactive package', TAP_CONF, function (t) {
     client.post('/my/machines/' + machine, {
         action: 'resize',
         'package': sdc_256_inactive_entry.name
@@ -735,7 +735,7 @@ test('Wait For Firewall Disabled', TAP_CONF,  function (t) {
 });
 
 
-test('Tags tests', function (t) {
+test('Tags tests', TAP_CONF, function (t) {
     var testTags = require('./machines/tags');
     testTags(t, client, machine, function () {
         t.end();
@@ -743,7 +743,7 @@ test('Tags tests', function (t) {
 });
 
 
-test('Metadata tests', function (t) {
+test('Metadata tests', TAP_CONF, function (t) {
     var testMetadata = require('./machines/metadata');
     testMetadata(t, client, machine, function () {
         t.end();
@@ -751,7 +751,7 @@ test('Metadata tests', function (t) {
 });
 
 
-test('Snapshots tests', function (t) {
+test('Snapshots tests', TAP_CONF, function (t) {
     var testSnapshots = require('./machines/snapshots');
     testSnapshots(t, client, machine, function () {
         t.end();
@@ -759,7 +759,7 @@ test('Snapshots tests', function (t) {
 });
 
 
-test('Firewall Rules tests', function (t) {
+test('Firewall Rules tests', TAP_CONF, function (t) {
     var testFirewallRules = require('./machines/firewall-rules');
     testFirewallRules(t, client, machine, function () {
         t.end();
@@ -768,7 +768,7 @@ test('Firewall Rules tests', function (t) {
 
 
 
-test('Delete tests', function (t) {
+test('Delete tests', TAP_CONF, function (t) {
     var deleteTest = require('./machines/delete');
     deleteTest(t, client, machine, function () {
         t.end();
@@ -887,7 +887,7 @@ test('Wait For Running', TAP_CONF,  function (t) {
     });
 });
 
-test('Get Machine Firewall Enabled', function (t) {
+test('Get Machine Firewall Enabled', TAP_CONF, function (t) {
     client.get('/my/machines/' + machine, function (err, req, res, body) {
         t.ifError(err, 'GET /my/machines/:id error');
         t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
@@ -900,7 +900,7 @@ test('Get Machine Firewall Enabled', function (t) {
 });
 
 
-test('Delete 7.0.0 tests', function (t) {
+test('Delete 7.0.0 tests', TAP_CONF, function (t) {
     var deleteTest = require('./machines/delete');
     deleteTest(t, client, machine, function () {
         t.end();
@@ -911,7 +911,7 @@ test('Delete 7.0.0 tests', function (t) {
 var LINUX_DS = false;
 var KVM_MACHINE = false;
 
-test('KVM dataset', function (t) {
+test('KVM dataset', TAP_CONF, function (t) {
     client.get('/my/images?os=linux', function (er1, req1, res1, body1) {
         t.ifError(er1, 'GET /my/images error');
         t.equal(res1.statusCode, 200, 'GET /my/images status');
@@ -987,7 +987,7 @@ test('Wait For KVM machine Running', TAP_CONF,  function (t) {
     }
 });
 
-test('Delete KVM tests', function (t) {
+test('Delete KVM tests', TAP_CONF, function (t) {
     if (KVM_MACHINE) {
         var deleteTest = require('./machines/delete');
         deleteTest(t, client, KVM_MACHINE, function () {

@@ -10,6 +10,9 @@ var TAP_CONF = {
 };
 
 module.exports = function (suite, client, machine, callback) {
+    if (!machine) {
+        TAP_CONF.skip = true;
+    }
     suite.test('RebootMachine', TAP_CONF, function (t) {
         client.post('/my/machines/' + machine, {
             action: 'reboot'

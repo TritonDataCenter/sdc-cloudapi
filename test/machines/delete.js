@@ -10,6 +10,9 @@ var TAP_CONF = {
 };
 
 module.exports = function (suite, client, machine, callback) {
+    if (!machine) {
+        TAP_CONF.skip = true;
+    }
     suite.test('DeleteMachine', TAP_CONF, function (t) {
         client.del('/my/machines/' + machine, function (err, req, res) {
             t.ifError(err, 'DELETE /my/machines error');
