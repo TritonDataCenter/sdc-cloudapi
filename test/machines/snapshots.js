@@ -50,6 +50,9 @@ module.exports = function (suite, client, machine, callback) {
             });
             t.ok(snapshot_jobs.length, 'snapshot jobs is an array');
             waitForJob(client, snapshot_jobs[0].uuid, function (err2) {
+                if (err2) {
+                    TAP_CONF.skip = true;
+                }
                 t.ifError(err2, 'Check state error');
                 t.end();
             });
