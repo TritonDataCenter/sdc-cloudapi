@@ -1238,12 +1238,16 @@ Provides a list of images available in this datacenter.
 
 ### Inputs
 
-None for SDC 6.5. Starting with SDC 7.0, the following optional inputs are
-available to filter the list of images:
+None for SDC 6.5. Starting with SDC 7.0, the following optional query parameters
+are available to filter the list of images:
 
 ||name||String||The "friendly" name for this image||
 ||os||String||The underlying operating system for this image||
 ||version||String||The version for this image||
+||public||Boolean||(New in 7.1.) Filter public/private images, e.g. `?public=true`, `?public=false`||
+||state||String||(New in 7.1.) Filter on image [state](https://images.joyent.com/docs/#manifest-state). By default only active images are shown. Use `?state=all` to list all images.||
+||owner||String||(New in 7.1.) Filter on the owner UUID.||
+||type||String||(New in 7.1.) Filter on the image type, e.g. `?type=smartmachine`.||
 
 
 ### Returns
