@@ -36,7 +36,7 @@ CLEAN_FILES	+= node_modules cscope.files docs/index.restdown
 
 # The prebuilt sdcnode version we want. See
 # "tools/mk/Makefile.node_prebuilt.targ" for details.
-NODE_PREBUILT_VERSION=v0.8.23
+NODE_PREBUILT_VERSION=v0.8.25
 ifeq ($(shell uname -s),SunOS)
 	NODE_PREBUILT_CC_VERSION=4.6.2
 	NODE_PREBUILT_TAG=zone
