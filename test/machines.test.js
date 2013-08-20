@@ -86,6 +86,8 @@ var sdc_256_entry, sdc_256_inactive_entry, sdc_128_ok_entry;
 
 var HEADNODE = null;
 
+var CREATE_IMAGES = false;
+
 // --- Helpers
 
 
@@ -143,7 +145,13 @@ test('setup', TAP_CONF, function (t) {
             t.ok(_server);
         }
         server = _server;
-
+        var cfg = common.getCfg();
+        if (cfg.bleeding_edge_features &&
+            cfg.bleeding_edge_features.img_mgmt &&
+            cfg.bleeding_edge_login_whitelist &&
+            cfg.bleeding_edge_login_whitelist['*']) {
+            CREATE_IMAGES = true;
+        }
         saveKey(KEY, keyName, client, t, function () {
             add128Ok(t, function () {
                 add256Inactive(t, function () {
@@ -266,7 +274,7 @@ test('Create machine with invalid package', TAP_CONF, function (t) {
     client.post({
         path: '/my/machines',
         headers: {
-            'accept-version': '~7.0'
+            'accept-version': '~7.1'
         }
     }, obj, function (err, req, res, body) {
         t.ok(err, 'POST /my/machines with invalid package error');
@@ -455,7 +463,7 @@ test('Get Machine Include Credentials', TAP_CONF, function (t) {
 var IMG_JOB_UUID;
 
 test('Attempt to create image from running machine', TAP_CONF, function (t) {
-    if (common.getCfg().create_images === true && machine) {
+    if (CREATE_IMAGES && machine) {
         var obj = {
             machine: machine,
             name: uuid(),
@@ -464,7 +472,7 @@ test('Attempt to create image from running machine', TAP_CONF, function (t) {
         client.post({
             path: '/my/images',
             headers: {
-                'accept-version': '~7.0'
+                'accept-version': '~7.1'
             }
         }, obj, function (err, req, res, body) {
             t.ifError(err);
@@ -479,7 +487,7 @@ test('Attempt to create image from running machine', TAP_CONF, function (t) {
 });
 
 test('Wait for img create from running machine job', TAP_CONF, function (t) {
-    if (common.getCfg().create_images === true && machine) {
+    if (CREATE_IMAGES && machine) {
         waitForWfJob(client, IMG_JOB_UUID, function (err) {
             t.ok(err, 'Image job error');
             t.equal(err.message, 'Job failed');
@@ -500,7 +508,7 @@ test('Stop test', TAP_CONF, function (t) {
 
 
 test('Create image from machine (missing params)', TAP_CONF, function (t) {
-    if (common.getCfg().create_images === true && machine) {
+    if (CREATE_IMAGES && machine) {
         // Missing name attribute:
         var obj = {
             machine: machine,
@@ -509,7 +517,7 @@ test('Create image from machine (missing params)', TAP_CONF, function (t) {
         client.post({
             path: '/my/images',
             headers: {
-                'accept-version': '~7.0'
+                'accept-version': '~7.1'
             }
         }, obj, function (err, req, res, body) {
             t.ok(err, 'missing parameters error');
@@ -524,7 +532,7 @@ test('Create image from machine (missing params)', TAP_CONF, function (t) {
 
 
 test('Create image from machine OK', TAP_CONF, function (t) {
-    if (common.getCfg().create_images === true && machine) {
+    if (CREATE_IMAGES && machine) {
         var obj = {
             machine: machine,
             name: uuid(),
@@ -533,7 +541,7 @@ test('Create image from machine OK', TAP_CONF, function (t) {
         client.post({
             path: '/my/images',
             headers: {
-                'accept-version': '~7.0'
+                'accept-version': '~7.1'
             }
         }, obj, function (err, req, res, body) {
             t.ifError(err);
@@ -550,7 +558,7 @@ test('Create image from machine OK', TAP_CONF, function (t) {
 
 
 test('Wait for img create job', TAP_CONF, function (t) {
-    if (common.getCfg().create_images === true && machine) {
+    if (CREATE_IMAGES && machine) {
         waitForWfJob(client, IMG_JOB_UUID, function (err) {
             if (err) {
                 image_uuid = null;
@@ -565,7 +573,7 @@ test('Wait for img create job', TAP_CONF, function (t) {
 
 
 test('Delete image', TAP_CONF, function (t) {
-    if (common.getCfg().create_images === true && image_uuid) {
+    if (CREATE_IMAGES && image_uuid) {
         client.imgapi.deleteImage(image_uuid, function (err, res) {
             t.ifError(err, 'Delete Image error');
             t.end();
