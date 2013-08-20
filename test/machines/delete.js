@@ -11,8 +11,9 @@ var TAP_CONF = {
 
 module.exports = function (suite, client, machine, callback) {
     if (!machine) {
-        TAP_CONF.skip = true;
+        return callback();
     }
+
     suite.test('DeleteMachine', TAP_CONF, function (t) {
         client.del('/my/machines/' + machine, function (err, req, res) {
             t.ifError(err, 'DELETE /my/machines error');
@@ -38,5 +39,14 @@ module.exports = function (suite, client, machine, callback) {
         });
     });
 
-    callback();
+    suite.test('Delete already deleted machine', TAP_CONF, function (t) {
+        client.del('/my/machines/' + machine, function (err, req, res) {
+            t.ok(err, 'DELETE /my/machines/ error');
+            t.equal(res.statusCode, 410, 'DELETE /my/machines/ statusCode');
+            common.checkHeaders(t, res.headers);
+            t.end();
+        });
+    });
+
+    return callback();
 };

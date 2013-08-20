@@ -185,56 +185,6 @@ test('Get Headnode', TAP_CONF, function (t) {
 });
 
 
-test('CreateMachine (6.5)', TAP_CONF, function (t) {
-    var obj = {
-        dataset: 'smartos',
-        'package': 'sdc_128_ok',
-        name: 'a' + uuid().substr(0, 7),
-        server_uuid: HEADNODE.uuid
-    };
-    obj['metadata.' + META_KEY] = META_VAL;
-    obj['metadata.' + META_64_KEY] = META_64_VAL;
-    obj['tag.' + TAG_KEY] = TAG_VAL;
-
-    obj['metadata.credentials'] = META_CREDS;
-
-    client.post({
-        path: '/my/machines',
-        headers: {
-            'accept-version': '~6.5'
-        }
-    }, obj, function (err, req, res, body) {
-        t.ifError(err, 'POST /my/machines error');
-        t.equal(res.statusCode, 201, 'POST /my/machines status');
-        common.checkHeaders(t, res.headers);
-        t.equal(res.headers.location,
-            util.format('/%s/machines/%s', client.testUser, body.id));
-        t.ok(body, 'POST /my/machines body');
-        checkMachine(t, body);
-        machine = body.id;
-        // Handy to output this to stdout in order to poke around COAL:
-        console.log('Requested provision of machine: %s', machine);
-        t.end();
-    });
-});
-
-
-test('Wait For Running', TAP_CONF,  function (t) {
-    client.vmapi.listJobs({
-        vm_uuid: machine,
-        task: 'provision'
-    }, function (err, jobs) {
-        t.ifError(err, 'list jobs error');
-        t.ok(jobs, 'list jobs ok');
-        t.ok(jobs.length, 'list jobs is an array');
-        waitForJob(client, jobs[0].uuid, function (err2) {
-            t.ifError(err2, 'Check state error');
-            t.end();
-        });
-    });
-});
-
-
 test('Create machine with inactive package', TAP_CONF, function (t) {
     var obj = {
         dataset: 'smartos',
@@ -352,88 +302,160 @@ test('CreateMachine (7.0) w/o dataset fails', TAP_CONF, function (t) {
 });
 
 
-test('ListMachines all', TAP_CONF, function (t) {
-    client.get('/my/machines', function (err, req, res, body) {
-        t.ifError(err, 'GET /my/machines error');
-        t.equal(res.statusCode, 200, 'GET /my/machines status');
+test('CreateMachine (6.5)', TAP_CONF, function (t) {
+    var obj = {
+        dataset: 'smartos',
+        'package': 'sdc_128_ok',
+        name: 'a' + uuid().substr(0, 7),
+        server_uuid: HEADNODE.uuid
+    };
+    obj['metadata.' + META_KEY] = META_VAL;
+    obj['metadata.' + META_64_KEY] = META_64_VAL;
+    obj['tag.' + TAG_KEY] = TAG_VAL;
+
+    obj['metadata.credentials'] = META_CREDS;
+
+    client.post({
+        path: '/my/machines',
+        headers: {
+            'accept-version': '~6.5'
+        }
+    }, obj, function (err, req, res, body) {
+        t.ifError(err, 'POST /my/machines error');
+        t.equal(res.statusCode, 201, 'POST /my/machines status');
         common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/machines body');
-        t.ok(Array.isArray(body), 'GET /my/machines body is array');
-        t.ok(body.length, 'GET /my/machines list is not empty');
-        body.forEach(function (m) {
-            checkMachine(t, m);
-        });
+        t.equal(res.headers.location,
+            util.format('/%s/machines/%s', client.testUser, body.id));
+        t.ok(body, 'POST /my/machines body');
+        checkMachine(t, body);
+        machine = body.id;
+        // Handy to output this to stdout in order to poke around COAL:
+        console.log('Requested provision of machine: %s', machine);
         t.end();
     });
+});
+
+
+test('Wait For Running', TAP_CONF,  function (t) {
+    client.vmapi.listJobs({
+        vm_uuid: machine,
+        task: 'provision'
+    }, function (err, jobs) {
+        if (err) {
+            // Skip machine tests when machine creation fails
+            machine = null;
+        }
+        t.ifError(err, 'list jobs error');
+        t.ok(jobs, 'list jobs ok');
+        t.ok(jobs.length, 'list jobs is an array');
+        waitForJob(client, jobs[0].uuid, function (err2) {
+            if (err2) {
+                // Skip machine tests when machine creation fails
+                machine = null;
+            }
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
+    });
+});
+
+
+test('ListMachines all', TAP_CONF, function (t) {
+    if (machine) {
+        client.get('/my/machines', function (err, req, res, body) {
+            t.ifError(err, 'GET /my/machines error');
+            t.equal(res.statusCode, 200, 'GET /my/machines status');
+            common.checkHeaders(t, res.headers);
+            t.ok(body, 'GET /my/machines body');
+            t.ok(Array.isArray(body), 'GET /my/machines body is array');
+            t.ok(body.length, 'GET /my/machines list is not empty');
+            body.forEach(function (m) {
+                checkMachine(t, m);
+            });
+            t.end();
+        });
+    } else {
+        t.end();
+    }
 });
 
 
 test('Get Machine', TAP_CONF, function (t) {
-    client.get({
-        path: '/my/machines/' + machine,
-        headers: {
-            'accept-version': '~7.0'
-        }
-    }, function (err, req, res, body) {
-        t.ifError(err, 'GET /my/machines/:id error');
-        t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/machines/:id body');
-        checkMachine(t, body);
-        // Double check tags are OK, due to different handling by VMAPI:
-        var tags = {};
-        tags[TAG_KEY] = TAG_VAL;
-        t.equivalent(body.tags, tags, 'Machine tags');
-        // Make sure we are not including credentials:
-        t.equal(typeof (body.metadata.credentials), 'undefined',
-            'Machine Credentials');
-        // Same for networks:
-        // console.log(util.inspect(body, false, 8, true));
-        // t.equal(typeof (body.networks), 'undefined', 'Machine networks');
+    if (machine) {
+        client.get({
+            path: '/my/machines/' + machine,
+            headers: {
+                'accept-version': '~7.0'
+            }
+        }, function (err, req, res, body) {
+            t.ifError(err, 'GET /my/machines/:id error');
+            t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
+            common.checkHeaders(t, res.headers);
+            t.ok(body, 'GET /my/machines/:id body');
+            checkMachine(t, body);
+            // Double check tags are OK, due to different handling by VMAPI:
+            var tags = {};
+            tags[TAG_KEY] = TAG_VAL;
+            t.equivalent(body.tags, tags, 'Machine tags');
+            // Make sure we are not including credentials:
+            t.equal(typeof (body.metadata.credentials), 'undefined',
+                'Machine Credentials');
+            // Same for networks:
+            t.equal(typeof (body.networks), 'undefined', 'Machine networks');
+            t.end();
+        });
+    } else {
         t.end();
-    });
+    }
 });
 
 
 test('Get Machine (7.1)', TAP_CONF, function (t) {
-    client.get({
-        path: '/my/machines/' + machine,
-        headers: {
-            'accept-version': '~7.1'
-        }
-    }, function (err, req, res, body) {
-        t.ifError(err, 'GET /my/machines/:id error');
-        t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/machines/:id body');
-        checkMachine(t, body);
-        // console.log(util.inspect(body, false, 8, true));
-        // t.ok(body.networks, 'machine networks');
-        // t.ok(Array.isArray(body.networks), 'machine networks array');
+    if (machine) {
+        client.get({
+            path: '/my/machines/' + machine,
+            headers: {
+                'accept-version': '~7.1'
+            }
+        }, function (err, req, res, body) {
+            t.ifError(err, 'GET /my/machines/:id error');
+            t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
+            common.checkHeaders(t, res.headers);
+            t.ok(body, 'GET /my/machines/:id body');
+            checkMachine(t, body);
+            t.ok(body.networks, 'machine networks');
+            t.ok(Array.isArray(body.networks), 'machine networks array');
+            t.end();
+        });
+    } else {
         t.end();
-    });
+    }
 });
 
 test('Get Machine Include Credentials', TAP_CONF, function (t) {
-    var url = '/my/machines/' + machine + '?credentials=true';
-    client.get(url, function (err, req, res, body) {
-        t.ifError(err, 'GET /my/machines/:id error');
-        t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/machines/:id body');
-        checkMachine(t, body);
-        t.equal(typeof (body.metadata.credentials), 'object');
-        Object.keys(META_CREDS).forEach(function (k) {
-            t.equal(body.metadata.credentials[k], META_CREDS[k]);
+    if (machine) {
+        var url = '/my/machines/' + machine + '?credentials=true';
+        client.get(url, function (err, req, res, body) {
+            t.ifError(err, 'GET /my/machines/:id error');
+            t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
+            common.checkHeaders(t, res.headers);
+            t.ok(body, 'GET /my/machines/:id body');
+            checkMachine(t, body);
+            t.equal(typeof (body.metadata.credentials), 'object');
+            Object.keys(META_CREDS).forEach(function (k) {
+                t.equal(body.metadata.credentials[k], META_CREDS[k]);
+            });
+            t.end();
         });
+    } else {
         t.end();
-    });
+    }
 });
 
 var IMG_JOB_UUID;
 
 test('Attempt to create image from running machine', TAP_CONF, function (t) {
-    if (common.getCfg().create_images === true) {
+    if (common.getCfg().create_images === true && machine) {
         var obj = {
             machine: machine,
             name: uuid(),
@@ -457,7 +479,7 @@ test('Attempt to create image from running machine', TAP_CONF, function (t) {
 });
 
 test('Wait for img create from running machine job', TAP_CONF, function (t) {
-    if (common.getCfg().create_images === true) {
+    if (common.getCfg().create_images === true && machine) {
         waitForWfJob(client, IMG_JOB_UUID, function (err) {
             t.ok(err, 'Image job error');
             t.equal(err.message, 'Job failed');
@@ -478,7 +500,7 @@ test('Stop test', TAP_CONF, function (t) {
 
 
 test('Create image from machine (missing params)', TAP_CONF, function (t) {
-    if (common.getCfg().create_images === true) {
+    if (common.getCfg().create_images === true && machine) {
         // Missing name attribute:
         var obj = {
             machine: machine,
@@ -502,7 +524,7 @@ test('Create image from machine (missing params)', TAP_CONF, function (t) {
 
 
 test('Create image from machine OK', TAP_CONF, function (t) {
-    if (common.getCfg().create_images === true) {
+    if (common.getCfg().create_images === true && machine) {
         var obj = {
             machine: machine,
             name: uuid(),
@@ -528,8 +550,11 @@ test('Create image from machine OK', TAP_CONF, function (t) {
 
 
 test('Wait for img create job', TAP_CONF, function (t) {
-    if (common.getCfg().create_images === true) {
+    if (common.getCfg().create_images === true && machine) {
         waitForWfJob(client, IMG_JOB_UUID, function (err) {
+            if (err) {
+                image_uuid = null;
+            }
             t.ifError(err, 'create image job');
             t.end();
         });
@@ -580,157 +605,26 @@ test('Resize machine to inactive package', TAP_CONF, function (t) {
 });
 
 
-test('Resize Machine', TAP_CONF, function (t) {
-    t.ok(sdc_128_ok_entry, 'Resize package OK');
-    console.log('Resizing to package: %j', sdc_128_ok_entry);
-    client.post('/my/machines/' + machine, {
-        action: 'resize',
-        'package': sdc_128_ok_entry.name
-    }, function (err) {
-        t.ifError(err, 'Resize machine error');
+test('Resize machine tests', TAP_CONF, function (t) {
+    var resizeTest = require('./machines/resize');
+    resizeTest(t, client, machine, sdc_128_ok_entry, function () {
         t.end();
     });
 });
 
 
-test('Wait For Resized', TAP_CONF,  function (t) {
-    client.vmapi.listJobs({
-        vm_uuid: machine,
-        task: 'update'
-    }, function (err, jobs) {
-        t.ifError(err, 'list jobs error');
-        t.ok(jobs, 'list jobs OK');
-        t.ok(jobs.length, 'update jobs is array');
-        var resize_jobs = jobs.filter(function (job) {
-            return (typeof (job.params.max_physical_memory) !== 'undefined');
-        });
-        t.ok(resize_jobs.length, 'resize jobs is an array');
-        waitForJob(client, resize_jobs[0].uuid, function (err2) {
-            t.ifError(err2, 'Check state error');
-            t.end();
-        });
-    });
-});
-
-
-test('Rename Machine 6.5.0', TAP_CONF, function (t) {
-    client.post({
-        path: '/my/machines/' + machine,
-        headers: {
-            'accept-version': '~6.5'
-        }
-    }, {
-        action: 'rename',
-        name: 'b' + uuid().substr(0, 7)
-    }, function (err) {
-        t.ok(err, 'Rename machine error');
+test('Rename machine tests', TAP_CONF, function (t) {
+    var renameTest = require('./machines/rename');
+    renameTest(t, client, machine, function () {
         t.end();
     });
 });
 
 
-test('Rename Machine 7.0.0', TAP_CONF, function (t) {
-    client.post({
-        path: '/my/machines/' + machine,
-        headers: {
-            'accept-version': '~7.0'
-        }
-    }, {
-        action: 'rename',
-        name: 'b' + uuid().substr(0, 7)
-    }, function (err) {
-        t.ifError(err, 'Rename machine error');
+test('Firewall tests', TAP_CONF, function (t) {
+    var firewallTest = require('./machines/firewall');
+    firewallTest(t, client, machine, function () {
         t.end();
-    });
-});
-
-
-test('Wait For Renamed', TAP_CONF,  function (t) {
-    client.vmapi.listJobs({
-        vm_uuid: machine,
-        task: 'update'
-    }, function (err, jobs) {
-        t.ifError(err, 'list jobs error');
-        t.ok(jobs, 'list jobs OK');
-        t.ok(jobs.length, 'update jobs is array');
-        var rename_jobs = jobs.filter(function (job) {
-            return (typeof (job.params.alias) !== 'undefined');
-        });
-        t.ok(rename_jobs.length, 'rename jobs is an array');
-        waitForJob(client, rename_jobs[0].uuid, function (err2) {
-            t.ifError(err2, 'Check state error');
-            t.end();
-        });
-    });
-});
-
-
-test('Enable firewall 7.0.0', TAP_CONF, function (t) {
-    client.post({
-        path: '/my/machines/' + machine,
-        headers: {
-            'accept-version': '~7.0'
-        }
-    }, {
-        action: 'enable_firewall'
-    }, function (err) {
-        t.ifError(err, 'Enable firewall error');
-        t.end();
-    });
-});
-
-
-test('Wait For Firewall Enabled', TAP_CONF,  function (t) {
-    client.vmapi.listJobs({
-        vm_uuid: machine,
-        task: 'update'
-    }, function (err, jobs) {
-        t.ifError(err, 'list jobs error');
-        t.ok(jobs, 'list jobs OK');
-        t.ok(jobs.length, 'update jobs is array');
-        var firewall_jobs = jobs.filter(function (job) {
-            return (typeof (job.params.firewall_enabled) !== 'undefined');
-        });
-        t.ok(firewall_jobs.length, 'firewall jobs is an array');
-        waitForJob(client, firewall_jobs[0].uuid, function (err2) {
-            t.ifError(err2, 'Check state error');
-            t.end();
-        });
-    });
-});
-
-
-test('Disable firewall 7.0.0', TAP_CONF, function (t) {
-    client.post({
-        path: '/my/machines/' + machine,
-        headers: {
-            'accept-version': '~7.0'
-        }
-    }, {
-        action: 'disable_firewall'
-    }, function (err) {
-        t.ifError(err, 'Enable firewall error');
-        t.end();
-    });
-});
-
-
-test('Wait For Firewall Disabled', TAP_CONF,  function (t) {
-    client.vmapi.listJobs({
-        vm_uuid: machine,
-        task: 'update'
-    }, function (err, jobs) {
-        t.ifError(err, 'list jobs error');
-        t.ok(jobs, 'list jobs OK');
-        t.ok(jobs.length, 'update jobs is array');
-        var firewall_jobs = jobs.filter(function (job) {
-            return (typeof (job.params.firewall_enabled) !== 'undefined');
-        });
-        t.ok(firewall_jobs.length, 'firewall jobs is an array');
-        waitForJob(client, firewall_jobs[0].uuid, function (err2) {
-            t.ifError(err2, 'Check state error');
-            t.end();
-        });
     });
 });
 
@@ -827,16 +721,6 @@ test('ListMachines exclude tombstone', TAP_CONF, function (t) {
 });
 
 
-test('Delete already deleted machine', TAP_CONF, function (t) {
-    client.del('/my/machines/' + machine, function (err, req, res) {
-        t.ok(err, 'DELETE /my/machines/ error');
-        t.equal(res.statusCode, 410, 'DELETE /my/machines/ statusCode');
-        common.checkHeaders(t, res.headers);
-        t.end();
-    });
-});
-
-
 // Test using IMAGE.uuid instead of IMAGE.name due to PUBAPI-625:
 test('CreateMachine (7.0)', TAP_CONF, function (t) {
     var obj = {
@@ -877,10 +761,18 @@ test('Wait For Running', TAP_CONF,  function (t) {
         vm_uuid: machine,
         task: 'provision'
     }, function (err, jobs) {
+        if (err) {
+            // Skip machine tests when machine creation fails
+            machine = null;
+        }
         t.ifError(err, 'list jobs error');
         t.ok(jobs, 'list jobs ok');
         t.ok(jobs.length, 'list jobs is an array');
         waitForJob(client, jobs[0].uuid, function (err2) {
+            if (err2) {
+                // Skip machine tests when machine creation fails
+                machine = null;
+            }
             t.ifError(err2, 'Check state error');
             t.end();
         });
@@ -888,15 +780,17 @@ test('Wait For Running', TAP_CONF,  function (t) {
 });
 
 test('Get Machine Firewall Enabled', TAP_CONF, function (t) {
-    client.get('/my/machines/' + machine, function (err, req, res, body) {
-        t.ifError(err, 'GET /my/machines/:id error');
-        t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/machines/:id body');
-        checkMachine(t, body);
-        t.ok(body.firewall_enabled);
-        t.end();
-    });
+    if (machine) {
+        client.get('/my/machines/' + machine, function (err, req, res, body) {
+            t.ifError(err, 'GET /my/machines/:id error');
+            t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
+            common.checkHeaders(t, res.headers);
+            t.ok(body, 'GET /my/machines/:id body');
+            checkMachine(t, body);
+            t.ok(body.firewall_enabled);
+            t.end();
+        });
+    }
 });
 
 
@@ -999,7 +893,7 @@ test('Delete KVM tests', TAP_CONF, function (t) {
 });
 
 
-test('teardown', TAP_CONF, function (t) {
+test('teardown', {timeout: 'Infinity '}, function (t) {
     client.del('/my/keys/' + keyName, function (err, req, res) {
         t.ifError(err, 'delete key error');
         t.equal(res.statusCode, 204);

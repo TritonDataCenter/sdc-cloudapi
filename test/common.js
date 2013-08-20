@@ -263,8 +263,7 @@ module.exports = {
         t.ok(headers.date, 'headers date');
         t.ok(headers['x-request-id'], 'headers x-request-id');
         t.ok(headers['x-response-time'] >= 0, 'headers response time');
-        t.equal(headers.server, 'Joyent SmartDataCenter 7.0.0',
-                'headers server');
+        t.ok(headers.server, 'headers server');
         t.equal(headers.connection, 'Keep-Alive', 'headers connection');
         t.ok(headers['x-api-version'], 'headers x-api-version OK');
     },

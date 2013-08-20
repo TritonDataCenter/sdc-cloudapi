@@ -17,7 +17,7 @@ var TAG_TWO_VAL = 'none';
 module.exports = function (suite, client, machine, callback) {
 
     if (!machine) {
-        TAP_CONF.skip = true;
+        return callback();
     }
 
     suite.test('ListMachines by tag', TAP_CONF, function (t) {
@@ -156,5 +156,5 @@ module.exports = function (suite, client, machine, callback) {
         });
     });
 
-    callback();
+    return callback();
 };

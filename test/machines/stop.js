@@ -11,8 +11,9 @@ var TAP_CONF = {
 
 module.exports = function (suite, client, machine, callback) {
     if (!machine) {
-        TAP_CONF.skip = true;
+        return callback();
     }
+
     suite.test('StopMachine', TAP_CONF, function (t) {
         client.post('/my/machines/' + machine, {
             action: 'stop'
@@ -38,5 +39,5 @@ module.exports = function (suite, client, machine, callback) {
         });
     });
 
-    callback();
+    return callback();
 };

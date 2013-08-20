@@ -14,7 +14,7 @@ var TAP_CONF = {
 
 module.exports = function (suite, client, machine, callback) {
     if (!machine) {
-        TAP_CONF.skip = true;
+        return callback();
     }
     // FireWall Rules:
     var RULE_UUID;
@@ -194,5 +194,5 @@ module.exports = function (suite, client, machine, callback) {
         });
     });
 
-    callback();
+    return callback();
 };
