@@ -152,8 +152,19 @@ keys_test: $(TAP)
 networks_test: $(TAP)
 	$(TAP) --tap --timeout 120 test/networks.test.js
 
-machines_test: $(TAP)
+machines_all_test:
 	$(TAP) --tap --timeout 480 test/machines.test.js
+
+machines_65_test:
+	$(TAP) --tap --timeout 480 test/machines.65.test.js
+
+machines_70_test:
+	$(TAP) --tap --timeout 480 test/machines.70.test.js
+
+machines_71_test:
+	$(TAP) --tap --timeout 480 test/machines.71.test.js
+
+machines_test: machines_all_test machines_65_test machines_70_test machines_71_test
 
 packages_test: $(TAP)
 	$(TAP) --tap --timeout 120 test/packages.test.js

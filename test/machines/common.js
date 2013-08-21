@@ -104,11 +104,29 @@ function saveKey(key, keyName, client, t, cb) {
     });
 }
 
+
+function addPackage(client, pkg, cb) {
+    return client.pkg.get(pkg.urn, function (err, p) {
+        if (err) {
+            if (err.restCode === 'ResourceNotFound') {
+                return client.pkg.add(pkg, function (err2, entry) {
+                    return cb(err2, entry);
+                });
+            } else {
+                return cb(err);
+            }
+        } else {
+            return cb(null, p);
+        }
+    });
+}
+
 module.exports = {
     checkJob: checkJob,
     waitForJob: waitForJob,
     checkMachine: checkMachine,
     saveKey: saveKey,
     checkWfJob: checkWfJob,
-    waitForWfJob: waitForWfJob
+    waitForWfJob: waitForWfJob,
+    addPackage: addPackage
 };

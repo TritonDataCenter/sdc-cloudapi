@@ -248,7 +248,7 @@ module.exports = {
                 server = s;
                 server.start(function () {
                     LOG.info('CloudAPI listening at %s', server.url);
-                    return setupClient(callback);
+                    return setupClient(version, callback);
                 });
             });
             return server;

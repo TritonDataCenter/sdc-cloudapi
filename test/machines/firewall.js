@@ -14,14 +14,10 @@ module.exports = function (suite, client, machine, callback) {
         return callback();
     }
 
-    suite.test('Enable firewall 7.0.0', TAP_CONF, function (t) {
-        client.post({
-            path: '/my/machines/' + machine,
-            headers: {
-                'accept-version': '~7.0'
-            }
-        }, {
-            action: 'enable_firewall'
+
+    suite.test('Disable firewall', TAP_CONF, function (t) {
+        client.post('/my/machines/' + machine, {
+            action: 'disable_firewall'
         }, function (err) {
             t.ifError(err, 'Enable firewall error');
             t.end();
@@ -29,7 +25,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('Wait For Firewall Enabled', TAP_CONF,  function (t) {
+    suite.test('Wait For Firewall Disabled', TAP_CONF,  function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'update'
@@ -49,14 +45,9 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('Disable firewall 7.0.0', TAP_CONF, function (t) {
-        client.post({
-            path: '/my/machines/' + machine,
-            headers: {
-                'accept-version': '~7.0'
-            }
-        }, {
-            action: 'disable_firewall'
+    suite.test('Enable firewall', TAP_CONF, function (t) {
+        client.post('/my/machines/' + machine, {
+            action: 'enable_firewall'
         }, function (err) {
             t.ifError(err, 'Enable firewall error');
             t.end();
@@ -64,7 +55,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('Wait For Firewall Disabled', TAP_CONF,  function (t) {
+    suite.test('Wait For Firewall Enabled', TAP_CONF,  function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'update'

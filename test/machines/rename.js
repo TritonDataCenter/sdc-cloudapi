@@ -15,29 +15,9 @@ module.exports = function (suite, client, machine, callback) {
         return callback();
     }
 
-    suite.test('Rename Machine 6.5.0', TAP_CONF, function (t) {
-        client.post({
-            path: '/my/machines/' + machine,
-            headers: {
-                'accept-version': '~6.5'
-            }
-        }, {
-            action: 'rename',
-            name: 'b' + uuid().substr(0, 7)
-        }, function (err) {
-            t.ok(err, 'Rename machine error');
-            t.end();
-        });
-    });
 
-
-    suite.test('Rename Machine 7.0.0', TAP_CONF, function (t) {
-        client.post({
-            path: '/my/machines/' + machine,
-            headers: {
-                'accept-version': '~7.0'
-            }
-        }, {
+    suite.test('Rename Machine', TAP_CONF, function (t) {
+        client.post('/my/machines/' + machine, {
             action: 'rename',
             name: 'b' + uuid().substr(0, 7)
         }, function (err) {

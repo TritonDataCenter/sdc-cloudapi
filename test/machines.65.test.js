@@ -14,7 +14,6 @@ var checkWfJob = machinesCommon.checkWfJob;
 var waitForWfJob = machinesCommon.waitForWfJob;
 var saveKey = machinesCommon.saveKey;
 var addPackage = machinesCommon.addPackage;
-
 // --- Globals
 
 var client, server, snapshot;
@@ -93,7 +92,7 @@ var CREATE_IMAGES = false;
 // --- Tests
 
 test('setup', TAP_CONF, function (t) {
-    common.setup(function (err, _client, _server) {
+    common.setup('~6.5', function (err, _client, _server) {
         t.ifError(err, 'common setup error');
         t.ok(_client, 'common _client ok');
         client = _client;
@@ -124,19 +123,6 @@ test('setup', TAP_CONF, function (t) {
 });
 
 
-test('ListMachines (empty)', TAP_CONF, function (t) {
-    client.get('/my/machines', function (err, req, res, body) {
-        t.ifError(err, 'GET /my/machines error');
-        t.equal(res.statusCode, 200, 'GET /my/machines Status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/machines body');
-        t.ok(Array.isArray(body), 'body is an array');
-        t.ok(!body.length, 'body array is empty');
-        t.end();
-    });
-});
-
-
 test('Get Headnode', TAP_CONF, function (t) {
     client.cnapi.listServers(function (err, servers) {
         t.ifError(err);
@@ -153,34 +139,6 @@ test('Get Headnode', TAP_CONF, function (t) {
     });
 });
 
-
-test('Create machine with inactive package', TAP_CONF, function (t) {
-    var obj = {
-        dataset: 'smartos',
-        'package': sdc_256_inactive_entry.name,
-        name: 'a' + uuid().substr(0, 7),
-        server_uuid: HEADNODE.uuid
-    };
-
-    client.post({
-        path: '/my/machines',
-        headers: {
-            'accept-version': '~6.5'
-        }
-    }, obj, function (err, req, res, body) {
-        t.ok(err, 'POST /my/machines with inactive package error');
-        var cfg = common.getCfg();
-        var capi_limits = cfg.plugins.filter(function (p) {
-            return (p.name === 'capi_limits');
-        })[0];
-        if (capi_limits.enabled) {
-            t.equal(res.statusCode, 403);
-        } else {
-            t.equal(res.statusCode, 409);
-        }
-        t.end();
-    });
-});
 
 var DATASET;
 
@@ -202,14 +160,12 @@ test('get smartos dataset', TAP_CONF, function (t) {
 });
 
 
-// Test using IMAGE.uuid instead of IMAGE.name due to PUBAPI-625:
 test('CreateMachine', TAP_CONF, function (t) {
     var obj = {
-        image: DATASET,
+        dataset: 'smartos',
         'package': 'sdc_128_ok',
         name: 'a' + uuid().substr(0, 7),
-        server_uuid: HEADNODE.uuid,
-        firewall_enabled: true
+        server_uuid: HEADNODE.uuid
     };
     obj['metadata.' + META_KEY] = META_VAL;
     obj['metadata.' + META_64_KEY] = META_64_VAL;
@@ -257,178 +213,20 @@ test('Wait For Running', TAP_CONF,  function (t) {
 });
 
 
-test('ListMachines all', TAP_CONF, function (t) {
-    if (machine) {
-        client.get('/my/machines', function (err, req, res, body) {
-            t.ifError(err, 'GET /my/machines error');
-            t.equal(res.statusCode, 200, 'GET /my/machines status');
-            common.checkHeaders(t, res.headers);
-            t.ok(body, 'GET /my/machines body');
-            t.ok(Array.isArray(body), 'GET /my/machines body is array');
-            t.ok(body.length, 'GET /my/machines list is not empty');
-            body.forEach(function (m) {
-                checkMachine(t, m);
-            });
-            t.end();
-        });
-    } else {
-        t.end();
-    }
-});
-
-
-test('Get Machine Include Credentials', TAP_CONF, function (t) {
-    if (machine) {
-        var url = '/my/machines/' + machine + '?credentials=true';
-        client.get(url, function (err, req, res, body) {
-            t.ifError(err, 'GET /my/machines/:id error');
-            t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
-            common.checkHeaders(t, res.headers);
-            t.ok(body, 'GET /my/machines/:id body');
-            checkMachine(t, body);
-            t.equal(typeof (body.metadata.credentials), 'object');
-            Object.keys(META_CREDS).forEach(function (k) {
-                t.equal(body.metadata.credentials[k], META_CREDS[k]);
-            });
-            t.end();
-        });
-    } else {
-        t.end();
-    }
-});
-
-
-test('Stop test', TAP_CONF, function (t) {
-    var stopTest = require('./machines/stop');
-    stopTest(t, client, machine, function () {
-        t.end();
-    });
-});
-
-
-test('Start test', TAP_CONF, function (t) {
-    var startTest = require('./machines/start');
-    startTest(t, client, machine, function () {
-        t.end();
-    });
-});
-
-
-test('Reboot test', TAP_CONF, function (t) {
-    var rebootTest = require('./machines/reboot');
-    rebootTest(t, client, machine, function () {
-        t.end();
-    });
-});
-
-
-test('Resize machine to inactive package', TAP_CONF, function (t) {
+test('Rename Machine 6.5.0', TAP_CONF, function (t) {
     client.post('/my/machines/' + machine, {
-        action: 'resize',
-        'package': sdc_256_inactive_entry.name
-    }, function (err, req, res, body) {
-        t.ok(err, 'Resize to inactive package error');
-        t.equal(res.statusCode, 409, 'Resize to inactive pkg status');
+        action: 'rename',
+        name: 'b' + uuid().substr(0, 7)
+    }, function (err) {
+        t.ok(err, 'Rename machine error');
         t.end();
     });
 });
-
-
-test('Resize machine tests', TAP_CONF, function (t) {
-    var resizeTest = require('./machines/resize');
-    resizeTest(t, client, machine, sdc_128_ok_entry, function () {
-        t.end();
-    });
-});
-
-
-test('Tags tests', TAP_CONF, function (t) {
-    var testTags = require('./machines/tags');
-    testTags(t, client, machine, function () {
-        t.end();
-    });
-});
-
-
-test('Metadata tests', TAP_CONF, function (t) {
-    var testMetadata = require('./machines/metadata');
-    testMetadata(t, client, machine, function () {
-        t.end();
-    });
-});
-
-
-test('Snapshots tests', TAP_CONF, function (t) {
-    var testSnapshots = require('./machines/snapshots');
-    testSnapshots(t, client, machine, function () {
-        t.end();
-    });
-});
-
-
-test('Firewall Rules tests', TAP_CONF, function (t) {
-    var testFirewallRules = require('./machines/firewall-rules');
-    testFirewallRules(t, client, machine, function () {
-        t.end();
-    });
-});
-
 
 
 test('Delete tests', TAP_CONF, function (t) {
     var deleteTest = require('./machines/delete');
     deleteTest(t, client, machine, function () {
-        t.end();
-    });
-});
-
-
-test('machine audit', TAP_CONF, function (t) {
-    var p = '/my/machines/' + machine + '/audit';
-    client.get(p, function (err, req, res, body) {
-        t.ifError(err);
-        t.ok(Array.isArray(body));
-        t.ok(body.length);
-        var f = body.reverse()[0];
-        t.ok(f.success);
-        t.ok(f.time);
-        t.ok(f.action);
-        t.ok(f.caller);
-        t.ok(f.caller.type);
-        t.equal(f.caller.type, 'signature');
-        t.ok(f.caller.ip);
-        t.ok(f.caller.keyId);
-        t.end();
-    });
-});
-
-
-test('ListMachines tombstone', TAP_CONF, function (t) {
-    client.get('/my/machines?tombstone=20', function (err, req, res, body) {
-        t.ifError(err, 'GET /my/machines error');
-        t.equal(res.statusCode, 200, 'GET /my/machines status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/machines body');
-        t.ok(Array.isArray(body), 'GET /my/machines body is array');
-        t.ok(body.length, 'GET /my/machines list is not empty');
-        t.ok(body.some(function (m) {
-            return (m.id === machine);
-        }));
-        t.end();
-    });
-});
-
-
-test('ListMachines exclude tombstone', TAP_CONF, function (t) {
-    client.get('/my/machines', function (err, req, res, body) {
-        t.ifError(err, 'GET /my/machines error');
-        t.equal(res.statusCode, 200, 'GET /my/machines status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/machines body');
-        t.ok(Array.isArray(body), 'GET /my/machines body is array');
-        t.notOk(body.some(function (m) {
-            return (m.id === machine);
-        }));
         t.end();
     });
 });

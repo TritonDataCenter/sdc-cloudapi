@@ -14,7 +14,6 @@ var checkWfJob = machinesCommon.checkWfJob;
 var waitForWfJob = machinesCommon.waitForWfJob;
 var saveKey = machinesCommon.saveKey;
 var addPackage = machinesCommon.addPackage;
-
 // --- Globals
 
 var client, server, snapshot;
@@ -93,7 +92,7 @@ var CREATE_IMAGES = false;
 // --- Tests
 
 test('setup', TAP_CONF, function (t) {
-    common.setup(function (err, _client, _server) {
+    common.setup('~7.1', function (err, _client, _server) {
         t.ifError(err, 'common setup error');
         t.ok(_client, 'common _client ok');
         client = _client;
@@ -124,19 +123,6 @@ test('setup', TAP_CONF, function (t) {
 });
 
 
-test('ListMachines (empty)', TAP_CONF, function (t) {
-    client.get('/my/machines', function (err, req, res, body) {
-        t.ifError(err, 'GET /my/machines error');
-        t.equal(res.statusCode, 200, 'GET /my/machines Status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/machines body');
-        t.ok(Array.isArray(body), 'body is an array');
-        t.ok(!body.length, 'body array is empty');
-        t.end();
-    });
-});
-
-
 test('Get Headnode', TAP_CONF, function (t) {
     client.cnapi.listServers(function (err, servers) {
         t.ifError(err);
@@ -153,34 +139,6 @@ test('Get Headnode', TAP_CONF, function (t) {
     });
 });
 
-
-test('Create machine with inactive package', TAP_CONF, function (t) {
-    var obj = {
-        dataset: 'smartos',
-        'package': sdc_256_inactive_entry.name,
-        name: 'a' + uuid().substr(0, 7),
-        server_uuid: HEADNODE.uuid
-    };
-
-    client.post({
-        path: '/my/machines',
-        headers: {
-            'accept-version': '~6.5'
-        }
-    }, obj, function (err, req, res, body) {
-        t.ok(err, 'POST /my/machines with inactive package error');
-        var cfg = common.getCfg();
-        var capi_limits = cfg.plugins.filter(function (p) {
-            return (p.name === 'capi_limits');
-        })[0];
-        if (capi_limits.enabled) {
-            t.equal(res.statusCode, 403);
-        } else {
-            t.equal(res.statusCode, 409);
-        }
-        t.end();
-    });
-});
 
 var DATASET;
 
@@ -202,6 +160,62 @@ test('get smartos dataset', TAP_CONF, function (t) {
 });
 
 
+// PUBAPI-567: Verify it has been fixed as side effect of PUBAPI-566
+test('Create machine with invalid package', TAP_CONF, function (t) {
+    var obj = {
+        dataset: DATASET,
+        'package': uuid().substr(0, 7),
+        name: 'a' + uuid().substr(0, 7),
+        server_uuid: HEADNODE.uuid
+    };
+
+    client.post('/my/machines', obj, function (err, req, res, body) {
+        t.ok(err, 'POST /my/machines with invalid package error');
+        console.log('Status Code: ' + res.statusCode);
+        t.equal(res.statusCode, 409);
+        t.end();
+    });
+});
+
+
+test('CreateMachine w/o dataset fails', TAP_CONF, function (t) {
+    var obj = {
+        'package': 'sdc_128_ok',
+        name: 'a' + uuid().substr(0, 7),
+        server_uuid: HEADNODE.uuid
+    };
+    obj['metadata.' + META_KEY] = META_VAL;
+    obj['tag.' + TAG_KEY] = TAG_VAL;
+
+    obj['metadata.credentials'] = META_CREDS;
+
+    client.post('/my/machines', obj, function (err, req, res, body) {
+        t.ok(err, 'create machine w/o dataset error');
+        t.equal(res.statusCode, 409, 'create machine w/o dataset status');
+        t.ok(/image/.test(err.message));
+        t.end();
+    });
+});
+
+
+test('Create machine with invalid network', TAP_CONF, function (t) {
+    var obj = {
+        dataset: DATASET,
+        'package': 'sdc_128_ok',
+        name: 'a' + uuid().substr(0, 7),
+        server_uuid: HEADNODE.uuid,
+        networks: [uuid()]
+    };
+
+    client.post('/my/machines', obj, function (err, req, res, body) {
+        t.ok(err, 'POST /my/machines with invalid network error');
+        console.log('Status Code: ' + res.statusCode);
+        t.equal(res.statusCode, 409);
+        t.end();
+    });
+});
+
+
 // Test using IMAGE.uuid instead of IMAGE.name due to PUBAPI-625:
 test('CreateMachine', TAP_CONF, function (t) {
     var obj = {
@@ -212,7 +226,6 @@ test('CreateMachine', TAP_CONF, function (t) {
         firewall_enabled: true
     };
     obj['metadata.' + META_KEY] = META_VAL;
-    obj['metadata.' + META_64_KEY] = META_64_VAL;
     obj['tag.' + TAG_KEY] = TAG_VAL;
 
     obj['metadata.credentials'] = META_CREDS;
@@ -257,18 +270,46 @@ test('Wait For Running', TAP_CONF,  function (t) {
 });
 
 
-test('ListMachines all', TAP_CONF, function (t) {
+test('Get Machine', TAP_CONF, function (t) {
     if (machine) {
-        client.get('/my/machines', function (err, req, res, body) {
-            t.ifError(err, 'GET /my/machines error');
-            t.equal(res.statusCode, 200, 'GET /my/machines status');
+        client.get('/my/machines/' + machine, function (err, req, res, body) {
+            t.ifError(err, 'GET /my/machines/:id error');
+            t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
             common.checkHeaders(t, res.headers);
-            t.ok(body, 'GET /my/machines body');
-            t.ok(Array.isArray(body), 'GET /my/machines body is array');
-            t.ok(body.length, 'GET /my/machines list is not empty');
-            body.forEach(function (m) {
-                checkMachine(t, m);
-            });
+            t.ok(body, 'GET /my/machines/:id body');
+            checkMachine(t, body);
+            t.ok(body.firewall_enabled, 'machine firewall enabled');
+            t.ok(body.networks, 'machine networks');
+            t.ok(Array.isArray(body.networks), 'machine networks array');
+            // Double check tags are OK, due to different handling by VMAPI:
+            var tags = {};
+            tags[TAG_KEY] = TAG_VAL;
+            t.equivalent(body.tags, tags, 'Machine tags');
+            t.end();
+        });
+    }
+});
+
+
+var IMG_JOB_UUID;
+
+test('Attempt to create image from running machine', TAP_CONF, function (t) {
+    if (CREATE_IMAGES && machine) {
+        var obj = {
+            machine: machine,
+            name: uuid(),
+            version: '1.0.0'
+        };
+        client.post({
+            path: '/my/images',
+            headers: {
+                'accept-version': '~7.1'
+            }
+        }, obj, function (err, req, res, body) {
+            t.ifError(err);
+            t.ok(body);
+            t.ok(res.headers['x-joyent-jobid'], 'jobid header');
+            IMG_JOB_UUID = res.headers['x-joyent-jobid'];
             t.end();
         });
     } else {
@@ -277,24 +318,32 @@ test('ListMachines all', TAP_CONF, function (t) {
 });
 
 
-test('Get Machine Include Credentials', TAP_CONF, function (t) {
-    if (machine) {
-        var url = '/my/machines/' + machine + '?credentials=true';
-        client.get(url, function (err, req, res, body) {
-            t.ifError(err, 'GET /my/machines/:id error');
-            t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
-            common.checkHeaders(t, res.headers);
-            t.ok(body, 'GET /my/machines/:id body');
-            checkMachine(t, body);
-            t.equal(typeof (body.metadata.credentials), 'object');
-            Object.keys(META_CREDS).forEach(function (k) {
-                t.equal(body.metadata.credentials[k], META_CREDS[k]);
-            });
+test('Wait for img create from running machine job', TAP_CONF, function (t) {
+    if (CREATE_IMAGES && machine) {
+        waitForWfJob(client, IMG_JOB_UUID, function (err) {
+            t.ok(err, 'Image job error');
+            t.equal(err.message, 'Job failed');
             t.end();
         });
     } else {
         t.end();
     }
+});
+
+
+test('Rename machine tests', TAP_CONF, function (t) {
+    var renameTest = require('./machines/rename');
+    renameTest(t, client, machine, function () {
+        t.end();
+    });
+});
+
+
+test('Firewall tests', TAP_CONF, function (t) {
+    var firewallTest = require('./machines/firewall');
+    firewallTest(t, client, machine, function () {
+        t.end();
+    });
 });
 
 
@@ -306,71 +355,80 @@ test('Stop test', TAP_CONF, function (t) {
 });
 
 
-test('Start test', TAP_CONF, function (t) {
-    var startTest = require('./machines/start');
-    startTest(t, client, machine, function () {
+test('Create image from machine (missing params)', TAP_CONF, function (t) {
+    if (CREATE_IMAGES && machine) {
+        // Missing name attribute:
+        var obj = {
+            machine: machine,
+            version: '1.0.0'
+        };
+        client.post({
+            path: '/my/images',
+            headers: {
+                'accept-version': '~7.1'
+            }
+        }, obj, function (err, req, res, body) {
+            t.ok(err, 'missing parameters error');
+            t.equal(res.statusCode, 409);
+            t.ok(err.message);
+            t.end();
+        });
+    } else {
         t.end();
-    });
+    }
 });
 
 
-test('Reboot test', TAP_CONF, function (t) {
-    var rebootTest = require('./machines/reboot');
-    rebootTest(t, client, machine, function () {
+test('Create image from machine OK', TAP_CONF, function (t) {
+    if (CREATE_IMAGES && machine) {
+        var obj = {
+            machine: machine,
+            name: uuid(),
+            version: '1.0.0'
+        };
+        client.post({
+            path: '/my/images',
+            headers: {
+                'accept-version': '~7.1'
+            }
+        }, obj, function (err, req, res, body) {
+            t.ifError(err);
+            t.ok(body);
+            image_uuid = body.id;
+            t.ok(res.headers['x-joyent-jobid'], 'jobid header');
+            IMG_JOB_UUID = res.headers['x-joyent-jobid'];
+            t.end();
+        });
+    } else {
         t.end();
-    });
+    }
 });
 
 
-test('Resize machine to inactive package', TAP_CONF, function (t) {
-    client.post('/my/machines/' + machine, {
-        action: 'resize',
-        'package': sdc_256_inactive_entry.name
-    }, function (err, req, res, body) {
-        t.ok(err, 'Resize to inactive package error');
-        t.equal(res.statusCode, 409, 'Resize to inactive pkg status');
+test('Wait for img create job', TAP_CONF, function (t) {
+    if (CREATE_IMAGES && machine) {
+        waitForWfJob(client, IMG_JOB_UUID, function (err) {
+            if (err) {
+                image_uuid = null;
+            }
+            t.ifError(err, 'create image job');
+            t.end();
+        });
+    } else {
         t.end();
-    });
+    }
 });
 
 
-test('Resize machine tests', TAP_CONF, function (t) {
-    var resizeTest = require('./machines/resize');
-    resizeTest(t, client, machine, sdc_128_ok_entry, function () {
+test('Delete image', TAP_CONF, function (t) {
+    if (CREATE_IMAGES && image_uuid) {
+        client.imgapi.deleteImage(image_uuid, function (err, res) {
+            t.ifError(err, 'Delete Image error');
+            t.end();
+        });
+    } else {
         t.end();
-    });
-});
-
-
-test('Tags tests', TAP_CONF, function (t) {
-    var testTags = require('./machines/tags');
-    testTags(t, client, machine, function () {
-        t.end();
-    });
-});
-
-
-test('Metadata tests', TAP_CONF, function (t) {
-    var testMetadata = require('./machines/metadata');
-    testMetadata(t, client, machine, function () {
-        t.end();
-    });
-});
-
-
-test('Snapshots tests', TAP_CONF, function (t) {
-    var testSnapshots = require('./machines/snapshots');
-    testSnapshots(t, client, machine, function () {
-        t.end();
-    });
-});
-
-
-test('Firewall Rules tests', TAP_CONF, function (t) {
-    var testFirewallRules = require('./machines/firewall-rules');
-    testFirewallRules(t, client, machine, function () {
-        t.end();
-    });
+    }
 });
 
 
@@ -383,55 +441,6 @@ test('Delete tests', TAP_CONF, function (t) {
 });
 
 
-test('machine audit', TAP_CONF, function (t) {
-    var p = '/my/machines/' + machine + '/audit';
-    client.get(p, function (err, req, res, body) {
-        t.ifError(err);
-        t.ok(Array.isArray(body));
-        t.ok(body.length);
-        var f = body.reverse()[0];
-        t.ok(f.success);
-        t.ok(f.time);
-        t.ok(f.action);
-        t.ok(f.caller);
-        t.ok(f.caller.type);
-        t.equal(f.caller.type, 'signature');
-        t.ok(f.caller.ip);
-        t.ok(f.caller.keyId);
-        t.end();
-    });
-});
-
-
-test('ListMachines tombstone', TAP_CONF, function (t) {
-    client.get('/my/machines?tombstone=20', function (err, req, res, body) {
-        t.ifError(err, 'GET /my/machines error');
-        t.equal(res.statusCode, 200, 'GET /my/machines status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/machines body');
-        t.ok(Array.isArray(body), 'GET /my/machines body is array');
-        t.ok(body.length, 'GET /my/machines list is not empty');
-        t.ok(body.some(function (m) {
-            return (m.id === machine);
-        }));
-        t.end();
-    });
-});
-
-
-test('ListMachines exclude tombstone', TAP_CONF, function (t) {
-    client.get('/my/machines', function (err, req, res, body) {
-        t.ifError(err, 'GET /my/machines error');
-        t.equal(res.statusCode, 200, 'GET /my/machines status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/machines body');
-        t.ok(Array.isArray(body), 'GET /my/machines body is array');
-        t.notOk(body.some(function (m) {
-            return (m.id === machine);
-        }));
-        t.end();
-    });
-});
 
 
 test('teardown', {timeout: 'Infinity '}, function (t) {
