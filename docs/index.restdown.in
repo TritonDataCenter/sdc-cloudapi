@@ -1486,17 +1486,32 @@ not all fields listed there can be specified here.
 ||name||String||Yes||-||The name of the custom image, e.g. "my-image". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-name) for details.||
 ||version||String||Yes||-||The version of the custom image, e.g. "1.0.0". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-version) for details.||
 ||description||String||No||-||The image [description](https://images.joyent.com/docs/#manifest-description).||
+||homepage||String||No||-||The image [homepage](https://images.joyent.com/docs/#manifest-homepage).||
+||eula||String||No||-||The image [eula](https://images.joyent.com/docs/#manifest-eula).||
+||acl||String||No||-||The image [acl](https://images.joyent.com/docs/#manifest-acl).||
+||tags||String||No||-||The image [tags](https://images.joyent.com/docs/#manifest-tags).||
 
-TODO: list other optional fields
 
 ### Returns
 
-||**Field**||**Type**||**Notes**||
-||id||String||The image UUID||
-||name||String||The image UUID||
-||version||String||The image UUID||
-||type||String||"smartmachine" (corresponds to ["zone-dataset" in IMGAPI](https://images.joyent.com/docs/#manifest-type)) or "virtualmachine" (corresponds to ["zvol" in IMGAPI](https://images.joyent.com/docs/#manifest-type))||
-||requirements||String||Image requirements (TODO: clarify)||
+|| **Field**    ||**Type**||**Notes**||
+|| id           || String ||a unique identifier for this image||
+|| name         || String ||The "friendly name for this image||
+|| os           || String ||The underlying operating system for this image||
+|| version      || String ||The version for this image||
+|| type         || String ||Whether this is a smartmachine or virtualmachine dataset||
+|| requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
+|| homepage     || String ||(New in 7.0.) The URL for a web page including detailed information for this image||
+|| created      || String (ISO-8859) ||(Only in 6.5.) The time this image has been made publicly available. This has been obsoleted by the 'published_at' field.||
+|| published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
+<!-- #ifdef BLEEDING_EDGE -->
+|| owner        || String ||(New in 7.0.) The UUID of the user who owns this image.||
+|| public       || Boolean ||(New in 7.0.) Indicates if this image is publicly available. Currently all custom images are private.||
+|| state        || String ||(New in 7.0.) The current state of the image. The value returned here will be 'creating'.||
+|| tags         || Object ||(New in 7.0.) An object of key/value pairs that allows clients to categorize images by any given criteria.||
+|| eula         || String ||(New in 7.0.) URL of the End User License Agreement (EULA) for the image.||
+|| acl          || Array  ||(New in 7.0.) Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
+<!-- #endif -->
 
 
 ### Errors
