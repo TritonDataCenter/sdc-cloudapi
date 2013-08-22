@@ -42,20 +42,6 @@ var fingerprint = '66:ca:1c:09:75:99:35:69:be:91:08:25:03:c0:17:c0';
 var privateKey, publicKey;
 
 
-function getAuthHeaders() {
-    var now = new Date().toUTCString();
-    var alg = 'RSA-SHA256';
-    var signer = crypto.createSign(alg);
-    signer.update(now);
-    return {
-        Date: now,
-        Authorization: util.format(SIGNATURE,
-                                    KEY_ID,
-                                    alg.toLowerCase(),
-                                    signer.sign(privateKey, 'base64'))
-    };
-}
-
 function requestSigner(req) {
     var d = req.getHeader('Date');
 
