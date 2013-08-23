@@ -206,4 +206,9 @@ To edit the SMF manifest:
     svccfg import cloudapi.xml
     svcadm restart cloudapi
 
+# Image management
 
+If you want to test image management using COAL, the faster approach is to run
+the following from the global zone:
+
+    /zones/`sdc-vmname imgapi`/root/opt/smartdc/imgapi/bin/coal-setup-dc-for-image-mgmt
