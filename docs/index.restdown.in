@@ -1463,6 +1463,83 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     X-Response-Time: 244
 
 
+## ExportImage (POST /:login/images/:id?action=export)
+
+Exports an image to the specified Manta path. One must be the owner of the image
+and the correspondent Manta path prefix in order to export it. Both the image
+manifest and the image file will be exported and their filenames will default
+to the following format:
+
+    <manta_path>/NAME-VER.imgmanifest
+    <manta_path>/NAME-VER.zfs.FILE-EXT
+
+Where NAME is the image name and VER is the image version. FILE-EXT is the file
+extension of the image file. As an example, exporting a foo-1.0.0 image to
+/user/stor/cloudapi would result in the following files being exported:
+
+    /user/stor/cloudapi/foo-1.0.0.imgmanifest
+    /user/stor/cloudapi/foo-1.0.0.zfs.gz
+
+### Inputs
+
+||manta_path||String||The Manta path prefix to use when exporting the image||
+
+### Returns
+
+Responds with the exported Image object, it is an identical response to GetImage.
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or the image specified does not exist||
+
+### CLI Command
+
+    TODO: Does not yet exist.
+
+    $ sdc-exportimage 0c428eb9-7f03-4bb0-ac9f-c0718945d604 manta_path=/user/stor/my-images
+
+#### Example Request
+
+    POST /my/images/e42f8c84-bbea-11e2-b920-078fab2aab1f?action=export&manta_path=/user/stor/my-images HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~7.0
+
+#### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, DELETE
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Date: Sat, 10 Aug 2013 00:43:33 GMT
+    Server: Joyent SmartDataCenter 7.0.0
+    Api-Version: 7.0.0
+    Request-Id: ab6f01b0-0c51-11e3-89ae-13ae42b358d6
+    Response-Time: 2470
+    X-Request-Id: ab6f01b0-0c51-11e3-89ae-13ae42b358d6
+    X-Api-Version: 7.0.0
+    X-Response-Time: 2470
+
+    {
+      "id": "e42f8c84-bbea-11e2-b920-078fab2aab1f",
+      "name": "fedora",
+      "version": "2.4.2",
+      "os": "linux",
+      "type": "virtualmachine",
+      "requirements": {},
+      "description": "Fedora 18 64-bit image with just essential...",
+      "published_at": "2013-05-17T18:18:36.472Z",
+      "public": true
+      "state": "active",
+    }
+
+
 ## CreateImageFromMachine (POST /:login/images)
 
 Create a new custom image from a stopped and prepared machine.
