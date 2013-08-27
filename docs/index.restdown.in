@@ -8,7 +8,7 @@ markdown2extras: wiki-tables, code-friendly
 # Joyent CloudAPI
 
 This is the reference documentation for the CloudAPI that is part of Joyent's
-SmartDataCenter 6.5 & 7.0 product. This guide provides descriptions of the APIs
+SmartDataCenter 7.0 product. This guide provides descriptions of the APIs
 available, as well as supporting information such as how to use the SDK(s),
 command line interface (CLI),
 and where to find more information.
@@ -16,7 +16,8 @@ and where to find more information.
 For more information about this product visit
 [Joyent SmartDataCenter](http://www.joyent.com/software/smartdatacenter).
 
-This document refers to SmartDataCenter 6.5 & SmartDataCenter 7.0.
+This document refers to SmartDataCenter 7.0. For information on 6.5 version of
+this API see [CloudAPI 6.5 Documentation](65.html)
 
 
 ## Conventions
@@ -193,30 +194,12 @@ a SmartMachine.
 Now that we've done some basics with a SmartMachine, let's introduce a few
 concepts in case you want to be cooler than the defaults.
 
-<a name="dataset-description"></a>
-### Datasets
-
-Datasets can be any image available in your SmartDataCenter cloud.  By
-default, you can use SmartOS datasets.  Your SmartDataCenter cloud may
-have other datasets available, such as Linux or Windows datasets.  To list
-what datasets are available in your datacenter, run:
-
-    $ sdc-listdatasets
-
-Datasets are the deprecated SmartDataCenter name for the "image" of your
-machine. To specify a dataset, use the special dataset urn syntax recognized by
-SmartDataCenter.  The urn syntax is specified as: `cloud:vendor:name:version`.
-
-For example, to provision a node.js machine, use:
-
-    $ sdc-createmachine -e sdc:sdc:nodejs:1.2.0 -n getting-started-nodejs
-
 <a name="image-description"></a>
 ### Images
 
-Starting with SmartDatacenter 7.0, the term "dataset" is deprecated, and
-"image" must be used instead. The list of available images can be obtained
-with:
+By default, you can use SmartOS images.  Your SmartDataCenter cloud may
+have other images available, such as Linux or Windows images. The list of
+available images can be obtained with:
 
     $ sdc-listimages
 
@@ -409,21 +392,21 @@ Full support for HTTP Signature Authentication scheme is in the
 CloudAPI SDK; additionally, a reference implementation for node.js is available
 in the NPM `http-signature`, which you can install with:
 
-    npm install http-signature
+    npm install http-signature@0.9.11
 
-### X-Api-Version
+### Api-Version
 
 The CloudAPI is strongly versioned, and all requests *must* specify a version of
-the API.  The `X-Api-Version` header is expected to carry a
+the API.  The `Api-Version` header is expected to carry a
 [semver](http://semver.org/) string that the client wants to use, with the
 additional twist that your client can specify ranges of versions to support, as
 you can with NPM.   For details on how to specify ranges, check
 [node-semver](https://github.com/isaacs/node-semver).  A couple examples:
 
-    X-Api-Version: ~6.5
-    X-Api-Version: >=6.5.0
+    X-Api-Version: ~7.0
+    X-Api-Version: >=7.0.0
 
-Joyent recommends you set the X-Api-Version header to `~7.0`; each service
+Joyent recommends you set the Api-Version header to `~7.0`; each service
 release of SmartDataCenter will increment the `patch` version; any major
 releases of SmartDataCenter will increment either the `minor` or `major`
 version.
@@ -439,7 +422,7 @@ CloudAPI:
       local now=`date -u "+%a, %d %h %Y %H:%M:%S GMT"` ;
       local signature=`echo ${now} | tr -d '\n' | openssl dgst -sha256 -sign ~/.ssh/id_rsa | openssl enc -e -a | tr -d '\n'` ;
 
-      curl -is -H "Accept: application/json" -H "x-api-version: ~7.0" -H "Date: ${now}" -H "Authorization: Signature keyId=\"/demo/keys/id_rsa\",algorithm=\"rsa-sha256\" ${signature}" --url https://api.example.com$@ ;
+      curl -is -H "Accept: application/json" -H "api-version: ~7.0" -H "Date: ${now}" -H "Authorization: Signature keyId=\"/demo/keys/id_rsa\",algorithm=\"rsa-sha256\" ${signature}" --url https://api.example.com$@ ;
       echo "";
     }
 
@@ -763,7 +746,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Host: api.example.com
     Authorization: ...
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -773,7 +756,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 28 Jun 2011 23:05:42 GMT
-    X-API-Version: 6.5.0
+    X-API-Version: 7.0.0
     X-RequestId: 9E962AAA-E5F6-487F-8339-45FABA3CF5BD
     X-Response-Time: 66
     Content-Type: application/json
@@ -820,7 +803,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-API-Version: ~6.5
+    X-API-Version: ~7.0
 
 ### Example Response
 
@@ -830,7 +813,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: BE3559EE-713B-43EB-8DEB-6EE93F441C23
     X-Response-Time: 78
     Content-Type: application/json
@@ -881,7 +864,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 455
     Content-Type: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
     {
       "name": "id_rsa",
@@ -897,7 +880,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: BE3559EE-713B-43EB-8DEB-6EE93F441C23
     X-Response-Time: 78
     Content-Type: application/json
@@ -938,7 +921,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     DELETE /my/keys/id_rsa HTTP/1.1
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
     Content-Length: 0
 
 #### Example Response
@@ -949,7 +932,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: 4655EA0A-C4CB-4486-8AA9-8C8C9A0B71B1
     X-Response-Time: 65
     Content-Length: 0
@@ -989,7 +972,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     GET /my/datacenters HTTP/1.1
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
     Content-Length: 0
 
 #### Example Response
@@ -998,7 +981,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET
     Connection: close
-    x-api-version: 6.5.0
+    x-api-version: 7.0.0
     Date: Mon, 06 Jun 2011 18:45:21 GMT
     Server: SmartDataCenter
     x-request-id: 75812321-5887-45ae-b0d4-6e562cb463b5
@@ -1044,7 +1027,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: Basic ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -1053,7 +1036,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET
     Connection: close
-    x-api-version: 6.5.0
+    x-api-version: 7.0.0
     Date: Mon, 06 Jun 2011 18:47:01 GMT
     Server: SmartDataCenter
     x-request-id: e7b35c46-c36d-4e02-8cde-6fdf2695af15
@@ -1070,162 +1053,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 
 
-# Datasets
-
-A [dataset](#dataset-description) is the image of the software on your machine. It contains the software packages that will be available on newly provisioned machines. In the case of virtual machines, the dataset also includes the operating system.
-
-**Deprecated.** Please, note that starting with *version 7.0* of CloudAPI
-datasets are not supported, and their usage should be replaced with
-[images](#image-description). Specially, note the lack of `urn` attribute for
-images when compared with datasets.
-
-
-## ListDatasets (GET /:login/datasets)
-
-**Deprecated in SDC 7.0. Use [ListImages](#ListImages).**
-
-Provides a list of datasets available in this datacenter.
-
-### Inputs
-
-None
-
-### Returns
-
-An array of datasets. Dataset objects are:
-
-||id||String||a unique identifier for this dataset||
-||name||String||The "friendly name for this dataset||
-||os||String||The underlying operating system for this dataset||
-||version||String||The version for this dataset||
-||urn||String||The full URN for this dataset||
-||type||String||Whether this is a smartmachine or virtualmachine dataset||
-||default||Boolean||Whether this is the default dataset in this datacenter||
-||requirements||Object||Contains a grouping of various minimum requirements for provisioning a machine with this dataset. For example 'password' indicates that a password must be provided.||
-
-### Errors
-
-For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
-
-||**Error Code**||**Description**||
-||ResourceNotFound||If :login does not exist||
-
-### CLI Command
-
-    $ sdc-listdatasets
-
-### Example Request
-
-    GET /my/datasets HTTP/1.1
-    Authorization: ...
-    Host: api.example.com
-    Accept: application/json
-    X-Api-Version: ~6.5
-
-### Example Response
-
-    HTTP/1.1 200 OK
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET
-    Server: SmartDataCenter
-    Connection: close
-    Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 6.5.0
-    X-RequestId: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
-    X-Response-Time: 257
-    Content-Type: application/json
-    Content-Length: 402
-    Content-MD5: y7YOeXG98DYchC96s46yRw==
-
-    [
-      {
-        "name": "nodejs",
-        "version": "1.1.3",
-        "os": "smartos",
-        "id": "7456f2b0-67ac-11e0-b5ec-832e6cf079d5",
-        "urn": "sdc:sdc:nodejs:1.1.3",
-        "default": true,
-        "type": "smartmachine",
-        "created": "2011-04-15T22:04:12+00:00"
-      },
-      {
-        "name": "smartos",
-        "version": "1.3.12",
-        "os": "smartos",
-        "id": "febaa412-6417-11e0-bc56-535d219f2590",
-        "urn": "sdc:sdc:smartos:1.3.23",
-        "default": false,
-        "type": "smartmachine",
-        "created": "2011-04-11T08:45:00+00:00"
-      }
-    ]
-
-
-## GetDataset (GET /:login/datasets/:id)
-
-**Deprecated in SDC 7.0. Use [GetImage](#GetImage).**
-
-Gets an individual dataset by id.
-
-### Inputs
-
-* None
-
-### Returns
-
-||id||String||a unique identifier for this dataset||
-||name||String||The "friendly name for this dataset||
-||version||String||The version for this dataset||
-||urn||String||The full URN for this dataset||
-||type||String||Whether this is a smartmachine or virtualmachine dataset||
-||default||Boolean||Whether this is the default dataset in this datacenter||
-||requirements||Object||Contains a grouping of various minimum requirements for provisioning a machine with this dataset. For example 'password' indicates that a password must be provided.||
-
-### Errors
-
-For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
-
-||**Error Code**||**Description**||
-||ResourceNotFound||If :login does not exist or the dataset specified does not exist||
-
-### CLI Command
-
-    $ sdc-getdataset 63ce06d8-7ae7-11e0-b0df-1fcf8f45c5d5
-
-#### Example Request
-
-    GET /my/datasets/63ce06d8-7ae7-11e0-b0df-1fcf8f45c5d5 HTTP/1.1
-    Authorization: ...
-    Host: api.example.com
-    Accept: application/json
-    X-Api-Version: ~6.5
-
-#### Example Response
-
-    HTTP/1.1 200 OK
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET
-    Server: Joyent
-    Connection: close
-    Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 6.5.0
-    X-RequestId: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
-    X-Response-Time: 257
-    Content-Type: application/json
-    Content-Length: 402
-    Content-MD5: y7YOeXG98DYchC96s46yRw==
-
-    {
-      "id": "63ce06d8-7ae7-11e0-b0df-1fcf8f45c5d5",
-      "name": "smartos",
-      "os": "smartos",
-      "type": "smartmachine",
-      "version": "1.3.13",
-      "created": "2011-06-27T18:41:39+00:00",
-      "default": true
-    }
-
-
 # Images
 
 An [image](#image-description) contains the software packages that will be
@@ -1238,7 +1065,7 @@ Provides a list of images available in this datacenter.
 
 ### Inputs
 
-None for SDC 6.5. Starting with SDC 7.0, the following optional query parameters
+The following optional query parameters
 are available to filter the list of images:
 
 ||name||String||The "friendly" name for this image||
@@ -1261,7 +1088,6 @@ An array of images. Image objects include the following fields:
 || type         || String ||Whether this is a smartmachine or virtualmachine dataset||
 || requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
 || homepage     || String ||(New in 7.0.) The URL for a web page including detailed information for this image||
-|| created      || String (ISO-8859) ||(Only in 6.5.) The time this image has been made publicly available. This has been obsoleted by the 'published_at' field.||
 || published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
 <!-- #ifdef BLEEDING_EDGE -->
 || public       || Boolean ||(New in 7.0.) Indicates if this image is publicly available.||
@@ -1312,7 +1138,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
         "version": "1.1.3",
         "os": "smartos",
         "id": "7456f2b0-67ac-11e0-b5ec-832e6cf079d5",
-        "urn": "sdc:sdc:nodejs:1.1.3",
         "default": true,
         "type": "smartmachine",
         "published_at": "2011-04-15T22:04:12+00:00"
@@ -1322,7 +1147,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
         "version": "1.3.12",
         "os": "smartos",
         "id": "febaa412-6417-11e0-bc56-535d219f2590",
-        "urn": "sdc:sdc:smartos:1.3.23",
         "default": false,
         "type": "smartmachine",
         "published_at": "2011-04-11T08:45:00+00:00"
@@ -1347,7 +1171,6 @@ None
 || type         || String ||Whether this is a smartmachine or virtualmachine dataset||
 || requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
 || homepage     || String ||(New in 7.0.) The URL for a web page including detailed information for this image||
-|| created      || String (ISO-8859) ||(Only in 6.5.) The time this image has been made publicly available. This has been obsoleted by the 'published_at' field.||
 || published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
 <!-- #ifdef BLEEDING_EDGE -->
 || owner        || String ||(New in 7.0.) The UUID of the user who owns this image.||
@@ -1579,7 +1402,6 @@ not all fields listed there can be specified here.
 || type         || String ||Whether this is a smartmachine or virtualmachine dataset||
 || requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
 || homepage     || String ||(New in 7.0.) The URL for a web page including detailed information for this image||
-|| created      || String (ISO-8859) ||(Only in 6.5.) The time this image has been made publicly available. This has been obsoleted by the 'published_at' field.||
 || published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
 <!-- #ifdef BLEEDING_EDGE -->
 || owner        || String ||(New in 7.0.) The UUID of the user who owns this image.||
@@ -1665,9 +1487,7 @@ Provides a list of packages available in this datacenter.
 
 ### Inputs
 
-* None for SDC 6.5
-
-* Starting with SDC 7.0, the following are all optional accepted inputs:
+* The following are all optional accepted inputs:
 
 ||name||String||The "friendly" name for this package||
 ||memory||Number||How much memory will by available (in Mb)||
@@ -1690,10 +1510,6 @@ An array of objects, of the form:
 ||swap||Number||How much swap memory will be available (in Mb)||
 ||vcpus||Number||Number of VCPUS for this package||
 ||default||Boolean||Whether this is the default package in this datacenter||
-
-Starting at SmartDataCenter 7.0, this API also includes the following package
-properties.
-
 ||id||String||Unique identifier for this package||
 ||version||String||The version for this package||
 ||group||String||The group this package belongs to||
@@ -1716,7 +1532,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -1726,7 +1542,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
     X-Response-Time: 257
     Content-Type: application/json
@@ -1766,7 +1582,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ## GetPackage (GET /:login/packages/:package)
 
-Gets a package by name.
+Gets a package by name or id.
 
 ### Inputs
 
@@ -1780,16 +1596,11 @@ Gets a package by name.
 ||swap||Number||How much swap memory will be available (in Mb)||
 ||vcpus||Number||Number of VCPUS for this package||
 ||default||Boolean||Whether this is the default package in this datacenter||
-
-Starting at SmartDataCenter 7.0, this API also includes the following package
-properties.
-
 ||id||String||Unique identifier for this package||
 ||version||String||The version for this package||
 ||group||String||The group this package belongs to||
 ||description||String||An Human friendly description for this package||
 
-Also, starting at SmartDataCenter 7.0, packages can also be retrieved by id.
 
 ### Errors
 
@@ -1857,7 +1668,7 @@ retrieve the number of machines.
 
 ||type||String||virtualmachine or smartmachine||
 ||name||String||Machine name to find (will make your list size 1, or 0)||
-||dataset||String||dataset ID; returns machines provisioned with that dataset||
+||image||String||Image ID; returns machines provisioned with that image||
 ||state||String||The current state of the machine||
 ||memory||Number||The current size of the RAM deployed for the machine (Mb)||
 ||tombstone||Number||Include machines destroyed in the last N minutes||
@@ -1866,9 +1677,8 @@ retrieve the number of machines.
 ||tag.$name||String||An arbitrary set of tags can be used to query on, assuming they are prefixed with "tag."||
 ||credentials||Boolean||Whether to include the generated credentials for machines, if present. Defaults to false.||
 
-Also, **starting with 7.0 version of CloudAPI**, if the special input `tags=*` is
-provided, any other input will be completely ignored and the response will
-return all the machines with any tag.
+Also, if the special input `tags=*` is provided, any other input will be
+completely ignored and the response will return all the machines with any tag.
 
 ### Returns
 
@@ -1885,10 +1695,6 @@ An array of machine objects, which contain:
 ||metadata||Object[String => String]||Any "extra" metadata this machine has||
 ||created||Date (ISO8601)||When this machine was created||
 ||updated||Date (ISO8601)||When this machine was updated||
-
-Starting at **version 7.0**, a machine will also provide information about the
-associated package.
-
 ||package||String||The name of the package used to create this machine.||
 ||image||String||The image id this machine was provisioned with||
 
@@ -1922,7 +1728,7 @@ Getting all SmartMachines that are currently running, with 256 Mb of memory tagg
 
     $ sdc-listmachines -y smartmachine -s running -m 256 -t group=test
 
-Getting all tagged machines (SDC 7.0+):
+Getting all tagged machines:
 
     $ sdc-listmachines -t \*
 
@@ -1939,7 +1745,7 @@ options.
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -1949,7 +1755,7 @@ options.
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: AECD793C-3368-45FA-ACD9-19AC394B8933
     X-Response-Time: 315
     x-resource-count: 2
@@ -1965,6 +1771,7 @@ options.
         "type": "smartmachine",
         "state": "running",
         "dataset": "sdc:sdc:smartos:1.3.15",
+        "image": "01b2c898-945f-11e1-a523-af1afbe22822",
         "memory": 256,
         "disk": 5120,
         "ips": [
@@ -1999,11 +1806,6 @@ Gets the details for an individual machine.
 ||created||Date (ISO8601)||When this machine was created||
 ||updated||Date (ISO8601)||When this machine was updated||
 ||credentials||Boolean||Whether to include the generated credentials for machines, if present. Defaults to false.||
-
-
-Starting at **version 7.0**, a machine will also provide information about the
-associated package.
-
 ||package||String||The name of the package used to create this machine.||
 ||image||String||The image id this machine was provisioned with||
 
@@ -2026,7 +1828,7 @@ Getting the details for the machine whose id is 75cfe125-a5ce-49e8-82ac-09aa31ff
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -2036,7 +1838,7 @@ Getting the details for the machine whose id is 75cfe125-a5ce-49e8-82ac-09aa31ff
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: 4A8C4694-03C3-484D-80E0-ACBA9FEE6C7C
     X-Response-Time: 174
     Content-Type: application/json
@@ -2049,6 +1851,7 @@ Getting the details for the machine whose id is 75cfe125-a5ce-49e8-82ac-09aa31ff
       "type": "smartmachine",
       "state": "running",
       "dataset": "sdc:sdc:smartos:1.3.15",
+      "image": "01b2c898-945f-11e1-a523-af1afbe22822",
       "ips": [
         "10.88.88.51"
       ],
@@ -2086,7 +1889,7 @@ those.  Changing the keys over time under your account will not affect the
 running virtual machine in any way; those keys are statically written at
 provisioning-time only, and you will need to manually manage them.
 
-If the dataset you create a machine from is set to generate passwords for you,
+If the image you create a machine from is set to generate passwords for you,
 the username/password pairs will be returned in the metadata response as a
 nested object, like:
 
@@ -2108,8 +1911,7 @@ object.
 
 ||name||String||friendly name for this machine; default is a randomly generated name||
 ||package||String||Name of the package to use on provisioning; default is indicated in ListPackages||
-||image||String||(Added in SDC 7.0.) The image UUID (the "id" field in [ListImages](#ListImages)) or URN (the "urn" field; not all images have a URN field because it is deprecated in SDC 7). In SDC 6.5 this may also be the image "name". If multiple images have that same name, the latest by "version" (semver semantics) is selected. This defaults per the `"default": true` image in ListDatasets.||
-||dataset||String||(Deprecated in SDC 7.0.) Backward compatible alternative to 'image' field.||
+||image||String||The image UUID (the "id" field in [ListImages](#ListImages))||
 ||networks||Array||desired networks ids, obtained from ListNetworks||
 ||metadata.$name||String||An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata."||
 ||tag.$name||String||An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag."||
@@ -2128,7 +1930,10 @@ object.
 ||metadata||Object[String => String]||Any "extra" metadata this machine has||
 ||created||Date (ISO8601)||When this machine was created||
 ||updated||Date (ISO8601)||When this machine was updated||
-||firewall_enabled||Boolean||(Added in SDC 7.0.)Completely enable or disable firewall for this machine||
+||firewall_enabled||Boolean||Completely enable or disable firewall for this machine||
+||package||String||The name of the package used to create this machine.||
+||image||String||The image id this machine was provisioned with||
+
 
 ### Errors
 
@@ -2151,7 +1956,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 455
     Content-Type: application/x-www-form-urlencoded
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -2161,7 +1966,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: Joyent
     Connection: close
     Date: Wed, 13 Apr 2011 23:12:39 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: 04BF964B-C285-4BDF-84B1-762B8FDCADB1
     X-Response-Time: 470
     Content-Type: application/json
@@ -2174,6 +1979,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       "type": "smartmachine",
       "state": "provisioning",
       "dataset": nodejs-1.1.4",
+      "image": "01b2c898-945f-11e1-a523-af1afbe22822",
       "memory": 128,
       "disk": 5120,
       "ips": [],
@@ -2228,7 +2034,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
     action=stop
 
@@ -2240,7 +2046,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:35:25 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: F09F3674-2151-434B-9911-29DD188057F0
     X-Response-Time: 115
     Content-Length: 0
@@ -2282,7 +2088,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
     action=start
 
@@ -2294,7 +2100,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:35:25 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: F09F3674-2151-434B-9911-29DD188057F0
     X-Response-Time: 115
     Content-Length: 0
@@ -2336,7 +2142,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
     action=reboot
 
@@ -2348,7 +2154,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:35:25 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: F09F3674-2151-434B-9911-29DD188057F0
     X-Response-Time: 115
     Content-Length: 0
@@ -2357,9 +2163,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 Allows you to resize a SmartMachine.  POST to the machine id with an action of `resize`.
 
-This operation is not supported on virtual machines before version 7.0.
-
-Starting with version 7.0, virtual machines can also be resized but,
+Virtual machines can also be resized but,
 **only resizing virtual machines to a higher capacity package is supported**.
 
 You must additionally include a new package name, as you can only resize a
@@ -2396,7 +2200,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
     action=resize&package=regular_512
 
@@ -2406,7 +2210,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
-    x-api-version: 6.5.0
+    x-api-version: 7.0.0
     Date: Sat, 11 Jun 2011 18:31:14 GMT
     Server: SmartDataCenter
     x-request-id: 3974ead1-0f1d-49ed-974c-1abfd13d6087
@@ -2415,8 +2219,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 
 ## RenameMachine (POST /:login/machines/:id?action=rename)
-
-### Since Version 7.0
 
 Allows you to rename a machine. POST to the machine id with an action of
 `rename`. You must additionally include a new name for the machine.
@@ -2472,8 +2274,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ## EnableMachineFirewall (POST /:login/machines/:id?action=enable_firewall)
 
-### Since Version 7.0
-
 Allows you to enable firewall for a machine.
 
 ### Inputs
@@ -2524,8 +2324,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Content-Length: 0
 
 ## DisableMachineFirewall (POST /:login/machines/:id?action=disable_firewall)
-
-### Since Version 7.0
 
 Allows you to completelly disable firewall for a machine.
 
@@ -2617,7 +2415,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
     name=just-booted
 
@@ -2628,7 +2426,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
     Connection: close
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
     X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
@@ -2676,7 +2474,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 0
     Content-Type: application/x-www-form-urlencoded
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -2684,7 +2482,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     Date: Tue, 05 Jul 2011 17:26:56 GMT
     Server: SmartDataCenter
     X-Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
@@ -2727,7 +2525,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 0
     Content-Type: application/x-www-form-urlencoded
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -2735,7 +2533,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
     Connection: close
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
     X-Request-Id: 06a57272-9238-4276-951b-4123fbfdb948
@@ -2785,7 +2583,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 0
     Content-Type: application/x-www-form-urlencoded
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -2793,7 +2591,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     Date: Tue, 05 Jul 2011 17:26:56 GMT
     Server: SmartDataCenter
     X-Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
@@ -2840,7 +2638,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 0
     Content-Type: application/x-www-form-urlencoded
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -2848,7 +2646,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     Date: Tue, 05 Jul 2011 17:26:56 GMT
     Server: SmartDataCenter
     X-Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
@@ -2896,7 +2694,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
     foo=bar&group=test
 
@@ -2906,7 +2704,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
     Connection: close
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
     X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
@@ -2953,7 +2751,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -2961,7 +2759,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
     Connection: close
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
     X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
@@ -3008,7 +2806,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -3016,7 +2814,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
     Connection: close
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
     X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
@@ -3057,7 +2855,7 @@ wildcard to keep the shell from matching files in the current directory.
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -3065,7 +2863,7 @@ wildcard to keep the shell from matching files in the current directory.
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
     Connection: close
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
     X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
@@ -3113,7 +2911,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
     foo=bar&group=test
 
@@ -3123,7 +2921,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, PUT
     Connection: close
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
     X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
@@ -3233,7 +3031,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -3241,7 +3039,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, PUT
     Connection: close
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
     X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
@@ -3286,7 +3084,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: text/plain
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -3294,7 +3092,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
     Connection: close
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
     X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
@@ -3334,7 +3132,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: text/plain
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -3342,7 +3140,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
     X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
@@ -3381,7 +3179,7 @@ wildcard to keep the shell from matching files in the current directory.
     Authorization: ...
     Host: api.example.com
     Accept: text/plain
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -3389,7 +3187,7 @@ wildcard to keep the shell from matching files in the current directory.
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
     X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
@@ -3427,7 +3225,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 #### Example Response
 
@@ -3437,15 +3235,13 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:38:03 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: 762C3F37-8ACA-4A49-AF10-84CEC8137B1D
     X-Response-Time: 72
     Content-Length: 0
 
 
 ## MachineAudit (GET /:login/machines/:id/audit)
-
-**Since SDC 7.0**.
 
 Provides a list of machine's accomplished actions, (sorted from latest to older
 one).
@@ -3793,7 +3589,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -3803,7 +3599,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:40:30 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: 83BB32FC-1F65-4FEB-871E-BABCD96D588D
     X-Response-Time: 285
     Content-Type: application/json
@@ -3872,7 +3668,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -3882,7 +3678,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:49:40 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: 99839114-1B59-4733-AC64-A93144CA7D8B
     X-Response-Time: 48
     Content-Type: application/json
@@ -3960,7 +3756,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -3971,7 +3767,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:53:29 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: E79B48A2-EC5B-475E-A473-1AF0053FCF4F
     X-Response-Time: 60
     Content-Type: application/json
@@ -4037,7 +3833,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Host: api.example.com
     Authorization: ...
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 
 ### Example Response
@@ -4048,7 +3844,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:53:29 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: E79B48A2-EC5B-475E-A473-1AF0053FCF4F
     X-Response-Time: 60
     Content-Type: application/json
@@ -4116,7 +3912,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 ### Example Response
 
@@ -4124,7 +3920,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET
     Connection: close
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     Date: Wed, 29 Jun 2011 23:57:44 GMT
     Server: SmartDataCenter
     X-Request-Id: 3d511185-36b8-4699-9cdd-a67bf8be7a6d
@@ -4247,7 +4043,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
 
@@ -4262,7 +4058,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:43:24 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: F4238406-ED7D-4938-937B-4E3D0F93D924
     X-Response-Time: 1508
     Content-Type: application/json
@@ -4323,7 +4119,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 #### Example Response
 
@@ -4333,7 +4129,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:56:29 GMT
-    X-Api-Version: 6.5.0
+    X-Api-Version: 7.0.0
     X-RequestId: E4DD448D-F491-4A88-9237-DAF6C4DC782C
     X-Response-Time: 49
     Content-Length: 0
@@ -4342,7 +4138,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 # FirewallRules
 
-Starting with *SDC 7.0* it's possible to manage Firewall Rules for your
+It's possible to manage Firewall Rules for your
 machines through Cloud API.
 
 ## Firewall Rule Syntax
@@ -4829,8 +4625,8 @@ Will return the collection of machines affected by the firewall rule given by
 
 # Networks
 
-Starting with *SDC 7.0* it's possible to get the details for public and
-customer especific networks through Cloud API.
+CloudAPI provides a way to get the details for public and
+customer especific networks.
 
 ## ListNetworks (GET /:login/networks)
 
@@ -5527,7 +5323,7 @@ complete details.
 
 A node.js library for HTTP Signature is available with:
 
-    $ npm install http-signature
+    $ npm install http-signature@0.9.11
 
 ## CloudAPI Specific Parameters
 
@@ -5546,13 +5342,13 @@ request:
     Date: Sat, 11 Jun 2011 23:56:29 GMT
     Authorization: Signature keyId="/demo/keys/rsa-1",algorithm="rsa-sha256" <Base64(rsa(sha256($Date)))>
     Accept: application/json
-    X-Api-Version: ~6.5
+    X-Api-Version: ~7.0
 
 Where the signature is attached with the
-Base64(rsa(sha256(Sat, 11 Jun 2011 23:56:29 GMT))) output.  Note that the
-`keyId` parameter *cannot* use the _my_ shortcut, as in the HTTP resource paths.
+`Base64(rsa(sha256(Sat, 11 Jun 2011 23:56:29 GMT)))` output.  Note that the
+`keyId` parameter **cannot** use the *my* shortcut, as in the HTTP resource paths.
 This is because CloudAPI must lookup your account to resolve the key, as with
-Basic authentication.  In short, you *MUST* use the login name associated to
+Basic authentication.  In short, you **MUST** use the login name associated to
 your account to specify the `keyId`.
 
 ## Sample Code
@@ -5627,7 +5423,7 @@ follows.
       host: 'api.example.com',
       path: '/my/machines',
       headers: {
-        'x-api-version': '~6.5',
+        'x-api-version': '~7.0',
         'Date': date,
         'Authorization': authz
       }
@@ -5704,15 +5500,15 @@ version, where the main one is:
 
 * The request version of SDC 7.0 CLI is, obviously, `~7.0` instead of `6.5`.
 
-* This means that the parameter `--dataset` (or the equivalent `-e` short option)
+* This means that the parameter `--image` (or the equivalent `-e` short option)
 is mandatory for the command `sdc-createmachine`. On previous versions of the
 API, it was possible to provision a machine without specifying an image to the
 create machine command. This behavior has been deprecated, and the desired
 image **must** be specified.
 
-* Also, starting at version 7.0, there isn't a `default` dataset. For backward
+* Also, starting at version 7.0, there isn't a `default` image. For backward
 compatibility purposes, when a request using `~6.5` is received, the latest
-version of the `smartos` dataset will become the default one.
+version of the `smartos` image will become the default one.
 
 * Starting with version 7.0, virtual machines can also be resized but, **only
 resizing virtual machines to a higher capacity/package is supported**.
@@ -5755,5 +5551,5 @@ migrate to the new version.
 
 
 <p style="min-height: 31px; margin-top: 60px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0">
-<a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/"><img alt="Creative Commons License" style="border-width:0;float:left;margin:4px 8px 0 0;" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a> <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Text" property="dct:title" rel="dct:type">Joyent CloudAPI Documentation</span> by <a xmlns:cc="http://creativecommons.org/ns#" href="http://www.joyent.com" property="cc:attributionName" rel="cc:attributionURL">Joyent, Inc.</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/"><img alt="Creative Commons License" style="border-width:0;float:left;margin:4px 8px 0 0;" src="https://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a> <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Text" property="dct:title" rel="dct:type">Joyent CloudAPI Documentation</span> by <a xmlns:cc="http://creativecommons.org/ns#" href="http://www.joyent.com" property="cc:attributionName" rel="cc:attributionURL">Joyent, Inc.</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
 </p>
