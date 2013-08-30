@@ -73,7 +73,7 @@ PATH	:= $(NODE_INSTALL)/bin:/opt/local/bin:${PATH}
 # Repo-specific targets
 #
 .PHONY: all
-all: build
+all: build sdc-scripts
 
 .PHONY: build
 build: $(SMF_MANIFESTS) | $(TAP) $(REPO_DEPS)
@@ -119,6 +119,10 @@ release: check build docs
 		$(ROOT)/smf \
 		$(ROOT)/test \
 		$(TMPDIR)/root/opt/smartdc/cloudapi/
+	mkdir -p $(tmpdir)/root/opt/smartdc/sdc-boot/scripts
+	cp $(ROOT)/sdc-boot/*.sh $(tmpdir)/root/opt/smartdc/sdc-boot/
+	cp $(ROOT)/deps/sdc-scripts/*.sh \
+	    $(tmpdir)/root/opt/smartdc/sdc-boot/scripts/
 	(cd $(TMPDIR) && $(TAR) -jcf $(ROOT)/$(RELEASE_TARBALL) root site)
 	@rm -rf $(TMPDIR)
 
