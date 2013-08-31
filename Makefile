@@ -119,10 +119,9 @@ release: check build docs
 		$(ROOT)/smf \
 		$(ROOT)/test \
 		$(TMPDIR)/root/opt/smartdc/cloudapi/
-	mkdir -p $(tmpdir)/root/opt/smartdc/sdc-boot/scripts
-	cp $(ROOT)/sdc-boot/*.sh $(tmpdir)/root/opt/smartdc/sdc-boot/
-	cp $(ROOT)/deps/sdc-scripts/*.sh \
-	    $(tmpdir)/root/opt/smartdc/sdc-boot/scripts/
+	mkdir -p $(tmpdir)/root/opt/smartdc/sdc-boot
+	cp -R $(ROOT)/deps/sdc-scripts/* $(tmpdir)/root/opt/smartdc/sdc-boot/
+	cp -R $(ROOT)/sdc-boot/* $(tmpdir)/root/opt/smartdc/sdc-boot/
 	(cd $(TMPDIR) && $(TAR) -jcf $(ROOT)/$(RELEASE_TARBALL) root site)
 	@rm -rf $(TMPDIR)
 
@@ -183,3 +182,5 @@ else
 endif
 include ./tools/mk/Makefile.smf.targ
 include ./tools/mk/Makefile.targ
+
+sdc-scripts: deps/sdc-scripts/.git
