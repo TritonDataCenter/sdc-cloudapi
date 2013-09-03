@@ -105,7 +105,7 @@ release: check build docs
 	@mkdir -p $(TMPDIR)/site
 	@touch $(TMPDIR)/site/.do-not-delete-me
 	@mkdir -p $(TMPDIR)/root
-	@mkdir -p $(tmpdir)/root/opt/smartdc/cloudapi/ssl
+	@mkdir -p $(TMPDIR)/root/opt/smartdc/cloudapi/ssl
 	cp -r	$(ROOT)/build \
 		$(ROOT)/bin \
 		$(ROOT)/etc \
@@ -119,9 +119,9 @@ release: check build docs
 		$(ROOT)/smf \
 		$(ROOT)/test \
 		$(TMPDIR)/root/opt/smartdc/cloudapi/
-	mkdir -p $(tmpdir)/root/opt/smartdc/sdc-boot
-	cp -R $(ROOT)/deps/sdc-scripts/* $(tmpdir)/root/opt/smartdc/sdc-boot/
-	cp -R $(ROOT)/sdc-boot/* $(tmpdir)/root/opt/smartdc/sdc-boot/
+	mkdir -p $(TMPDIR)/root/opt/smartdc/sdc-boot
+	cp -R $(ROOT)/deps/sdc-scripts/* $(TMPDIR)/root/opt/smartdc/sdc-boot/
+	cp -R $(ROOT)/sdc-boot/* $(TMPDIR)/root/opt/smartdc/sdc-boot/
 	(cd $(TMPDIR) && $(TAR) -jcf $(ROOT)/$(RELEASE_TARBALL) root site)
 	@rm -rf $(TMPDIR)
 
