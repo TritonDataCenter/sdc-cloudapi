@@ -6,8 +6,6 @@ var test = require('tap').test;
 var common = require('../common');
 var machinesCommon = require('./common');
 var checkMachine = machinesCommon.checkMachine;
-var checkWfJob = machinesCommon.checkWfJob;
-var waitForWfJob = machinesCommon.waitForWfJob;
 var TAP_CONF = {
     timeout: 'Infinity '
 };
@@ -20,7 +18,6 @@ module.exports = function (suite, client, machine, callback) {
     var RULE_UUID;
     var RULES_URL = '/my/fwrules';
     var RULE_URL = RULES_URL + '/%s';
-    var RULE_JOB_UUID;
 
     function checkRule(t, rule) {
         t.ok(rule.id, 'rule id ok');
@@ -48,23 +45,15 @@ module.exports = function (suite, client, machine, callback) {
             t.ifError(err, 'Error');
             t.ok(body, 'body OK');
             checkRule(t, body);
-            RULE_UUID = body.id;
-            t.equal(201, res.statusCode, 'Status Code');
-            t.equal(body.enabled, false, 'rule enabled');
-            t.ok(res.headers['x-joyent-jobid'], 'jobid header');
-            RULE_JOB_UUID = res.headers['x-joyent-jobid'];
-            t.end();
-        });
-    });
 
-
-    suite.test('RuleAdd Job', TAP_CONF, function (t) {
-        waitForWfJob(client, RULE_JOB_UUID, function (err) {
-            if (err) {
-                TAP_CONF.skip = true;
+            if (body.id) {
+                RULE_UUID = body.id;
+                t.equal(201, res.statusCode, 'Status Code');
+                t.equal(body.enabled, false, 'rule enabled');
+                t.end();
+            } else {
+                t.end();
             }
-            t.ifError(err, 'error');
-            t.end();
         });
     });
 
@@ -82,17 +71,22 @@ module.exports = function (suite, client, machine, callback) {
 
 
     suite.test('List Rule Machines (not empty set)', TAP_CONF, function (t) {
-        var p = sprintf(RULE_URL, RULE_UUID) + '/machines';
-        client.get(p, function (err, req, res, body) {
-            t.ifError(err, 'Error');
-            t.equal(200, res.statusCode, 'Status Code');
-            t.ok(Array.isArray(body), 'isArray(machines)');
-            t.ok(body.length, 'machines length');
-            body.forEach(function (m) {
-                checkMachine(t, m);
+        if (RULE_UUID) {
+            var p = sprintf(RULE_URL, RULE_UUID) + '/machines';
+            client.get(p, function (err, req, res, body) {
+                t.ifError(err, 'Error');
+                t.equal(200, res.statusCode, 'Status Code');
+                console.log(util.inspect(body, false, 8, true));
+                t.ok(Array.isArray(body), 'isArray(machines)');
+                t.ok(body.length, 'machines length');
+                body.forEach(function (m) {
+                    checkMachine(t, m);
+                });
+                t.end();
             });
+        } else {
             t.end();
-        });
+        }
     });
 
 
@@ -110,88 +104,90 @@ module.exports = function (suite, client, machine, callback) {
 
 
     suite.test('GetRule', TAP_CONF, function (t) {
-        client.get(sprintf(RULE_URL, RULE_UUID),
-            function (err, req, res, body) {
-            t.ifError(err);
-            t.equal(200, res.statusCode);
-            checkRule(t, body);
+        if (RULE_UUID) {
+            client.get(sprintf(RULE_URL, RULE_UUID),
+                function (err, req, res, body) {
+                t.ifError(err);
+                t.equal(200, res.statusCode);
+                checkRule(t, body);
+                t.end();
+            });
+        } else {
             t.end();
-        });
+        }
     });
 
 
     suite.test('UpdateRule', TAP_CONF, function (t) {
-        client.post(sprintf(RULE_URL, RULE_UUID), {
-            rule: 'FROM vm ' + machine +
-                ' TO subnet 10.99.99.0/24 ALLOW tcp (port 80 AND port 443)'
-        }, function (err, req, res, body) {
-            t.ifError(err);
-            t.equal(200, res.statusCode);
-            t.ok(res.headers['x-joyent-jobid'], 'jobid header');
-            RULE_JOB_UUID = res.headers['x-joyent-jobid'];
+        if (RULE_UUID) {
+            client.post(sprintf(RULE_URL, RULE_UUID), {
+                rule: 'FROM vm ' + machine +
+                    ' TO subnet 10.99.99.0/24 ALLOW tcp (port 80 AND port 443)'
+            }, function (err, req, res, body) {
+                t.ifError(err);
+                t.equal(200, res.statusCode);
+                t.end();
+            });
+        } else {
             t.end();
-        });
-    });
-
-
-    suite.test('RuleUpdate Job', TAP_CONF, function (t) {
-        waitForWfJob(client, RULE_JOB_UUID, function (err) {
-            t.ifError(err, 'error');
-            t.end();
-        });
+        }
     });
 
 
     suite.test('GetUpdatedRule', TAP_CONF, function (t) {
-        client.get(sprintf(RULE_URL, RULE_UUID),
-            function (err, req, res, body) {
-            t.ifError(err);
-            t.equal(200, res.statusCode);
-            checkRule(t, body);
+        if (RULE_UUID) {
+            client.get(sprintf(RULE_URL, RULE_UUID),
+                function (err, req, res, body) {
+                t.ifError(err);
+                t.equal(200, res.statusCode);
+                checkRule(t, body);
+                t.end();
+            });
+        } else {
             t.end();
-        });
+        }
     });
 
 
     suite.test('EnableRule', TAP_CONF, function (t) {
-        client.post(sprintf(RULE_URL, RULE_UUID) + '/enable', {
-        }, function (err, req, res, body) {
-            t.ifError(err);
-            t.equal(200, res.statusCode);
-            t.ok(res.headers['x-joyent-jobid'], 'jobid header');
-            RULE_JOB_UUID = res.headers['x-joyent-jobid'];
+        if (RULE_UUID) {
+            client.post(sprintf(RULE_URL, RULE_UUID) + '/enable', {
+            }, function (err, req, res, body) {
+                t.ifError(err);
+                t.equal(200, res.statusCode);
+                t.end();
+            });
+        } else {
             t.end();
-        });
-    });
-
-
-    suite.test('EnableRule Job', TAP_CONF, function (t) {
-        waitForWfJob(client, RULE_JOB_UUID, function (err) {
-            t.ifError(err, 'error');
-            t.end();
-        });
+        }
     });
 
 
     suite.test('GetEnabledRule', TAP_CONF, function (t) {
-        client.get(sprintf(RULE_URL, RULE_UUID),
-            function (err, req, res, body) {
-            t.ifError(err);
-            t.equal(200, res.statusCode);
-            checkRule(t, body);
+        if (RULE_UUID) {
+            client.get(sprintf(RULE_URL, RULE_UUID),
+                function (err, req, res, body) {
+                t.ifError(err);
+                t.equal(200, res.statusCode);
+                checkRule(t, body);
+                t.end();
+            });
+        } else {
             t.end();
-        });
+        }
     });
 
 
     suite.test('DeleteRule', TAP_CONF, function (t) {
-        client.del(sprintf(RULE_URL, RULE_UUID), function (err, req, res) {
-            t.ifError(err);
-            t.equal(204, res.statusCode);
-            t.ok(res.headers['x-joyent-jobid'], 'jobid header');
-            RULE_JOB_UUID = res.headers['x-joyent-jobid'];
+        if (RULE_UUID) {
+            client.del(sprintf(RULE_URL, RULE_UUID), function (err, req, res) {
+                t.ifError(err);
+                t.equal(204, res.statusCode);
+                t.end();
+            });
+        } else {
             t.end();
-        });
+        }
     });
 
     return callback();
