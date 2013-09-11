@@ -27,7 +27,7 @@
         <exec_method
             type="method"
             name="start"
-            exec="@@NODE@@ @@PREFIX@@/main.js -f @@PREFIX@@/etc/cloudapi.cfg -p %{cloudapi/port} &amp;"
+            exec="@@PREFIX@@/build/node/bin/node @@PREFIX@@/main.js -f @@PREFIX@@/etc/cloudapi.cfg -p %{cloudapi/port} -l /var/svc/log/smartdc-application-cloudapi:default.log &amp;"
             timeout_seconds="30">
             <method_context working_directory="@@PREFIX@@">
                 <method_credential user="nobody"
@@ -35,7 +35,7 @@
                                    privileges="basic,net_privaddr"/>
                 <method_environment>
                     <envvar name="PATH"
-                            value="/opt/smartdc/cloudapi/build/node/bin:/opt/local/bin:/usr/bin:/usr/sbin:/bin"/>
+                            value="@@PREFIX@@/build/node/bin:/opt/local/bin:/usr/bin:/usr/sbin:/bin"/>
                     <envvar name="LD_PRELOAD_32"
                             value="/usr/lib/extendedFILE.so.1" />
                 </method_environment>
