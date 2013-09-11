@@ -81,6 +81,12 @@
             "burst": 30,
             "rate": 10,
             "overrides": {
+            {{#CLOUDAPI_THROTTLE_WHITELIST}}
+                "{{{.}}}": {
+                    "burst": 0,
+                    "rate": 0
+                },
+            {{/CLOUDAPI_THROTTLE_WHITELIST}}
                 "{{{ufds_admin_login}}}": {
                     "burst": 0,
                     "rate": 0
