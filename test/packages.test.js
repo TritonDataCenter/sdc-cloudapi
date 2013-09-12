@@ -99,7 +99,7 @@ function checkPackage_6_5(t, pkg) {
     t.notOk(pkg.id, 'Package id not OK');
     t.ok(pkg.memory, 'Package memory');
     t.ok(pkg.disk, 'Package Disk');
-    t.ok(pkg.vcpus, 'Package VCPUs OK');
+    t.ok(!isNaN(pkg.vcpus), 'Package VCPUs OK');
     t.notOk(pkg.version, 'Package version not OK');
     t.ok(pkg.swap, 'Package swap');
     t.ok(pkg['default'] !== undefined, 'Package default');
@@ -112,7 +112,7 @@ function checkPackage_7(t, pkg) {
     t.ok(pkg.id, 'Package id OK');
     t.ok(pkg.memory, 'Package memory');
     t.ok(pkg.disk, 'Package Disk');
-    t.ok(pkg.vcpus, 'Package VCPUs OK');
+    t.ok(!isNaN(pkg.vcpus), 'Package VCPUs OK');
     t.ok(pkg.version, 'Package version OK');
     t.ok(pkg.swap, 'Package swap');
     t.ok(pkg['default'] !== undefined, 'Package default');
