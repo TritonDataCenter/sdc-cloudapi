@@ -206,6 +206,9 @@ test('teardown', { timeout: 'Infinity' }, function (t) {
         t.ifError(err);
         if (!process.env.SDC_SETUP_TESTS) {
             server._clients.ufds.client.removeAllListeners('close');
+            if (!server._clients.is_ufds_master) {
+                server._clients.ufds_master.client.removeAllListeners('close');
+            }
             server.close(function () {
                 t.end();
             });
