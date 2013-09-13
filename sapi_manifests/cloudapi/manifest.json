@@ -1,5 +1,5 @@
 {
     "name": "cloudapi",
     "path": "/opt/smartdc/cloudapi/etc/cloudapi.cfg",
-    "post_cmd": "/usr/sbin/svcadm restart cloudapi:cloudapi-8081 cloudapi:cloudapi-8082 cloudapi:cloudapi-8083 cloudapi:cloudapi-8084; /usr/sbin/svcadm restart haproxy"
+    "post_cmd": "/usr/sbin/svcadm restart cloudapi"
 }
