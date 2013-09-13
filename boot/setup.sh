@@ -77,7 +77,7 @@ function setup_cloudapi {
             fatal "unable to start $cloudapi_instance"
         echo "Adding log rotation"
         logadm -w $cloudapi_instance -C 48 -s 100m -p 1h \
-            /var/svc/log/smartdc-application-cloudapi:$cloudapi_instance.log
+            /var/svc/log/smartdc-application-$cloudapi_instance:default.log
     done
 
     unset IFS
