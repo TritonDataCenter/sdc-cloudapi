@@ -34,6 +34,12 @@ echo "Generating SSL Certificate"
 echo "" >>/root/.profile
 echo "export PATH=\$PATH:/opt/smartdc/$role/build/node/bin:/opt/smartdc/$role/node_modules/.bin" >>/root/.profile
 
+# Make sure we have our log file
+touch /var/svc/log/smartdc-application-cloudapi:default.log
+
+logadm -w cloudapi -C 48 -s 100m -p 1h \
+            /var/svc/log/smartdc-application-cloudapi:default.log
+
 # setup haproxy
 function setup_cloudapi {
     local cloudapi_instances=4
@@ -75,9 +81,7 @@ function setup_cloudapi {
             fatal "unable to import $cloudapi_instance: $cloudapi_xml_out"
         svcadm enable "$cloudapi_instance" || \
             fatal "unable to start $cloudapi_instance"
-        echo "Adding log rotation"
-        logadm -w $cloudapi_instance -C 48 -s 100m -p 1h \
-            /var/svc/log/smartdc-application-$cloudapi_instance:default.log
+
     done
 
     unset IFS

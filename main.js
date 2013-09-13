@@ -21,14 +21,16 @@ var opts = {
     'debug': Boolean,
     'file': String,
     'port': Number,
-    'help': Boolean
+    'help': Boolean,
+    'log': String
 };
 
 var shortOpts = {
     'd': ['--debug'],
     'f': ['--file'],
     'p': ['--port'],
-    'h': ['--help']
+    'h': ['--help'],
+    'l': ['--log']
 };
 
 
@@ -77,12 +79,22 @@ if (PARSED.help) {
     usage(0);
 }
 
-LOG = new Logger({
-    level: (PARSED.debug ? 'trace' : 'info'),
-    name: 'CloudAPI',
-    stream: process.stderr,
-    serializers: restify.bunyan.serializers
-});
+if (PARSED.log) {
+    LOG = new Logger({
+        level: (PARSED.debug ? 'debug' : 'info'),
+        name: 'CloudAPI',
+        serializers: restify.bunyan.serializers,
+        streams: [ { path: PARSED.log } ]
+    });
+} else {
+    LOG = new Logger({
+        level: (PARSED.debug ? 'trace' : 'info'),
+        name: 'CloudAPI',
+        stream: process.stderr,
+        serializers: restify.bunyan.serializers
+    });
+}
+
 
 // There we go!:
 run();
