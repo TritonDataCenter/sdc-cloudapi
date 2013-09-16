@@ -2,6 +2,13 @@
     "port": 443,
     "certificate": "/opt/smartdc/cloudapi/ssl/cert.pem",
     "key": "/opt/smartdc/cloudapi/ssl/key.pem",
+    "bunyan": {
+        "level": "info",
+        "syslog": {
+            "facility": "local0",
+            "type": "udp"
+        }
+    },
     "read_only": {{{CLOUDAPI_READONLY}}},
     "ufds": {
         "url": "ldaps://{{{ufds_domain}}}",

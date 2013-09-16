@@ -224,13 +224,9 @@ module.exports = {
             // no need to boot another one:
             return setupClient(version, callback);
         } else {
-            server = app.createServer({
-                config: DEFAULT_CFG,
-                log: LOG,
-                name: 'cloudapi_tests',
-                overrides: {},
-                test: true
-            }, function (s) {
+            config.log = LOG;
+            config.test = true;
+            server = app.createServer(config, function (s) {
                 server = s;
                 server.start(function () {
                     LOG.info('CloudAPI listening at %s', server.url);
