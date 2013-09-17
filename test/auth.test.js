@@ -6,7 +6,10 @@ var crypto = require('crypto');
 var qs = require('querystring');
 
 var test = require('tap').test;
-var uuid = require('node-uuid');
+var libuuid = require('libuuid');
+function uuid() {
+    return (libuuid.create());
+}
 var restify = require('restify');
 
 var common = require('./common');

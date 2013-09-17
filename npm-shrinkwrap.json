@@ -48,9 +48,10 @@
       "version": "1.2.7",
       "from": "mime@1.2.7"
     },
-    "node-uuid": {
-      "version": "1.4.0",
-      "from": "node-uuid@1.4.0"
+    "libuuid": {
+      "version": "0.1.2",
+      "from": "libuuid@0.1.2",
+      "resolved": "https://registry.npmjs.org/libuuid/-/libuuid-0.1.2.tgz"
     },
     "nopt": {
       "version": "2.0.0",
@@ -107,6 +108,10 @@
         "negotiator": {
           "version": "0.2.5",
           "from": "negotiator@0.2.5"
+        },
+        "node-uuid": {
+          "version": "1.4.0",
+          "from": "node-uuid@1.4.0"
         },
         "once": {
           "version": "1.1.1",
@@ -249,6 +254,10 @@
         "lru-cache": {
           "version": "2.3.0",
           "from": "lru-cache@2.3.0"
+        },
+        "node-uuid": {
+          "version": "1.4.0",
+          "from": "node-uuid@1.4.0"
         },
         "once": {
           "version": "1.1.1",
