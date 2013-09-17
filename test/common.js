@@ -4,7 +4,10 @@ var crypto = require('crypto');
 var path = require('path');
 var Logger = require('bunyan');
 var restify = require('restify');
-var uuid = require('node-uuid');
+var libuuid = require('libuuid');
+function uuid() {
+    return (libuuid.create());
+}
 var UFDS = require('sdc-clients').UFDS;
 var VMAPI = require('sdc-clients').VMAPI;
 var CNAPI = require('sdc-clients').CNAPI;

@@ -3,7 +3,10 @@
 var fs = require('fs');
 var util = require('util');
 var test = require('tap').test;
-var uuid = require('node-uuid');
+var libuuid = require('libuuid');
+function uuid() {
+    return (libuuid.create());
+}
 var sprintf = util.format;
 var common = require('./common');
 var machinesCommon = require('./machines/common');
