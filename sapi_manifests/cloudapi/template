@@ -13,7 +13,7 @@
         },
         "maxConnections": 1,
         "retry": {
-            "minTimeout": 1000
+            "initialDelay": 1000
         },
         "clientTimeout": 120000
     },
@@ -27,7 +27,7 @@
         },
         "maxConnections": 1,
         "retry": {
-            "minTimeout": 1000
+            "initialDelay": 1000
         },
         "clientTimeout": 120000
     },
