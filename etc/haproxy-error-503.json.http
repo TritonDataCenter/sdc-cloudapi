@@ -1,0 +1,7 @@
+HTTP/1.1 503 Service Unavailable
+Content-Type: application/json
+Content-Length: 83
+Cache-Control: no-cache
+Connection: close
+
+{"code":"ServiceUnavailable", "message":"CloudAPI service is currently unavailable"}

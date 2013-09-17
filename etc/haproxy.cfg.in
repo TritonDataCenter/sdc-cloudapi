@@ -8,18 +8,36 @@ global
         stats socket /tmp/haproxy.sock
 
 defaults
-        mode    tcp
+        mode    http
         balance leastconn
         maxconn 65535
-        option redispatch
-        option abortonclose
+        option  redispatch
+        option  abortonclose
+        log     global
+        option  httplog
         retries 1
         timeout queue   0
-        timeout connect 500
+        timeout connect 2000
+        timeout client  55000
+        timeout server  120000
+        errorfile 503 /opt/smartdc/cloudapi/etc/haproxy-error-503.json.http
+        errorfile 504 /opt/smartdc/cloudapi/etc/haproxy-error-503.json.http
+        errorfile 500 /opt/smartdc/cloudapi/etc/haproxy-error-500.json.http
+        errorfile 400 /opt/smartdc/cloudapi/etc/haproxy-error-400.json.http
+        errorfile 408 /opt/smartdc/cloudapi/etc/haproxy-error-408.json.http
 
 frontend cloudapi
-        bind *:443
+        bind *:8443 accept-proxy
         default_backend servers
 
+listen stats :3333
+    mode http
+    stats enable
+    stats hide-version
+    stats realm Haproxy\ Statistics
+    stats uri /
+    stats auth @@UFDS_ADMIN_LOGIN@@:@@UFDS_ADMIN_PW@@
+
 backend servers
+        option httpchk GET /--ping
 @@CLOUDAPI_INSTANCES@@

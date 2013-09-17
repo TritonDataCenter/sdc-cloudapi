@@ -15,6 +15,10 @@ CONFIG_AGENT_LOCAL_MANIFESTS_DIRS=/opt/smartdc/$role
 # This is just shortest
 SVC_ROOT=/opt/smartdc/$role
 
+UFDS_ADMIN_LOGIN=$(json -f ${METADATA} ufds_admin_login)
+UFDS_ADMIN_PW=$(json -f ${METADATA} ufds_admin_pw)
+
+
 # Include common utility functions (then run the boilerplate)
 source /opt/smartdc/boot/lib/util.sh
 sdc_common_setup
@@ -34,7 +38,7 @@ echo "Generating SSL Certificate"
 echo "" >>/root/.profile
 echo "export PATH=\$PATH:/opt/smartdc/$role/build/node/bin:/opt/smartdc/$role/node_modules/.bin" >>/root/.profile
 
-# setup haproxy
+# setup stud, haproxy
 function setup_cloudapi {
     local cloudapi_instances=4
 
@@ -53,6 +57,8 @@ function setup_cloudapi {
     done
 
     sed -e "s#@@CLOUDAPI_INSTANCES@@#$hainstances#g" \
+        -e "s#@@UFDS_ADMIN_LOGIN@@#$UFDS_ADMIN_LOGIN#g" \
+        -e "s#@@UFDS_ADMIN_PW@@#$UFDS_ADMIN_PW#g" \
         $SVC_ROOT/etc/haproxy.cfg.in > $SVC_ROOT/etc/haproxy.cfg || \
         fatal "could not process $src to $dest"
 
@@ -79,6 +85,10 @@ function setup_cloudapi {
         logadm -w $cloudapi_instance -C 48 -s 100m -p 1h \
             /var/svc/log/smartdc-application-cloudapi:$cloudapi_instance.log
     done
+
+    cp $SVC_ROOT/etc/stud.cfg.in > /opt/local/etc/stud.conf
+    svccfg import /opt/local/share/smf/stud/manifest.xml
+    svcadm enable stud || fatal "unable to start stud"
 
     unset IFS
 }
