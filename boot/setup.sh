@@ -15,10 +15,6 @@ CONFIG_AGENT_LOCAL_MANIFESTS_DIRS=/opt/smartdc/$role
 # This is just shortest
 SVC_ROOT=/opt/smartdc/$role
 
-UFDS_ADMIN_LOGIN=$(json -f ${METADATA} ufds_admin_login)
-UFDS_ADMIN_PW=$(json -f ${METADATA} ufds_admin_pw)
-
-
 # Include common utility functions (then run the boilerplate)
 source /opt/smartdc/boot/lib/util.sh
 sdc_common_setup
@@ -33,6 +29,9 @@ echo "Generating SSL Certificate"
 /opt/local/bin/openssl req -x509 -nodes -subj '/CN=*' -newkey rsa:2048 \
     -keyout /opt/smartdc/$role/ssl/key.pem \
     -out /opt/smartdc/$role/ssl/cert.pem -days 365
+
+cat /opt/smartdc/$role/ssl/cert.pem > /opt/smartdc/$role/ssl/stud.pem
+cat /opt/smartdc/$role/ssl/key.pem >> /opt/smartdc/$role/ssl/stud.pem
 
 # Add build/node/bin and node_modules/.bin to PATH
 echo "" >>/root/.profile
@@ -57,9 +56,11 @@ function setup_cloudapi {
     done
 
     sed -e "s#@@CLOUDAPI_INSTANCES@@#$hainstances#g" \
-        -e "s#@@UFDS_ADMIN_LOGIN@@#$UFDS_ADMIN_LOGIN#g" \
-        -e "s#@@UFDS_ADMIN_PW@@#$UFDS_ADMIN_PW#g" \
         $SVC_ROOT/etc/haproxy.cfg.in > $SVC_ROOT/etc/haproxy.cfg || \
+        fatal "could not process $src to $dest"
+
+    sed -e "s/@@PREFIX@@/\/opt\/smartdc\/cloudapi/g" \
+        $SVC_ROOT/smf/manifests/haproxy.xml.in > $SVC_ROOT/smf/manifests/haproxy.xml || \
         fatal "could not process $src to $dest"
 
     svccfg import $SVC_ROOT/smf/manifests/haproxy.xml || \
@@ -86,7 +87,7 @@ function setup_cloudapi {
             /var/svc/log/smartdc-application-cloudapi:$cloudapi_instance.log
     done
 
-    cp $SVC_ROOT/etc/stud.cfg.in > /opt/local/etc/stud.conf
+    cp $SVC_ROOT/etc/stud.cfg.in /opt/local/etc/stud.conf
     svccfg import /opt/local/share/smf/stud/manifest.xml
     svcadm enable stud || fatal "unable to start stud"
 
@@ -152,6 +153,9 @@ HERE
     svcadm restart system-log
     [[ $? -eq 0 ]] || fatal "Unable to restart rsyslog"
 }
+
+
+cd /opt/smartdc/cloudapi/haproxy-1.4.21 && /opt/local/bin/gmake TARGET=solaris
 
 setup_cloudapi
 

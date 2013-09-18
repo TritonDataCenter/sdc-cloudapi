@@ -22,7 +22,7 @@ backend = "[127.0.0.1]:8443"
 # are listed; the last cert listed will be used if none of the others match
 #
 # type: string
-pem-file = "/opt/smartdc/cloudapi/etc/ssl/cert.pem"
+pem-file = "/opt/smartdc/cloudapi/ssl/stud.pem"
 
 # SSL protocol.
 #

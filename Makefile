@@ -108,6 +108,7 @@ release: check build docs
 	@mkdir -p $(TMPDIR)/root/opt/smartdc/cloudapi/ssl
 	cp -r	$(ROOT)/build \
 		$(ROOT)/bin \
+		$(ROOT)/deps/haproxy-1.4.21 \
 		$(ROOT)/etc \
 		$(ROOT)/lib \
 		$(ROOT)/plugins \

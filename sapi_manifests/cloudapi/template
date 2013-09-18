@@ -1,7 +1,5 @@
 {
     "port": 443,
-    "certificate": "/opt/smartdc/cloudapi/ssl/cert.pem",
-    "key": "/opt/smartdc/cloudapi/ssl/key.pem",
     "bunyan": {
         "level": "info",
         "syslog": {

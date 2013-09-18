@@ -30,9 +30,9 @@
 
 	<exec_method type="method"
 		     name="start"
-		     exec="/opt/local/sbin/haproxy -f /opt/smartdc/cloudapi/etc/haproxy.cfg -D"
+         exec="@@PREFIX@@/haproxy-1.4.21/haproxy -f @@PREFIX@@/etc/haproxy.cfg -D"
 		     timeout_seconds="30">
-	    <method_context working_directory="/opt/smartdc/cloudapi">
+	    <method_context working_directory="@@PREFIX@@">
 		<method_environment>
 		    <envvar name="PATH"
 			    value="/opt/local/bin:/usr/bin:/usr/sbin:/bin"/>

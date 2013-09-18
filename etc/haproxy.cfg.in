@@ -34,9 +34,7 @@ listen stats :3333
     mode http
     stats enable
     stats hide-version
-    stats realm Haproxy\ Statistics
     stats uri /
-    stats auth @@UFDS_ADMIN_LOGIN@@:@@UFDS_ADMIN_PW@@
 
 backend servers
         option httpchk GET /--ping
