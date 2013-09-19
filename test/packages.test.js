@@ -72,7 +72,8 @@ function add128Ok(t, cb) {
 
 
 function add512Ownership(t, owner_uuid, cb) {
-    sdc_512_ownership.owner_uuid = [sdc_512_ownership.owner_uuid, client.account.uuid];
+    sdc_512_ownership.owner_uuid = [sdc_512_ownership.owner_uuid,
+        client.account.uuid];
     return client.pkg.get(sdc_512_ownership.urn, function (err4, pkg) {
         if (err4) {
             if (err4.restCode === 'ResourceNotFound') {
