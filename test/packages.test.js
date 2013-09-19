@@ -71,7 +71,8 @@ function add128Ok(t, cb) {
 }
 
 
-function add512Ownership(t, cb) {
+function add512Ownership(t, owner_uuid, cb) {
+    sdc_512_ownership.owner_uuid = [sdc_512_ownership.owner_uuid, client.account.uuid];
     return client.pkg.get(sdc_512_ownership.urn, function (err4, pkg) {
         if (err4) {
             if (err4.restCode === 'ResourceNotFound') {
@@ -134,7 +135,7 @@ test('setup', function (t) {
         }
         server = _server;
         add128Ok(t, function () {
-            add512Ownership(t, function () {
+            add512Ownership(t, client.account.uuid, function () {
                 t.end();
             });
         });
@@ -158,7 +159,6 @@ test('ListPackages OK (6.5)', function (t) {
         t.ok(body.length);
         body.forEach(function (p) {
             checkPackage_6_5(t, p);
-            t.ok(p.id !== sdc_512_ownership_entry.uuid);
         });
         t.end();
     });
@@ -197,7 +197,6 @@ test('ListPackages OK (7.0)', function (t) {
         t.ok(body.length);
         body.forEach(function (p) {
             checkPackage_7(t, p);
-            t.ok(p.id !== sdc_512_ownership_entry.uuid);
         });
         t.end();
     });
