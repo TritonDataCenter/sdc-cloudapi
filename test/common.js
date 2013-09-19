@@ -161,7 +161,7 @@ function setupClient(version, callback) {
                 return callback(err);
             }
 
-            account = customer;
+            client.account = account = customer;
             var p = __dirname + '/id_rsa';
             return fs.readFile(p + '.pub', 'ascii', function (er1, data) {
                 if (er1) {
