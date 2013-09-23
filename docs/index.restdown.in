@@ -1332,8 +1332,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    TODO: Does not yet exist.
-
     $ sdc-exportimage 0c428eb9-7f03-4bb0-ac9f-c0718945d604 manta_path=/user/stor/my-image
 
 #### Example Request
