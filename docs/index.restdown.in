@@ -1089,13 +1089,11 @@ An array of images. Image objects include the following fields:
 || requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
 || homepage     || String ||(New in 7.0.) The URL for a web page including detailed information for this image||
 || published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
-<!-- #ifdef BLEEDING_EDGE -->
-|| public       || Boolean ||(New in 7.0.) Indicates if this image is publicly available.||
-|| state        || String ||(New in 7.0.) The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed'.||
-|| tags         || Object ||(New in 7.0.) An object of key/value pairs that allows clients to categorize images by any given criteria.||
-|| eula         || String ||(New in 7.0.) URL of the End User License Agreement (EULA) for the image.||
-|| acl          || Array ||(New in 7.0.) Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
-<!-- #endif -->
+|| public       || Boolean ||(New in 7.1.) Indicates if this image is publicly available.||
+|| state        || String ||(New in 7.1.) The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed'.||
+|| tags         || Object ||(New in 7.1.) An object of key/value pairs that allows clients to categorize images by any given criteria.||
+|| eula         || String ||(New in 7.1.) URL of the End User License Agreement (EULA) for the image.||
+|| acl          || Array ||(New in 7.1.) Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
 
 
 ### Errors
@@ -1172,14 +1170,12 @@ None
 || requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
 || homepage     || String ||(New in 7.0.) The URL for a web page including detailed information for this image||
 || published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
-<!-- #ifdef BLEEDING_EDGE -->
-|| owner        || String ||(New in 7.0.) The UUID of the user who owns this image.||
-|| public       || Boolean ||(New in 7.0.) Indicates if this image is publicly available.||
-|| state        || String ||(New in 7.0.) The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed'.||
-|| tags         || Object ||(New in 7.0.) An object of key/value pairs that allows clients to categorize images by any given criteria.||
-|| eula         || String ||(New in 7.0.) URL of the End User License Agreement (EULA) for the image.||
-|| acl          || Array  ||(New in 7.0.) Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
-<!-- #endif -->
+|| owner        || String ||(New in 7.1.) The UUID of the user who owns this image.||
+|| public       || Boolean ||(New in 7.1.) Indicates if this image is publicly available.||
+|| state        || String ||(New in 7.1.) The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed'.||
+|| tags         || Object ||(New in 7.1.) An object of key/value pairs that allows clients to categorize images by any given criteria.||
+|| eula         || String ||(New in 7.1.) URL of the End User License Agreement (EULA) for the image.||
+|| acl          || Array  ||(New in 7.1.) Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
 
 ### Errors
 
@@ -1235,9 +1231,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 
 
-<!-- #ifdef BLEEDING_EDGE -->
-
 ## DeleteImage (DELETE /:login/images/:id)
+
+(**Early Access Only** The functionality described in this topic is available
+at joyentcloud.com by invitation only at this time. For more information, send a
+note to support@joyent.com)
 
 Delete an image. One must be the owner of the image to delete it.
 
@@ -1287,6 +1285,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 
 ## ExportImage (POST /:login/images/:id?action=export)
+
+(**Early Access Only** The functionality described in this topic is available
+at joyentcloud.com by invitation only at this time. For more information, send a
+note to support@joyent.com)
 
 Exports an image to the specified Manta path. One must be the owner of the image
 and the correspondent Manta path prefix in order to export it. Both the image
@@ -1371,6 +1373,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ## CreateImageFromMachine (POST /:login/images)
 
+(**Early Access Only** The functionality described in this topic is available
+at joyentcloud.com by invitation only at this time. For more information, send a
+note to support@joyent.com)
+
 Create a new custom image from a stopped and prepared machine.
 The typical process for creating a new custom image is as follows:
 
@@ -1409,14 +1415,12 @@ not all fields listed there can be specified here.
 || requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
 || homepage     || String ||(New in 7.0.) The URL for a web page including detailed information for this image||
 || published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
-<!-- #ifdef BLEEDING_EDGE -->
-|| owner        || String ||(New in 7.0.) The UUID of the user who owns this image.||
-|| public       || Boolean ||(New in 7.0.) Indicates if this image is publicly available. Currently all custom images are private.||
-|| state        || String ||(New in 7.0.) The current state of the image. The value returned here will be 'creating'.||
-|| tags         || Object ||(New in 7.0.) An object of key/value pairs that allows clients to categorize images by any given criteria.||
-|| eula         || String ||(New in 7.0.) URL of the End User License Agreement (EULA) for the image.||
-|| acl          || Array  ||(New in 7.0.) Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
-<!-- #endif -->
+|| owner        || String ||(New in 7.1.) The UUID of the user who owns this image.||
+|| public       || Boolean ||(New in 7.1.) Indicates if this image is publicly available. Currently all custom images are private.||
+|| state        || String ||(New in 7.1.) The current state of the image. The value returned here will be 'creating'.||
+|| tags         || Object ||(New in 7.1.) An object of key/value pairs that allows clients to categorize images by any given criteria.||
+|| eula         || String ||(New in 7.1.) URL of the End User License Agreement (EULA) for the image.||
+|| acl          || Array  ||(New in 7.1.) Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
 
 
 ### Errors
@@ -1477,8 +1481,6 @@ TODO: Does not yet exist. Not sure of the following syntax.
       "requirements": {},
       "version": "1.0.0"
     }
-
-<!-- #endif -->
 
 
 # Packages
