@@ -119,5 +119,11 @@
         "{{{.}}}": true,
         {{/CLOUDAPI_BLEEDING_EDGE_LOGIN_WHITELIST}}
         "": false
-    }
+    },
+    {{^CLOUDAPI_TEST_MODE}}
+    "test": false,
+    {{/CLOUDAPI_TEST_MODE}}
+    {{#CLOUDAPI_TEST_MODE}}
+    "test": {{{CLOUDAPI_TEST_MODE}}},
+    {{/CLOUDAPI_TEST_MODE}}
 }
