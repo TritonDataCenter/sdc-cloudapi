@@ -43,7 +43,8 @@ var sdc_128_ok = {
     'default': false,
     vcpus: 1,
     urn: 'sdc:' + uuid() + ':sdc_128_ok:1.0.0',
-    active: true
+    active: true,
+    owner_uuid: uuid()
 };
 
 var sdc_512_ownership_entry, sdc_128_ok_entry;
