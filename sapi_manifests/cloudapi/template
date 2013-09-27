@@ -121,9 +121,9 @@
         "": false
     },
     {{^CLOUDAPI_TEST_MODE}}
-    "test": false,
+    "test": false
     {{/CLOUDAPI_TEST_MODE}}
     {{#CLOUDAPI_TEST_MODE}}
-    "test": {{{CLOUDAPI_TEST_MODE}}},
+    "test": {{{CLOUDAPI_TEST_MODE}}}
     {{/CLOUDAPI_TEST_MODE}}
 }
