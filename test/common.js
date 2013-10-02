@@ -90,7 +90,7 @@ function setupClient(version, callback) {
     });
 
     client.testUser = user;
-    KEY_ID = '/' + client.testUser + '/keys/id_rsa';
+    client.KEY_ID = KEY_ID = '/' + client.testUser + '/keys/id_rsa';
     // We need vmapi client to check jobs on tests, given if we
     // just wait for vmachine status change, we'll be just
     // hanging forever.
@@ -154,7 +154,8 @@ function setupClient(version, callback) {
         var entry = {
             login: client.testUser,
             email: client.testUser,
-            userpassword: PASSWD
+            userpassword: PASSWD,
+            registered_developer: true
         };
         return ufds.addUser(entry, function (err, customer) {
             if (err) {
@@ -167,7 +168,7 @@ function setupClient(version, callback) {
                 if (er1) {
                     return callback(er1);
                 }
-                publicKey = data;
+                client.publicKey = publicKey = data;
                 var obj = {
                     openssh: publicKey,
                     name: 'id_rsa'
@@ -180,7 +181,7 @@ function setupClient(version, callback) {
                         if (er3) {
                             return callback(er3);
                         }
-                        privateKey = d;
+                        client.privateKey = privateKey = d;
                         client.ufds = ufds;
                         client.pkg = new Package(ufds);
                         client.teardown = function teardown(cb) {
