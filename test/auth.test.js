@@ -278,18 +278,17 @@ if (process.env.SDC_SSO_ADMIN_IP) {
 
             // The following test is failing.
             // Skipping until can check with John:
-            t.test('token auth response', {skip: true}, function (t) {
+            t.test('token auth response', {skip: true}, function (t2) {
                 sigClient.get(obj, function (er1, req, res, body) {
-                    t.ifError(er1, 'Token client error');
-                    t.equal(res.statusCode, 200, 'Token client status code');
-                    common.checkHeaders(t, res.headers);
-                    t.ok(/Signature/.test(req._headers.authorization));
-                    t.ok(body);
-                    t.ok(Array.isArray(body));
+                    t2.ifError(er1, 'Token client error');
+                    t2.equal(res.statusCode, 200, 'Token client status code');
+                    common.checkHeaders(t2, res.headers);
+                    t2.ok(/Signature/.test(req._headers.authorization));
+                    t2.ok(body);
+                    t2.ok(Array.isArray(body));
                     // This is admin user, which has no keys
-                    t.ok(!body.length);
-                    sigClient.close();
-                    t.end();
+                    t2.ok(!body.length);
+                    t2.end();
                 });
             });
 
