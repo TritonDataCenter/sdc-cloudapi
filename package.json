@@ -24,7 +24,8 @@
         "clone": "0.1.5",
         "assert-plus": "0.1.2",
         "asn1": "0.1.11",
-        "ctype": "0.5.2"
+        "ctype": "0.5.2",
+        "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#1c1063"
     },
     "devDependencies": {
         "tap": "~0.3"
