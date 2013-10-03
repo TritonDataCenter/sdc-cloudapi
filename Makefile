@@ -76,7 +76,7 @@ PATH	:= $(NODE_INSTALL)/bin:/opt/local/bin:${PATH}
 all: build sdc-scripts
 
 .PHONY: build
-build: $(SMF_MANIFESTS) | $(TAP) $(REPO_DEPS)
+build: haproxy $(SMF_MANIFESTS) | $(TAP) $(REPO_DEPS)
 	$(NPM) install && $(NPM) update
 
 $(TAP): | $(NPM_EXEC)
@@ -96,6 +96,21 @@ DOC_CLEAN_FILES = docs/{index,admin}.{html,json} \
 clean-docs:
 	-$(RMTREE) $(DOC_CLEAN_FILES)
 clean:: clean-docs
+
+
+# Build HAProxy when in SunOS
+.PHONY: haproxy
+ifeq ($(shell uname -s),SunOS)
+haproxy:
+	@echo "Building HAproxy"
+	cd deps/haproxy-1.4.21 && /opt/local/bin/gmake TARGET=solaris
+else
+haproxy:
+	@echo "HAproxy building only in SunOS"
+endif
+
+
+CLEAN_FILES += deps/haproxy-1.4.21/haproxy
 
 
 .PHONY: release

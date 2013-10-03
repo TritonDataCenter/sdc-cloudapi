@@ -155,7 +155,7 @@ HERE
 }
 
 
-cd /opt/smartdc/cloudapi/haproxy-1.4.21 && /opt/local/bin/gmake TARGET=solaris
+# cd /opt/smartdc/cloudapi/haproxy-1.4.21 && /opt/local/bin/gmake TARGET=solaris
 
 setup_cloudapi
 
