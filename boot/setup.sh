@@ -12,6 +12,8 @@ PATH=/opt/local/bin:/opt/local/sbin:/usr/bin:/usr/sbin
 role=cloudapi
 # Local SAPI manifests:
 CONFIG_AGENT_LOCAL_MANIFESTS_DIRS=/opt/smartdc/$role
+# Just sortest
+SVC_ROOT="/opt/smartdc/$role"
 
 # Include common utility functions (then run the boilerplate)
 source /opt/smartdc/boot/lib/util.sh
