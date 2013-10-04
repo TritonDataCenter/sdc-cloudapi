@@ -28,22 +28,137 @@ echo "Generating SSL Certificate"
     -keyout /opt/smartdc/$role/ssl/key.pem \
     -out /opt/smartdc/$role/ssl/cert.pem -days 365
 
+cat /opt/smartdc/$role/ssl/cert.pem > /opt/smartdc/$role/ssl/stud.pem
+cat /opt/smartdc/$role/ssl/key.pem >> /opt/smartdc/$role/ssl/stud.pem
+
 # Add build/node/bin and node_modules/.bin to PATH
 echo "" >>/root/.profile
 echo "export PATH=\$PATH:/opt/smartdc/$role/build/node/bin:/opt/smartdc/$role/node_modules/.bin" >>/root/.profile
 
-echo "Updating SMF manifest"
-$(/opt/local/bin/gsed -i"" -e "s/@@PREFIX@@/\/opt\/smartdc\/cloudapi/g" /opt/smartdc/cloudapi/smf/manifests/cloudapi.xml)
 
-echo Importing SMF manifest
-/usr/sbin/svccfg import /opt/smartdc/cloudapi/smf/manifests/cloudapi.xml
+# setup stud, haproxy
+function setup_cloudapi {
+    local cloudapi_instances=4
+
+    #Build the list of ports.  That'll be used for everything else.
+    local ports
+    for (( i=1; i<=$cloudapi_instances; i++ )); do
+        ports[$i]=`expr 8080 + $i`
+    done
+
+    #To preserve whitespace in echo commands...
+    IFS='%'
+
+    #haproxy
+    for port in "${ports[@]}"; do
+        hainstances="$hainstances        server cloudapi-$port 127.0.0.1:$port check inter 10s slowstart 10s error-limit 3 on-error mark-down\n"
+    done
+
+    sed -e "s#@@CLOUDAPI_INSTANCES@@#$hainstances#g" \
+        $SVC_ROOT/etc/haproxy.cfg.in > $SVC_ROOT/etc/haproxy.cfg || \
+        fatal "could not process $src to $dest"
+
+    sed -e "s/@@PREFIX@@/\/opt\/smartdc\/cloudapi/g" \
+        $SVC_ROOT/smf/manifests/haproxy.xml.in > $SVC_ROOT/smf/manifests/haproxy.xml || \
+        fatal "could not process $src to $dest"
+
+    svccfg import $SVC_ROOT/smf/manifests/haproxy.xml || \
+        fatal "unable to import haproxy"
+    svcadm enable "cloudapi/haproxy" || fatal "unable to start haproxy"
+
+    #cloudapi instances
+    local cloudapi_xml_in=$SVC_ROOT/smf/manifests/cloudapi.xml.in
+    for port in "${ports[@]}"; do
+        local cloudapi_instance="cloudapi-$port"
+        local cloudapi_xml_out=$SVC_ROOT/smf/manifests/cloudapi-$port.xml
+        sed -e "s#@@CLOUDAPI_PORT@@#$port#g" \
+            -e "s#@@CLOUDAPI_INSTANCE_NAME@@#$cloudapi_instance#g" \
+            -e "s/@@PREFIX@@/\/opt\/smartdc\/cloudapi/g" \
+            $cloudapi_xml_in  > $cloudapi_xml_out || \
+            fatal "could not process $cloudapi_xml_in to $cloudapi_xml_out"
+
+        svccfg import $cloudapi_xml_out || \
+            fatal "unable to import $cloudapi_instance: $cloudapi_xml_out"
+        svcadm enable "$cloudapi_instance" || \
+            fatal "unable to start $cloudapi_instance"
+        echo "Adding log rotation"
+        logadm -w $cloudapi_instance -C 48 -s 100m -p 1h \
+            /var/svc/log/smartdc-application-cloudapi:$cloudapi_instance.log
+    done
+
+    cp $SVC_ROOT/etc/stud.cfg.in /opt/local/etc/stud.conf
+    svccfg import /opt/local/share/smf/stud/manifest.xml
+    svcadm enable stud || fatal "unable to start stud"
+
+    unset IFS
+}
+
+
+function setup_cloudapi_rsyslogd {
+    #rsyslog was already set up by common setup- this will overwrite the
+    # config and restart since we want cloudapi to log locally.
+
+    mkdir -p /var/tmp/rsyslog/work
+    chmod 777 /var/tmp/rsyslog/work
+
+    echo "Updating /etc/rsyslog.conf"
+    mkdir -p /var/tmp/rsyslog/work
+    chmod 777 /var/tmp/rsyslog/work
+
+    cat > /etc/rsyslog.conf <<"HERE"
+$MaxMessageSize 64k
+
+$ModLoad immark
+$ModLoad imsolaris
+$ModLoad imudp
+
+$template bunyan,"%msg:R,ERE,1,FIELD:(\{.*\})--end%\n"
+
+*.err;kern.notice;auth.notice                   /dev/sysmsg
+*.err;kern.debug;daemon.notice;mail.crit        /var/adm/messages
+
+*.alert;kern.err;daemon.err                     operator
+*.alert                                         root
+
+*.emerg                                         *
+
+mail.debug                                      /var/log/syslog
+
+auth.info                                       /var/log/auth.log
+mail.info                                       /var/log/postfix.log
+
+$WorkDirectory /var/tmp/rsyslog/work
+$ActionQueueType LinkedList
+$ActionQueueFileName mantafwd
+$ActionResumeRetryCount -1
+$ActionQueueSaveOnShutdown on
+
+# Support node bunyan logs going to local0
+local0.* /var/log/cloudapi.log;bunyan
+
+$UDPServerAddress 127.0.0.1
+$UDPServerRun 514
+
+# Support node bunyan logs going to local0 and forwarding
+# only as logs are already captured via SMF
+# Uncomment the following line to get local logs via syslog
+local0.* /var/log/cloudapi.log;bunyan
+
+$UDPServerAddress 127.0.0.1
+$UDPServerRun 514
+HERE
+
+
+    svcadm restart system-log
+    [[ $? -eq 0 ]] || fatal "Unable to restart rsyslog"
+}
+
+setup_cloudapi
+
+setup_cloudapi_rsyslogd
 
 # Install Amon monitor and probes for CloudAPI
 TRACE=1 /opt/smartdc/cloudapi/bin/cloudapi-amon-install
-
-echo "Adding log rotation"
-logadm -w cloudapi -C 48 -s 100m -p 1h \
-    /var/svc/log/smartdc-application-cloudapi:default.log
 
 # All done, run boilerplate end-of-setup
 sdc_setup_complete

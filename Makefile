@@ -30,7 +30,7 @@ JSL_FILES_NODE   = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS    = -f tools/jsstyle.conf
 SHRINKWRAP	 = npm-shrinkwrap.json
-SMF_MANIFESTS_IN    = smf/manifests/cloudapi.xml.in
+SMF_MANIFESTS_IN    = smf/manifests/cloudapi.xml.in smf/manifests/haproxy.xml.in
 
 CLEAN_FILES	+= node_modules cscope.files docs/index.restdown
 
@@ -76,7 +76,7 @@ PATH	:= $(NODE_INSTALL)/bin:/opt/local/bin:${PATH}
 all: build sdc-scripts
 
 .PHONY: build
-build: $(SMF_MANIFESTS) | $(TAP) $(REPO_DEPS)
+build: haproxy $(SMF_MANIFESTS) | $(TAP) $(REPO_DEPS)
 	$(NPM) install && $(NPM) update
 
 $(TAP): | $(NPM_EXEC)
@@ -98,6 +98,21 @@ clean-docs:
 clean:: clean-docs
 
 
+# Build HAProxy when in SunOS
+.PHONY: haproxy
+ifeq ($(shell uname -s),SunOS)
+haproxy:
+	@echo "Building HAproxy"
+	cd deps/haproxy-1.4.21 && /opt/local/bin/gmake TARGET=solaris
+else
+haproxy:
+	@echo "HAproxy building only in SunOS"
+endif
+
+
+CLEAN_FILES += deps/haproxy-1.4.21/haproxy
+
+
 .PHONY: release
 release: check build docs
 	@echo "Building $(RELEASE_TARBALL)"
@@ -108,6 +123,7 @@ release: check build docs
 	@mkdir -p $(TMPDIR)/root/opt/smartdc/cloudapi/ssl
 	cp -r	$(ROOT)/build \
 		$(ROOT)/bin \
+		$(ROOT)/deps/haproxy-1.4.21 \
 		$(ROOT)/etc \
 		$(ROOT)/lib \
 		$(ROOT)/plugins \
