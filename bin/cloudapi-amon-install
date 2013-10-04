@@ -97,17 +97,17 @@ putprobe $account "{
 }"
 
 
-# Probe: Monitor FATALs in the cloudapi service log.
+# Probe: Monitor FATALs in the cloudapi-8081 service log.
 # TODO: It is silly to have three probes for this. Amon should support
 # rolling these up.
 putprobe $account "{
     \"skipauthz\": true,
     \"group\": \"$group_uuid\",
-    \"name\": \"cloudapi log fatal\",
+    \"name\": \"cloudapi 8081 log fatal\",
     \"type\": \"bunyan-log-scan\",
     \"agent\": \"$zonename\",
     \"config\": {
-        \"smfServiceName\": \"cloudapi\",
+        \"smfServiceName\": \"cloudapi:cloudapi-8081\",
         \"fields\": {
             \"level\": \"fatal\"
         }
@@ -118,11 +118,11 @@ putprobe $account "{
 putprobe $account "{
     \"skipauthz\": true,
     \"group\": \"$group_uuid\",
-    \"name\": \"cloudapi log error\",
+    \"name\": \"cloudapi 8081 log error\",
     \"type\": \"bunyan-log-scan\",
     \"agent\": \"$zonename\",
     \"config\": {
-        \"smfServiceName\": \"cloudapi\",
+        \"smfServiceName\": \"cloudapi:cloudapi-8081\",
         \"fields\": {
             \"level\": \"error\"
         }
@@ -133,11 +133,11 @@ putprobe $account "{
 putprobe $account "{
     \"skipauthz\": true,
     \"group\": \"$group_uuid\",
-    \"name\": \"cloudapi log warn\",
+    \"name\": \"cloudapi 8081 log warn\",
     \"type\": \"bunyan-log-scan\",
     \"agent\": \"$zonename\",
     \"config\": {
-        \"smfServiceName\": \"cloudapi\",
+        \"smfServiceName\": \"cloudapi:cloudapi-8081\",
         \"fields\": {
             \"level\": \"warn\"
         }
@@ -149,16 +149,222 @@ putprobe $account "{
 putprobe $account "{
     \"skipauthz\": true,
     \"group\": \"$group_uuid\",
-    \"name\": \"cloudapi service stopping\",
+    \"name\": \"cloudapi 8081 service stopping\",
     \"type\": \"bunyan-log-scan\",
     \"agent\": \"$zonename\",
     \"config\": {
-        \"smfServiceName\": \"cloudapi\",
+        \"smfServiceName\": \"cloudapi:cloudapi-8081\",
         \"match\": {
             \"pattern\": \"Executing stop method\"
         }
     }
 }"
+
+# Probe: Monitor FATALs in the cloudapi service log.
+# TODO: It is silly to have three probes for this. Amon should support
+# rolling these up.
+putprobe $account "{
+    \"skipauthz\": true,
+    \"group\": \"$group_uuid\",
+    \"name\": \"cloudapi 8082 log fatal\",
+    \"type\": \"bunyan-log-scan\",
+    \"agent\": \"$zonename\",
+    \"config\": {
+        \"smfServiceName\": \"cloudapi:cloudapi-8082\",
+        \"fields\": {
+            \"level\": \"fatal\"
+        }
+    }
+}"
+
+# Probe: Monitor ERRORs in the cloudapi service log.
+putprobe $account "{
+    \"skipauthz\": true,
+    \"group\": \"$group_uuid\",
+    \"name\": \"cloudapi 8082 log error\",
+    \"type\": \"bunyan-log-scan\",
+    \"agent\": \"$zonename\",
+    \"config\": {
+        \"smfServiceName\": \"cloudapi:cloudapi-8082\",
+        \"fields\": {
+            \"level\": \"error\"
+        }
+    }
+}"
+
+# Probe: Monitor WARNs in the cloudapi service log.
+putprobe $account "{
+    \"skipauthz\": true,
+    \"group\": \"$group_uuid\",
+    \"name\": \"cloudapi 8082 log warn\",
+    \"type\": \"bunyan-log-scan\",
+    \"agent\": \"$zonename\",
+    \"config\": {
+        \"smfServiceName\": \"cloudapi:cloudapi-8082\",
+        \"fields\": {
+            \"level\": \"warn\"
+        }
+    }
+}"
+
+# Probe: Monitor the cloudapi service stopping.
+# TODO: use an smf probe type when available.
+putprobe $account "{
+    \"skipauthz\": true,
+    \"group\": \"$group_uuid\",
+    \"name\": \"cloudapi 8082 service stopping\",
+    \"type\": \"bunyan-log-scan\",
+    \"agent\": \"$zonename\",
+    \"config\": {
+        \"smfServiceName\": \"cloudapi:cloudapi-8082\",
+        \"match\": {
+            \"pattern\": \"Executing stop method\"
+        }
+    }
+}"
+
+# Probe: Monitor FATALs in the cloudapi 8083 service log.
+# TODO: It is silly to have three probes for this. Amon should support
+# rolling these up.
+putprobe $account "{
+    \"skipauthz\": true,
+    \"group\": \"$group_uuid\",
+    \"name\": \"cloudapi 8083 log fatal\",
+    \"type\": \"bunyan-log-scan\",
+    \"agent\": \"$zonename\",
+    \"config\": {
+        \"smfServiceName\": \"cloudapi:cloudapi-8083\",
+        \"fields\": {
+            \"level\": \"fatal\"
+        }
+    }
+}"
+
+# Probe: Monitor ERRORs in the cloudapi service log.
+putprobe $account "{
+    \"skipauthz\": true,
+    \"group\": \"$group_uuid\",
+    \"name\": \"cloudapi 8083 log error\",
+    \"type\": \"bunyan-log-scan\",
+    \"agent\": \"$zonename\",
+    \"config\": {
+        \"smfServiceName\": \"cloudapi:cloudapi-8083\",
+        \"fields\": {
+            \"level\": \"error\"
+        }
+    }
+}"
+
+# Probe: Monitor WARNs in the cloudapi service log.
+putprobe $account "{
+    \"skipauthz\": true,
+    \"group\": \"$group_uuid\",
+    \"name\": \"cloudapi 8083 log warn\",
+    \"type\": \"bunyan-log-scan\",
+    \"agent\": \"$zonename\",
+    \"config\": {
+        \"smfServiceName\": \"cloudapi:cloudapi-8083\",
+        \"fields\": {
+            \"level\": \"warn\"
+        }
+    }
+}"
+
+# Probe: Monitor the cloudapi 8084 service stopping.
+# TODO: use an smf probe type when available.
+putprobe $account "{
+    \"skipauthz\": true,
+    \"group\": \"$group_uuid\",
+    \"name\": \"cloudapi 8084 service stopping\",
+    \"type\": \"bunyan-log-scan\",
+    \"agent\": \"$zonename\",
+    \"config\": {
+        \"smfServiceName\": \"cloudapi:cloudapi-8084\",
+        \"match\": {
+            \"pattern\": \"Executing stop method\"
+        }
+    }
+}"
+
+# Probe: Monitor FATALs in the cloudapi service log.
+# TODO: It is silly to have three probes for this. Amon should support
+# rolling these up.
+putprobe $account "{
+    \"skipauthz\": true,
+    \"group\": \"$group_uuid\",
+    \"name\": \"cloudapi 8084 log fatal\",
+    \"type\": \"bunyan-log-scan\",
+    \"agent\": \"$zonename\",
+    \"config\": {
+        \"smfServiceName\": \"cloudapi:cloudapi-8084\",
+        \"fields\": {
+            \"level\": \"fatal\"
+        }
+    }
+}"
+
+# Probe: Monitor ERRORs in the cloudapi service log.
+putprobe $account "{
+    \"skipauthz\": true,
+    \"group\": \"$group_uuid\",
+    \"name\": \"cloudapi 8084 log error\",
+    \"type\": \"bunyan-log-scan\",
+    \"agent\": \"$zonename\",
+    \"config\": {
+        \"smfServiceName\": \"cloudapi:cloudapi-8084\",
+        \"fields\": {
+            \"level\": \"error\"
+        }
+    }
+}"
+
+# Probe: Monitor WARNs in the cloudapi service log.
+putprobe $account "{
+    \"skipauthz\": true,
+    \"group\": \"$group_uuid\",
+    \"name\": \"cloudapi 8084 log warn\",
+    \"type\": \"bunyan-log-scan\",
+    \"agent\": \"$zonename\",
+    \"config\": {
+        \"smfServiceName\": \"cloudapi:cloudapi-8084\",
+        \"fields\": {
+            \"level\": \"warn\"
+        }
+    }
+}"
+
+# Probe: Monitor the cloudapi service stopping.
+# TODO: use an smf probe type when available.
+putprobe $account "{
+    \"skipauthz\": true,
+    \"group\": \"$group_uuid\",
+    \"name\": \"cloudapi 8084 service stopping\",
+    \"type\": \"bunyan-log-scan\",
+    \"agent\": \"$zonename\",
+    \"config\": {
+        \"smfServiceName\": \"cloudapi:cloudapi-8084\",
+        \"match\": {
+            \"pattern\": \"Executing stop method\"
+        }
+    }
+}"
+
+# Probe: Monitor the haproxy service stopping.
+# TODO: use an smf probe type when available.
+putprobe $account "{
+    \"skipauthz\": true,
+    \"group\": \"$group_uuid\",
+    \"name\": \"cloudapi HAproxy service stopping\",
+    \"type\": \"bunyan-log-scan\",
+    \"agent\": \"$zonename\",
+    \"config\": {
+        \"smfServiceName\": \"haproxy\",
+        \"match\": {
+            \"pattern\": \"Executing stop method\"
+        }
+    }
+}"
+
 
 # raise alarm if zone dataset start running out of space
 putprobe $account "{
