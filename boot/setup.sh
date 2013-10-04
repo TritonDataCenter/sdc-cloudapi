@@ -140,14 +140,6 @@ local0.* /var/log/cloudapi.log;bunyan
 
 $UDPServerAddress 127.0.0.1
 $UDPServerRun 514
-
-# Support node bunyan logs going to local0 and forwarding
-# only as logs are already captured via SMF
-# Uncomment the following line to get local logs via syslog
-local0.* /var/log/cloudapi.log;bunyan
-
-$UDPServerAddress 127.0.0.1
-$UDPServerRun 514
 HERE
 
 

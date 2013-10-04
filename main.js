@@ -152,7 +152,7 @@ function configure(file, options, log) {
 
 function run() {
 
-    LOG = new Logger({
+    LOG = Logger.createLogger({
         level: (PARSED.debug ? 'trace' : 'info'),
         name: 'CloudAPI',
         stream: process.stderr,
