@@ -104,6 +104,21 @@ test('Create (named) key with duplicate name', function (t) {
 });
 
 
+test('Attempt to create with invalid key', function (t) {
+    var key = {
+        key: 'asdf',
+        name: 'Not so valid'
+    };
+    client.post('/my/keys', key, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.statusCode, 409);
+        t.equal(err.restCode, 'InvalidArgument');
+        t.ok(err.message);
+        t.end();
+    });
+});
+
+
 test('ListKeys OK', function (t) {
     client.get('/my/keys', function (err, req, res, body) {
         t.ifError(err);
