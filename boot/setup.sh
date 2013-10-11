@@ -10,22 +10,20 @@ set -o xtrace
 PATH=/opt/local/bin:/opt/local/sbin:/usr/bin:/usr/sbin
 
 role=cloudapi
-# Local SAPI manifests:
-CONFIG_AGENT_LOCAL_MANIFESTS_DIRS=/opt/smartdc/$role
-# Just sortest
 SVC_ROOT="/opt/smartdc/$role"
 
 # Include common utility functions (then run the boilerplate)
 source /opt/smartdc/boot/lib/util.sh
+CONFIG_AGENT_LOCAL_MANIFESTS_DIRS=/opt/smartdc/$role
 sdc_common_setup
 
 # Cookie to identify this as a SmartDC zone and its role
 mkdir -p /var/smartdc/$role
-mkdir -p /opt/smartdc/$role/ssl
 
 /usr/bin/chown -R root:root /opt/smartdc
 
 echo "Generating SSL Certificate"
+mkdir -p /opt/smartdc/$role/ssl
 /opt/local/bin/openssl req -x509 -nodes -subj '/CN=*' -newkey rsa:2048 \
     -keyout /opt/smartdc/$role/ssl/key.pem \
     -out /opt/smartdc/$role/ssl/cert.pem -days 365
@@ -83,9 +81,6 @@ function setup_cloudapi {
             fatal "unable to import $cloudapi_instance: $cloudapi_xml_out"
         svcadm enable "$cloudapi_instance" || \
             fatal "unable to start $cloudapi_instance"
-        echo "Adding log rotation"
-        logadm -w $cloudapi_instance -C 48 -s 100m -p 1h \
-            /var/svc/log/smartdc-application-cloudapi:$cloudapi_instance.log
     done
 
     cp $SVC_ROOT/etc/stud.cfg.in /opt/local/etc/stud.conf
@@ -153,6 +148,13 @@ setup_cloudapi_rsyslogd
 
 # Install Amon monitor and probes for CloudAPI
 TRACE=1 /opt/smartdc/cloudapi/bin/cloudapi-amon-install
+
+# Log rotation.
+sdc_log_rotation_add amon-agent /var/svc/log/*amon-agent*.log 1g
+sdc_log_rotation_add config-agent /var/svc/log/*config-agent*.log 1g
+sdc_log_rotation_add registrar /var/svc/log/*registrar*.log 1g
+sdc_log_rotation_add cloudapi /var/log/cloudapi.log 1g
+sdc_log_rotation_setup_end
 
 # All done, run boilerplate end-of-setup
 sdc_setup_complete
