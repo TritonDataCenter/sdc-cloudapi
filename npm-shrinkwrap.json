@@ -164,8 +164,8 @@
     },
     "sdc-clients": {
       "version": "8.1.0",
-      "from": "sdc-clients@git+ssh://git@git.joyent.com:node-sdc-clients.git#6530a5",
-      "resolved": "git+ssh://git@git.joyent.com:node-sdc-clients.git#6530a5cd8b40f0807081bef7de116e170f51bc62",
+      "from": "sdc-clients@git+ssh://git@git.joyent.com:node-sdc-clients.git#dcf4bb0",
+      "resolved": "git+ssh://git@git.joyent.com:node-sdc-clients.git#dcf4bb03f61ad25a53f5aa274a134e61c20cad03",
       "dependencies": {
         "assert-plus": {
           "version": "0.1.3",
