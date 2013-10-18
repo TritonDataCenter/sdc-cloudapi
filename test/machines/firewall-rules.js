@@ -3,6 +3,8 @@
 var util = require('util');
 var sprintf = util.format;
 var test = require('tap').test;
+var libuuid = require('libuuid');
+
 var common = require('../common');
 var machinesCommon = require('./common');
 var checkMachine = machinesCommon.checkMachine;
@@ -115,6 +117,16 @@ module.exports = function (suite, client, machine, callback) {
         } else {
             t.end();
         }
+    });
+
+
+    suite.test('Get unexisting rule', TAP_CONF, function (t) {
+        client.get(sprintf(RULE_URL, libuuid.create()),
+            function (err, req, res, body) {
+                t.ok(err);
+                t.equal(404, res.statusCode);
+                t.end();
+        });
     });
 
 
