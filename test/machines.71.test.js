@@ -281,6 +281,7 @@ test('Get Machine', TAP_CONF, function (t) {
             common.checkHeaders(t, res.headers);
             t.ok(body, 'GET /my/machines/:id body');
             checkMachine(t, body);
+            t.ok(body.compute_node, 'machine compute_node');
             t.ok(body.firewall_enabled, 'machine firewall enabled');
             t.ok(body.networks, 'machine networks');
             t.ok(Array.isArray(body.networks), 'machine networks array');

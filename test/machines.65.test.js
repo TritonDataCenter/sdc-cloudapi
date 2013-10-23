@@ -215,6 +215,26 @@ test('Wait For Running', TAP_CONF,  function (t) {
     });
 });
 
+test('Get Machine', TAP_CONF, function (t) {
+    if (machine) {
+        client.get('/my/machines/' + machine, function (err, req, res, body) {
+            t.ifError(err, 'GET /my/machines/:id error');
+            t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
+            common.checkHeaders(t, res.headers);
+            t.ok(body, 'GET /my/machines/:id body');
+            checkMachine(t, body);
+            t.ok(typeof (body.compute_node) === 'undefined', 'machine compute_node');
+            t.ok(typeof (body.firewall_enabled) === 'undefined', 'machine firewall enabled');
+            t.ok(typeof (body.networks) === 'undefined', 'machine networks');
+            // Double check tags are OK, due to different handling by VMAPI:
+            var tags = {};
+            tags[TAG_KEY] = TAG_VAL;
+            t.equivalent(body.tags, tags, 'Machine tags');
+            t.end();
+        });
+    }
+});
+
 
 test('Rename Machine 6.5.0', TAP_CONF, function (t) {
     client.post('/my/machines/' + machine, {
