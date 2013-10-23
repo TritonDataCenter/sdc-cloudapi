@@ -223,8 +223,10 @@ test('Get Machine', TAP_CONF, function (t) {
             common.checkHeaders(t, res.headers);
             t.ok(body, 'GET /my/machines/:id body');
             checkMachine(t, body);
-            t.ok(typeof (body.compute_node) === 'undefined', 'machine compute_node');
-            t.ok(typeof (body.firewall_enabled) === 'undefined', 'machine firewall enabled');
+            t.ok(typeof (body.compute_node) === 'undefined',
+                'machine compute_node');
+            t.ok(typeof (body.firewall_enabled) === 'undefined',
+                'machine firewall enabled');
             t.ok(typeof (body.networks) === 'undefined', 'machine networks');
             // Double check tags are OK, due to different handling by VMAPI:
             var tags = {};
