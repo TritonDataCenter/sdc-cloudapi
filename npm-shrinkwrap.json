@@ -114,7 +114,8 @@
         },
         "once": {
           "version": "1.1.1",
-          "from": "once@1.1.1"
+          "from": "once@1.1.1",
+          "resolved": "https://registry.npmjs.org/once/-/once-1.1.1.tgz"
         },
         "qs": {
           "version": "0.6.4",
@@ -126,8 +127,7 @@
         },
         "spdy": {
           "version": "1.8.2",
-          "from": "spdy@1.8.2",
-          "resolved": "https://registry.npmjs.org/spdy/-/spdy-1.8.2.tgz"
+          "from": "spdy@1.8.2"
         },
         "verror": {
           "version": "1.3.6",
@@ -165,8 +165,8 @@
     },
     "sdc-clients": {
       "version": "8.1.0",
-      "from": "sdc-clients@git+ssh://git@git.joyent.com:node-sdc-clients.git#dcf4bb0",
-      "resolved": "git+ssh://git@git.joyent.com:node-sdc-clients.git#dcf4bb03f61ad25a53f5aa274a134e61c20cad03",
+      "from": "sdc-clients@git+ssh://git@git.joyent.com:node-sdc-clients.git#395608b5",
+      "resolved": "git+ssh://git@git.joyent.com:node-sdc-clients.git#395608b546600de0124036f1d5c89dc6c958ea40",
       "dependencies": {
         "assert-plus": {
           "version": "0.1.3",
@@ -256,7 +256,8 @@
         },
         "once": {
           "version": "1.1.1",
-          "from": "once@1.1.1"
+          "from": "once@1.1.1",
+          "resolved": "https://registry.npmjs.org/once/-/once-1.1.1.tgz"
         },
         "restify": {
           "version": "2.5.1",
@@ -322,8 +323,7 @@
             },
             "spdy": {
               "version": "1.8.2",
-              "from": "spdy@1.8.2",
-              "resolved": "https://registry.npmjs.org/spdy/-/spdy-1.8.2.tgz"
+              "from": "spdy@1.8.2"
             },
             "dtrace-provider": {
               "version": "0.2.8",
@@ -402,7 +402,6 @@
         "simplesmtp": {
           "version": "0.3.11",
           "from": "simplesmtp@>= 0.1.22",
-          "resolved": "https://registry.npmjs.org/simplesmtp/-/simplesmtp-0.3.11.tgz",
           "dependencies": {
             "rai": {
               "version": "0.1.7",
@@ -561,7 +560,8 @@
               "dependencies": {
                 "once": {
                   "version": "1.1.1",
-                  "from": "once@1.1.1"
+                  "from": "once@1.1.1",
+                  "resolved": "https://registry.npmjs.org/once/-/once-1.1.1.tgz"
                 }
               }
             }
@@ -569,8 +569,7 @@
         },
         "sprintf": {
           "version": "0.1.1",
-          "from": "sprintf@0.1.1",
-          "resolved": "https://registry.npmjs.org/sprintf/-/sprintf-0.1.1.tgz"
+          "from": "sprintf@0.1.1"
         }
       }
     }
