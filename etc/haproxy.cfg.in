@@ -30,12 +30,6 @@ frontend cloudapi
         bind *:8443 accept-proxy
         default_backend servers
 
-listen stats :3333
-    mode http
-    stats enable
-    stats hide-version
-    stats uri /
-
 backend servers
         option httpchk GET /--ping
 @@CLOUDAPI_INSTANCES@@
