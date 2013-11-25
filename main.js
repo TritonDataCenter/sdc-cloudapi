@@ -1,17 +1,16 @@
 // Copyright 2012 Joyent, Inc.  All rights reserved.
 
-var path = require('path');
-var assert = require('assert');
+var assert = require('assert-plus');
 var fs = require('fs');
 var http = require('http');
 var https = require('https');
-
-var Logger = require('bunyan');
-var nopt = require('nopt');
-var restify = require('restify');
+var path = require('path');
 
 var bsyslog = require('bunyan-syslog');
-var os = require('os');
+var bunyan = require('bunyan');
+var nopt = require('nopt');
+var restify = require('restify');
+var RequestCaptureStream = restify.bunyan.RequestCaptureStream;
 
 var app = require('./lib').app;
 
@@ -22,7 +21,6 @@ var app = require('./lib').app;
 var DEFAULT_CFG = __dirname + '/etc/cloudapi.config.json';
 var LOG;
 var PARSED;
-
 
 var opts = {
     'debug': Boolean,
@@ -43,38 +41,48 @@ var shortOpts = {
 ///--- Helpers
 
 function setupLogger(config) {
-    assert.ok(config.bunyan);
+    assert.object(config.bunyan, 'config.bunyan');
+    assert.optionalString(config.bunyan.level, 'config.bunyan.level');
     var cfg_b = config.bunyan;
-
-
-    var level = LOG.level();
+    var level = cfg_b.level || LOG.level();
 
     if (cfg_b.syslog) {
-        assert.ok(cfg_b.syslog.facility);
-        assert.ok(cfg_b.syslog.type);
+        assert.string(cfg_b.syslog.facility, 'config.bunyan.syslog.facility');
+        assert.string(cfg_b.syslog.type, 'config.bunyan.syslog.type');
 
-        var facility = bsyslog.facility[cfg_b.syslog.facility];
-        LOG = Logger.createLogger({
-            name: 'CloudAPI',
-            serializers: restify.bunyan.serializers,
-            streams: [ {
-                level: level,
-                type: 'raw',
-                stream: bsyslog.createBunyanStream({
-                    name: 'CloudAPI',
-                    facility: facility,
-                    host: cfg_b.syslog.host,
-                    port: cfg_b.syslog.port,
-                    type: cfg_b.syslog.type
-                })
-            } ]
+        var syslogStream = bsyslog.createBunyanStream({
+            name: 'cloudapi',
+            facility: bsyslog.facility[cfg_b.syslog.facility],
+            host: cfg_b.syslog.host,
+            port: cfg_b.syslog.port,
+            type: cfg_b.syslog.type
         });
-    }
-
-    if (cfg_b.level) {
-        if (Logger.resolveLevel(cfg_b.level)) {
-            LOG.level(cfg_b.level);
-        }
+        LOG = bunyan.createLogger({
+            name: 'cloudapi',
+            serializers: restify.bunyan.serializers,
+            src: Boolean(bunyan.resolveLevel(level) <= bunyan.TRACE),
+            streams: [
+                {
+                    level: level,
+                    type: 'raw',
+                    stream: syslogStream
+                },
+                {
+                    level: 'trace',
+                    type: 'raw',
+                    stream: new RequestCaptureStream({
+                        level: bunyan.WARN,
+                        maxRecords: 1000,
+                        maxRequestIds: 1000,
+                        dumpDefault: true,
+                        streams: [{
+                            raw: true,
+                            stream: syslogStream
+                        }]
+                    })
+                }
+            ]
+        });
     }
 }
 
@@ -100,7 +108,9 @@ function usage(code, message) {
 
 
 function configure(file, options, log) {
-    assert.ok(file);
+    assert.string(file, 'file');
+    assert.object(options, 'options');
+    assert.object(log, 'log');
     var config;
 
     try {
@@ -150,35 +160,30 @@ function configure(file, options, log) {
     return config;
 }
 
-function run() {
 
-    LOG = Logger.createLogger({
+function run() {
+    LOG = bunyan.createLogger({
         level: (PARSED.debug ? 'trace' : 'info'),
-        name: 'CloudAPI',
+        name: 'cloudapi',
         stream: process.stderr,
         serializers: restify.bunyan.serializers
     });
 
-    var options = {
-        config: PARSED.file || DEFAULT_CFG,
-        overrides: PARSED,
-        log: LOG
-    };
-
-    var config = configure(options.config, options.overrides, options.log);
+    var config = configure(PARSED.file || DEFAULT_CFG, PARSED, LOG);
 
     setupLogger(config);
-
     config.log = LOG;
 
     return app.createServer(config, function (server) {
         server.start(function () {
-            LOG.info('CloudAPI listening at %s', server.url);
+            LOG.info('cloudapi listening at %s', server.url);
         });
 
         return server;
     });
 }
+
+
 
 ///--- Mainline
 

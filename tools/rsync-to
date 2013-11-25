@@ -36,10 +36,13 @@ rsync -av ${TOP}/ \
     --exclude /tools/ \
     --exclude /tmp/
 
-state=$(ssh ${NODE} svcs -z ${CLOUDAPI_ZONE} -H -o state cloudapi)
-if [[ "$state" == "maintenance" ]]; then
-    ssh ${NODE} svcadm -z ${CLOUDAPI_ZONE} clear cloudapi
-else
-    ssh ${NODE} svcadm -z ${CLOUDAPI_ZONE} restart cloudapi
-fi
+SERVICES=$(ssh ${NODE} svcs -z ${CLOUDAPI_ZONE} -H -o fmri cloudapi)
+for service in $SERVICES; do
+    state=$(ssh ${NODE} svcs -z ${CLOUDAPI_ZONE} -H -o state $service)
+    if [[ "$state" == "maintenance" ]]; then
+        ssh ${NODE} svcadm -z ${CLOUDAPI_ZONE} clear $service
+    else
+        ssh ${NODE} svcadm -z ${CLOUDAPI_ZONE} restart $service
+    fi
+done
 ssh ${NODE} svcadm -z ${CLOUDAPI_ZONE} restart config-agent
