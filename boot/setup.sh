@@ -125,8 +125,8 @@ auth.info                                       /var/log/auth.log
 mail.info                                       /var/log/postfix.log
 
 $WorkDirectory /var/tmp/rsyslog/work
-$ActionQueueType LinkedList
-$ActionQueueFileName mantafwd
+$ActionQueueType Direct
+$ActionQueueFileName sdcfwd
 $ActionResumeRetryCount -1
 $ActionQueueSaveOnShutdown on
 
