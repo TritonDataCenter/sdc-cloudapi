@@ -75,10 +75,10 @@ function setupLogger(config) {
                         maxRecords: 1000,
                         maxRequestIds: 1000,
                         dumpDefault: true,
-                        streams: [{
+                        streams: [ {
                             raw: true,
                             stream: syslogStream
-                        }]
+                        } ]
                     })
                 }
             ]
