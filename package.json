@@ -15,7 +15,7 @@
         "mime": "1.2.7",
         "libuuid": "0.1.2",
         "nopt": "2.0.0",
-        "restify": "git+ssh://git@github.com:mcavage/node-restify.git#f7f32d4",
+        "restify": "git+ssh://git@github.com:mcavage/node-restify.git#0d7b4ba",
         "bunyan": "0.21.4",
         "bunyan-syslog": "0.2.1",
         "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#eed251b",
