@@ -29,7 +29,6 @@ JSL_CONF_NODE	 = tools/jsl.node.conf
 JSL_FILES_NODE   = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS    = -f tools/jsstyle.conf
-SHRINKWRAP	 = npm-shrinkwrap.json
 SMF_MANIFESTS_IN    = smf/manifests/cloudapi.xml.in smf/manifests/haproxy.xml.in
 
 CLEAN_FILES	+= node_modules cscope.files docs/index.restdown
@@ -130,7 +129,6 @@ release: check build docs
 		$(ROOT)/main.js \
 		$(ROOT)/node_modules \
 		$(ROOT)/package.json \
-		$(ROOT)/npm-shrinkwrap.json \
 		$(ROOT)/sapi_manifests \
 		$(ROOT)/smf \
 		$(ROOT)/test \
