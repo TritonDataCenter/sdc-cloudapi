@@ -14,3 +14,4 @@ etc/cloudapi.cfg
 .sdc-test-no-production-data
 smf/manifests/*.xml
 npm-shrinkwrap.json.old
+/tmp
