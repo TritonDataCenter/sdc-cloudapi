@@ -81,9 +81,6 @@
     "ca": {
         "url": "http://{{{ca_domain}}}:23181"
     },
-    "usageapi": {
-        "url": "http://{{{usageapi_domain}}}"
-    },
     "keyapi": "http://{{{keyapi_domain}}}",
     "datacenters": {{{CLOUDAPI_DATACENTERS}}},
     "ufds_admin_uuid": "{{{ufds_admin_uuid}}}",
