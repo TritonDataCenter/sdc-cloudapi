@@ -13,6 +13,7 @@ defaults
         maxconn 65535
         option  redispatch
         option  abortonclose
+        option  forwardfor
         log     global
         option  httplog
         retries 1
