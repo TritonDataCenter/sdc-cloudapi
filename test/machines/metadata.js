@@ -42,11 +42,11 @@ module.exports = function (suite, client, machine, callback) {
             bar: 'baz'
         };
         client.post(path, meta, function (err, req, res, body) {
-            t.ifError(err);
-            t.equal(res.statusCode, 200);
+            t.ifError(err, 'Add Metadata error');
+            t.equal(res.statusCode, 200, 'Add Metadata Status');
             common.checkHeaders(t, res.headers);
-            t.ok(body);
-            t.ok(body.bar);
+            t.ok(body, 'Add Metadata Body');
+            t.ok(body.bar, 'Add Metadata Metadata');
             t.end();
         });
     });
@@ -89,8 +89,8 @@ module.exports = function (suite, client, machine, callback) {
     suite.test('DeleteAllMetadata', TAP_CONF, function (t) {
         var url = '/my/machines/' + machine + '/metadata';
         client.del(url, function (err, req, res) {
-            t.ifError(err);
-            t.equal(res.statusCode, 204);
+            t.ifError(err, 'Delete All Metadata Error');
+            t.equal(res.statusCode, 204, 'Delete All Metadata status');
             common.checkHeaders(t, res.headers);
             t.end();
         });

@@ -93,12 +93,12 @@ module.exports = function (suite, client, machine, callback) {
         tags = {};
         tags[TAG_TWO_KEY] = TAG_TWO_VAL;
         client.post(path, tags, function (err, req, res, body) {
-            t.ifError(err);
-            t.equal(res.statusCode, 200);
+            t.ifError(err, 'Add Tag error');
+            t.equal(res.statusCode, 200, 'Status code');
             common.checkHeaders(t, res.headers);
-            t.ok(body);
-            t.ok(body[TAG_TWO_KEY]);
-            t.equal(body[TAG_TWO_KEY], TAG_TWO_VAL);
+            t.ok(body, 'AddTag Body');
+            t.ok(body[TAG_TWO_KEY], 'Add Tag Key');
+            t.equal(body[TAG_TWO_KEY], TAG_TWO_VAL, 'Add Tag Value');
             t.end();
         });
     });
@@ -133,13 +133,13 @@ module.exports = function (suite, client, machine, callback) {
         tags = {};
         tags[TAG_KEY] = TAG_VAL;
         client.put(path, tags, function (err, req, res, body) {
-            t.ifError(err);
-            t.equal(res.statusCode, 200);
+            t.ifError(err, 'Replace Tags Error');
+            t.equal(res.statusCode, 200, 'Replace Tags Status');
             common.checkHeaders(t, res.headers);
-            t.ok(body);
-            t.ok(body[TAG_KEY]);
-            t.equal(body[TAG_KEY], TAG_VAL);
-            t.equal(typeof (body[TAG_TWO_KEY]), 'undefined');
+            t.ok(body, 'Replace Tags Body');
+            t.ok(body[TAG_KEY], 'Tag Key');
+            t.equal(body[TAG_KEY], TAG_VAL, 'Tag Value');
+            t.equal(typeof (body[TAG_TWO_KEY]), 'undefined', 'Removed Tag');
             t.end();
         });
 
