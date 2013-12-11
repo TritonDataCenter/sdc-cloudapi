@@ -14,8 +14,6 @@ defaults
         option  redispatch
         option  abortonclose
         option  forwardfor
-        log     global
-        option  httplog
         retries 1
         timeout queue   0
         timeout connect 2000
