@@ -1387,15 +1387,14 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 at joyentcloud.com by invitation only at this time. For more information, send a
 note to support@joyent.com)
 
-Create a new custom image from a stopped and prepared machine.
-The typical process for creating a new custom image is as follows:
+Create a new custom image from a machine. The typical process is:
 
 1. Create a new machine that will be the basis for the new image.
 2. SSH in and customize the machine.
-3. Run `sm-prepare-image` to remove cache and temporary files and stop the
-   machine.
-4. Call this endpoint to create the new image.
-5. Delete the basis image.
+3. Call this endpoint to create the new image.
+4. ... repeat from step 2 if more customizations are desired.
+5. Use the new image for provisioning via [CreateMachine](#CreateMachine).
+
 
 ### Inputs
 
@@ -1435,7 +1434,15 @@ not all fields listed there can be specified here.
 
 ### Errors
 
-For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+For general errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+Some typical and specific errors for this endpoint:
+
+
+|| **Code** || **HTTP Status** || **Description** ||
+|| InsufficientServerVersionError || 422 || The `machine` given is running on a server that is too old. ||
+
+<!-- TODO: integrate these errors into the general table above? -->
+
 
 ### CLI Command
 
