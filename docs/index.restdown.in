@@ -1095,7 +1095,7 @@ An array of images. Image objects include the following fields:
 || eula         || String ||(New in 7.1.) URL of the End User License Agreement (EULA) for the image.||
 || acl          || Array ||(New in 7.1.) Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
 || error        || Object ||(New in 7.1.) If `state=="failed"`, resulting from [CreateImageFromMachine](#CreateImageFromMachine) failiure, then there may be an error object of the form `{"code": "<string error code>", "message": "<string desc>"}`||
-|| error.code   || String ||(New in 7.1.) A CamelCase string code for this error, e.g. "PrepareImageDidNotRun".||
+|| error.code   || String ||(New in 7.1.) A CamelCase string code for this error, e.g. "PrepareImageDidNotRun". See [GetImage](#GetImage) docs for a table of error.code values.||
 || error.message|| String ||(New in 7.1.) A short description of the image creation failure.||
 
 <!-- TODO: list possible error.code values, link to troubleshooting docs -->
@@ -1185,15 +1185,16 @@ None
 || error.code   || String ||(New in 7.1.) A CamelCase string code for this error, e.g. "PrepareImageDidNotRun".||
 || error.message|| String ||(New in 7.1.) A short description of the image creation failure.||
 
-<!-- TODO: list possible error.code values, link to troubleshooting docs -->
+Possible `error.code` values:
+
+|| **error.code** || **Discussion** ||
+|| PrepareImageDidNotRun || This typically means that the target KVM machine (e.g. Linux) has old guest tools that pre-date the image creation feature. Guest tools can be upgraded with installers at <https://download.joyent.com/pub/guest-tools/>. Other possibilities are: a boot time greater than the 5 minute timeout or a bug or crash in the image preparation script. ||
 
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If :login does not exist or the dataset specified does not exist||
 
 ### CLI Command
 
