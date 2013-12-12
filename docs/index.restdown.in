@@ -1443,8 +1443,9 @@ Some typical and specific errors for this endpoint:
 
 || **Code** || **HTTP Status** || **Description** ||
 || InsufficientServerVersionError || 422 || The `machine` given is running on a server that is too old. ||
+|| NotAvailable || 501 || Typically this indicates that image creation is not supported for the OS of the given VM. ||
 
-<!-- TODO: integrate these errors into the general table above? -->
+<!-- TODO: integrate these errors into the general table above -->
 
 
 ### CLI Command
