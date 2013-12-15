@@ -1190,6 +1190,7 @@ Possible `error.code` values:
 || **error.code** || **Details** ||
 || PrepareImageDidNotRun || This typically means that the target KVM machine (e.g. Linux) has old guest tools that pre-date the image creation feature. Guest tools can be upgraded with installers at <https://download.joyent.com/pub/guest-tools/>. Other possibilities are: a boot time greater than the 5 minute timeout or a bug or crash in the image preparation script. ||
 || VmHasNoOrigin || Origin image data could not be found for the machine. Typically this is for a machine *migrated* before image creation support was added. ||
+|| NotSupported || Indicates an error due to functionality that isn't currently supported. One example is that custom image creation of a VM based on a custom image isn't currently supported. ||
 || InternalError || A catch-all error for unexpected or internal errors. ||
 
 
