@@ -1247,9 +1247,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ## DeleteImage (DELETE /:login/images/:id)
 
-(**Early Access Only** The functionality described in this topic is available
-at joyentcloud.com by invitation only at this time. For more information, send a
-note to support@joyent.com)
+(**Beta.** Custom image management is currently in beta.)
 
 Delete an image. One must be the owner of the image to delete it.
 
@@ -1300,9 +1298,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ## ExportImage (POST /:login/images/:id?action=export)
 
-(**Early Access Only** The functionality described in this topic is available
-at joyentcloud.com by invitation only at this time. For more information, send a
-note to support@joyent.com)
+(**Beta.** Custom image management is currently in beta.)
 
 Exports an image to the specified Manta path. One must be the owner of the image
 and the correspondent Manta path prefix in order to export it. Both the image
@@ -1387,17 +1383,14 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ## CreateImageFromMachine (POST /:login/images)
 
-(**Early Access Only** The functionality described in this topic is available
-at joyentcloud.com by invitation only at this time. For more information, send a
-note to support@joyent.com)
+(**Beta.** Custom image management is currently in beta.)
 
 Create a new custom image from a machine. The typical process is:
 
-1. Create a new machine that will be the basis for the new image.
-2. SSH in and customize the machine.
-3. Call this endpoint to create the new image.
-4. ... repeat from step 2 if more customizations are desired.
-5. Use the new image for provisioning via [CreateMachine](#CreateMachine).
+1. Customize a machine instance as you want it.
+2. Call this endpoint to create the new image.
+3. ... repeat from step 1 if more customizations are desired.
+4. Use the new image for provisioning via [CreateMachine](#CreateMachine).
 
 
 ### Inputs
@@ -1449,18 +1442,14 @@ Some typical and specific errors for this endpoint:
 <!-- TODO: integrate these errors into the general table above -->
 
 
-### CLI Command
+### Example CLI Command
 
-TODO: Does not yet exist. Not sure of the following syntax.
+    sdc-createimagefrommachine \
+        --machine a44f2b9b-e7af-f548-b0ba-4d9270423f1a
+        --name my-custom-image
+        --imageVersion 1.0.0
 
-    echo '{
-        "machine": "a44f2b9b-e7af-f548-b0ba-4d9270423f1a",
-        "name": "my-custom-image",
-        "version": "1.0.0",
-    }' | sdc-createimagefrommachine
-
-
-#### Example Request
+#### Example HTTP Request
 
     POST /my/images HTTP/1.1
     Authorization: ...
@@ -1474,7 +1463,7 @@ TODO: Does not yet exist. Not sure of the following syntax.
       "version": "1.0.0"
     }
 
-#### Example Response
+#### Example HTTP Response
 
     HTTP/1.1 201 Created
     x-joyent-jobid: 0b30ef20-d622-436a-9c30-7376ba7d904c
@@ -1497,11 +1486,13 @@ TODO: Does not yet exist. Not sure of the following syntax.
     X-Response-Time: 160
 
     {
-      "id": "b87616a2-7a49-4e02-a71d-2e0ce5a2f037",
-      "name": "my-custom-image",
-      "type": "smartmachine",
-      "requirements": {},
-      "version": "1.0.0"
+        "id": "62306cd7-7b8a-c5dd-d44e-8491c83b9974",
+        "name": "my-custom-image",
+        "version": "1.2.3",
+        "requirements": {},
+        "owner": "47034e57-42d1-0342-b302-00db733e8c8a",
+        "public": false,
+        "state": "creating"
     }
 
 
