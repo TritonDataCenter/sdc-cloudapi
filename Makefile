@@ -120,8 +120,7 @@ release: check build docs
 	@touch $(RELSTAGEDIR)/site/.do-not-delete-me
 	@mkdir -p $(RELSTAGEDIR)/root
 	@mkdir -p $(RELSTAGEDIR)/root/opt/smartdc/cloudapi/ssl
-	cp -r	$(ROOT)/build \
-		$(ROOT)/bin \
+	cp -r	$(ROOT)/bin \
 		$(ROOT)/deps/haproxy-1.4.21 \
 		$(ROOT)/etc \
 		$(ROOT)/lib \
@@ -136,6 +135,11 @@ release: check build docs
 	mkdir -p $(RELSTAGEDIR)/root/opt/smartdc/boot
 	cp -R $(ROOT)/deps/sdc-scripts/* $(RELSTAGEDIR)/root/opt/smartdc/boot/
 	cp -R $(ROOT)/boot/* $(RELSTAGEDIR)/root/opt/smartdc/boot/
+	mkdir -p $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)/build
+	cp -r \
+		$(TOP)/build/node \
+		$(TOP)/build/docs \
+		$(RELSTAGEDIR)/root/opt/smartdc/$(NAME)/build
 	(cd $(RELSTAGEDIR) && $(TAR) -jcf $(ROOT)/$(RELEASE_TARBALL) root site)
 	@rm -rf $(RELSTAGEDIR)
 
