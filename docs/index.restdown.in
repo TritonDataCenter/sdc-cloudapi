@@ -537,6 +537,8 @@ Account object:
 ||state||String||...||
 ||country||String||...||
 ||phone||String||...||
+||created||Date (ISO8601)||When this account was created||
+||updated||Date (ISO8601)||When this account was updated||
 
 ### Errors
 
@@ -591,7 +593,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       "city": "benzoylation concoctive",
       "state": "SP",
       "country": "BAT",
-      "phone": "+1 891 657 5818"
+      "phone": "+1 891 657 5818",
+      "updated": "2013-12-20T08:58:51.026Z",
+      "created": "2013-12-20T08:58:50.721Z"
     }
 
 
@@ -630,6 +634,8 @@ Account object:
 ||state||String||...||
 ||country||String||...||
 ||phone||String||...||
+||created||Date (ISO8601)||When this account was created||
+||updated||Date (ISO8601)||When this account was updated||
 
 ### Errors
 
@@ -690,7 +696,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       "city": "benzoylation concoctive",
       "state": "SP",
       "country": "BAT",
-      "phone": "1 (234) 567 890"
+      "phone": "1 (234) 567 890",
+      "updated": "2013-12-20T08:58:51.026Z",
+      "created": "2013-12-20T08:58:50.721Z"
     }
 
 
