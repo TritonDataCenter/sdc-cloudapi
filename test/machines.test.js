@@ -280,6 +280,29 @@ test('ListMachines all', TAP_CONF, function (t) {
 });
 
 
+// Fixed by PUBAPI-774, again!
+test('ListMachines (filter by dataset)', TAP_CONF, function (t) {
+    if (machine) {
+        client.get('/my/machines?image=' + DATASET,
+            function (err, req, res, body) {
+            t.ifError(err, 'GET /my/machines by dataset error');
+            t.equal(res.statusCode, 200, 'GET /my/machines by dataset status');
+            common.checkHeaders(t, res.headers);
+            t.ok(body, 'GET /my/machines by dataset body');
+            t.ok(Array.isArray(body),
+                'GET /my/machines by dataset body is array');
+            t.ok(body.length, 'GET /my/machines by dataset list is not empty');
+            body.forEach(function (m) {
+                checkMachine(t, m);
+            });
+            t.end();
+        });
+    } else {
+        t.end();
+    }
+});
+
+
 test('Get Machine Include Credentials', TAP_CONF, function (t) {
     if (machine) {
         var url = '/my/machines/' + machine + '?credentials=true';
