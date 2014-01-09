@@ -132,6 +132,36 @@ test('basic auth (accept-version: ~7.0)', function (t) {
 });
 
 
+test('admin basic auth (x-api-version: ~6.5)', function (t) {
+    var user = 'admin';
+    var pwd = 'joypass123';
+    var cli = restify.createJsonClient({
+        url: server ? server.url : 'https://127.0.0.1',
+        retryOptions: {
+            retry: 0
+        },
+        log: client.log,
+        rejectUnauthorized: false
+    });
+
+    cli.basicAuth(user, pwd);
+
+    cli.get({
+        path: '/' + client.testUser,
+        headers: {
+            'x-api-version': '~6.5'
+        }
+    }, function (err, req, res, obj) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        t.ok(obj);
+        t.equal(obj.login, client.testUser);
+        cli.close();
+        t.end();
+    });
+});
+
+
 test('signature auth', function (t) {
     client.get('/my/keys', function (err, req, res, body) {
         t.ifError(err);
