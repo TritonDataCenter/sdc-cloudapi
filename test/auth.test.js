@@ -185,14 +185,15 @@ test('signature auth (http-signature 0.10.x)', function (t) {
 
 
 function createToken(t, callback) {
+    var url = require('url');
     var opts = {
         keyid: encodeURIComponent(KEY_ID),
         nonce: encodeURIComponent('whateveryouwant'),
         now: encodeURIComponent(new Date().toISOString()),
         permissions: encodeURIComponent(JSON.stringify({
-            'cloudapi': ['/my/keys/*', '/my/keys']
+            'cloudapi': ['/admin/keys/*', '/admin/keys']
         })),
-        returnto: encodeURIComponent(client.url)
+        returnto: encodeURIComponent(url.format(client.url))
     };
 
     var query = qs.stringify(opts);
@@ -202,9 +203,6 @@ function createToken(t, callback) {
     var signature = signer.sign(privateKey, 'base64');
 
     opts.sig = signature;
-
-    opts.username = 'admin';
-    opts.password = 'joypass123';
 
     ssoClient = restify.createJsonClient({
         url: SDC_SSO_URI,
@@ -230,7 +228,7 @@ function createToken(t, callback) {
         if (err) {
             return callback(err);
         } else {
-            return callback(null, obj);
+            return callback(null, obj.token);
         }
     });
 }
@@ -249,7 +247,7 @@ if (process.env.SDC_SSO_ADMIN_IP) {
             var alg = 'RSA-SHA256';
 
             var obj = {
-                path: '/my/keys',
+                path: '/admin/keys',
                 headers: {
                     Date: now,
                     'x-api-version': '~6.5'
@@ -266,33 +264,37 @@ if (process.env.SDC_SSO_ADMIN_IP) {
             // Magic goes here:
             obj.headers['X-Auth-Token'] = JSON.stringify(TOKEN);
 
-            sigClient = restify.createJsonClient({
-                url: server ? server.url : 'https://127.0.0.1',
-                version: '*',
-                retryOptions: {
-                    retry: 0
-                },
-                log: client.log,
-                rejectUnauthorized: false
-            });
+
 
             // The following test is failing.
             // Skipping until can check with John:
-            t.test('token auth response', {skip: true}, function (t2) {
+            t.test('token auth response', function (t2) {
+
+                sigClient = restify.createJsonClient({
+                    url: server ? server.url : 'https://127.0.0.1',
+                    version: '*',
+                    retryOptions: {
+                        retry: 0
+                    },
+                    log: client.log,
+                    rejectUnauthorized: false
+                });
+
                 sigClient.get(obj, function (er1, req, res, body) {
                     t2.ifError(er1, 'Token client error');
                     t2.equal(res.statusCode, 200, 'Token client status code');
                     common.checkHeaders(t2, res.headers);
-                    t2.ok(/Signature/.test(req._headers.authorization));
-                    t2.ok(body);
-                    t2.ok(Array.isArray(body));
-                    // This is admin user, which has no keys
-                    t2.ok(!body.length);
+                    t2.ok(/Signature/.test(req._headers.authorization), 'Sig');
+                    t2.ok(body, 'Token body');
+                    t2.ok(Array.isArray(body), 'Token body is array');
+                    // This is admin user, which always has keys
+                    t2.ok(body.length, 'Admin has keys');
+
+                    sigClient.close();
                     t2.end();
                 });
             });
 
-            sigClient.close();
             t.end();
         });
     });
