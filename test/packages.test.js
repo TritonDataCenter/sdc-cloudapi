@@ -169,7 +169,7 @@ test('ListPackages OK (6.5)', function (t) {
 
 test('GetPackage OK (6.5)', function (t) {
     client.get({
-        path: '/my/packages/sdc_128_ok',
+        path: '/my/packages/sdc_512_ownership',
         headers: {
             'accept-version': '~6.5'
         }
@@ -228,7 +228,7 @@ test('search packages (7.0)', function (t) {
 
 test('GetPackage by name OK (7.0)', function (t) {
     client.get({
-        path: '/my/packages/sdc_128_ok',
+        path: '/my/packages/sdc_512_ownership',
         headers: {
             'accept-version': '~7.0'
         }
