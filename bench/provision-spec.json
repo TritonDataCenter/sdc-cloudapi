@@ -1,0 +1,34 @@
+{
+    "spec": [
+        {
+            "method": "listDatacenters",
+            "args": []
+        }, {
+            "method": "getKey",
+            "args": ["id_rsa"]
+        }, {
+            "method": "listKeys",
+            "args": []
+        }, {
+            "method": "listImages",
+            "args": []
+        }, {
+            "method": "listNetworks",
+            "args": []
+        }, {
+            "method": "listPackages",
+            "args": []
+        }, {
+            "method": "createMachine",
+            "args": [{
+                "// WARNING": "// You obviously need to change this",
+                "image": "01b2c898-945f-11e1-a523-af1afbe22822",
+                "package": "83322f8e-7456-11e3-9941-2bb51e770e54"
+            }],
+            "concurrency": 3
+        }, {
+            "method": "listMachines",
+            "args": []
+        }
+    ]
+}

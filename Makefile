@@ -24,7 +24,7 @@ TAP		:= ./node_modules/.bin/tap
 #
 DOC_FILES	 = index.restdown admin.restdown 65.restdown
 JS_FILES	:= $(shell ls *.js) $(shell find lib -maxdepth 1 -name '*.js') \
-	$(shell find test -name '*.js')
+	$(shell find test -name '*.js') $(shell find bench -name '*.js')
 JSL_CONF_NODE	 = tools/jsl.node.conf
 JSL_FILES_NODE   = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
