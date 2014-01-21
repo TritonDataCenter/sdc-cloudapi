@@ -72,9 +72,8 @@ function setupLogger(config) {
                     type: 'raw',
                     stream: new RequestCaptureStream({
                         level: bunyan.WARN,
-                        maxRecords: 1000,
-                        maxRequestIds: 1000,
-                        dumpDefault: true,
+                        maxRecords: 100,
+                        maxRequestIds: 100,
                         streams: [ {
                             raw: true,
                             stream: syslogStream
