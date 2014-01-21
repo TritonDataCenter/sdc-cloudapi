@@ -26,7 +26,7 @@
         "assert-plus": "0.1.2",
         "asn1": "0.1.11",
         "ctype": "0.5.2",
-        "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#29f166"
+        "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#c2e8ce"
     },
     "devDependencies": {
         "tap": "~0.3",
