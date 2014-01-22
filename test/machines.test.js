@@ -205,6 +205,32 @@ test('get smartos dataset', TAP_CONF, function (t) {
 });
 
 
+test('Create machine with invalid parameters', TAP_CONF, function (t) {
+    var obj = {
+        image: DATASET,
+        'package': 'sdc_128_ok',
+        // Underscore will make name invalid:
+        name: '_a' + uuid().substr(0, 7),
+        // Obviously, not a valid UUID, but we don't want to notify customers
+        // about this:
+        server_uuid: '123456'
+    };
+
+    client.post({
+        path: '/my/machines',
+        headers: {
+            'accept-version': '~6.5'
+        }
+    }, obj, function (err, req, res, body) {
+        t.ok(err, 'POST Create machine with invalid parameters');
+        t.ok(/name/.test(err.message));
+        t.notOk(/server/.test(err.message));
+        t.end();
+    });
+
+});
+
+
 // Test using IMAGE.uuid instead of IMAGE.name due to PUBAPI-625:
 test('CreateMachine', TAP_CONF, function (t) {
     var obj = {
