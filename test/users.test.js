@@ -12,6 +12,7 @@ var common = require('./common');
 var USER_FMT = 'uuid=%s, ou=users, o=smartdc';
 var SUB_FMT = 'uuid=%s, ' + USER_FMT;
 var ROLE_FMT = 'role-uuid=%s, ' + USER_FMT;
+var GROUP_FMT = 'group-uuid=%s, ' + USER_FMT;
 
 var client, server, account;
 var SUB_ID = libuuid.create();
@@ -38,6 +39,8 @@ var POLICY_DOC = [
 var ROLE_UUID;
 var ROLE_DN;
 
+var GROUP_UUID, GROUP_DN;
+
 // --- Helpers
 function checkUser(t, user) {
     t.ok(user, 'checkUser user OK');
@@ -52,6 +55,13 @@ function checkRole(t, role) {
     t.ok(role.name, 'checkRole role.name OK');
     t.ok(role.policy, 'checkRole role.policy OK');
 }
+
+function checkGroup(t, group) {
+    t.ok(group, 'checkGroup group OK');
+    t.ok(group.id, 'checkGroup group.id OK');
+    t.ok(group.name, 'checkGroup group.name OK');
+}
+
 
 // --- Tests
 
@@ -312,6 +322,105 @@ test('delete role', function (t) {
     });
 });
 
+
+test('list groups (empty)', function (t) {
+    client.get('/my/groups', function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.ok(Array.isArray(body));
+        t.equal(body.length, 0);
+        t.end();
+    });
+});
+
+
+test('create group', function (t) {
+    var group_uuid = libuuid.create();
+    var name = 'a' + group_uuid.substr(0, 7);
+
+    var entry = {
+        name: name,
+        members: SUB_DN_TWO
+    };
+
+    client.post('/my/groups', entry, function (err, req, res, body) {
+        t.ifError(err);
+        t.ok(body);
+        t.equal(res.statusCode, 201);
+        common.checkHeaders(t, res.headers);
+        checkGroup(t, body);
+        GROUP_UUID = body.id;
+        GROUP_DN = util.format(GROUP_FMT, GROUP_UUID, account.uuid);
+        t.end();
+    });
+});
+
+
+test('get group (by UUID)', function (t) {
+    client.get('/my/groups/' + GROUP_UUID, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.equal(body.id, GROUP_UUID);
+        t.end();
+    });
+});
+
+
+test('list groups (OK)', function (t) {
+    client.get('/my/groups', function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.ok(Array.isArray(body));
+        t.equal(body.length, 1);
+        t.end();
+    });
+});
+
+
+test('update group', function (t) {
+    client.post('/my/groups/' + GROUP_UUID, {
+        members: [SUB_DN, SUB_DN_TWO],
+        name: 'group-name-can-be-modified'
+    }, function (err, req, res, body) {
+        t.ifError(err);
+        t.ok(body);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        checkGroup(t, body);
+        t.equal(body.name, 'group-name-can-be-modified');
+        t.ok(body.members.indexOf(SUB_DN) !== -1);
+        t.end();
+    });
+});
+
+
+test('delete group', function (t) {
+    var url = '/my/groups/' + GROUP_UUID;
+    client.del(url, function (err, req, res) {
+        t.ifError(err);
+        t.equal(res.statusCode, 204);
+        common.checkHeaders(t, res.headers);
+        t.end();
+    });
+});
+
+
+test('get user by UUID', function (t) {
+    client.get('/my/users/' + SUB_UUID, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.equal(body.login, SUB_LOGIN);
+        t.end();
+    });
+});
 
 
 test('delete user', function (t) {
