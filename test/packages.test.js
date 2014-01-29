@@ -16,6 +16,7 @@ var client, server, THE_PACKAGE;
 
 // May or not be created by previous test run or whatever else:
 var sdc_512_ownership = {
+    uuid: '4667d1b8-0bc7-466c-bf62-aae98ba5efa9',
     name: 'sdc_512_ownership',
     version: '1.0.0',
     max_physical_memory: 512,
@@ -26,12 +27,13 @@ var sdc_512_ownership = {
     zfs_io_priority: 10,
     'default': false,
     vcpus: 1,
-    urn: 'sdc:' + uuid() + ':sdc_512_ownership:1.0.0',
+    urn: 'sdc:4667d1b8-0bc7-466c-bf62-aae98ba5efa9:sdc_512_ownership:1.0.0',
     active: true,
-    owner_uuid: uuid()
+    owner_uuids: [uuid()]
 };
 
 var sdc_128_ok = {
+    uuid: 'df27bb35-8569-48fb-8dd7-ffd61a118aff',
     name: 'sdc_128_ok',
     version: '1.0.0',
     max_physical_memory: 128,
@@ -42,19 +44,19 @@ var sdc_128_ok = {
     zfs_io_priority: 10,
     'default': false,
     vcpus: 1,
-    urn: 'sdc:' + uuid() + ':sdc_128_ok:1.0.0',
+    urn: 'sdc:df27bb35-8569-48fb-8dd7-ffd61a118aff:sdc_128_ok:1.0.0',
     active: true,
-    owner_uuid: uuid()
+    owner_uuids: [uuid()]
 };
 
 var sdc_512_ownership_entry, sdc_128_ok_entry;
 
 // Add custom packages, given "sdc_" default ones will be owner by admin user.
 function add128Ok(t, cb) {
-    return client.pkg.get(sdc_128_ok.urn, function (err, pkg) {
+    return client.papi.get(sdc_128_ok.uuid, function (err, pkg) {
         if (err) {
             if (err.restCode === 'ResourceNotFound') {
-                return client.pkg.add(sdc_128_ok, function (err2, pkg2) {
+                return client.papi.add(sdc_128_ok, function (err2, pkg2) {
                     t.ifError(err2, 'Error creating package');
                     t.ok(pkg2, 'Package created OK');
                     sdc_128_ok_entry = pkg2;
@@ -73,12 +75,12 @@ function add128Ok(t, cb) {
 
 
 function add512Ownership(t, owner_uuid, cb) {
-    sdc_512_ownership.owner_uuid = [sdc_512_ownership.owner_uuid,
-        client.account.uuid];
-    return client.pkg.get(sdc_512_ownership.urn, function (err4, pkg) {
+    sdc_512_ownership.owner_uuids.push(owner_uuid);
+
+    return client.papi.get(sdc_512_ownership.uuid, function (err4, pkg) {
         if (err4) {
             if (err4.restCode === 'ResourceNotFound') {
-                return client.pkg.add(sdc_512_ownership,
+                return client.papi.add(sdc_512_ownership,
                     function (err5, pkg2) {
                     t.ifError(err5, 'Error creating package');
                     t.ok(pkg2, 'Package created OK');

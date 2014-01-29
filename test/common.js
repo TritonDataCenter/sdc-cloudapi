@@ -13,7 +13,7 @@ var VMAPI = require('sdc-clients').VMAPI;
 var CNAPI = require('sdc-clients').CNAPI;
 var NAPI = require('sdc-clients').NAPI;
 var IMGAPI = require('sdc-clients').IMGAPI;
-var Package = require('sdc-clients').Package;
+var PAPI = require('sdc-clients').PAPI;
 var app = require('../lib').app;
 var util = require('util');
 var fs = require('fs');
@@ -136,6 +136,17 @@ function setupClient(version, callback) {
         agent: false
     });
 
+    client.papi = PAPI({
+        url: process.env.PAPI_URL || config.papi.url ||
+            'http://10.99.99.30',
+        retry: {
+            retries: 1,
+            minTimeout: 1000
+        },
+        log: client.log,
+        agent: false
+    });
+
     ufds = new UFDS({
         url: (process.env.UFDS_URL || config.ufds.url || 'ldaps://10.99.99.18'),
         bindDN: (config.ufds.bindDN || 'cn=root'),
@@ -183,7 +194,6 @@ function setupClient(version, callback) {
                         }
                         client.privateKey = privateKey = d;
                         client.ufds = ufds;
-                        client.pkg = new Package(ufds);
                         client.teardown = function teardown(cb) {
                             client.close();
                             client.ufds.deleteKey(client.testUser, 'id_rsa',
