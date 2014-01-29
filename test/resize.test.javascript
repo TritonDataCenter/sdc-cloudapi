@@ -216,10 +216,13 @@ var RESIZE_ATTEMPTS = 5;
 var packages = [];
 var i;
 for (i = 0; i <= RESIZE_ATTEMPTS; i += 1) {
+    var newUuid = uuid();
+
     // May or not be created by previous test run or whatever else:
     packages[i] = {
+        uuid: newUuid,
         name: 'sdc_256',
-        version: '1.0.0',
+        version: i + '.0.0',
         max_physical_memory: 256,
         quota: 10240,
         max_swap: 512,
@@ -228,7 +231,7 @@ for (i = 0; i <= RESIZE_ATTEMPTS; i += 1) {
         zfs_io_priority: 10 + i,
         'default': false,
         vcpus: 1,
-        urn: 'sdc::sdc_256:' + i + '.0.0',
+        urn: 'sdc:' + newUuid + ':sdc_256:' + i + '.0.0',
         active: true
     };
 };
@@ -242,11 +245,11 @@ test('The resize tests', TAP_CONF, function (t) {
         // We may have been created this on previous test suite runs or not:
         t.test('Prepare resize package', TAP_CONF, function (t) {
             console.log(util.inspect(pack, false, 8));
-            client.pkg.get(pack.urn, function (err, pkg) {
+            client.papi.get(pack.uuid, function (err, pkg) {
                 if (err) {
                     if (err.restCode === 'ResourceNotFound') {
                         // Try to create:
-                        client.pkg.add(pack, function (err2, pkg2) {
+                        client.papi.add(pack, function (err2, pkg2) {
                             t.ifError(err2, 'Error creating package');
                             t.ok(pkg2);
                             pkg_entry = pkg2;

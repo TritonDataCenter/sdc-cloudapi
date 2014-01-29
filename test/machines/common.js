@@ -106,10 +106,10 @@ function saveKey(key, keyName, client, t, cb) {
 
 
 function addPackage(client, pkg, cb) {
-    return client.pkg.get(pkg.urn, function (err, p) {
+    return client.papi.get(pkg.uuid, function (err, p) {
         if (err) {
             if (err.restCode === 'ResourceNotFound') {
-                return client.pkg.add(pkg, function (err2, entry) {
+                return client.papi.add(pkg, function (err2, entry) {
                     return cb(err2, entry);
                 });
             } else {

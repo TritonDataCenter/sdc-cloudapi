@@ -55,6 +55,7 @@ var TAP_CONF = {
 
 // May or not be created by previous test run or whatever else:
 var sdc_256_inactive = {
+    uuid: '4633473b-aae9-466b-8bde-3c410e5072cc',
     name: 'sdc_256_inactive',
     version: '1.0.0',
     max_physical_memory: 256,
@@ -65,11 +66,12 @@ var sdc_256_inactive = {
     zfs_io_priority: 10,
     'default': false,
     vcpus: 1,
-    urn: 'sdc:' + uuid() + ':sdc_256_inactive:1.0.0',
+    urn: 'sdc:4633473b-aae9-466b-8bde-3c410e5072cc:sdc_256_inactive:1.0.0',
     active: false
 };
 
 var sdc_128_ok = {
+    uuid: '897779dc-9ce7-4042-8879-a4adccc94353',
     name: 'sdc_128_ok',
     version: '1.0.0',
     max_physical_memory: 128,
@@ -81,7 +83,7 @@ var sdc_128_ok = {
     fss: 25,
     'default': false,
     vcpus: 1,
-    urn: 'sdc:' + uuid() + ':sdc_128_ok:1.0.0',
+    urn: 'sdc:897779dc-9ce7-4042-8879-a4adccc94353:sdc_128_ok:1.0.0',
     active: true
 };
 
