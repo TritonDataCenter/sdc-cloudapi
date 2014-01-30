@@ -312,17 +312,6 @@ test('update role', function (t) {
 });
 
 
-test('delete role', function (t) {
-    var url = '/my/roles/' + ROLE_UUID;
-    client.del(url, function (err, req, res) {
-        t.ifError(err);
-        t.equal(res.statusCode, 204);
-        common.checkHeaders(t, res.headers);
-        t.end();
-    });
-});
-
-
 test('list groups (empty)', function (t) {
     client.get('/my/groups', function (err, req, res, body) {
         t.ifError(err);
@@ -400,11 +389,28 @@ test('update group', function (t) {
 });
 
 
-test('delete group', function (t) {
-    var url = '/my/groups/' + GROUP_UUID;
-    client.del(url, function (err, req, res) {
+test('add existing role to group', function (t) {
+    client.post('/my/groups/' + GROUP_UUID, {
+        roles: [ROLE_UUID]
+    }, function (err, req, res, body) {
         t.ifError(err);
-        t.equal(res.statusCode, 204);
+        t.ok(body);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        checkGroup(t, body);
+        t.ok(body.roles.indexOf(ROLE_UUID) !== -1);
+        t.end();
+    });
+});
+
+
+test('add unexisting role to group', function (t) {
+    var FAKE_ROLE = libuuid.create();
+    client.post('/my/groups/' + GROUP_UUID, {
+        roles: [ROLE_UUID, FAKE_ROLE]
+    }, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(res.statusCode, 409);
         common.checkHeaders(t, res.headers);
         t.end();
     });
@@ -418,6 +424,29 @@ test('get user by UUID', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.equal(body.login, SUB_LOGIN);
+        t.end();
+    });
+});
+
+
+test('delete group', function (t) {
+    var url = '/my/groups/' + GROUP_UUID;
+    client.del(url, function (err, req, res) {
+        t.ifError(err);
+        t.equal(res.statusCode, 204);
+        common.checkHeaders(t, res.headers);
+        t.end();
+    });
+});
+
+
+
+test('delete role', function (t) {
+    var url = '/my/roles/' + ROLE_UUID;
+    client.del(url, function (err, req, res) {
+        t.ifError(err);
+        t.equal(res.statusCode, 204);
+        common.checkHeaders(t, res.headers);
         t.end();
     });
 });
