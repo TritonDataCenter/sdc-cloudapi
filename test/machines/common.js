@@ -106,7 +106,7 @@ function saveKey(key, keyName, client, t, cb) {
 
 
 function addPackage(client, pkg, cb) {
-    return client.papi.get(pkg.uuid, function (err, p) {
+    return client.papi.get(pkg.uuid, {}, function (err, p) {
         if (err) {
             if (err.restCode === 'ResourceNotFound') {
                 return client.papi.add(pkg, function (err2, entry) {

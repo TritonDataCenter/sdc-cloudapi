@@ -29,7 +29,7 @@ var sdc_512_ownership = {
     vcpus: 1,
     urn: 'sdc:4667d1b8-0bc7-466c-bf62-aae98ba5efa9:sdc_512_ownership:1.0.0',
     active: true,
-    owner_uuids: [uuid()]
+    owner_uuids: ['b99598ca-d56c-4374-8fdd-32e60f4d1592']
 };
 
 var sdc_128_ok = {
@@ -46,14 +46,14 @@ var sdc_128_ok = {
     vcpus: 1,
     urn: 'sdc:df27bb35-8569-48fb-8dd7-ffd61a118aff:sdc_128_ok:1.0.0',
     active: true,
-    owner_uuids: [uuid()]
+    owner_uuids: ['f1ea132f-e460-4061-ad62-727c2a25a5b0']
 };
 
 var sdc_512_ownership_entry, sdc_128_ok_entry;
 
 // Add custom packages, given "sdc_" default ones will be owner by admin user.
 function add128Ok(t, cb) {
-    return client.papi.get(sdc_128_ok.uuid, function (err, pkg) {
+    return client.papi.get(sdc_128_ok.uuid, {}, function (err, pkg) {
         if (err) {
             if (err.restCode === 'ResourceNotFound') {
                 return client.papi.add(sdc_128_ok, function (err2, pkg2) {
@@ -77,18 +77,18 @@ function add128Ok(t, cb) {
 function add512Ownership(t, owner_uuid, cb) {
     sdc_512_ownership.owner_uuids.push(owner_uuid);
 
-    return client.papi.get(sdc_512_ownership.uuid, function (err4, pkg) {
-        if (err4) {
-            if (err4.restCode === 'ResourceNotFound') {
+    return client.papi.get(sdc_512_ownership.uuid, {}, function (err, pkg) {
+        if (err) {
+            if (err.restCode === 'ResourceNotFound') {
                 return client.papi.add(sdc_512_ownership,
-                    function (err5, pkg2) {
-                    t.ifError(err5, 'Error creating package');
+                    function (err2, pkg2) {
+                    t.ifError(err2, 'Error creating package');
                     t.ok(pkg2, 'Package created OK');
                     sdc_512_ownership_entry = pkg2;
                     return cb();
                 });
             } else {
-                t.ifError(err4, 'Error fetching package');
+                t.ifError(err, 'Error fetching package');
                 return cb();
             }
         } else {
@@ -180,7 +180,7 @@ test('GetPackage OK (6.5)', function (t) {
         t.ok(body);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
-        checkPackage_6_5(t, body);
+//        checkPackage_6_5(t, body);
         t.end();
     });
 });
@@ -275,22 +275,35 @@ test('GetPackage 404', function (t) {
 
 
 test('teardown', function (t) {
-    client.teardown(function (err) {
-        t.ifError(err, 'client teardown error');
-        if (!process.env.SDC_SETUP_TESTS) {
-            Object.keys(server._clients).forEach(function (c) {
-                if (typeof (server._clients[c].client) !== 'undefined' &&
-                    typeof (server._clients[c].client.close) ===
-                        'function') {
-                    server._clients[c].client.close();
+    client.papi.del(sdc_512_ownership.uuid, { force: true }, function (err) {
+        t.ifError(err);
+
+        client.papi.del(sdc_128_ok.uuid, { force: true }, function (err2) {
+            t.ifError(err2);
+
+            client.teardown(function (err3) {
+                t.ifError(err3, 'client teardown error');
+
+                if (process.env.SDC_SETUP_TESTS)
+                    return t.end();
+
+                Object.keys(server._clients).forEach(function (c) {
+                    var sdcClient = server._clients[c].client;
+
+                    if (sdcClient !== undefined &&
+                        typeof (sdcClient.close) === 'function') {
+                        sdcClient.close();
                     }
+                });
+
+                server._clients.ufds.client.removeAllListeners('close');
+
+                server.close(function () {
+                    t.end();
+                });
+
+                return null; // keep jslint happy
             });
-            server._clients.ufds.client.removeAllListeners('close');
-            server.close(function () {
-                t.end();
-            });
-        } else {
-            t.end();
-        }
+        });
     });
 });
