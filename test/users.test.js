@@ -36,10 +36,9 @@ var POLICY_DOC = [
     'John, Jack and Jane can ops_* *'
 ];
 
-var ROLE_UUID;
-var ROLE_DN;
+var ROLE_UUID, ROLE_DN, ROLE_NAME;
 
-var GROUP_UUID, GROUP_DN;
+var GROUP_UUID, GROUP_DN, GROUP_NAME;
 
 // --- Helpers
 function checkUser(t, user) {
@@ -262,6 +261,7 @@ test('create role', function (t) {
         common.checkHeaders(t, res.headers);
         checkRole(t, body);
         ROLE_UUID = body.id;
+        ROLE_NAME = body.name;
         ROLE_DN = util.format(ROLE_FMT, ROLE_UUID, account.uuid);
         t.end();
     });
@@ -275,6 +275,20 @@ test('get role by UUID', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.equal(body.id, ROLE_UUID);
+        console.log(util.inspect(body, false, 8, true));
+        t.end();
+    });
+});
+
+
+test('get role by name', function (t) {
+    client.get('/my/roles/' + ROLE_NAME, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.equal(body.id, ROLE_UUID);
+        console.log(util.inspect(body, false, 8, true));
         t.end();
     });
 });
@@ -341,6 +355,7 @@ test('create group', function (t) {
         common.checkHeaders(t, res.headers);
         checkGroup(t, body);
         GROUP_UUID = body.id;
+        GROUP_NAME = body.name;
         GROUP_DN = util.format(GROUP_FMT, GROUP_UUID, account.uuid);
         t.end();
     });
@@ -354,6 +369,20 @@ test('get group (by UUID)', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.equal(body.id, GROUP_UUID);
+        console.log(util.inspect(body, false, 8, true));
+        t.end();
+    });
+});
+
+
+test('get group (by name)', function (t) {
+    client.get('/my/groups/' + GROUP_NAME, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.equal(body.id, GROUP_UUID);
+        console.log(util.inspect(body, false, 8, true));
         t.end();
     });
 });
