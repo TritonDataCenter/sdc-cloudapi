@@ -132,11 +132,9 @@ section will explain the configuration file.
             "analytics": false
         },
         "bleeding_edge_features": {
-            "img_mgmt": true,
             "": false
         },
         "bleeding_edge_login_whitelist": {
-            "admin": true,
             "": false
         }
     }
@@ -171,7 +169,7 @@ instance should redirect to).
 
     ...
         "bleeding_edge_features": {
-            "img_mgmt": true,
+            "foo": true,
             "": false
         },
         "bleeding_edge_login_whitelist": {
@@ -180,9 +178,10 @@ instance should redirect to).
         }
     ...
 
-One can define bleeding edge features by name and then set a whitelist of
-user login's allowed to access those features. See "img_mgmt" in the code for
-how to implement this. Currently the "metadata.BLEEDING_EDGE_FEATURES" and
+One can define bleeding edge features by name and then set a whitelist of user
+login's allowed to access those features. Cloudapi code before PUBAPI-816 shows
+how to uses this config to guard endpoints and certain functionality. Currently
+the "metadata.BLEEDING_EDGE_FEATURES" and
 "metadata.BLEEDING_EDGE_LOGIN_WHITELIST" arrays on the "cloudapi" SAPI service
 set the features and whitelist.
 

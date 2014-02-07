@@ -90,8 +90,6 @@ var sdc_256_entry, sdc_256_inactive_entry, sdc_128_ok_entry;
 
 var HEADNODE = null;
 
-var CREATE_IMAGES = false;
-
 // --- Tests
 
 test('setup', TAP_CONF, function (t) {
@@ -103,13 +101,6 @@ test('setup', TAP_CONF, function (t) {
             t.ok(_server);
         }
         server = _server;
-        var cfg = common.getCfg();
-        if (cfg.bleeding_edge_features &&
-            cfg.bleeding_edge_features.img_mgmt &&
-            cfg.bleeding_edge_login_whitelist &&
-            cfg.bleeding_edge_login_whitelist['*']) {
-            CREATE_IMAGES = true;
-        }
         saveKey(KEY, keyName, client, t, function () {
             // Add custom packages; "sdc_" ones will be owned by admin user:
             addPackage(client, sdc_128_ok, function (err2, entry) {

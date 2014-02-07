@@ -90,8 +90,6 @@ var sdc_256_entry, sdc_256_inactive_entry, sdc_128_ok_entry;
 
 var HEADNODE = null;
 
-var CREATE_IMAGES = false;
-
 // --- Tests
 
 test('setup', TAP_CONF, function (t) {
@@ -103,13 +101,6 @@ test('setup', TAP_CONF, function (t) {
             t.ok(_server);
         }
         server = _server;
-        var cfg = common.getCfg();
-        if (cfg.bleeding_edge_features &&
-            cfg.bleeding_edge_features.img_mgmt &&
-            cfg.bleeding_edge_login_whitelist &&
-            cfg.bleeding_edge_login_whitelist['*']) {
-            CREATE_IMAGES = true;
-        }
         saveKey(KEY, keyName, client, t, function () {
             // Add custom packages; "sdc_" ones will be owned by admin user:
             addPackage(client, sdc_128_ok, function (err2, entry) {
@@ -298,7 +289,7 @@ test('Get Machine', TAP_CONF, function (t) {
 var IMG_JOB_UUID;
 
 test('Attempt to create image from running machine', TAP_CONF, function (t) {
-    if (CREATE_IMAGES && machine) {
+    if (machine) {
         var obj = {
             machine: machine,
             name: uuid(),
@@ -323,7 +314,7 @@ test('Attempt to create image from running machine', TAP_CONF, function (t) {
 
 
 test('Wait for img create from running machine job', TAP_CONF, function (t) {
-    if (CREATE_IMAGES && machine) {
+    if (machine) {
         waitForWfJob(client, IMG_JOB_UUID, function (err) {
             t.ok(err, 'Image job error');
             t.equal(err.message, 'Job failed');
@@ -360,7 +351,7 @@ test('Stop test', TAP_CONF, function (t) {
 
 
 test('Create image from machine (missing params)', TAP_CONF, function (t) {
-    if (CREATE_IMAGES && machine) {
+    if (machine) {
         // Missing name attribute:
         var obj = {
             machine: machine,
@@ -384,7 +375,7 @@ test('Create image from machine (missing params)', TAP_CONF, function (t) {
 
 
 test('Create image from machine OK', TAP_CONF, function (t) {
-    if (CREATE_IMAGES && machine) {
+    if (machine) {
         var obj = {
             machine: machine,
             name: uuid(),
@@ -410,7 +401,7 @@ test('Create image from machine OK', TAP_CONF, function (t) {
 
 
 test('Wait for img create job', TAP_CONF, function (t) {
-    if (CREATE_IMAGES && machine) {
+    if (machine) {
         waitForWfJob(client, IMG_JOB_UUID, function (err) {
             if (err) {
                 image_uuid = null;
@@ -425,7 +416,7 @@ test('Wait for img create job', TAP_CONF, function (t) {
 
 
 test('Delete image', TAP_CONF, function (t) {
-    if (CREATE_IMAGES && image_uuid) {
+    if (image_uuid) {
         client.imgapi.deleteImage(image_uuid, function (err, res) {
             t.ifError(err, 'Delete Image error');
             t.end();
