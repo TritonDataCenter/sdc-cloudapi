@@ -26,10 +26,7 @@
         "url": "ldaps://{{{ufds_remote_ip}}}",
         "bindDN": "{{{ufds_ldap_root_dn}}}",
         "bindPassword": "{{{ufds_ldap_root_pw}}}",
-        "cache": {
-            "size": 5000,
-            "expiry": 60
-        },
+        "cache": false,
         "maxConnections": 1,
         "retry": {
             "initialDelay": 1000
