@@ -72,6 +72,7 @@ module.exports = {
                         break;
                     } else {
                         req.limit = 2;
+                        break;
                     }
                 }
 
