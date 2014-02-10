@@ -79,7 +79,7 @@ test('CreateKey (named) OK', function (t) {
     var key = {
         key: KEY,
         name: 'id_rsa 1'
-    }; 
+    };
     client.post('/my/keys', key, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
@@ -87,14 +87,14 @@ test('CreateKey (named) OK', function (t) {
         common.checkHeaders(t, res.headers);
         checkKey(t, body);
         t.equal(body.name, key.name);
-        client.get('/my/keys', function (err, req, res, body) {
-            t.ifError(err);
-            t.equal(res.statusCode, 200);
-            common.checkHeaders(t, res.headers);
-            t.ok(body);
-            t.ok(body.length);
+        client.get('/my/keys', function (err2, req2, res2, body2) {
+            t.ifError(err2);
+            t.equal(res2.statusCode, 200);
+            common.checkHeaders(t, res2.headers);
+            t.ok(body2);
+            t.ok(body2.length);
             var key_present = false;
-            body.forEach(function (k) {
+            body2.forEach(function (k) {
                 if (k.name === key.name) {
                     key_present = true;
                 }
