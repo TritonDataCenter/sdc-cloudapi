@@ -70,6 +70,8 @@ module.exports = {
                     if (limits[i][req.dataset.name]) {
                         req.limit = parseInt(limits[i][req.dataset.name], 10);
                         break;
+                    } else {
+                        req.limit = 2;
                     }
                 }
 
