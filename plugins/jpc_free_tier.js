@@ -67,14 +67,18 @@ module.exports = {
                 return next();
             }
 
+            if (!cfg.packages.length) {
+                log.debug('jpc_free_tier: no free tier packages, allowing.');
+                return next();
+            }
             // If req.package is not included into the free tier config list,
             // this plugin should have zero impact in provisioning:
             if (cfg.packages.indexOf(req.pkg.uuid) === -1) {
                 log.debug('jpc_free_tier: pkg %s is not free tier, allowing.',
                     req.pkg.uuid);
                 return next();
-
             }
+
             if (req.account.isAdmin()) {
                 log.debug('jpc_free_tier: account %s is an admin, allowing.',
                     req.account.login);
@@ -96,7 +100,10 @@ module.exports = {
             // Let's assume we will allow destroy/re-create a machine for
             // the free tier time period
             var filter = '(&(owner_uuid=' + req.account.uuid +
-                    ')(&(!(state=destroyed))(!(state=failed))))';
+                    ')(&(!(state=destroyed))(!(state=failed)))(|(' +
+            cfg.packages.map(function (i) {
+                return ('billing_id=' + i);
+            }).join(')(') + ')))';
 
 
             log.debug({filter: filter}, 'VMAPI search machines filter');
