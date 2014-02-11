@@ -61,7 +61,7 @@ module.exports = {
                 }
 
                 req.limits = limits;
-                req.limit = cfg.defaults[req.dataset.name] || 0;
+                req.limit = cfg.defaults[req.dataset.name] || 2;
                 for (var i = 0; i < limits.length; i++) {
                     if (limits[i].datacenter !== cfg.datacenter) {
                         continue;
@@ -69,9 +69,6 @@ module.exports = {
 
                     if (limits[i][req.dataset.name]) {
                         req.limit = parseInt(limits[i][req.dataset.name], 10);
-                        break;
-                    } else {
-                        req.limit = 2;
                         break;
                     }
                 }
