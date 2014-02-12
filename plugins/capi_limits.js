@@ -60,15 +60,17 @@ module.exports = {
                     limits = [];
                 }
 
+                var dsname = req.dataset.name.toLowerCase();
+
                 req.limits = limits;
-                req.limit = cfg.defaults[req.dataset.name] || 2;
+                req.limit = cfg.defaults[dsname] || 2;
                 for (var i = 0; i < limits.length; i++) {
                     if (limits[i].datacenter !== cfg.datacenter) {
                         continue;
                     }
 
-                    if (limits[i][req.dataset.name]) {
-                        req.limit = parseInt(limits[i][req.dataset.name], 10);
+                    if (limits[i][dsname]) {
+                        req.limit = parseInt(limits[i][dsname], 10);
                         break;
                     }
                 }
