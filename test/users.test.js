@@ -11,7 +11,7 @@ var common = require('./common');
 
 var USER_FMT = 'uuid=%s, ou=users, o=smartdc';
 var SUB_FMT = 'uuid=%s, ' + USER_FMT;
-var ROLE_FMT = 'role-uuid=%s, ' + USER_FMT;
+var ROLE_FMT = 'policy-uuid=%s, ' + USER_FMT;
 var GROUP_FMT = 'group-uuid=%s, ' + USER_FMT;
 
 var client, server, account;
@@ -250,7 +250,6 @@ test('create role', function (t) {
     var entry = {
         name: name,
         policy: POLICY_DOC,
-        members: SUB_DN,
         description: 'This is completely optional'
     };
 
@@ -275,7 +274,6 @@ test('get role by UUID', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.equal(body.id, ROLE_UUID);
-        console.log(util.inspect(body, false, 8, true));
         t.end();
     });
 });
@@ -288,7 +286,6 @@ test('get role by name', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.equal(body.id, ROLE_UUID);
-        console.log(util.inspect(body, false, 8, true));
         t.end();
     });
 });
@@ -320,6 +317,7 @@ test('update role', function (t) {
         common.checkHeaders(t, res.headers);
         checkRole(t, body);
         t.equal(body.name, 'role-name-can-be-modified');
+        ROLE_NAME = body.name;
         t.ok(body.policy.indexOf(str) !== -1);
         t.end();
     });
@@ -345,7 +343,7 @@ test('create group', function (t) {
 
     var entry = {
         name: name,
-        members: SUB_DN_TWO
+        members: SUB_LOGIN_TWO
     };
 
     client.post('/my/groups', entry, function (err, req, res, body) {
@@ -369,7 +367,6 @@ test('get group (by UUID)', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.equal(body.id, GROUP_UUID);
-        console.log(util.inspect(body, false, 8, true));
         t.end();
     });
 });
@@ -382,7 +379,6 @@ test('get group (by name)', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.equal(body.id, GROUP_UUID);
-        console.log(util.inspect(body, false, 8, true));
         t.end();
     });
 });
@@ -402,8 +398,9 @@ test('list groups (OK)', function (t) {
 
 
 test('update group', function (t) {
-    client.post('/my/groups/' + GROUP_UUID, {
-        members: [SUB_DN, SUB_DN_TWO],
+    var members = [SUB_LOGIN_TWO, SUB_LOGIN];
+    client.post('/my/groups/' + GROUP_NAME, {
+        members: members,
         name: 'group-name-can-be-modified'
     }, function (err, req, res, body) {
         t.ifError(err);
@@ -412,22 +409,23 @@ test('update group', function (t) {
         common.checkHeaders(t, res.headers);
         checkGroup(t, body);
         t.equal(body.name, 'group-name-can-be-modified');
-        t.ok(body.members.indexOf(SUB_DN) !== -1);
+        GROUP_NAME = body.name;
+        t.ok(body.members.indexOf(SUB_LOGIN) !== -1);
         t.end();
     });
 });
 
 
 test('add existing role to group', function (t) {
-    client.post('/my/groups/' + GROUP_UUID, {
-        roles: [ROLE_UUID]
+    client.post('/my/groups/' + GROUP_NAME, {
+        roles: [ROLE_NAME]
     }, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
         checkGroup(t, body);
-        t.ok(body.roles.indexOf(ROLE_UUID) !== -1);
+        t.ok(body.roles.indexOf(ROLE_NAME) !== -1);
         t.end();
     });
 });
@@ -435,8 +433,8 @@ test('add existing role to group', function (t) {
 
 test('add unexisting role to group', function (t) {
     var FAKE_ROLE = libuuid.create();
-    client.post('/my/groups/' + GROUP_UUID, {
-        roles: [ROLE_UUID, FAKE_ROLE]
+    client.post('/my/groups/' + GROUP_NAME, {
+        roles: [ROLE_NAME, FAKE_ROLE]
     }, function (err, req, res, body) {
         t.ok(err);
         t.equal(res.statusCode, 409);
