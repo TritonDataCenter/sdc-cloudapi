@@ -456,6 +456,21 @@ test('get user by UUID', function (t) {
 });
 
 
+test('get user with roles', function (t) {
+    client.get('/my/users/' + SUB_LOGIN + '?membership=true',
+        function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.equal(body.id, SUB_UUID);
+        t.ok(body.roles);
+        t.ok(Array.isArray(body.roles));
+        t.end();
+    });
+});
+
+
 test('delete group', function (t) {
     var url = '/my/groups/' + GROUP_UUID;
     client.del(url, function (err, req, res) {
