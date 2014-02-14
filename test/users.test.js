@@ -291,7 +291,7 @@ test('create role', function (t) {
 
     var entry = {
         name: name,
-        policy: POLICY_DOC,
+        rules: POLICY_DOC,
         description: 'This is completely optional'
     };
 
@@ -350,7 +350,7 @@ test('update role', function (t) {
     var str = 'Pedro can delete *';
     POLICY_DOC.push(str);
     client.post('/my/roles/' + ROLE_UUID, {
-        policy: POLICY_DOC,
+        rules: POLICY_DOC,
         name: 'role-name-can-be-modified'
     }, function (err, req, res, body) {
         t.ifError(err);
@@ -360,7 +360,7 @@ test('update role', function (t) {
         checkRole(t, body);
         t.equal(body.name, 'role-name-can-be-modified');
         ROLE_NAME = body.name;
-        t.ok(body.policy.indexOf(str) !== -1);
+        t.ok(body.rules.indexOf(str) !== -1);
         t.end();
     });
 });
