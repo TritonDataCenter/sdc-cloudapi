@@ -52,7 +52,7 @@ function checkRole(t, role) {
     t.ok(role, 'checkRole role OK');
     t.ok(role.id, 'checkRole role.id OK');
     t.ok(role.name, 'checkRole role.name OK');
-    t.ok(role.policy, 'checkRole role.policy OK');
+    t.ok(role.rules, 'checkRole role.rules OK');
 }
 
 function checkGroup(t, group) {
