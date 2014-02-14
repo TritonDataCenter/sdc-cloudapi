@@ -11,7 +11,7 @@ var common = require('./common');
 
 var USER_FMT = 'uuid=%s, ou=users, o=smartdc';
 var SUB_FMT = 'uuid=%s, ' + USER_FMT;
-var ROLE_FMT = 'policy-uuid=%s, ' + USER_FMT;
+var POLICY_FMT = 'policy-uuid=%s, ' + USER_FMT;
 var GROUP_FMT = 'group-uuid=%s, ' + USER_FMT;
 
 var client, server, account;
@@ -36,7 +36,7 @@ var POLICY_DOC = [
     'John, Jack and Jane can ops_* *'
 ];
 
-var ROLE_UUID, ROLE_DN, ROLE_NAME;
+var POLICY_UUID, POLICY_DN, POLICY_NAME;
 
 var GROUP_UUID, GROUP_DN, GROUP_NAME;
 
@@ -48,11 +48,11 @@ function checkUser(t, user) {
     t.ok(user.email, 'checkUser user.email OK');
 }
 
-function checkRole(t, role) {
-    t.ok(role, 'checkRole role OK');
-    t.ok(role.id, 'checkRole role.id OK');
-    t.ok(role.name, 'checkRole role.name OK');
-    t.ok(role.rules, 'checkRole role.rules OK');
+function checkPolicy(t, policy) {
+    t.ok(policy, 'checkPolicy policy OK');
+    t.ok(policy.id, 'checkPolicy policy.id OK');
+    t.ok(policy.name, 'checkPolicy policy.name OK');
+    t.ok(policy.rules, 'checkPolicy policy.rules OK');
 }
 
 function checkGroup(t, group) {
@@ -272,8 +272,8 @@ test('create another user', function (t) {
 });
 
 
-test('list roles (empty)', function (t) {
-    client.get('/my/roles', function (err, req, res, body) {
+test('list policies (empty)', function (t) {
+    client.get('/my/policies', function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -285,9 +285,9 @@ test('list roles (empty)', function (t) {
 });
 
 
-test('create role', function (t) {
-    var role_uuid = libuuid.create();
-    var name = 'a' + role_uuid.substr(0, 7);
+test('create policy', function (t) {
+    var policy_uuid = libuuid.create();
+    var name = 'a' + policy_uuid.substr(0, 7);
 
     var entry = {
         name: name,
@@ -295,46 +295,46 @@ test('create role', function (t) {
         description: 'This is completely optional'
     };
 
-    client.post('/my/roles', entry, function (err, req, res, body) {
+    client.post('/my/policies', entry, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         t.equal(res.statusCode, 201);
         common.checkHeaders(t, res.headers);
-        checkRole(t, body);
-        ROLE_UUID = body.id;
-        ROLE_NAME = body.name;
-        ROLE_DN = util.format(ROLE_FMT, ROLE_UUID, account.uuid);
+        checkPolicy(t, body);
+        POLICY_UUID = body.id;
+        POLICY_NAME = body.name;
+        POLICY_DN = util.format(POLICY_FMT, POLICY_UUID, account.uuid);
         t.end();
     });
 });
 
 
-test('get role by UUID', function (t) {
-    client.get('/my/roles/' + ROLE_UUID, function (err, req, res, body) {
+test('get policy by UUID', function (t) {
+    client.get('/my/policies/' + POLICY_UUID, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
         t.ok(body);
-        t.equal(body.id, ROLE_UUID);
+        t.equal(body.id, POLICY_UUID);
         t.end();
     });
 });
 
 
-test('get role by name', function (t) {
-    client.get('/my/roles/' + ROLE_NAME, function (err, req, res, body) {
+test('get policy by name', function (t) {
+    client.get('/my/policies/' + POLICY_NAME, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
         t.ok(body);
-        t.equal(body.id, ROLE_UUID);
+        t.equal(body.id, POLICY_UUID);
         t.end();
     });
 });
 
 
-test('list roles (OK)', function (t) {
-    client.get('/my/roles', function (err, req, res, body) {
+test('list policies (OK)', function (t) {
+    client.get('/my/policies', function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -346,20 +346,20 @@ test('list roles (OK)', function (t) {
 });
 
 
-test('update role', function (t) {
+test('update policy', function (t) {
     var str = 'Pedro can delete *';
     POLICY_DOC.push(str);
-    client.post('/my/roles/' + ROLE_UUID, {
+    client.post('/my/policies/' + POLICY_UUID, {
         rules: POLICY_DOC,
-        name: 'role-name-can-be-modified'
+        name: 'policy-name-can-be-modified'
     }, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
-        checkRole(t, body);
-        t.equal(body.name, 'role-name-can-be-modified');
-        ROLE_NAME = body.name;
+        checkPolicy(t, body);
+        t.equal(body.name, 'policy-name-can-be-modified');
+        POLICY_NAME = body.name;
         t.ok(body.rules.indexOf(str) !== -1);
         t.end();
     });
@@ -458,25 +458,25 @@ test('update group', function (t) {
 });
 
 
-test('add existing role to group', function (t) {
+test('add existing policy to group', function (t) {
     client.post('/my/groups/' + GROUP_NAME, {
-        roles: [ROLE_NAME]
+        policies: [POLICY_NAME]
     }, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
         checkGroup(t, body);
-        t.ok(body.roles.indexOf(ROLE_NAME) !== -1);
+        t.ok(body.policies.indexOf(POLICY_NAME) !== -1);
         t.end();
     });
 });
 
 
-test('add unexisting role to group', function (t) {
-    var FAKE_ROLE = libuuid.create();
+test('add unexisting policy to group', function (t) {
+    var FAKE_POLICY = libuuid.create();
     client.post('/my/groups/' + GROUP_NAME, {
-        roles: [ROLE_NAME, FAKE_ROLE]
+        policies: [POLICY_NAME, FAKE_POLICY]
     }, function (err, req, res, body) {
         t.ok(err);
         t.equal(res.statusCode, 409);
@@ -525,8 +525,8 @@ test('delete group', function (t) {
 
 
 
-test('delete role', function (t) {
-    var url = '/my/roles/' + ROLE_UUID;
+test('delete policy', function (t) {
+    var url = '/my/policies/' + POLICY_UUID;
     client.del(url, function (err, req, res) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
