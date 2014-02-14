@@ -12,7 +12,7 @@ var common = require('./common');
 var USER_FMT = 'uuid=%s, ou=users, o=smartdc';
 var SUB_FMT = 'uuid=%s, ' + USER_FMT;
 var POLICY_FMT = 'policy-uuid=%s, ' + USER_FMT;
-var GROUP_FMT = 'group-uuid=%s, ' + USER_FMT;
+var ROLE_FMT = 'group-uuid=%s, ' + USER_FMT;
 
 var client, server, account;
 var SUB_ID = libuuid.create();
@@ -38,7 +38,7 @@ var POLICY_DOC = [
 
 var POLICY_UUID, POLICY_DN, POLICY_NAME;
 
-var GROUP_UUID, GROUP_DN, GROUP_NAME;
+var ROLE_UUID, ROLE_DN, ROLE_NAME;
 
 // --- Helpers
 function checkUser(t, user) {
@@ -55,10 +55,10 @@ function checkPolicy(t, policy) {
     t.ok(policy.rules, 'checkPolicy policy.rules OK');
 }
 
-function checkGroup(t, group) {
-    t.ok(group, 'checkGroup group OK');
-    t.ok(group.id, 'checkGroup group.id OK');
-    t.ok(group.name, 'checkGroup group.name OK');
+function checkRole(t, role) {
+    t.ok(role, 'checkRole role OK');
+    t.ok(role.id, 'checkRole role.id OK');
+    t.ok(role.name, 'checkRole role.name OK');
 }
 
 
@@ -366,8 +366,8 @@ test('update policy', function (t) {
 });
 
 
-test('list groups (empty)', function (t) {
-    client.get('/my/groups', function (err, req, res, body) {
+test('list roles (empty)', function (t) {
+    client.get('/my/roles', function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -379,55 +379,55 @@ test('list groups (empty)', function (t) {
 });
 
 
-test('create group', function (t) {
-    var group_uuid = libuuid.create();
-    var name = 'a' + group_uuid.substr(0, 7);
+test('create role', function (t) {
+    var role_uuid = libuuid.create();
+    var name = 'a' + role_uuid.substr(0, 7);
 
     var entry = {
         name: name,
         members: SUB_LOGIN_TWO
     };
 
-    client.post('/my/groups', entry, function (err, req, res, body) {
+    client.post('/my/roles', entry, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         t.equal(res.statusCode, 201);
         common.checkHeaders(t, res.headers);
-        checkGroup(t, body);
-        GROUP_UUID = body.id;
-        GROUP_NAME = body.name;
-        GROUP_DN = util.format(GROUP_FMT, GROUP_UUID, account.uuid);
+        checkRole(t, body);
+        ROLE_UUID = body.id;
+        ROLE_NAME = body.name;
+        ROLE_DN = util.format(ROLE_FMT, ROLE_UUID, account.uuid);
         t.end();
     });
 });
 
 
-test('get group (by UUID)', function (t) {
-    client.get('/my/groups/' + GROUP_UUID, function (err, req, res, body) {
+test('get role (by UUID)', function (t) {
+    client.get('/my/roles/' + ROLE_UUID, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
         t.ok(body);
-        t.equal(body.id, GROUP_UUID);
+        t.equal(body.id, ROLE_UUID);
         t.end();
     });
 });
 
 
-test('get group (by name)', function (t) {
-    client.get('/my/groups/' + GROUP_NAME, function (err, req, res, body) {
+test('get role (by name)', function (t) {
+    client.get('/my/roles/' + ROLE_NAME, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
         t.ok(body);
-        t.equal(body.id, GROUP_UUID);
+        t.equal(body.id, ROLE_UUID);
         t.end();
     });
 });
 
 
-test('list groups (OK)', function (t) {
-    client.get('/my/groups', function (err, req, res, body) {
+test('list roles (OK)', function (t) {
+    client.get('/my/roles', function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -439,43 +439,43 @@ test('list groups (OK)', function (t) {
 });
 
 
-test('update group', function (t) {
+test('update role', function (t) {
     var members = [SUB_LOGIN_TWO, SUB_LOGIN];
-    client.post('/my/groups/' + GROUP_NAME, {
+    client.post('/my/roles/' + ROLE_NAME, {
         members: members,
-        name: 'group-name-can-be-modified'
+        name: 'role-name-can-be-modified'
     }, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
-        checkGroup(t, body);
-        t.equal(body.name, 'group-name-can-be-modified');
-        GROUP_NAME = body.name;
+        checkRole(t, body);
+        t.equal(body.name, 'role-name-can-be-modified');
+        ROLE_NAME = body.name;
         t.ok(body.members.indexOf(SUB_LOGIN) !== -1);
         t.end();
     });
 });
 
 
-test('add existing policy to group', function (t) {
-    client.post('/my/groups/' + GROUP_NAME, {
+test('add existing policy to role', function (t) {
+    client.post('/my/roles/' + ROLE_NAME, {
         policies: [POLICY_NAME]
     }, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
-        checkGroup(t, body);
+        checkRole(t, body);
         t.ok(body.policies.indexOf(POLICY_NAME) !== -1);
         t.end();
     });
 });
 
 
-test('add unexisting policy to group', function (t) {
+test('add unexisting policy to role', function (t) {
     var FAKE_POLICY = libuuid.create();
-    client.post('/my/groups/' + GROUP_NAME, {
+    client.post('/my/roles/' + ROLE_NAME, {
         policies: [POLICY_NAME, FAKE_POLICY]
     }, function (err, req, res, body) {
         t.ok(err);
@@ -513,8 +513,8 @@ test('get user with roles', function (t) {
 });
 
 
-test('delete group', function (t) {
-    var url = '/my/groups/' + GROUP_UUID;
+test('delete role', function (t) {
+    var url = '/my/roles/' + ROLE_UUID;
     client.del(url, function (err, req, res) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
