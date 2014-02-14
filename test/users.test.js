@@ -185,6 +185,48 @@ test('update user', function (t) {
 });
 
 
+test('change password (missing params)', function (t) {
+    client.post('/my/users/' + SUB_LOGIN + '/change_password', {
+        password: 'whatever'
+    }, function (err, req, res, body) {
+        t.ok(err);
+        t.ok(/password/.test(err.message));
+        t.ok(body);
+        t.equal(res.statusCode, 409);
+        t.end();
+    });
+});
+
+
+test('change password (confirmation missmatch)', function (t) {
+    client.post('/my/users/' + SUB_LOGIN + '/change_password', {
+        password: 'whatever',
+        password_confirmation: 'somethingelse'
+    }, function (err, req, res, body) {
+        t.ok(err);
+        t.ok(/password/.test(err.message));
+        t.ok(body);
+        t.equal(res.statusCode, 409);
+        t.end();
+    });
+});
+
+
+test('change password (OK)', function (t) {
+    client.post('/my/users/' + SUB_LOGIN + '/change_password', {
+        password: 'whatever123',
+        password_confirmation: 'whatever123'
+    }, function (err, req, res, body) {
+        t.ifError(err);
+        t.ok(body);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        checkUser(t, body);
+        t.end();
+    });
+});
+
+
 test('get user by UUID', function (t) {
     client.get('/my/users/' + SUB_UUID, function (err, req, res, body) {
         t.ifError(err);
