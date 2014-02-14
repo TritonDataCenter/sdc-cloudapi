@@ -79,7 +79,7 @@ Array of user objects. Each user object has the following fields:
     GET /my/users HTTP/1.1
     Accept: application/json
     Host: api.example.com
-    Api-Version: ~7.1
+    Api-Version: ~7.2
     Authorization: Signature keyId...
 
 
@@ -90,8 +90,8 @@ Array of user objects. Each user object has the following fields:
     Location: /my/users
     Content-Type: application/json
     Content-Length: 400
-    Server: Joyent SmartDataCenter 7.1.0
-    Api-Version: 7.1.0
+    Server: Joyent SmartDataCenter 7.2.0
+    Api-Version: 7.2.0
     Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
 
     [{
@@ -153,7 +153,7 @@ Array of user objects. Each user object has the following fields:
     GET /my/users/a4ce91ff?membership=true HTTP/1.1
     Accept: application/json
     Host: api.example.com
-    Api-Version: ~7.1
+    Api-Version: ~7.2
     Authorization: Signature keyId...
 
 
@@ -163,8 +163,8 @@ Array of user objects. Each user object has the following fields:
     HTTP/1.1 200 Ok
     Content-Type: application/json
     Content-Length: 199
-    Server: Joyent SmartDataCenter 7.1.0
-    Api-Version: 7.1.0
+    Server: Joyent SmartDataCenter 7.2.0
+    Api-Version: 7.2.0
     Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
 
     {
@@ -330,7 +330,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
-    Api-Version: ~7.1
+    Api-Version: ~7.2
     Content-Length: 40
     Authorization: Signature keyId...
 
@@ -344,7 +344,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     HTTP/1.1 200 OK
     Content-Type: application/json
     Content-Length: 199
-    Api-Version: 7.1.0
+    Api-Version: 7.2.0
     Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
 
     {
@@ -380,7 +380,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     DELETE /my/users/a4ce91ff HTTP/1.1
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~7.1
+    Api-Version: ~7.2
     Content-Length: 0
 
 #### Example Response
@@ -391,7 +391,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 28 Jun 2011 23:14:34 GMT
-    Api-Version: 7.1.0
+    Api-Version: 7.2.0
     RequestId: 4655EA0A-C4CB-4486-8AA9-8C8C9A0B71B1
     Response-Time: 65
     Content-Length: 0
@@ -402,9 +402,106 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ## ListRoles (GET /:account/roles)
 
+Returns an array of account roles
+
+### Inputs
+
+* None
+
+### Returns
+
+||**Field**||**Type**||**Description**||
+||name||String||The role name||
+||members||Array||The list of account's sub-users logins to be added to this role (Optional)||
+||policies||Array||The list of account's policies to be given to this role (Optional)||
+||id||String||(UUID) Unique role identifier. Identifier purpose is just to allow role name modifications||
+
+
+### Errors
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :account does not exist||
+
+### Example Request
+
+
+    GET /my/roles HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Host: api.example.com
+    Api-Version: ~7.2
+    Authorization: Signature keyId...
+
+
+### Example Response
+
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Content-Length: 99
+    Server: Joyent SmartDataCenter 7.2.0
+    Api-Version: 7.2.0
+    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+
+    [{
+        "id": "4025de02-b4b6-4041-ae72-0749e99a5ac4",
+        "name": "reboot",
+        "members": ["bob","fred","pedro"],
+        "policies": ["rebootMachine"]
+    }]
+
+
 ## GetRole (GET /:account/roles/:role)
 
 Get an account role (`:role`) either by `name` or `id`.
+
+
+### Inputs
+
+* None
+
+### Returns
+
+||**Field**||**Type**||**Description**||
+||name||String||The role name||
+||members||Array||The list of account's sub-users logins to be added to this role (Optional)||
+||policies||Array||The list of account's policies to be given to this role (Optional)||
+||id||String||(UUID) Unique role identifier. Identifier purpose is just to allow role name modifications||
+
+
+### Errors
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :account or :role do not exist||
+
+### Example Request
+
+
+    GET /my/roles/reboot HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Host: api.example.com
+    Api-Version: ~7.2
+    Authorization: Signature keyId...
+
+
+### Example Response
+
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Content-Length: 97
+    Server: Joyent SmartDataCenter 7.2.0
+    Api-Version: 7.2.0
+    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+
+    {
+        "id": "4025de02-b4b6-4041-ae72-0749e99a5ac4",
+        "name": "reboot",
+        "members": ["bob","fred","pedro"],
+        "policies": ["rebootMachine"]
+    }
+
 
 ## CreateRole (POST /:account/roles)
 
@@ -443,7 +540,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
-    Api-Version: ~7.1
+    Api-Version: ~7.2
     Content-Length: 40
     Authorization: Signature keyId...
 
@@ -456,11 +553,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ### Example Response
 
     HTTP/1.1 201 Created
-    Location: /my/roles/4025de02-b4b6-4041-ae72-0749e99a5ac4
+    Location: /my/roles/reboot
     Content-Type: application/json
     Content-Length: 97
-    Server: Joyent SmartDataCenter 7.1.0
-    Api-Version: 7.1.0
+    Server: Joyent SmartDataCenter 7.2.0
+    Api-Version: 7.2.0
     Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
 
     {
@@ -471,60 +568,112 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     }
 
 
-
-
 ## UpdateRole (POST /:account/roles/:role)
 
-Everything but id can be modified.
+Modifies an account role. Everything but id can be modified.
+
+### Inputs
+
+||**Field**||**Type**||**Description**||
+||name||String||(Required) The role name||
+||members||Array||The list of account's sub-users logins to be added to this role (Optional)||
+||policies||Array||The list of account's policies to be given to this role (Optional)||
+
+### Returns
+
+Account role
+
+||**Field**||**Type**||**Description**||
+||name||String||The role name||
+||members||Array||The list of account's sub-users logins to be added to this role (Optional)||
+||policies||Array||The list of account's policies to be given to this role (Optional)||
+||id||String||(UUID) Unique role identifier. Identifier purpose is just to allow role name modifications||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||InvalidArgument||If member or policies are invalid, for example, you try to add an unexisting user||
+||MissingParameter||If you didn't send a name||
+||ResourceNotFound||If :account does not exist||
+
+
+### Example Request
+
+    POST /my/roles/reboot HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Host: api.example.com
+    Api-Version: ~7.2
+    Content-Length: 40
+    Authorization: Signature keyId...
+
+    {
+        "policies": ["rebootMachine", "resizeMachine"]
+    }
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Content-Length: 97
+    Server: Joyent SmartDataCenter 7.2.0
+    Api-Version: 7.2.0
+    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+
+    {
+        "id": "4025de02-b4b6-4041-ae72-0749e99a5ac4",
+        "name": "reboot",
+        "members": ["bob","fred","pedro"],
+        "policies": ["rebootMachine", "resizeMachine"]
+    }
+
+
 
 ## DeleteRole (DELETE /:account/roles/:role)
 
 
+### Inputs
+
+* None
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :account or :role do not exist||
+
+
+#### Example Request
+
+    DELETE /my/roles/reboot HTTP/1.1
+    Host: api.example.com
+    Accept: application/json
+    Api-Version: ~7.2
+    Content-Length: 0
+
+#### Example Response
+
+    HTTP/1.1 204 No Content
+    Connection: close
+    Date: Tue, 28 Jun 2011 23:14:34 GMT
+    Api-Version: 7.2.0
+    RequestId: 4655EA0A-C4CB-4486-8AA9-8C8C9A0B71B1
+    Response-Time: 65
+    Content-Length: 0
 
 
 # Policies
 
 ## ListPolicies (GET /:account/policies)
 
-## GetPolicy (GET /:account/policies/:policy)
-
-Get an account policy (`:policy`) either by `name` or `id`.
-
-## CreatePolicy (POST /:account/policies)
-
-
-## UpdatePolicy (POST /:account/policies/:policy)
-
-Everything but id can be modified.
-
-## DeletePolicy (DELETE /:account/policies/:policy)
-
-
-
-# SSH Keys
-
-See account [keys](#keys) for a detailed description. Only difference is the
-path from where you can access subordinated users' keys:
-
-## ListKeys (GET /:account/users/:user/keys)
-
-Lists all public keys we have on record for the specified account sub-user.
-
-## GetKey (GET /:account/users/:user/keys/:key)
-
-Retrieves the given key record either by fingerprint or name.
-
-## CreateKey (POST /:account/users/:user/keys)
-
-Creates a new key record.
-
-## DeleteKey (DELETE /:account/users/:user/keys/:key)
-
-Removes a key.
-
-
-
-===========================================
+Retrieves a list of account policies.
 
 
 ### Inputs
@@ -534,34 +683,280 @@ Removes a key.
 ### Returns
 
 ||**Field**||**Type**||**Description**||
+||name||String||The policy name||
+||rules||Array||One or more Aperture sentences to be added to the current policy||
+||description||String||A description for this policy||
+||id||String||(UUID) Unique policy identifier. Identifier purpose is just to allow policy name modifications||
+
 
 ### Errors
 
 ||**Error Code**||**Description**||
-||InvalidArgument||...||
-||MissingParameter||...||
 ||ResourceNotFound||If :account does not exist||
 
 ### Example Request
 
 
-    POST /my/roles HTTP/1.1
+    GET /my/policies HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
-    Api-Version: ~7.1
-    Content-Length: 40
+    Api-Version: ~7.2
     Authorization: Signature keyId...
 
 
 ### Example Response
 
 
-    HTTP/1.1 201 Created
-    Location: /my/roles/4025de02-b4b6-4041-ae72-0749e99a5ac4
+    HTTP/1.1 200 OK
     Content-Type: application/json
     Content-Length: 97
-    Server: Joyent SmartDataCenter 7.1.0
-    Api-Version: 7.1.0
+    Server: Joyent SmartDataCenter 7.2.0
+    Api-Version: 7.2.0
     Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
 
+    [{
+        "id": "4025de02-b4b6-4041-ae72-0749e99a5ac4",
+        "name": "rebootMachine",
+        "rules": ["* can rebootMachine *"],
+        "description": "Restart any machine"
+    }]
+
+
+
+## GetPolicy (GET /:account/policies/:policy)
+
+Get an account policy (`:policy`) either by `name` or `id`.
+
+
+### Inputs
+
+* None
+
+### Returns
+
+||**Field**||**Type**||**Description**||
+||name||String||The policy name||
+||rules||Array||One or more Aperture sentences to be added to the current policy||
+||description||String||A description for this policy||
+||id||String||(UUID) Unique policy identifier. Identifier purpose is just to allow policy name modifications||
+
+
+### Errors
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :account or :role do not exist||
+
+### Example Request
+
+
+    GET /my/policies/rebootMachine HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Host: api.example.com
+    Api-Version: ~7.2
+    Authorization: Signature keyId...
+
+
+### Example Response
+
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Content-Length: 97
+    Server: Joyent SmartDataCenter 7.2.0
+    Api-Version: 7.2.0
+    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+
+    {
+        "id": "4025de02-b4b6-4041-ae72-0749e99a5ac4",
+        "name": "rebootMachine",
+        "rules": ["* can rebootMachine *"],
+        "description": "Restart any machine"
+    }
+
+
+## CreatePolicy (POST /:account/policies)
+
+Creates a new account policy.
+
+### Inputs
+
+||**Field**||**Type**||**Description**||
+||name||String||The policy name (required)||
+||rules||Array||One or more Aperture sentences to be added to the current policy (required)||
+||description||String||A description for this policy (Optional)||
+
+
+### Returns
+
+||**Field**||**Type**||**Description**||
+||name||String||The policy name||
+||rules||Array||One or more Aperture sentences to be added to the current policy||
+||description||String||A description for this policy||
+||id||String||(UUID) Unique policy identifier. Identifier purpose is just to allow policy name modifications||
+
+
+### Errors
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :account or :role do not exist||
+
+### Example Request
+
+
+    POST /my/policies HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Host: api.example.com
+    Api-Version: ~7.2
+    Authorization: Signature keyId...
+
+
+    {
+        "name": "rebootMachine",
+        "rules": ["* can rebootMachine *"],
+        "description": "Restart any machine"
+    }
+
+
+### Example Response
+
+
+    HTTP/1.1 201 Created
+    Content-Type: application/json
+    Content-Length: 97
+    Server: Joyent SmartDataCenter 7.2.0
+    Api-Version: 7.2.0
+    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+
+    {
+        "id": "4025de02-b4b6-4041-ae72-0749e99a5ac4",
+        "name": "rebootMachine",
+        "rules": ["* can rebootMachine *"],
+        "description": "Restart any machine"
+    }
+
+
+## UpdatePolicy (POST /:account/policies/:policy)
+
+Upgrades an existing account policy. Everything but id can be modified.
+
+### Inputs
+
+||**Field**||**Type**||**Description**||
+||name||String||The policy name||
+||rules||Array||One or more Aperture sentences to be added to the current policy||
+||description||String||A description for this policy||
+
+
+### Returns
+
+||**Field**||**Type**||**Description**||
+||name||String||The policy name||
+||rules||Array||One or more Aperture sentences to be added to the current policy||
+||description||String||A description for this policy||
+||id||String||(UUID) Unique policy identifier. Identifier purpose is just to allow policy name modifications||
+
+
+### Errors
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :account or :role do not exist||
+
+### Example Request
+
+
+    POST /my/policies/rebootMachine HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Host: api.example.com
+    Api-Version: ~7.2
+    Authorization: Signature keyId...
+
+
+    {
+        "description": "Restart whatever machine, no matter from which IP address"
+    }
+
+
+### Example Response
+
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Content-Length: 97
+    Server: Joyent SmartDataCenter 7.2.0
+    Api-Version: 7.2.0
+    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+
+    {
+        "id": "4025de02-b4b6-4041-ae72-0749e99a5ac4",
+        "name": "rebootMachine",
+        "rules": ["* can rebootMachine *"],
+        "description": "Restart whatever machine, no matter from which IP address"
+    }
+
+
+
+## DeletePolicy (DELETE /:account/policies/:policy)
+
+Deletes an existing account policy.
+
+### Inputs
+
+* None
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :account or :policy do not exist||
+
+
+#### Example Request
+
+    DELETE /my/policies/rebootMachine HTTP/1.1
+    Host: api.example.com
+    Accept: application/json
+    Api-Version: ~7.2
+    Content-Length: 0
+
+#### Example Response
+
+    HTTP/1.1 204 No Content
+    Connection: close
+    Date: Tue, 28 Jun 2011 23:14:34 GMT
+    Api-Version: 7.2.0
+    RequestId: 4655EA0A-C4CB-4486-8AA9-8C8C9A0B71B1
+    Response-Time: 65
+    Content-Length: 0
+
+
+# SSH Keys
+
+See account [keys](#keys) for a detailed description. Only difference is the
+path from where you can access subordinated users' keys:
+
+## ListUserKeys (GET /:account/users/:user/keys)
+
+Lists all public keys we have on record for the specified account sub-user.
+See [ListKeys](#ListKeys).
+
+## GetUserKey (GET /:account/users/:user/keys/:key)
+
+Retrieves the given key record either by fingerprint or name.
+See [GetKey](#GetKey).
+
+## CreateUserKey (POST /:account/users/:user/keys)
+
+Creates a new key record. See [CreateKey](#CreateKey).
+
+## DeleteUserKey (DELETE /:account/users/:user/keys/:key)
+
+Removes a key. See [GetKey](#GetKey).
