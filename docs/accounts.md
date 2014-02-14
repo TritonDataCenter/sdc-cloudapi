@@ -276,7 +276,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||InvalidArgument||If any of the parameters are invalid, for example, you try to add a login name already taken by another sub user of your account||
 ||MissingParameter||If you didn't send a login, email or password||
-||ResourceNotFound||If :account does not exist||
+||ResourceNotFound||If :account  or :user do not exist||
 
 
 
@@ -290,7 +290,7 @@ trying to modify other data, or only self password.
 
 ||**Field**||**Type**||**Description**||
 ||password||String||(Required) Password||
-||password_confirmation||String||(Required) Password confirmation||
+||password\_confirmation||String||(Required) Password confirmation||
 
 
 ### Returns
@@ -312,6 +312,48 @@ User object:
 ||phone||String||...||
 ||created||Date (ISO8601)||When this user was created||
 ||updated||Date (ISO8601)||When this user was updated||
+
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||InvalidArgument||The provided password and password\_confirmation didn't match||
+||MissingParameter||Either password or password\_confirmation parameters are missing||
+||ResourceNotFound||If :account or :user do not exist||
+
+
+### Example Request
+
+    POST /my/users/a4ce91ff/change_password HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Host: api.example.com
+    Api-Version: ~7.1
+    Content-Length: 40
+    Authorization: Signature keyId...
+
+    {
+        "password": "foo123bar",
+        "password_confirmation": "foo123bar"
+    }
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Content-Length: 199
+    Api-Version: 7.1.0
+    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+
+    {
+        id: 'ed976ee5-80a4-42cd-b0d6-5493b7d41132',
+        login: 'a4ce91ff',
+        email: 'a4ce91ff_test@test.com',
+        updated: '2014-02-13T09:18:46.644Z',
+        created: '2014-02-13T09:18:46.644Z'
+    }
 
 
 ## DeleteUser (DELETE /:account/users/:user)
