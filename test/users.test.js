@@ -40,6 +40,18 @@ var POLICY_UUID, POLICY_DN, POLICY_NAME;
 
 var ROLE_UUID, ROLE_DN, ROLE_NAME;
 
+var KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAvad19ePSDckmgmo6Unqmd8' +
+    'n2G7o1794VN3FazVhV09yooXIuUhA+7OmT7ChiHueayxSubgL2MrO/HvvF/GGVUs/t3e0u4' +
+    '5YwRC51EVhyDuqthVJWjKrYxgDMbHru8fc1oV51l0bKdmvmJWbA/VyeJvstoX+eiSGT3Jge' +
+    'egSMVtc= mark@foo.local';
+
+var SSH_KEY_TWO = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDY2qV5e2q8qb+kYtn' +
+'pvRxC5PM6aqPPgWcaXn2gm4jtefGAPuJX9fIkz/KTRRLxdG27IMt6hBXRXvL0Gzw0H0mSUPHAbq' +
+'g4TAyG3/xEHp8iLH/QIf/RwVgjoGB0MLZn7q+L4ThMDo9rIrc5CpfOm/AN9vC4w0Zzu/XpJbzjd' +
+'pTXOh+vmOKkiWCzN+BJ9DvX3iei5NFiSL3rpru0j4CUjBKchUg6X7mdv42g/ZdRT9rilmEP154F' +
+'X/bVsFHitmyyYgba+X90uIR8KGLFZ4eWJNPprJFnCWXrpY5bSOgcS9aWVgCoH8sqHatNKUiQpZ4' +
+'Lsqr+Z4fAf4enldx/KMW91iKn whatever@wherever.local';
+
 // --- Helpers
 function checkUser(t, user) {
     t.ok(user, 'checkUser user OK');
@@ -61,6 +73,11 @@ function checkRole(t, role) {
     t.ok(role.name, 'checkRole role.name OK');
 }
 
+function checkKey(t, key) {
+    t.ok(key);
+    t.ok(key.name);
+    t.ok(key.key);
+}
 
 // --- Tests
 
@@ -508,6 +525,137 @@ test('get user with roles', function (t) {
         t.equal(body.id, SUB_UUID);
         t.ok(body.roles);
         t.ok(Array.isArray(body.roles));
+        t.end();
+    });
+});
+
+
+test('ListKeys (empty) OK', function (t) {
+    var p = util.format('/my/users/%s/keys', SUB_LOGIN);
+    client.get(p, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.ok(Array.isArray(body));
+        t.notOk(body.length);
+        t.end();
+    });
+});
+
+
+test('CreateKey (missing key)', function (t) {
+    var p = util.format('/my/users/%s/keys', SUB_LOGIN);
+    client.post(p, {}, function (err) {
+        t.ok(err);
+        t.equal(err.statusCode, 409);
+        t.equal(err.restCode, 'MissingParameter');
+        t.ok(err.message);
+        t.end();
+    });
+});
+
+
+test('CreateKey (named) OK', function (t) {
+    var key = {
+        key: KEY,
+        name: 'id_rsa 1'
+    };
+    var p = util.format('/my/users/%s/keys', SUB_LOGIN);
+    client.post(p, key, function (err, req, res, body) {
+        t.ifError(err);
+        t.ok(body);
+        t.equal(res.statusCode, 201);
+        common.checkHeaders(t, res.headers);
+        checkKey(t, body, 'CreateKey body');
+        t.equal(body.name, key.name, 'CreateKey name');
+        client.get(p, function (err2, req2, res2, body2) {
+            t.ifError(err2);
+            t.equal(res2.statusCode, 200);
+            common.checkHeaders(t, res2.headers);
+            t.ok(body2);
+            t.ok(body2.length);
+            var key_present = false;
+            body2.forEach(function (k) {
+                if (k.name === key.name) {
+                    key_present = true;
+                }
+                checkKey(t, k);
+            });
+            t.ok(key_present);
+            t.end();
+        });
+    });
+});
+
+
+test('Create (named) key with duplicate name', function (t) {
+    var key = {
+        key: SSH_KEY_TWO,
+        name: 'id_rsa 1'
+    };
+    var p = util.format('/my/users/%s/keys', SUB_LOGIN);
+    client.post(p, key, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.statusCode, 409);
+        t.end();
+    });
+});
+
+
+test('Attempt to create with invalid key', function (t) {
+    var key = {
+        key: 'asdf',
+        name: 'Not so valid'
+    };
+    var p = util.format('/my/users/%s/keys', SUB_LOGIN);
+    client.post(p, key, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.statusCode, 409);
+        t.equal(err.restCode, 'InvalidArgument');
+        t.ok(err.message);
+        t.end();
+    });
+});
+
+
+test('ListKeys OK', function (t) {
+    var p = util.format('/my/users/%s/keys', SUB_LOGIN);
+    client.get(p, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.ok(body.length);
+        body.forEach(function (k) {
+            checkKey(t, k);
+        });
+        t.end();
+    });
+});
+
+
+test('GetKey OK', function (t) {
+    var p = util.format('/my/users/%s/keys/', SUB_LOGIN);
+    var url = p + encodeURIComponent('id_rsa 1');
+    client.get(url, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        checkKey(t, body);
+        t.end();
+    });
+});
+
+
+test('DeleteKey OK', function (t) {
+    var p = util.format('/my/users/%s/keys/', SUB_LOGIN);
+    var url = p + encodeURIComponent('id_rsa 1');
+    client.del(url, function (err, req, res) {
+        t.ifError(err);
+        t.equal(res.statusCode, 204);
+        common.checkHeaders(t, res.headers);
         t.end();
     });
 });
