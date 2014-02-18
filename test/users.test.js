@@ -71,6 +71,12 @@ function checkRole(t, role) {
     t.ok(role, 'checkRole role OK');
     t.ok(role.id, 'checkRole role.id OK');
     t.ok(role.name, 'checkRole role.name OK');
+    if (role.members) {
+        t.ok(Array.isArray(role.members), 'checkRole role.members');
+    }
+    if (role.policies) {
+        t.ok(Array.isArray(role.policies), 'checkRole role.policies');
+    }
 }
 
 function checkKey(t, key) {
@@ -443,17 +449,7 @@ test('get role (by name)', function (t) {
 });
 
 
-test('list roles (OK)', function (t) {
-    client.get('/my/roles', function (err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
-        common.checkHeaders(t, res.headers);
-        t.ok(body);
-        t.ok(Array.isArray(body));
-        t.equal(body.length, 1);
-        t.end();
-    });
-});
+
 
 
 test('update role', function (t) {
@@ -502,6 +498,19 @@ test('add unexisting policy to role', function (t) {
     });
 });
 
+
+test('list roles (OK)', function (t) {
+    client.get('/my/roles', function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.ok(Array.isArray(body));
+        t.equal(body.length, 1);
+        checkRole(t, body[0]);
+        t.end();
+    });
+});
 
 test('get user by UUID', function (t) {
     client.get('/my/users/' + SUB_UUID, function (err, req, res, body) {
