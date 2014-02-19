@@ -1,7 +1,7 @@
 ---
 title: Joyent CloudAPI
 mediaroot: ./media
-apisections: Account, Keys, Datacenters, Datasets, Images, Packages, Machines, Analytics, FirewallRules, Networks
+apisections: Account, Keys, Datacenters, Datasets, Images, Packages, Machines, Analytics, FirewallRules, Networks, Users, Roles, Policies, User SSH Keys
 markdown2extras: wiki-tables, code-friendly
 ---
 
