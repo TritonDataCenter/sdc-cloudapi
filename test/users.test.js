@@ -449,9 +449,6 @@ test('get role (by name)', function (t) {
 });
 
 
-
-
-
 test('update role', function (t) {
     var members = [SUB_LOGIN_TWO, SUB_LOGIN];
     client.post('/my/roles/' + ROLE_NAME, {
@@ -499,6 +496,27 @@ test('add unexisting policy to role', function (t) {
 });
 
 
+test('create another role', function (t) {
+    var role_uuid = libuuid.create();
+    var name = 'a' + role_uuid.substr(0, 7);
+
+    var entry = {
+        name: name,
+        members: [SUB_LOGIN, SUB_LOGIN_TWO ],
+        policies: [POLICY_NAME]
+    };
+
+    client.post('/my/roles', entry, function (err, req, res, body) {
+        t.ifError(err);
+        t.ok(body);
+        t.equal(res.statusCode, 201);
+        common.checkHeaders(t, res.headers);
+        checkRole(t, body);
+        t.end();
+    });
+});
+
+
 test('list roles (OK)', function (t) {
     client.get('/my/roles', function (err, req, res, body) {
         t.ifError(err);
@@ -506,8 +524,9 @@ test('list roles (OK)', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.ok(Array.isArray(body));
-        t.equal(body.length, 1);
+        t.equal(body.length, 2);
         checkRole(t, body[0]);
+        checkRole(t, body[1]);
         t.end();
     });
 });
