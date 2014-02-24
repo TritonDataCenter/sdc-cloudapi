@@ -12,7 +12,7 @@ var common = require('./common');
 var USER_FMT = 'uuid=%s, ou=users, o=smartdc';
 var SUB_FMT = 'uuid=%s, ' + USER_FMT;
 var POLICY_FMT = 'policy-uuid=%s, ' + USER_FMT;
-var ROLE_FMT = 'group-uuid=%s, ' + USER_FMT;
+var ROLE_FMT = 'role-uuid=%s, ' + USER_FMT;
 
 var client, server, account;
 var SUB_ID = libuuid.create();
