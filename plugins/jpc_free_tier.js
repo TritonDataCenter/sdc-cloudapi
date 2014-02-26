@@ -4,7 +4,8 @@
  * JPC Free Tier offering plugin.
  *
  * Each JPC account can create a single free tier instance per
- * datacenter for the first year after the account has been created.
+ * datacenter for the first year after the account has been created,
+ * and only for accounts created after March 1, 2014.
  *
  * Free tier instance: req.package has one of the uuids listed into
  * plugin config file.
@@ -23,7 +24,8 @@ var restify = require('restify');
 
 var CODE = 'QuotaExceeded';
 var MESSAGE = 'Free tier offering is limited to a single instance for the ' +
-                'first year after the account has been created.';
+                'first year after the account has been created, and only ' +
+                'for accounts created after March 1, 2014.';
 
 function leap(year) {
     return ((year % 4) === 0 &&
@@ -90,10 +92,22 @@ module.exports = {
             var created = new Date(req.account.created_at);
             var aYearAgo = new Date(oneYearAgo());
             if (created <= aYearAgo) {
-                log.info('jpc_free_tier: account %s created %s, disallowing.',
+                log.info('jpc_free_tier: account %s created %s before than ' +
+                        'one year ago, disallowing.',
                         req.account.login, created.toUTCString());
                 return next(new restify.NotAuthorizedError(
                                 util.format('%s: %s', CODE, MESSAGE)));
+            }
+            // JPC Offering begins March the 1st, 2014:
+            var offer_begins_at = new Date(2014, 2, 1);
+            if (created < offer_begins_at) {
+                log.info('jpc_free_tier: account %s created %s before ' +
+                        'offering beginning %s, disallowing.',
+                        req.account.login, created.toUTCString(),
+                        offer_begins_at.toUTCString());
+                return next(new restify.NotAuthorizedError(
+                                util.format('%s: %s', CODE, MESSAGE)));
+
             }
 
 
@@ -135,6 +149,6 @@ module.exports = {
 
             });
 
-        }
+        };
     }
 };

@@ -64,7 +64,8 @@ module.exports = {
 
                 req.limits = limits;
                 req.limit = cfg.defaults[dsname] || 2;
-                for (var i = 0; i < limits.length; i++) {
+                var i;
+                for (i = 0; i < limits.length; i++) {
                     if (limits[i].datacenter !== cfg.datacenter) {
                         continue;
                     }
@@ -80,7 +81,7 @@ module.exports = {
                     limit: req.limit,
                     owner_uuid: req.account.uuid,
                     params: req.params,
-                    limits: req.limits,
+                    limits: req.limits
                 }, 'capi_limits: dataset limits');
 
                 if (req.limit < 0) {
@@ -105,7 +106,7 @@ module.exports = {
                     state: 'all'
                 }, function (err2, images, r) {
                     if (err2) {
-                        log.error({err: err3},
+                        log.error({err: err2},
                             'capi_limits: unable to list Images');
                     }
 
@@ -117,8 +118,8 @@ module.exports = {
 
                     var filter = '(&(owner_uuid=' + req.account.uuid +
                             ')(&(!(state=destroyed))(!(state=failed)))(|(' +
-                    images.map(function (i) {
-                        return ('image_uuid=' + i.uuid);
+                    images.map(function (img) {
+                        return ('image_uuid=' + img.uuid);
                     }).join(')(') + ')))';
 
 
