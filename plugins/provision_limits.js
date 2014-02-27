@@ -1,4 +1,14 @@
-// Copyright 2012 Joyent, Inc.  All rights reserved.
+/*
+ * Copyright (c) 2014, Joyent, Inc. All rights reserved.
+ *
+ * Provision Limits Plugin.
+ *
+ * See Appendix A of CloudAPI Administrator Guide for the whole details
+ * on how the plugin works:
+ *
+ * https://mo.joyent.com/docs/cloudapi/master/admin.html
+ *
+ */
 
 var assert = require('assert');
 var util = require('util');
@@ -10,83 +20,7 @@ var restify = require('restify');
 var CODE = 'QuotaExceeded';
 var MESSAGE = 'To have your limits raised please contact Support.';
 
-// --- Configuration details:
-// This plugin expects a config section with the following members:
-//
-//      {
-//          "name": "provisioning_limits",
-//          "enabled": true,
-//          "config": {
-//              "datacenter": ${dc_name} (String),
-//              "defaults": [{
-//                  "os": ${image_os} (String),
-//                  "dataset": ${image_name} (String),
-//                  "check": "os" | "dataset" (String),
-//                  "limit_by": "ram" | "quota" | "machines" (String),
-//                  "value": ${value} (Negative Integer|Zero|Positive Integer)
-//              }, { ... }, ...]
-//          }
-//      }
-//
-// Likewise, this plugin makes use of UFDS 'capilimit' LDAP object to declare
-// customers limits. Expected format for limit objects is similar to the format
-// used by the "capi_limits" plugin, but allowing to specify either a number of
-// machines or RAM or Disk Quota to establish the limit.
-//
-// When the value given to the attribute "limit_by" is either "ram" or "quota",
-// the limit specified for these values is expected to be in Megabytes.
-//
-// Note that, depending on the value of the "check" member, the plugin will
-// either check the limits against the dataset family (centos, ubuntu, ...),
-// like the "capi_limits" plugin does when the value is "dataset", or will
-// just check by dataset operating system when the given value is "os".
-//
-// For example:
-//
-//      dn: dclimit=coal, uuid=36fa9832-b836-455d-ac05-c586512019e4, \
-//          ou=users, o=smartdc
-//      datacenter: coal
-//      objectclass: capilimit
-//      type: smartos
-//      os: smartos
-//      check: dataset
-//      by: machines
-//      value: 1
-//
-// This would be a different configuration, which would limit provisioning
-// by disk "quota", and take a value of Infinity for the current customer:
-//
-//      dn: dclimit=coal, uuid=24c0ee76-9313-4a2c-b6e7-c46dbf769f00, \
-//          ou=users, o=smartdc
-//      datacenter: coal
-//      objectclass: capilimit
-//      type: ubuntu
-//      os: linux
-//      check: os
-//      by: quota
-//      value: 0
-//
-// And, finally, there is an example of the same plugin limiting provisions by
-// 50 GB of "ram":
-//
-//      dn: dclimit=coal, uuid=4e4f53d0-613e-463e-965f-1c1a50c0d8e1, \
-//          ou=users, o=smartdc
-//      datacenter: coal
-//      objectclass: capilimit
-//      type: windows
-//      os: windows
-//      check: os
-//      by: ram
-//      value: 51200
-//
-// Note that, as for "capi_limits", a "value" of zero means unlimited
-// quota.
-//
-// Also, note that is perfectly possible to specify several limits which may
-// be related to the same dataset/os like, for example, check that there are a
-// maximum of 3 machines with the given dataset/os and a total RAM of 1280MB,
-// in a way that 3 machines of 128MB each would be perfectly valid, but 4
-// machines will not, neither will be 2 machines of 1024MB each.
+
 module.exports = {
     preProvision: function (cfg) {
         if (!cfg || typeof (cfg) !== 'object') {
@@ -149,14 +83,56 @@ module.exports = {
                                 l.check === 'os') ||
                             (l.dataset && l.dataset === req.dataset.name));
                 });
+
+                log.info({cfg_limits: cfg_limits}, 'Config limits');
                 // Next, filter limits, do not keep any one not relevant:
+                log.info({limits: limits}, 'Customer limits before filtering');
+                // First, we are only interested into limits defined for the
+                // current datacenter:
+                limits = limits.filter(function (l) {
+                    return (l.datacenter === cfg.datacenter);
+                });
+                log.info({limits: limits}, 'Customer limits for this DC');
+                // At this point we should have a single limits entry, let's
+                // convert from capi_limits before we go further
+                if (limits.length) {
+                    var parsedLimits = [];
+                    Object.keys(limits[0]).forEach(function (k) {
+                        if (k === 'limit') {
+                            limits[0][k].forEach(function (j) {
+                                try {
+                                    parsedLimits.push(JSON.parse(j));
+                                } catch (e) {}
+                            });
+                        } else if (['dn',
+                            'controls',
+                            '_parent',
+                            '_owner',
+                            'objectclass',
+                            'datacenter'].indexOf(k) === -1) {
+                            // This is an old capi_limit: check image by
+                            // number of machines:
+                            parsedLimits.push({
+                                image: k,
+                                check: 'image',
+                                by: 'machines',
+                                value: limits[0][k]
+                            });
+                        }
+                    });
+                    log.info({limits: parsedLimits}, 'Customer limits parsed');
+                    limits = parsedLimits;
+                }
+
                 limits = limits.filter(function (l) {
                     return ((l.os && l.os === 'any') ||
-                            (l.dataset && l.dataset === 'any') ||
+                            (l.image && l.image === 'any') ||
                             (l.os && l.check && l.os === req.dataset.os &&
                                 l.check === 'os') ||
-                            (l.dataset && l.dataset === req.dataset.name));
+                            (l.image && l.image === req.dataset.name));
                 });
+                log.info({limits: limits}, 'Customer limits');
+
                 // Next, from cfg_limits, take any limit which is different
                 // than the ones from UFDS:
                 cfg_limits.filter(function (cfg_l) {
@@ -164,11 +140,10 @@ module.exports = {
                         return false;
                     }
                     var exists = limits.some(function (l) {
-                        return ((l.check && l.check === 'os' &&
-                                    l.os === cfg_l.os && l.by === cfg_l.by) ||
-                                (l.check && l.check === 'dataset' &&
-                                    l.dataset === cfg_l.dataset &&
-                                    l.by === cfg_l.by));
+                        return (l.check && cfg_l.check &&
+                                l.check === cfg_l.check &&
+                                l.os === cfg_l.os &&
+                                l.by === cfg_l.by);
                     });
 
                     return (!exists);
@@ -178,6 +153,8 @@ module.exports = {
                 if (cfg_limits.length > 0) {
                     limits = limits.concat(cfg_limits);
                 }
+
+                log.debug({provisioning_limits: limits}, 'Limits applied.');
 
                 req.limits = limits;
                 // Then, get all the customer machines, and cache it.
@@ -189,10 +166,10 @@ module.exports = {
                             'Provision limits: unable to list VMs Usage.'));
                     }
 
-
-
+                    log.info({vms: vms}, 'VmsUsage Values');
                     var limitExceeded = false;
-                    for (var i = 0; i < limits.length; i += 1) {
+                    var i;
+                    for (i = 0; i < limits.length; i += 1) {
                         var limit = limits[i];
                         var value = parseInt(limit.value, 10);
                         var count;
