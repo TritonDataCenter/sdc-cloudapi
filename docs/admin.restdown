@@ -748,6 +748,29 @@ On these cases where there could be more than one limit related to the same
 os/image, or even there are "catch all" limits which may also apply, all the
 limits must be satisfied.
 
+Finally, there's a possibility to define two different limits which have
+exactly the same meaning: those where you specify a value of "any" for image
+and for os. For example, the following limits would apply always:
+
+
+    os: any
+    check: os
+    by: whatever
+    value: something
+
+and the equivalent "catch all" limit for "image":
+
+    image: any
+    check: image
+    by: whatever
+    value: something_else
+
+
+On these cases, assuming that "by" value is the same in both limits, both
+values must be satisfied which in practice means that the most restrictive
+value is being applied.
+
+
 <p style="min-height: 31px; margin-top: 60px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0">
 <a rel="license" href="http://creativecommons.org/licenses/by-nd/3.0/"><img alt="Creative Commons License" style="border-width:0;float:left;margin:4px 8px 0 0;" src="https://i.creativecommons.org/l/by-nd/3.0/88x31.png" /></a> <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Text" property="dct:title" rel="dct:type">Joyent CloudAPI Administrator's Guide</span> by <a xmlns:cc="http://creativecommons.org/ns#" href="http://www.joyent.com" property="cc:attributionName" rel="cc:attributionURL">Joyent, Inc.</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nd/3.0/">Creative Commons Attribution-NoDerivs 3.0 Unported License</a>.
 </p>
