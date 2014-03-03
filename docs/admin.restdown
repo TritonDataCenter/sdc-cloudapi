@@ -655,7 +655,7 @@ following config fragment means:
 
     "plugins": [
         {
-            "name": "provision_limits",
+            "name": "provision\_limits",
             "enabled": false,
             "config": {
                 "datacenter": "DATACENTER_NAME",
@@ -678,7 +678,7 @@ following config fragment means:
 
 This plugin makes use of UFDS 'capilimit' LDAP object to declare individual
 customers limits. Expected format for limit objects is similar to the format
-used by the "capi_limits" plugin, but allowing to specify either a number of
+used by the "capi\_limits" plugin, but allowing to specify either a number of
 machines or RAM or Disk Quota to establish the limit.
 
 When the value given to the attribute "by" is either "ram" or "quota",
@@ -686,7 +686,7 @@ the limit specified for these values is expected to be in Megabytes.
 
 Note that, depending on the value of the "check" member, the plugin will
 either check the limits against the image family (centos, ubuntu, ...),
-like the "capi_limits" plugin does when the value is "image", or will
+like the "capi\_limits" plugin does when the value is "image", or will
 just check by image operating system when the given value is "os".
 
 Please, take into consideration that any limit defined for a particular
@@ -736,7 +736,7 @@ And, finally, there is an example of the same plugin limiting provisions by
           value: 51200
       }
 
-Note that, as for "capi_limits", a "value" of zero means unlimited quota.
+Note that, as for "capi\_limits", a "value" of zero means unlimited quota.
 
 Also, note that is perfectly possible to specify several limits which may
 be related to the same image/os like, for example, check that there are a
@@ -745,8 +745,22 @@ in a way that 3 machines of 512MB each would be perfectly valid, but 4
 machines will not, neither will be 2 machines of 1024MB each.
 
 On these cases where there could be more than one limit related to the same
-os/image, or even there are "catch all" limits which may also apply, all the
-limits must be satisfied.
+os/image, or even there are "catch all" limits which may also apply, **all the
+limits must be satisfied**, with the following exceptions:
+
+- When a "catch all" limit has been specified for a given customer, none of the
+global limits will be applied. ("os": "any" or "image": "any").
+- When a global "catch all" limit exists, but there is a specific limit for
+a customer, which will be applied to the current image/os, the global limit
+will not be applied.
+
+These rules are intented to allow things like:
+
+- Define a global limits for all customers, for example, restrict globally to
+either 2 machines or 2048GiB of RAM.
+- Then, for each customer, be able to override these settings for the
+specific images, using either number of machines, RAM or quota, depending on
+different factors like, for example, licenses.
 
 Finally, there's a possibility to define two different limits which have
 exactly the same meaning: those where you specify a value of "any" for image
