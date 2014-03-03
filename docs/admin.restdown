@@ -696,8 +696,7 @@ restrictive than the customer specific one.
 
 Some examples:
 
-      dn: dclimit=coal, uuid=36fa9832-b836-455d-ac05-c586512019e4, \
-          ou=users, o=smartdc
+      dn: dclimit=coal, uuid=36fa9832-b836-455d-ac05-c586512019e4, ou=users, o=smartdc
       datacenter: coal
       objectclass: capilimit
       limit: {
@@ -710,8 +709,7 @@ Some examples:
 This would be a different configuration, which would limit provisioning
 by disk "quota", and take a value of Infinity for the current customer:
 
-      dn: dclimit=coal, uuid=24c0ee76-9313-4a2c-b6e7-c46dbf769f00, \
-          ou=users, o=smartdc
+      dn: dclimit=coal, uuid=24c0ee76-9313-4a2c-b6e7-c46dbf769f00, ou=users, o=smartdc
       datacenter: coal
       objectclass: capilimit
       limit: {
@@ -724,8 +722,7 @@ by disk "quota", and take a value of Infinity for the current customer:
 And, finally, there is an example of the same plugin limiting provisions by
 50 GB of "ram":
 
-      dn: dclimit=coal, uuid=4e4f53d0-613e-463e-965f-1c1a50c0d8e1, \
-          ou=users, o=smartdc
+      dn: dclimit=coal, uuid=4e4f53d0-613e-463e-965f-1c1a50c0d8e1, ou=users, o=smartdc
       datacenter: coal
       objectclass: capilimit
       limit: {
@@ -784,6 +781,47 @@ On these cases, assuming that "by" value is the same in both limits, both
 values must be satisfied which in practice means that the most restrictive
 value is being applied.
 
+### Adding limits using UFDS:
+
+The following is an example of adding provisioning limits using ufds:
+
+    sdc-ldap add << EOD
+    dn: dclimit=coal, uuid=cc71f8bb-f310-4746-8e36-afd7c6dd2895, ou=users, o=smartdc
+    datacenter: coal
+    objectclass: capilimit
+    limit: {"os": "smartos", "check": "os", "limitby": "ram", "value": "8192"}
+    limit: {"os": "any", "check": "os", "limitby": "machines", "value": "4"}
+    EOD
+
+
+You can also modify existing capilimit entries (even the old ones used for
+capi\_limits plugin), and those would also be perfectly valid provisioning\_limits:
+
+So, for example, if you have an existing limit like:
+
+    dn: dclimit=coal, uuid=d7425eee-bbb1-4abf-b2b8-95ac1eee832f, ou=users, o=smartdc
+    base: 10
+    datacenter: coal
+    objectclass: capilimit
+
+
+The following would modify it in order to add some extra limits for the customer
+without removing the "old" limit of 10 machines of `base` image:
+
+
+        sdc-ldap modify << EOD
+        dn: dclimit=coal, uuid=d7425eee-bbb1-4abf-b2b8-95ac1eee832f, ou=users, o=smartdc
+        changetype: modify
+        add: limit
+        limit: {"os": "smartos", "check": "os", "by": "ram", "value": "8192"}
+        -
+        add: limit
+        limit: {"os": "any", "check": "os", "by": "machines", "value": "4"}
+        EOD
+
+(As shown, it's exactly the same if the "value of value" is specified using a
+string or a number, the plugin will take care of converting it into a number
+when necessary).
 
 <p style="min-height: 31px; margin-top: 60px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0">
 <a rel="license" href="http://creativecommons.org/licenses/by-nd/3.0/"><img alt="Creative Commons License" style="border-width:0;float:left;margin:4px 8px 0 0;" src="https://i.creativecommons.org/l/by-nd/3.0/88x31.png" /></a> <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Text" property="dct:title" rel="dct:type">Joyent CloudAPI Administrator's Guide</span> by <a xmlns:cc="http://creativecommons.org/ns#" href="http://www.joyent.com" property="cc:attributionName" rel="cc:attributionURL">Joyent, Inc.</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nd/3.0/">Creative Commons Attribution-NoDerivs 3.0 Unported License</a>.
