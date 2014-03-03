@@ -740,8 +740,8 @@ Note that, as for "capi_limits", a "value" of zero means unlimited quota.
 
 Also, note that is perfectly possible to specify several limits which may
 be related to the same image/os like, for example, check that there are a
-maximum of 3 machines with the given image/os and a total RAM of 1280MB,
-in a way that 3 machines of 128MB each would be perfectly valid, but 4
+maximum of 3 machines with the given image/os and a total RAM of 2048MB,
+in a way that 3 machines of 512MB each would be perfectly valid, but 4
 machines will not, neither will be 2 machines of 1024MB each.
 
 On these cases where there could be more than one limit related to the same
