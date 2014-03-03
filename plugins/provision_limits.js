@@ -37,11 +37,11 @@ function filterLimits(req_image, cfg_limits, limits) {
     // First, filter relevant limits from configuration (defaults):
     cfg_limits = cfg_limits.filter(function (l) {
         return ((l.os && l.os === 'any') ||
-                (l.dataset && l.dataset === 'any') ||
+                (l.image && l.image === 'any') ||
                 (l.os && l.check && l.os === req_image.os &&
                     l.check === 'os') ||
-                (l.dataset && (l.dataset === req_image.name ||
-                    l.dataset === req_image.name.toLowerCase())));
+                (l.image && (l.image === req_image.name ||
+                    l.image === req_image.name.toLowerCase())));
     });
 
 
@@ -83,6 +83,11 @@ function filterLimits(req_image, cfg_limits, limits) {
                 (l.image && (l.image === req_image.name.toLowerCase() ||
                             l.image === req_image.name)));
     });
+    // Check if the customer has a 'catch all' limit specified and, if so
+    // skip adding anything from the cfg_limits:
+    var catchAll = limits.some(function (l) {
+        return ((l.os && l.os === 'any') || (l.image && l.image === 'any'));
+    });
 
     // Next, from cfg_limits, take any limit which is different
     // than the ones from UFDS:
@@ -100,10 +105,9 @@ function filterLimits(req_image, cfg_limits, limits) {
     });
 
     // Push any limits not the same to our limits list:
-    if (cfg_limits.length > 0) {
+    if (cfg_limits.length > 0 && !catchAll && limits.length === 0) {
         limits = limits.concat(cfg_limits);
     }
-
     return (limits);
 }
 
@@ -311,7 +315,7 @@ module.exports = {
                     return vasync.forEachPipeline({
                         inputs: req.limits,
                         func: function (limit, cb) {
-                            log.warn({limit: limit}, 'Applying limit');
+                            log.debug({limit: limit}, 'Applying limit');
                             var value = parseInt(limit.value, 10);
                             if (value === 0) {
                                 return cb(null);

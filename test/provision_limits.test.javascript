@@ -26,7 +26,8 @@ var waitForWfJob = machinesCommon.waitForWfJob;
 var saveKey = machinesCommon.saveKey;
 var addPackage = machinesCommon.addPackage;
 
-var plugin = require('../plugins/provision_limits');
+var plugin = require('../plugins/provision_limits'),
+    filterLimits = plugin.filterLimits;
 
 // --- Globals
 
@@ -85,7 +86,7 @@ var sdc_128_ok = {
 };
 
 var HEADNODE = null;
-var DATASET;
+var DATASET, IMAGE;
 
 // --- Helpers:
 
@@ -152,6 +153,7 @@ test('setup', function (t) {
     });
 });
 
+
 test('Get Headnode', TAP_CONF, function (t) {
     client.cnapi.listServers(function (err, servers) {
         t.ifError(err);
@@ -180,11 +182,121 @@ test('get base dataset', TAP_CONF, function (t) {
         body.forEach(function (d) {
             if (d.version && d.version === '13.3.0') {
                 DATASET = body[0].id;
+                IMAGE = body[0];
             }
         });
         t.end();
     });
 });
+
+
+// Isolated tests to the function which decides which limits will be applied
+// given cloudapi cfg, customer limits and the requested image
+test('filterLimits', function (t) {
+
+    // Our tests will be based into the same image we will use later:
+    t.ok(IMAGE, 'filterLimits Image');
+    t.equal(IMAGE.os, 'smartos', 'filterLimits Image OS');
+    t.equal(IMAGE.name, 'base', 'filterLimits Image name');
+
+    t.test('customer catch-all by os', function (t2) {
+        // Only the customer specific limit will be applied:
+        var limits = [];
+        limits.push({ limit: [JSON.stringify({
+            check: 'os',
+            os: 'any',
+            by: 'machines',
+            value: 2
+        })]});
+
+        var cfg_limits = [ {
+            check: 'os',
+            os: 'smartos',
+            by: 'machines',
+            value: 4
+        }];
+        var applied = filterLimits(IMAGE, cfg_limits, limits);
+        t2.equal(applied.length, 1, 'customer catch-all os');
+        t2.equal(applied[0].value, 2, 'customer catch-all os val');
+        t2.end();
+    });
+
+    t.test('customer catch-all by image', function (t2) {
+        // Only the customer specific limit will be applied:
+        var limits = [];
+        limits.push({ limit: [JSON.stringify({
+            check: 'image',
+            image: 'any',
+            by: 'machines',
+            value: 2
+        })]});
+        var cfg_limits = [ {
+            check: 'image',
+            image: 'base',
+            by: 'machines',
+            value: 4
+        }];
+        var applied = filterLimits(IMAGE, cfg_limits, limits);
+        t2.equal(applied.length, 1);
+        t2.equal(applied[0].value, 2);
+        t2.end();
+    });
+
+    t.test('global catch-all by os', function (t2) {
+        var cfg_limits = [ {
+            check: 'os',
+            os: 'any',
+            by: 'machines',
+            value: 4
+        }];
+
+        // It will not be applied when there is a specific customer limit:
+        var limits = [];
+        limits.push({ limit: [JSON.stringify({
+            check: 'os',
+            os: 'smartos',
+            by: 'machines',
+            value: 10
+        })]});
+        var applied = filterLimits(IMAGE, cfg_limits, limits);
+        t2.equal(applied.length, 1);
+        t2.equal(applied[0].value, 10);
+        // But it will be when there is not specific limit:
+        applied = filterLimits(IMAGE, cfg_limits, []);
+        t2.equal(applied.length, 1);
+        t2.equal(applied[0].value, 4);
+        t2.end();
+    });
+
+    t.test('global catch-all by image', function (t2) {
+        var cfg_limits = [ {
+            check: 'image',
+            image: 'any',
+            by: 'machines',
+            value: 4
+        }];
+
+        // It will not be applied when there is a specific customer limit:
+        var limits = [];
+        limits.push({ limit: [JSON.stringify({
+            check: 'image',
+            image: 'base',
+            by: 'machines',
+            value: 10
+        })]});
+        var applied = filterLimits(IMAGE, cfg_limits, limits);
+        t2.equal(applied.length, 1, 'global image length');
+        t2.equal(applied[0].value, 10, 'global image value');
+        // But it will be when there is not specific limit:
+        applied = filterLimits(IMAGE, cfg_limits, []);
+        t2.equal(applied.length, 1, 'global image length (no local)');
+        t2.equal(applied[0].value, 4, 'global image val (no local)');
+        t2.end();
+
+    });
+    t.end();
+});
+
 
 test('CreateMachine', TAP_CONF, function (t) {
     var obj = {
@@ -292,7 +404,7 @@ test('CreateMachine #3', TAP_CONF, function (t) {
         // Otherwise, it'll complain about 'cannot read property of null':
         if (err) {
             t.ok(/QuotaExceeded/.test(err.message));
-            t.equal(res.statusCode, 409, 'create machine w/o dataset status');
+            t.equal(res.statusCode, 403, 'create machine w/o dataset status');
         }
         t.end();
     });
