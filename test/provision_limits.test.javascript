@@ -26,6 +26,8 @@ var waitForWfJob = machinesCommon.waitForWfJob;
 var saveKey = machinesCommon.saveKey;
 var addPackage = machinesCommon.addPackage;
 
+var plugin = require('../plugins/provision_limits');
+
 // --- Globals
 
 var client, server;
@@ -38,17 +40,17 @@ cfg.plugins = [ {
     enabled: true,
     config: {
         datacenter: DC_NAME,
-        defaults: [ { 
+        defaults: [ {
             image: 'any',
             check: 'image',
             by: 'ram',
-            value: 51200 
+            value: 512
         }, {
             os: 'windows',
             image: 'windows',
             check: 'image',
             by: 'machines',
-            value: -1 
+            value: -1
         } ]
     }
 }];
@@ -65,18 +67,18 @@ var TAP_CONF = {
 };
 
 var machine, machine2;
-var sdc_2048_ok_entry;
-var sdc_2048_ok = {
-    uuid: 'dd50ce46-7a60-48d5-9da9-20fe8b2b34db',
-    name: 'sdc_2048_ok',
+var sdc_128_ok_entry;
+var sdc_128_ok = {
+    uuid: '897779dc-9ce7-4042-8879-a4adccc94353',
+    name: 'sdc_128_ok',
     version: '1.0.0',
-    max_physical_memory: 2048,
-    quota: 25600,
-    max_swap: 4096,
-    cpu_cap: 400,
+    max_physical_memory: 128,
+    quota: 10240,
+    max_swap: 512,
+    cpu_cap: 150,
     max_lwps: 1000,
-    zfs_io_priority: 20,
-    fss: 200.5,
+    zfs_io_priority: 10,
+    fss: 25,
     'default': false,
     vcpus: 1,
     active: true
@@ -103,11 +105,17 @@ function createLimit(t, cb) {
                     value: '8192'
                 }),
                 JSON.stringify({
+                    image: 'nodejs',
+                    check: 'image',
+                    by: 'machines',
+                    value: '-1'
+                }),
+                JSON.stringify({
                     os: 'any',
                     check: 'os',
                     by: 'machines',
                     value: '4'
-                }),
+                })
             ]
         };
         return user.addLimit(limit, function (er2, limits) {
@@ -130,9 +138,9 @@ test('setup', function (t) {
         server = _server;
         saveKey(KEY, keyName, client, t, function () {
             // Add custom packages; "sdc_" ones will be owned by admin user:
-            addPackage(client, sdc_2048_ok, function (err2, entry) {
+            addPackage(client, sdc_128_ok, function (err2, entry) {
                 t.ifError(err2, 'Add package error');
-                sdc_2048_ok_entry = entry;
+                sdc_128_ok_entry = entry;
                 createLimit(t, function () {
                     t.end();
                 });
@@ -181,7 +189,7 @@ test('get base dataset', TAP_CONF, function (t) {
 test('CreateMachine', TAP_CONF, function (t) {
     var obj = {
         image: DATASET,
-        'package': 'sdc_2048_ok',
+        'package': 'sdc_128_ok',
         name: 'a' + uuid().substr(0, 7),
         server_uuid: HEADNODE.uuid,
         firewall_enabled: true
@@ -194,7 +202,7 @@ test('CreateMachine', TAP_CONF, function (t) {
         t.ok(body, 'POST /my/machines body');
         machine = body.id;
         // Handy to output this to stdout in order to poke around COAL:
-        console.log("Requested provision of machine: %s", machine);
+        console.log('Requested provision of machine: %s', machine);
         t.end();
     });
 });
@@ -227,7 +235,7 @@ test('Wait For Running', TAP_CONF,  function (t) {
 test('CreateMachine #2', TAP_CONF, function (t) {
     var obj = {
         image: DATASET,
-        'package': 'sdc_2048_ok',
+        'package': 'sdc_128_ok',
         name: 'a' + uuid().substr(0, 7),
         server_uuid: HEADNODE.uuid,
         firewall_enabled: true
@@ -240,7 +248,7 @@ test('CreateMachine #2', TAP_CONF, function (t) {
         t.ok(body, 'POST /my/machines body');
         machine2 = body.id;
         // Handy to output this to stdout in order to poke around COAL:
-        console.log("Requested provision of machine: %s", machine2);
+        console.log('Requested provision of machine: %s', machine2);
         t.end();
     });
 });
@@ -273,7 +281,7 @@ test('Wait For Running #2', TAP_CONF,  function (t) {
 test('CreateMachine #3', TAP_CONF, function (t) {
     var obj = {
         image: DATASET,
-        'package': 'sdc_2048_ok',
+        'package': 'sdc_128_ok',
         name: 'a' + uuid().substr(0, 7),
         server_uuid: HEADNODE.uuid,
         firewall_enabled: true
@@ -281,8 +289,11 @@ test('CreateMachine #3', TAP_CONF, function (t) {
 
     client.post('/my/machines', obj, function (err, req, res, body) {
         t.ok(err, 'Create machine #3 error');
-        t.ok(/QuotaExceeded/.test(err.message));
-        t.equal(res.statusCode, 409, 'create machine w/o dataset status');
+        // Otherwise, it'll complain about 'cannot read property of null':
+        if (err) {
+            t.ok(/QuotaExceeded/.test(err.message));
+            t.equal(res.statusCode, 409, 'create machine w/o dataset status');
+        }
         t.end();
     });
 });
