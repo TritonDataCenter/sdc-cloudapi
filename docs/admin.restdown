@@ -655,7 +655,7 @@ following config fragment means:
 
     "plugins": [
         {
-            "name": "provision\_limits",
+            "name": "provision_limits",
             "enabled": false,
             "config": {
                 "datacenter": "DATACENTER_NAME",
