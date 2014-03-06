@@ -1,4 +1,11 @@
-// Copyright 2012 Joyent, Inc.  All rights reserved.
+/*
+ * Copyright (c) 2014, Joyent, Inc. All rights reserved.
+ *
+ * Main CloudAPI Server file.
+ *
+ * ./build/node/bin/node main.js \
+ *      -f ./etc/cloudapi.cfg 2>&1 | ./node_dules/.bin/bunyan
+ */
 
 var assert = require('assert-plus');
 var fs = require('fs');
@@ -16,7 +23,7 @@ var app = require('./lib').app;
 
 
 
-///--- Globals
+// --- Globals
 
 var DEFAULT_CFG = __dirname + '/etc/cloudapi.config.json';
 var LOG;
@@ -184,7 +191,7 @@ function run() {
 
 
 
-///--- Mainline
+// --- Mainline
 
 PARSED = nopt(opts, shortOpts, process.argv, 2);
 if (PARSED.help) {
@@ -193,7 +200,4 @@ if (PARSED.help) {
 
 // There we go!:
 run();
-
-// Increase/decrease loggers levels using SIGUSR2/SIGUSR1:
-var sigyan = require('sigyan');
-sigyan.add([LOG]);
+var util = require('util');

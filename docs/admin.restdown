@@ -565,32 +565,65 @@ debug logging.
 
 ## Debug Logging in SMF
 
-In order to be able to change log levels without having to restart CloudAPI
-service, we can increase log level verbosity by sending a SIGUSR2 POSIX signal
-to each one of the processes associated with our Cloud API service.
+Log messages can be traced using `bunyan -p cloudapi` as explained into
+[Bunyan DTrace Examples](https://github.com/trentm/node-bunyan#dtrace-examples)
 
-First, in order to obtain the process PIDs of all the processes associated with
-our Cloud API service, run:
+# Specifying or overriding plugins configuration using UFDS
 
-    $ svcs -p cloudapi
+It's possible to specify CloudAPI's plugins configuration using UFDS, for
+example:
 
-This will result in some output like:
+        sdc-ldap add << EOD
+        dn: cn=provision_limits, ou=config, o=smartdc
+        cn: provision_limits
+        datacenter: coal
+        defaults: {"image": "any", "check": "image", "by": "machines", "value": 4}
+        defaults: {"image": "windows", "check": "image", "by": "machines", "value": -1}
+        enabled: true
+        svc: cloudapi
+        objectclass: config
+        EOD
 
-    STATE          STIME    FMRI
-    online         12:13:17 svc:/smartdc/application/cloudapi:default
-                   12:13:17    16945 node
-                   12:13:18    16997 node
-                   12:13:18    16999 node
+Of course, plugins config can be specified either using the cloudapi's config
+file or just using UFDS as above. Please, note that **any value specified for
+a given plugin using UFDS will automatically override the configuration
+specified for such plugin into the cloudapi's configuration file**.
 
-where the numbers right below the FMRI are the processes PIDs. To increase log
-level just run `kill -s SIGUSR2 <PID>` for each of the processes listed above:
+Given the most usual operations once a limit has been created are adding,
+replacing or removing concrete entries, the following are examples of how
+to do this using ufds:
 
-    $ kill -s SIGUSR2 16945 16997 16999
+### Add a new default limit to plugin config:
 
-Likewise, we can decrease log level verbosity by sending our processes a
-SIGUSR1 POSIX signal:
+        sdc-ldap modify << EOD
+        dn: cn=provision_limits, ou=config, o=smartdc
+        changetype: modify
+        add: defaults
+        defaults: {"image": "any", "check": "image", "by": "ram", "value": 8192}
+        EOD
 
-    $ kill -s SIGUSR1 16945 16997 16999
+### Remove a default limit from plugin config:
+
+        sdc-ldap modify << EOD
+        dn: cn=provision_limits, ou=config, o=smartdc
+        changetype: modify
+        delete: defaults
+        defaults: {"image": "any", "check": "image", "by": "ram", "value": 8192}
+        EOD
+
+
+### Replace an existing default limit from plugin config (delete + add):
+
+
+        sdc-ldap modify << EOD
+        dn: cn=provision_limits, ou=config, o=smartdc
+        changetype: modify
+        delete: defaults
+        defaults: {"image": "any", "check": "image", "by": "machines", "value": 4}
+        -
+        add: defaults
+        defaults: {"image": "any", "check": "image", "by": "machines", "value": 8}
+        EOD
 
 
 # Appendix A: Provision Limits Plugin
