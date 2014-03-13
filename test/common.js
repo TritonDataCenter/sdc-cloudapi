@@ -38,7 +38,6 @@ var SDC_SETUP_TESTS = process.env.SDC_SETUP_TESTS || false;
 
 var user, ufds, client, server, account;
 
-config.keyapi = config.keyapi || process.env.KEYAPI_URL;
 var SIGNATURE = 'Signature keyId="%s",algorithm="%s" %s';
 var KEY_ID;
 var fingerprint = '66:ca:1c:09:75:99:35:69:be:91:08:25:03:c0:17:c0';
