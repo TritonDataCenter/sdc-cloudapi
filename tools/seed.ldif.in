@@ -1,0 +1,118 @@
+# *Seed* packages for image management
+#
+# Notes:
+# - The "networks" are the UUIDs for the "Joyent-SDC-Public" and
+#   "Joyent-SDC-Private" network pools in NAPI
+# - These are set to be owned by the "Joyent_Dev" user for testing while
+#   image mgmt is a hidden feature pre-launch.
+#
+
+dn: uuid=IN_UUID1, ou=packages, o=smartdc
+uuid: IN_UUID1
+owner_uuid: IN_OWNER_UUID
+active: true
+cpu_cap: 200
+default: false
+group: Image Creation
+description: 2GB RAM, 1 CPUs and bursting, and 66GB Disk. Required for Image Creation.
+max_lwps: 4000
+max_physical_memory: 2048
+max_swap: 4096
+name: g3-standard-2-smartos-image-creation
+common_name: Standard 2
+quota: 67584
+min_platform: {"7.0": "20130917T001310Z"}
+traits: {"img_mgmt": true}
+parent: g3-standard-2-smartos
+networks: IN_NETWORKS
+version: 1.0.0
+zfs_io_priority: 100
+fss: 200.5
+cpu_burst_ratio: 0.5
+ram_ratio: 1.995012469
+overprovision_cpu: 2
+overprovision_memory: 1
+objectclass: sdcPackage
+
+dn: uuid=IN_UUID2, ou=packages, o=smartdc
+uuid: IN_UUID2
+owner_uuid: IN_OWNER_UUID
+active: true
+cpu_cap: 200
+default: false
+group: Image Creation
+description: 4GB RAM, 1 CPUs and bursting, and 131GB Disk. Required for Image Creation.
+max_lwps: 4000
+max_physical_memory: 4096
+max_swap: 8192
+name: g3-standard-4-smartos-image-creation
+common_name: Standard 4
+quota: 134144
+min_platform: {"7.0": "20130917T001310Z"}
+traits: {"img_mgmt": true}
+parent: g3-standard-4-smartos
+networks: IN_NETWORKS
+version: 1.0.0
+zfs_io_priority: 100
+fss: 200.5
+cpu_burst_ratio: 0.5
+ram_ratio: 3.990024938
+overprovision_cpu: 2
+overprovision_memory: 1
+objectclass: sdcPackage
+
+dn: uuid=IN_UUID3, ou=packages, o=smartdc
+uuid: IN_UUID3
+owner_uuid: IN_OWNER_UUID
+active: true
+cpu_cap: 100
+default: false
+group: Image Creation
+description: 2GB RAM, 1 CPUs, and 66GB Disk. Required for Image Creation.
+max_lwps: 4000
+max_physical_memory: 2048
+max_swap: 4096
+name: g3-standard-2-kvm-image-creation
+common_name: Standard 2
+quota: 67584
+min_platform: {"7.0": "20130917T001310Z"}
+traits: {"img_mgmt": true}
+parent: g3-standard-2-kvm
+vcpus: 1
+networks: IN_NETWORKS
+version: 1.0.0
+zfs_io_priority: 100
+fss: 100.5
+cpu_burst_ratio: 1
+ram_ratio: 1.990049751
+overprovision_cpu: 1
+overprovision_memory: 1
+objectclass: sdcPackage
+
+dn: uuid=IN_UUID4, ou=packages, o=smartdc
+uuid: IN_UUID4
+owner_uuid: IN_OWNER_UUID
+active: true
+cpu_cap: 100
+default: false
+group: Image Creation
+description: 4GB RAM, 1 CPUs, and 131GB Disk. Required for Image Creation.
+max_lwps: 4000
+max_physical_memory: 4096
+max_swap: 8192
+name: g3-standard-4-kvm-image-creation
+common_name: Standard 4
+quota: 134144
+min_platform: {"7.0": "20130917T001310Z"}
+traits: {"img_mgmt": true}
+parent: g3-standard-4-kvm
+vcpus: 1
+networks: IN_NETWORKS
+version: 1.0.0
+zfs_io_priority: 100
+fss: 100.5
+cpu_burst_ratio: 1
+ram_ratio: 3.980099502
+overprovision_cpu: 1
+overprovision_memory: 1
+objectclass: sdcPackage

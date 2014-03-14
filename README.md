@@ -16,8 +16,13 @@ CloudAPI is the API that customers use to interact with SmartDataCenter product
 `cloudapi` zone is not created by default as a core zone. If your setup lacks
 of cloudapi zone, you can create it by running:
 
-    sdc-sapi /instances -X POST \
-    -d "{\"service_uuid\": \"$(sdc-sapi --no-headers /services?name=cloudapi | json -a uuid)\", \"params\": { \"alias\" : \"cloudapi0\" }}"
+    ./tools/add-cloudapi-zone.sh <ssh hostname>
+
+from your development machine. For example, assuming you have an entry into
+your computer's SSH config file for COAL's headnode with `Host` set to
+`headnode`, the command above would become:
+
+    ./tools/add-cloudapi-zone.sh headnode
 
 # Development
 
@@ -42,120 +47,27 @@ There is an example `cloudapi.coal.cfg` file checked into the repository, with
 the default values every required variable should take if we were running the
 tests into our development machine, which has access to a COAL setup.
 
-The file `cloudapi.cfg.in` is used by headnode setup to replace every variable
-by the proper values required to make CloudAPI to work for real into a given
-SDC setup.
-
-The following is a list of the required variables, all included into this file,
-and their expected values:
-
-      "port": 443,
-      "certificate": "/opt/smartdc/cloudapi/ssl/cert.pem",
-      "key": "/opt/smartdc/cloudapi/ssl/key.pem",
-
-These are pretty straightforward, port where the application HTTP server should
-listen to and, in case of HTTPS, path to certificate & key. 
-
-      "ufds": {
-          "url": "UFDS_URL",
-          "bindDN": "UFDS_ROOT_DN",
-          "bindPassword": "UFDS_ROOT_PW",
-          "cache": {
-              "size": 5000,
-              "expiry": 60
-          }
-      },
-
-The UFDS section. It should include the __complete__ ldap(s) address for UFDS,
-and the required DN and password to bind to the LDAP server.
-
-      "vmapi": {
-          "url": "VMAPI_URL",
-          "cache": {
-              "size": 5000,
-              "expiry": 60
-          }
-      },
-
-VMAPI section. Right now internal APIs will not provide HTTP Basic Auth.
-`VMAPI_URL` must be the __complete__ HTTP address for VMAPI's HTTP server
-running into vmapi zone.
-
-      "wfapi": {
-          "url": "WFAPI_URL",
-          "cache": {
-              "size": 1000,
-              "expiry": 300
-          }
-      },
-
-Same than the VMAPI section, but for Workflow API.
-
-      "napi": {
-          "url": "NAPI_URL",
-          "cache": {
-              "size": 5000,
-              "expiry": 300
-          }
-      },
-
-Same than the VMAPI section, but for NAPI.
-
-      "cnapi": {
-          "url": "CNAPI_URL",
-          "cache": {
-              "size": 5000,
-              "expiry": 300
-          }
-      },
-
-Same than the VMAPI section, but for CNAPI.
-
-      "fwapi": {
-          "url": "FWAPI_URL",
-          "cache": {
-              "size": 5000,
-              "expiry": 300
-          }
-      },
-
-Same than the VMAPI section, but for FWAPI.
-
-      "imgapi": {
-          "url": "IMGAPI_URL",
-          "cache": {
-              "size": 5000,
-              "expiry": 300
-          }
-      },
-
-And the same thing for IMGAPI. We are using local IMGAPI instance.
-
-      "ca": {
-          "url": "CA_URL"
-      },
-
-The Cloud Analytics section. Like always, where we say URL we mean __complete__.
-
-      "datacenters": {
-          "DATACENTER_NAME": "CLOUDAPI_EXTERNAL_URL"
-      },
-
-The name of this datacenter, and the URL we can use to access CLOUDAPI from the
-outside world, if any.
+Please, remember that if you're trying to modify this file within a cloudapi
+zone, the config file is created - and automatically updated - by the
+`config-agent` service using the `template` file checked into this repo
+(`sapi_manifests/cloudapi/template`) and the SAPI configuration values.
 
 
 # Testing
 
-Before testing, you need to import smartos-1.6.3 dataset as follows from the
-headnode:
+Before testing, you need to import base image and create some packages into the
+headnode you're using for tests. Assuming that you'll be testing using COAL's
+Headnode and that you've already created `cloudapi0` zone into such HN, the
+easier way to prepare the Headnode for CloudAPI testing will be running, from
+the Global Zone:
 
-    /opt/smartdc/bin/sdc-imgadm import \
-    -m /usbkey/datasets/smartos-1.6.3.dsmanifest \
-    -f /usbkey/datasets/smartos-1.6.3.zfs.bz2
+    /zones/`vmadm lookup -1 alias=cloudapi0`/root/opt/smartdc/cloudapi/tools/coal-setup.sh
 
-(Note you can also scp the file `tools/coal-setup.sh` and run it on the headnode,
-which will create the CloudAPI zone and import the aforementioned dataset).
+This script will hack DAPI for Headnode provisioning, update imgapi to allow
+local custom images and install `base-13.4.0` and `smartos-1.6.3` images
+required for testing.
+
+Once you've completed this process you can run:
 
     make test
 
@@ -186,7 +98,7 @@ need to boot a server instance, since there's one already running).
 Also, the contents of the aforementioned `./etc/cloudapi.cfg` file
 should have been properly set.
 
-# COAL headnode provisinability
+# COAL headnode provisionability
 
 For testing changes on a COAL headnode-only configuration you will need to
 set the `SERVER_UUID` environment variable in the SMF manifest for the cloudapi
@@ -209,6 +121,5 @@ To edit the SMF manifest:
 # Image management
 
 If you want to test image management using COAL, the faster approach is to run
-the following from the global zone:
-
-    /zones/`sdc-vmname imgapi`/root/opt/smartdc/imgapi/bin/coal-setup-dc-for-image-mgmt
+the aforementioned coal-setup.sh script from the global zone. Among others, local
+image management setup will be completed.
