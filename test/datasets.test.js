@@ -78,8 +78,12 @@ test('ListDatasets OK (6.5)', function (t) {
         body.forEach(function (d) {
             checkDataset(t, d, '6.5.0');
         });
-        DATASET_UUID = body[0].id;
-        DATASET = body[0];
+        // PUBAPI-838: Prevent exceptions when images haven't been imported
+        // before running the tests:
+        if (body[0]) {
+            DATASET = body[0];
+            DATASET_UUID = body[0].id;
+        }
         t.end();
     });
 });
