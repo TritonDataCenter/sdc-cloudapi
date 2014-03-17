@@ -343,7 +343,65 @@ Each group can have an arbitrary set of [Policies](#policies):
     }
 
 Policies' `rules` are used for account users access control. These
-rules use [Aperture](https://github.com/joyent/node-aperture) as policy language.
+rules use [Aperture](https://github.com/joyent/node-aperture) as policy language
+and are described in detail into the next section.
+
+Our recommendation is to limit each policy set of rules to a very scoped collection
+and, then, add one or more of these policies to each group, in order to be able to
+easily re-use existing policies for one or more roles, allowing fine-grained
+definition of each role abilities.
+
+## Rules definition for access control
+
+As commented, the policies' rules use [Aperture Policy Language](https://github.com/joyent/node-aperture#policy-language),
+with the following general _basic format_: `<principals> CAN <actions> <resources> WHEN <conditions>`.
+
+You should refer to the [Aperture documentation](https://github.com/joyent/node-aperture) for the whole
+details on the different possibilities when defining new rules. This section
+will cover just the possibilities strictly related to CloudAPI's usage of
+such language.
+
+By default, applications will `DENY` any attempt made by any account sub-user to
+access a given resource, unless that sub-user is included into a role which
+has defined a policy with a rule that explicitly `GRANTS` access to such
+resource.
+
+The `<resources>` we can include into account policies are:
+
+- CloudAPI Routes (CloudAPI).
+- Account Instances (Smart Login).
+- Manta Resources (Manta).
+
+### Account's Instances SSH and CloudAPI's routes access
+
+Obviously, the list of `<actions>` will be different depending on each resource.
+For example, if we're defining a route to provide SSH access to a given Account's
+Instance, the only meaningful value will be `ssh`. For example, to allow all the
+members of a role including the following policy to ssh into the instance with
+the given id: `* can ssh $vm_id`.
+
+And for Cloud API's routes, the action will match the name of each route as
+defined into this documentation, __all lowercased__ to prevent case related issues.
+For example: `* can rebootmachine * when instanceip:ip=192.168.1.0/24`
+
+Both, Instances SSH and CloudAPI's routes referred to Instances can use either
+the instance `tags` or `instanceip:ip` (also IP ranges) as `<conditions>`.
+For the remaining CloudAPI's routes referred to resources which are not instances,
+the only applicable condition would be `sourceip` value or range for the
+current request.
+
+For `<resources>`, in the case of Smart Login, it'll either be an instance ID
+or the _catch all_ asterisk. For Cloud API, the same logic will be applied either
+if the route defines a machine or any other resource (ssh key, policy, role,
+image, ...): `<resources>` can take exactly the same values, either the _catch all_
+or the identifier for whatever the resource the route defined into `<actions>`
+is related to.
+
+Finally, given that policies' rules are associated to account roles, `<principals>`
+can be omitted, since any role member will be allowed to perform any action
+defined by the rules associated with that role. (It's to say, `<principals>`
+always will be like `*`).
+
 <!-- #endif -->
 
 
