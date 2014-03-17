@@ -91,12 +91,9 @@ function setup_cloudapi {
 }
 
 
-function setup_cloudapi_rsyslogd {
+function setup_haproxy_rsyslogd {
     #rsyslog was already set up by common setup- this will overwrite the
-    # config and restart since we want cloudapi to log locally.
-
-    mkdir -p /var/tmp/rsyslog/work
-    chmod 777 /var/tmp/rsyslog/work
+    # config and restart since we want haproxy to log locally.
 
     echo "Updating /etc/rsyslog.conf"
     mkdir -p /var/tmp/rsyslog/work
@@ -108,8 +105,6 @@ $MaxMessageSize 64k
 $ModLoad immark
 $ModLoad imsolaris
 $ModLoad imudp
-
-$template bunyan,"%msg:R,ERE,1,FIELD:(\{.*\})--end%\n"
 
 *.err;kern.notice;auth.notice                   /dev/sysmsg
 *.err;kern.debug;daemon.notice;mail.crit        /var/adm/messages
@@ -130,8 +125,7 @@ $ActionQueueFileName sdcfwd
 $ActionResumeRetryCount -1
 $ActionQueueSaveOnShutdown on
 
-# Support node bunyan logs going to local0
-local0.* /var/log/cloudapi.log;bunyan
+local0.* /var/log/haproxy.log
 
 $UDPServerAddress 127.0.0.1
 $UDPServerRun 514
@@ -140,11 +134,13 @@ HERE
 
     svcadm restart system-log
     [[ $? -eq 0 ]] || fatal "Unable to restart rsyslog"
+
+    logadm -w /var/log/haproxy.log -C 5 -c -s 100m
 }
 
 setup_cloudapi
 
-setup_cloudapi_rsyslogd
+setup_haproxy_rsyslogd
 
 # Install Amon monitor and probes for CloudAPI
 TRACE=1 /opt/smartdc/cloudapi/bin/cloudapi-amon-install
@@ -153,6 +149,10 @@ TRACE=1 /opt/smartdc/cloudapi/bin/cloudapi-amon-install
 sdc_log_rotation_add amon-agent /var/svc/log/*amon-agent*.log 1g
 sdc_log_rotation_add config-agent /var/svc/log/*config-agent*.log 1g
 sdc_log_rotation_add registrar /var/svc/log/*registrar*.log 1g
+sdc_log_rotation_add cloudapi-8081 /var/svc/log/*cloudapi-8081.log 1g
+sdc_log_rotation_add cloudapi-8082 /var/svc/log/*cloudapi-8082.log 1g
+sdc_log_rotation_add cloudapi-8083 /var/svc/log/*cloudapi-8083.log 1g
+sdc_log_rotation_add cloudapi-8084 /var/svc/log/*cloudapi-8084.log 1g
 sdc_log_rotation_add cloudapi /var/log/cloudapi.log 1g
 sdc_log_rotation_setup_end
 

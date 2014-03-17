@@ -1,11 +1,7 @@
 {
     "port": 443,
     "bunyan": {
-        "level": "info",
-        "syslog": {
-            "facility": "local0",
-            "type": "udp"
-        }
+        "level": "info"
     },
     "read_only": {{{CLOUDAPI_READONLY}}},
     "ufds": {

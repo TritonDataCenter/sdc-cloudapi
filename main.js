@@ -13,7 +13,6 @@ var http = require('http');
 var https = require('https');
 var path = require('path');
 
-var bsyslog = require('bunyan-syslog');
 var bunyan = require('bunyan');
 var nopt = require('nopt');
 var restify = require('restify');
@@ -53,43 +52,31 @@ function setupLogger(config) {
     var cfg_b = config.bunyan;
     var level = cfg_b.level || LOG.level();
 
-    if (cfg_b.syslog) {
-        assert.string(cfg_b.syslog.facility, 'config.bunyan.syslog.facility');
-        assert.string(cfg_b.syslog.type, 'config.bunyan.syslog.type');
+    LOG = bunyan.createLogger({
+        name: 'cloudapi',
+        serializers: restify.bunyan.serializers,
+        src: Boolean(bunyan.resolveLevel(level) <= bunyan.TRACE),
+        streams: [
+            {
+                level: level,
+                stream: process.stderr
+            },
+            {
+                level: 'trace',
+                type: 'raw',
+                stream: new RequestCaptureStream({
+                    level: bunyan.WARN,
+                    maxRecords: 100,
+                    maxRequestIds: 100,
+                    streams: [ {
+                        level: level,
+                        stream: process.stderr
+                    } ]
+                })
+            }
+        ]
+    });
 
-        var syslogStream = bsyslog.createBunyanStream({
-            name: 'cloudapi',
-            facility: bsyslog.facility[cfg_b.syslog.facility],
-            host: cfg_b.syslog.host,
-            port: cfg_b.syslog.port,
-            type: cfg_b.syslog.type
-        });
-        LOG = bunyan.createLogger({
-            name: 'cloudapi',
-            serializers: restify.bunyan.serializers,
-            src: Boolean(bunyan.resolveLevel(level) <= bunyan.TRACE),
-            streams: [
-                {
-                    level: level,
-                    type: 'raw',
-                    stream: syslogStream
-                },
-                {
-                    level: 'trace',
-                    type: 'raw',
-                    stream: new RequestCaptureStream({
-                        level: bunyan.WARN,
-                        maxRecords: 100,
-                        maxRequestIds: 100,
-                        streams: [ {
-                            raw: true,
-                            stream: syslogStream
-                        } ]
-                    })
-                }
-            ]
-        });
-    }
 }
 
 function usage(code, message) {
