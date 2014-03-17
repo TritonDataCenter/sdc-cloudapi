@@ -133,6 +133,7 @@ release: check build docs
 		$(ROOT)/sapi_manifests \
 		$(ROOT)/smf \
 		$(ROOT)/test \
+		$(ROOT)/tools \
 		$(RELSTAGEDIR)/root/opt/smartdc/cloudapi/
 	mkdir -p $(RELSTAGEDIR)/root/opt/smartdc/boot
 	cp -R $(ROOT)/deps/sdc-scripts/* $(RELSTAGEDIR)/root/opt/smartdc/boot/
