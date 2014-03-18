@@ -29,7 +29,8 @@ var SUB_UUID_TWO;
 var SUB_DN_TWO;
 
 var POLICY_DOC = [
-    'Fred can read *.js when dirname = examples and sourceip = 10.0.0.0/8',
+    'Fred can read *.js when foo::string = bar and tag = examples and ' +
+    'sourceip::ip = 10.0.0.0/8',
     'Bob can read and write timesheet if requesttime::time > 07:30:00 and ' +
         'requesttime::time < 18:30:00 and ' +
         'requesttime::day in (Mon, Tue, Wed, THu, Fri)',
@@ -384,6 +385,23 @@ test('update policy', function (t) {
         t.equal(body.name, 'policy-name-can-be-modified');
         POLICY_NAME = body.name;
         t.ok(body.rules.indexOf(str) !== -1);
+        t.end();
+    });
+});
+
+
+test('update policy with rule not OK', function (t) {
+    var str = 'Pedro can delete * when baz = bar';
+    POLICY_DOC.push(str);
+    client.post('/my/policies/' + POLICY_UUID, {
+        rules: POLICY_DOC,
+        name: 'policy-name-can-be-modified'
+    }, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.name, 'InvalidArgumentError');
+        t.ok(body);
+        t.ok(/baz/.test(body.message));
+        t.equal(res.statusCode, 409);
         t.end();
     });
 });

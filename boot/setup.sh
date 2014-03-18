@@ -35,6 +35,8 @@ cat /opt/smartdc/$role/ssl/key.pem >> /opt/smartdc/$role/ssl/stud.pem
 echo "" >>/root/.profile
 echo "export PATH=\$PATH:/opt/smartdc/$role/build/node/bin:/opt/smartdc/$role/node_modules/.bin" >>/root/.profile
 
+# Until we figure out a way to share aperture config across applications:
+cp $SVC_ROOT/etc/aperture.json.in $SVC_ROOT/etc/aperture.json
 
 # setup stud, haproxy
 function setup_cloudapi {

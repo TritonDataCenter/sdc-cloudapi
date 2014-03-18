@@ -1,0 +1,7 @@
+{
+    "typeTable": {
+        "ip": "ip",
+        "requestip": "ip",
+        "tag": "string"
+    }
+}

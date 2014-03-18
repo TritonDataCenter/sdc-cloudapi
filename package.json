@@ -17,14 +17,15 @@
         "nopt": "2.0.0",
         "restify": "git+ssh://git@github.com:mcavage/node-restify.git#0d7b4ba",
         "bunyan": "0.22.1",
-        "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#eef8be",
+        "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#cbb4f8",
         "semver": "1.1.0",
         "nodemailer": "0.3.29",
         "clone": "0.1.5",
         "assert-plus": "0.1.2",
         "asn1": "0.1.11",
         "ctype": "0.5.2",
-        "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#f06bd1"
+        "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#f06bd1",
+        "aperture": "git+ssh://git@github.com:joyent/node-aperture.git#e59aa4"
     },
     "devDependencies": {
         "tap": "~0.3",
