@@ -822,8 +822,8 @@ The following is an example of adding provisioning limits using ufds:
     dn: dclimit=coal, uuid=cc71f8bb-f310-4746-8e36-afd7c6dd2895, ou=users, o=smartdc
     datacenter: coal
     objectclass: capilimit
-    limit: {"os": "smartos", "check": "os", "limitby": "ram", "value": "8192"}
-    limit: {"os": "any", "check": "os", "limitby": "machines", "value": "4"}
+    limit: {"os": "smartos", "check": "os", "by": "ram", "value": "8192"}
+    limit: {"os": "any", "check": "os", "by": "machines", "value": "4"}
     EOD
 
 
