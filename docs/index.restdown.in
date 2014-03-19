@@ -5259,6 +5259,8 @@ An array of firewall rule objects. Firewall Rules are:
 ||id||String||Unique identifier for this rule||
 ||enabled||Boolean||Indicates if the rule is or not enabled||
 ||rule||String||Firewall Rule text||
+||global||Boolean||Indicates if the rule is or not global (Optional, since v7.1.1)||
+||description||String||Human readable description for the rule (Optional, since v7.1.1)||
 
 ### Errors
 
@@ -5321,6 +5323,8 @@ Retrieves an individual firewall rule record.
 ||id||String||Unique identifier for this rule||
 ||enabled||Boolean||Indicates if the rule is or not enabled||
 ||rule||String||Firewall Rule text||
+||global||Boolean||Indicates if the rule is or not global (Optional, since v7.1.1)||
+||description||String||Human readable description for the rule (Optional, since v7.1.1)||
 
 ### Errors
 
@@ -5375,6 +5379,7 @@ added to all the account machines where it may be necessary.
 ||**Field**||**Type**||**Description**||
 ||enabled||Boolean||Indicates if the rule is or not enabled (optional, false by default)||
 ||rule||String||Firewall Rule text (mandatory)||
+||description||String||Human readable description for the rule (Optional, since v7.1.1)||
 
 ### Returns
 
@@ -5384,6 +5389,8 @@ Firewall rule object.
 ||id||String||Unique identifier for this rule||
 ||enabled||Boolean||Indicates if the rule is or not enabled||
 ||rule||String||Firewall Rule text||
+||global||Boolean||Indicates if the rule is or not global (Optional, since v7.1.1)||
+||description||String||Human readable description for the rule (Optional, since v7.1.1)||
 
 ### Errors
 
@@ -5440,6 +5447,7 @@ the rule from all the required account machines.
 
 ||**Field**||**Type**||**Description**||
 ||rule||String||Firewall Rule text (mandatory)||
+||description||String||Human readable description for the rule (Optional, since v7.1.1)||
 
 ### Returns
 
@@ -5449,13 +5457,15 @@ Firewall rule object.
 ||id||String||Unique identifier for this rule||
 ||enabled||Boolean||Indicates if the rule is or not enabled||
 ||rule||String||Firewall Rule text||
+||global||Boolean||Indicates if the rule is or not global (Optional, since v7.1.1)||
+||description||String||Human readable description for the rule (Optional, since v7.1.1)||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
 ||**Error Code**||**Description**||
-||InvalidArgument||If rule is invalid||
+||InvalidArgument||If rule is invalid or you are trying to modify a global rule||
 ||MissingParameter||If you didn't send a rule||
 ||ResourceNotFound||If :login does not exist or rule with :id does not exist||
 
@@ -5512,6 +5522,8 @@ Firewall rule
 ||id||String||Unique identifier for this rule||
 ||enabled||Boolean||Indicates if the rule is or not enabled||
 ||rule||String||Firewall Rule text||
+||global||Boolean||Indicates if the rule is or not global (Optional, since v7.1.1)||
+||description||String||Human readable description for the rule (Optional, since v7.1.1)||
 
 ### Errors
 
@@ -5575,6 +5587,8 @@ Firewall rule
 ||id||String||Unique identifier for this rule||
 ||enabled||Boolean||Indicates if the rule is or not enabled||
 ||rule||String||Firewall Rule text||
+||global||Boolean||Indicates if the rule is or not global (Optional, since v7.1.1)||
+||description||String||Human readable description for the rule (Optional, since v7.1.1)||
 
 ### Errors
 
@@ -6598,6 +6612,9 @@ as explained into [Networks section](#Networks).
 `--networks|-w` argument, which can be set to the `id` of one or more of the
 networks retrieved from `/:account/networks`.
 
+* Starting at version `7.1.1` firewall rules will include information regarding
+rules being or not `global` and will optionally include human readable
+`description` for the rules, (which can be modified but for the global rules).
 
 # Appendix F: SDC 6.5 Support
 

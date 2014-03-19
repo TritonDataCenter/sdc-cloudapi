@@ -1,7 +1,7 @@
 {
     "name": "cloudapi",
     "description": "SmartDataCenter CloudAPI",
-    "version": "7.1.0",
+    "version": "7.1.1",
     "author": "Joyent (joyent.com)",
     "private": true,
     "repository": {
@@ -28,7 +28,7 @@
         "aperture": "git+ssh://git@github.com:joyent/node-aperture.git#e59aa4"
     },
     "devDependencies": {
-        "tap": "~0.3",
+        "tap": "~0.4",
         "smartdc": "git+ssh://git@github.com:joyent/node-smartdc.git#adea68"
     },
     "scripts": {
