@@ -88,8 +88,25 @@ var sdc_128_ok = {
     active: true
 };
 
+var sdc_128_os = {
+    uuid: '0f06a3b8-4c54-4408-bb17-ffb34290867e',
+    name: 'sdc_128_os',
+    version: '1.0.0',
+    os: 'linux',
+    max_physical_memory: 128,
+    quota: 10240,
+    max_swap: 256,
+    cpu_cap: 150,
+    max_lwps: 1000,
+    zfs_io_priority: 10,
+    'default': false,
+    vcpus: 1,
+    urn: 'sdc:0f06a3b8-4c54-4408-bb17-ffb34290867e:sdc_128_os:1.0.0',
+    active: true
+};
 
-var sdc_256_entry, sdc_256_inactive_entry, sdc_128_ok_entry;
+
+var sdc_256_entry, sdc_256_inactive_entry, sdc_128_ok_entry, sdc_128_os_entry;
 
 var HEADNODE = null;
 
@@ -100,20 +117,30 @@ test('setup', TAP_CONF, function (t) {
     common.setup(function (err, _client, _server) {
         t.ifError(err, 'common setup error');
         t.ok(_client, 'common _client ok');
-        client = _client;
+
         if (!process.env.SDC_SETUP_TESTS) {
             t.ok(_server);
         }
+
+        client = _client;
         server = _server;
+
         saveKey(KEY, keyName, client, t, function () {
             // Add custom packages; "sdc_" ones will be owned by admin user:
             addPackage(client, sdc_128_ok, function (err2, entry) {
                 t.ifError(err2, 'Add package error');
                 sdc_128_ok_entry = entry;
+
                 addPackage(client, sdc_256_inactive, function (err3, entry2) {
                     t.ifError(err3, 'Add package error');
                     sdc_256_inactive_entry = entry2;
-                    t.end();
+
+                    addPackage(client, sdc_128_os, function (err4, entry3) {
+                        t.ifError(err4, 'Add package error');
+                        sdc_128_os_entry = entry3;
+
+                        t.end();
+                    });
                 });
             });
         });
@@ -179,6 +206,7 @@ test('Create machine with inactive package', TAP_CONF, function (t) {
     });
 });
 
+
 var DATASET;
 
 test('get smartos dataset', TAP_CONF, function (t) {
@@ -194,6 +222,26 @@ test('get smartos dataset', TAP_CONF, function (t) {
                 DATASET = body[0].id;
             }
         });
+        t.end();
+    });
+});
+
+
+test('Create machine with os mismatch', TAP_CONF, function (t) {
+    var obj = {
+        image: DATASET,
+        'package': 'sdc_128_os',
+        name: 'a' + uuid().substr(0, 7),
+        server_uuid: HEADNODE.uuid,
+        firewall_enabled: true
+    };
+
+    client.post('/my/machines', obj, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.statusCode, 409);
+        t.equal(body.code, 'InvalidArgument');
+        t.equal(body.message, 'The package and image must have the same OS, ' +
+            'but package has "smartos" while image has "linux"');
         t.end();
     });
 });
