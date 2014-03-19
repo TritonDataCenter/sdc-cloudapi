@@ -37,7 +37,7 @@ CLEAN_FILES	+= node_modules cscope.files docs/index.restdown
 
 # The prebuilt sdcnode version we want. See
 # "tools/mk/Makefile.node_prebuilt.targ" for details.
-NODE_PREBUILT_VERSION=v0.8.26
+NODE_PREBUILT_VERSION=v0.10.26
 ifeq ($(shell uname -s),SunOS)
 	NODE_PREBUILT_IMAGE=fd2cc906-8938-11e3-beab-4359c665ac99
 	NODE_PREBUILT_TAG=zone
@@ -159,39 +159,39 @@ publish: release
 .PHONY: test auth_test account_test datacenters_test datasets_test keys_test machines_test packages_test
 
 auth_test: $(TAP)
-	$(TAP) --tap --timeout 120 test/auth.test.js
+	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/auth.test.js
 
 account_test: $(TAP)
-	$(TAP) --tap --timeout 120 test/account.test.js
+	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/account.test.js
 
 datacenters_test: $(TAP)
-	$(TAP) --tap --timeout 120 test/datacenters.test.js
+	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/datacenters.test.js
 
 datasets_test: $(TAP)
-	$(TAP) --tap --timeout 120 test/datasets.test.js
+	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/datasets.test.js
 
 keys_test: $(TAP)
-	$(TAP) --tap --timeout 120 test/keys.test.js
+	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/keys.test.js
 
 networks_test: $(TAP)
-	$(TAP) --tap --timeout 120 test/networks.test.js
+	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/networks.test.js
 
 machines_all_test:
-	$(TAP) --tap --timeout 480 test/machines.test.js
+	$(NODE_EXEC) $(TAP) --tap --timeout 480 test/machines.test.js
 
 machines_65_test:
-	$(TAP) --tap --timeout 480 test/machines.65.test.js
+	$(NODE_EXEC) $(TAP) --tap --timeout 480 test/machines.65.test.js
 
 machines_70_test:
-	$(TAP) --tap --timeout 480 test/machines.70.test.js
+	$(NODE_EXEC) $(TAP) --tap --timeout 480 test/machines.70.test.js
 
 machines_71_test:
-	$(TAP) --tap --timeout 480 test/machines.71.test.js
+	$(NODE_EXEC) $(TAP) --tap --timeout 480 test/machines.71.test.js
 
 machines_test: machines_all_test machines_65_test machines_70_test machines_71_test
 
 packages_test: $(TAP)
-	$(TAP) --tap --timeout 120 test/packages.test.js
+	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/packages.test.js
 
 test: auth_test account_test datacenters_test datasets_test keys_test networks_test machines_test packages_test
 
