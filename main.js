@@ -62,7 +62,6 @@ function setupLogger(config) {
                 stream: process.stderr
             },
             {
-                level: 'trace',
                 type: 'raw',
                 stream: new RequestCaptureStream({
                     level: bunyan.WARN,
