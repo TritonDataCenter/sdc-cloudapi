@@ -56,7 +56,6 @@ function hack_dapi_for_headnode_provisioning {
 
 
 function install_image {
-echo $#
   [[ $# -ge 1 ]] || fatal "install_image requires at least 1 argument"
   local img_uuid=$1
   local admin_uuid=$(bash /lib/sdc/config.sh -json | json ufds_admin_uuid)
