@@ -33,7 +33,7 @@ cat /opt/smartdc/$role/ssl/key.pem >> /opt/smartdc/$role/ssl/stud.pem
 
 # Add build/node/bin and node_modules/.bin to PATH
 echo "" >>/root/.profile
-echo "export PATH=\$PATH:/opt/smartdc/$role/build/node/bin:/opt/smartdc/$role/node_modules/.bin" >>/root/.profile
+echo "export PATH=/opt/smartdc/$role/build/node/bin:/opt/smartdc/$role/node_modules/.bin:\$PATH" >>/root/.profile
 
 # Until we figure out a way to share aperture config across applications:
 cp $SVC_ROOT/etc/aperture.json.in $SVC_ROOT/etc/aperture.json
