@@ -284,8 +284,9 @@ test('teardown', function (t) {
             client.teardown(function (err3) {
                 t.ifError(err3, 'client teardown error');
 
-                if (process.env.SDC_SETUP_TESTS)
+                if (process.env.SDC_SETUP_TESTS) {
                     return t.end();
+                }
 
                 Object.keys(server._clients).forEach(function (c) {
                     var sdcClient = server._clients[c].client;
