@@ -289,6 +289,9 @@ function setupClient(version, callback) {
         log: LOG,
         tlsOptions: {
             rejectUnauthorized: false
+        },
+        retry: {
+            initialDelay: 100
         }
     });
 
@@ -297,6 +300,19 @@ function setupClient(version, callback) {
     });
 
     ufds.once('connect', function () {
+        ufds.removeAllListeners('error');
+        ufds.on('error', function (err) {
+            LOG.warn(err, 'UFDS: unexpected error occurred');
+        });
+
+        ufds.on('close', function () {
+            LOG.warn('UFDS: disconnected');
+        });
+
+        ufds.on('connect', function () {
+            LOG.info('UFDS: reconnected');
+        });
+
         ufdsConnectCb(callback);
     });
 }
