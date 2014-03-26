@@ -6612,6 +6612,10 @@ as explained into [Networks section](#Networks).
 `--networks|-w` argument, which can be set to the `id` of one or more of the
 networks retrieved from `/:account/networks`.
 
+* Version `7.1.0` adds Customer Image Management, allowing [Machine Creation
+from Images](#CreateImageFromMachine), [exporting images to the specified manta
+path](#ExportImage) and [custom images deletion](#DeleteImage).
+
 * Starting at version `7.1.1` firewall rules will include information regarding
 rules being or not `global` and will optionally include human readable
 `description` for the rules, (which can be modified but for the global rules).
