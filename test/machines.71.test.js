@@ -138,8 +138,8 @@ test('Get Headnode', TAP_CONF, function (t) {
 
 var DATASET;
 
-test('get smartos dataset', TAP_CONF, function (t) {
-    client.get('/my/datasets?name=smartos', function (err, req, res, body) {
+test('get base dataset', TAP_CONF, function (t) {
+    client.get('/my/datasets?name=base', function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets error');
         t.equal(res.statusCode, 200, 'GET /my/datasets status');
         common.checkHeaders(t, res.headers);
@@ -147,7 +147,7 @@ test('get smartos dataset', TAP_CONF, function (t) {
         t.ok(Array.isArray(body), 'GET /my/datasets body is an array');
         t.ok(body.length, 'GET /my/datasets body array has elements');
         body.forEach(function (d) {
-            if (d.version && d.version === '1.6.3') {
+            if (d.version && d.version === '13.4.0') {
                 DATASET = body[0].id;
             }
         });
@@ -436,8 +436,6 @@ test('Delete tests', TAP_CONF, function (t) {
         t.end();
     });
 });
-
-
 
 
 test('teardown', {timeout: 'Infinity '}, function (t) {
