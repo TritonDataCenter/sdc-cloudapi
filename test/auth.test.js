@@ -18,9 +18,11 @@ var common = require('./common');
 
 var SIGNATURE = 'Signature keyId="%s",algorithm="%s" %s';
 var client, server, account, ssoClient, sigClient;
-var KEY_ID;
+var KEY_ID, SUB_KEY_ID;
 var fingerprint = '66:ca:1c:09:75:99:35:69:be:91:08:25:03:c0:17:c0';
+var sub_fp = 'f4:1a:34:3c:2c:81:69:5b:83:20:72:e2:b4:57:3e:71';
 var privateKey, publicKey;
+var subPrivateKey, subPublicKey;
 var SDC_SSO_URI, TOKEN;
 
 // --- Tests
@@ -32,7 +34,11 @@ test('setup', function (t) {
         client = _client;
         privateKey = client.privateKey;
         publicKey = client.publicKey;
+        subPublicKey = client.subPublicKey;
+        subPrivateKey = client.subPrivateKey;
+        account = client.account.login;
         KEY_ID = client.KEY_ID;
+        SUB_KEY_ID = client.SUB_ID;
         if (!process.env.SDC_SETUP_TESTS) {
             t.ok(_server);
         }
@@ -330,6 +336,43 @@ if (process.env.SDC_SSO_ADMIN_IP) {
     });
 }
 
+
+// Account sub-users will use only http-signature >= 0.10.x, given this
+// feature has been added after moving from 0.9.
+// Also, request version will always be >= 7.2 here.
+// PLEASE, NOTE SUB-USER REQUESTS USING "/my" WILL BE USELESS, NEED TO PROVIDE
+// MAIN ACCOUNT "login" COMPLETE "/:account".
+test('sub-user signature auth (0.10)', function (t) {
+    function subRequestSigner(req) {
+        httpSignature.sign(req, {
+            key: subPrivateKey,
+            keyId: SUB_KEY_ID
+        });
+    }
+
+    var cli = restify.createJsonClient({
+        url: server ? server.url : 'https://127.0.0.1',
+        retryOptions: {
+            retry: 0
+        },
+        log: client.log,
+        rejectUnauthorized: false,
+        signRequest: subRequestSigner
+    });
+
+    cli.get({
+        path: '/' + account,
+        headers: {
+            'accept-version': '~7.2'
+        }
+    }, function (err, req, res, obj) {
+        console.log(util.inspect(err, false, 8, true));
+        t.ok(err);
+        t.equal(res.statusCode, 403);
+        cli.close();
+        t.end();
+    });
+});
 
 test('teardown', { timeout: 'Infinity' }, function (t) {
     function nuke(callback) {
