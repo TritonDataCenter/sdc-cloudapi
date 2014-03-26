@@ -288,46 +288,6 @@ test('Get Machine', TAP_CONF, function (t) {
 });
 
 
-var IMG_JOB_UUID;
-
-test('Attempt to create image from running machine', TAP_CONF, function (t) {
-    if (machine) {
-        var obj = {
-            machine: machine,
-            name: uuid(),
-            version: '1.0.0'
-        };
-        client.post({
-            path: '/my/images',
-            headers: {
-                'accept-version': '~7.1'
-            }
-        }, obj, function (err, req, res, body) {
-            t.ifError(err);
-            t.ok(body);
-            t.ok(res.headers['x-joyent-jobid'], 'jobid header');
-            IMG_JOB_UUID = res.headers['x-joyent-jobid'];
-            t.end();
-        });
-    } else {
-        t.end();
-    }
-});
-
-
-test('Wait for img create from running machine job', TAP_CONF, function (t) {
-    if (machine) {
-        waitForWfJob(client, IMG_JOB_UUID, function (err) {
-            t.ok(err, 'Image job error');
-            t.equal(err.message, 'Job failed');
-            t.end();
-        });
-    } else {
-        t.end();
-    }
-});
-
-
 test('Rename machine tests', TAP_CONF, function (t) {
     var renameTest = require('./machines/rename');
     renameTest(t, client, machine, function () {
@@ -374,6 +334,9 @@ test('Create image from machine (missing params)', TAP_CONF, function (t) {
         t.end();
     }
 });
+
+
+var IMG_JOB_UUID;
 
 
 test('Create image from machine OK', TAP_CONF, function (t) {
