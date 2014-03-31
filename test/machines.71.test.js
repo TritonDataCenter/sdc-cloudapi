@@ -380,6 +380,23 @@ test('Wait for img create job', TAP_CONF, function (t) {
 });
 
 
+test('Update image', TAP_CONF, function (t) {
+    var obj = { name: uuid(), version: '1.1.0' };
+    if (image_uuid) {
+        var opts = {
+            path: '/my/images/' + image_uuid,
+            query: { action: 'update' }
+        };
+        client.post(opts, obj, function (err, req, res, body) {
+            t.ifError(err, 'Update Image error');
+            t.end();
+        });
+    } else {
+        t.end();
+    }
+});
+
+
 test('Delete image', TAP_CONF, function (t) {
     if (image_uuid) {
         client.imgapi.deleteImage(image_uuid, function (err, res) {

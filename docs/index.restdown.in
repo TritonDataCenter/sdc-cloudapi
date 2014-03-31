@@ -330,7 +330,7 @@ Additionally, these account users can be organized using [Roles](#roles):
         id: '802fbab6-ec2b-41c3-9399-064ccb65075b',
         name: 'devs',
         members: [ 'bob', 'fred', 'pedro' ],
-        policies: [ 'createMachine', 'resizeMachine', 'CreateImageFromMachine'] 
+        policies: [ 'createMachine', 'resizeMachine', 'CreateImageFromMachine']
     }
 
 Each group can have an arbitrary set of [Policies](#policies):
@@ -2531,6 +2531,98 @@ Some typical and specific errors for this endpoint:
         "owner": "47034e57-42d1-0342-b302-00db733e8c8a",
         "public": false,
         "state": "creating"
+    }
+
+
+## UpdateImage (POST /:login/images?action=update)
+
+(**Beta.** Custom image management is currently in beta.)
+
+Updates an image.
+
+### Inputs
+
+Only the image attributes listed below can be updated.
+
+||**Field**||**Type**||**Notes**||
+||name||String||Name of the image, e.g. "my-image". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-name) for details.||
+||version||String||Version of the image, e.g. "1.0.0". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-version) for details.||
+||description||String||The image [description](https://images.joyent.com/docs/#manifest-description).||
+||homepage||String||The image [homepage](https://images.joyent.com/docs/#manifest-homepage).||
+||eula||String||The image [eula](https://images.joyent.com/docs/#manifest-eula).||
+||acl||String||The image [acl](https://images.joyent.com/docs/#manifest-acl).||
+||tags||String||The image [tags](https://images.joyent.com/docs/#manifest-tags).||
+
+
+### Returns
+
+An updated image object.
+
+|| **Field**    ||**Type**||**Notes**||
+|| id           || String ||a unique identifier for this image||
+|| name         || String ||The "friendly name for this image||
+|| os           || String ||The underlying operating system for this image||
+|| version      || String ||The version for this image||
+|| type         || String ||Whether this is a smartmachine or virtualmachine dataset||
+|| requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
+|| homepage     || String ||(New in 7.0.) The URL for a web page including detailed information for this image||
+|| published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
+|| owner        || String ||(New in 7.1.) The UUID of the user who owns this image.||
+|| public       || Boolean ||(New in 7.1.) Indicates if this image is publicly available. Currently all custom images are private.||
+|| state        || String ||(New in 7.1.) The current state of the image. The value returned here will be 'creating'.||
+|| tags         || Object ||(New in 7.1.) An object of key/value pairs that allows clients to categorize images by any given criteria.||
+|| eula         || String ||(New in 7.1.) URL of the End User License Agreement (EULA) for the image.||
+|| acl          || Array  ||(New in 7.1.) Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
+
+
+### Errors
+
+For general errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+Some typical and specific errors for this endpoint:
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist or the image specified does not exist||
+
+
+### Example CLI Command
+
+    sdc-updateimage eca995fe-b904-11e3-b05a-83a4899322dc \
+        --name my-renamed-image
+
+#### Example HTTP Request
+
+    POST /my/images/eca995fe-b904-11e3-b05a-83a4899322dc?action=update HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    X-Api-Version: ~7.0
+
+    {
+      "name": "my-renamed-image",
+    }
+
+#### Example HTTP Response
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    ...
+    Request-Id: b8e43c60-b904-11e3-93b7-1f685001b0c3
+    Response-Time: 135
+    X-Request-Id: b8e43c60-b904-11e3-93b7-1f685001b0c3
+    X-Api-Version: 7.2.0
+    X-Response-Time: 135
+
+    {
+      "id": "eca995fe-b904-11e3-b05a-83a4899322dc",
+      "name": "my-renamed-image",
+      "version": "1.0.0",
+      "os": "smartos",
+      "requirements": {},
+      "type": "smartmachine",
+      "published_at": "2013-11-25T17:44:54Z",
+      "owner": "47034e57-42d1-0342-b302-00db733e8c8a",
+      "public": true,
+      "state": "active"
     }
 
 
