@@ -24,7 +24,7 @@
         "assert-plus": "0.1.2",
         "asn1": "0.1.11",
         "ctype": "0.5.2",
-        "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#f06bd1",
+        "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#4d70539d83a0235fdb1f4ad50aea86bf1bddc842",
         "aperture": "git+ssh://git@github.com:joyent/node-aperture.git#e59aa4"
     },
     "devDependencies": {
