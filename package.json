@@ -26,8 +26,9 @@
         "assert-plus": "0.1.2",
         "asn1": "0.1.11",
         "ctype": "0.5.2",
-        "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#5604fc77c983cdc84ed52cbbcf4bc306d574acec",
-        "aperture": "git+ssh://git@github.com:joyent/node-aperture.git#e59aa4"
+        "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#5604fc",
+        "aperture": "git+ssh://git@github.com:joyent/node-aperture.git#e59aa4",
+        "mahi": "git+ssh://git@git.joyent.com:node-mahi.git#d2c949"
     },
     "devDependencies": {
         "tap": "~0.4",
