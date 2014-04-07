@@ -4,6 +4,8 @@
     "version": "7.1.1",
     "author": "Joyent (joyent.com)",
     "private": true,
+    "engines" : { "node" : ">=0.10" },
+    "engineStrict": true,
     "repository": {
         "type" : "git",
         "url" : "git+ssh://git@git.joyent.com:cloudapi.git"
@@ -24,7 +26,7 @@
         "assert-plus": "0.1.2",
         "asn1": "0.1.11",
         "ctype": "0.5.2",
-        "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#4d70539d83a0235fdb1f4ad50aea86bf1bddc842",
+        "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#5604fc77c983cdc84ed52cbbcf4bc306d574acec",
         "aperture": "git+ssh://git@github.com:joyent/node-aperture.git#e59aa4"
     },
     "devDependencies": {
