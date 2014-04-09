@@ -51,6 +51,9 @@ function filterLimits(req_image, cfg_limits, limits) {
         var parsedLimits = [];
         Object.keys(limits[0]).forEach(function (k) {
             if (k === 'limit') {
+                if (typeof (limits[0][k]) === 'string') {
+                    limits[0][k] = [limits[0][k]];
+                }
                 limits[0][k].forEach(function (j) {
                     try {
                         parsedLimits.push(JSON.parse(j));
