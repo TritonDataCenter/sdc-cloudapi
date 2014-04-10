@@ -85,22 +85,6 @@ function hack_imgapi_to_allow_local_custom_images {
     fi
 }
 
-function add_image_creation_packages {
-    local existing=$(/opt/smartdc/bin/sdc sdc-papi /packages?filter='(%26(name=*-image-creation)(active=true))'|json -Ha|wc -l|awk '{print $1}')
-    if [[ "$existing" == "0" ]]; then
-      echo "# Adding Image Creation Packages"
-      TOP=$(cd $(dirname $0)/ >/dev/null; pwd)
-      $TOP/create-seed-packages-ldif-coal.sh
-
-      local papi_zone=$(vmadm lookup -1 alias=papi0)
-      cp /tmp/seed-packages.ldif /zones/$papi_zone/root/tmp/
-
-      /zones/$papi_zone/root/opt/smartdc/papi/build/node/bin/node \
-        /zones/$papi_zone/root/opt/smartdc/papi/bin/importer \
-        --ldif=/zones/$papi_zone/root/tmp/seed-packages.ldif
-    fi
-}
-
 
 
 #---- mainline
@@ -117,7 +101,6 @@ echo "# Setup CloudAPI and prepare COAL DC for ."
 hack_dapi_for_headnode_provisioning
 # TODO: how to offer alternative to hook up to remote Manta?
 hack_imgapi_to_allow_local_custom_images
-add_image_creation_packages
 
 # This is base-13.4.0:
 base=`joyent-imgadm list os=smartos name=base version=13.4.0 -o uuid|tail -1`
