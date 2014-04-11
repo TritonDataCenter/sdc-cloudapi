@@ -305,7 +305,7 @@ through the guide, so go ahead and delete the one we setup:
 
     $ sdc-deletekey id_rsa
 
-<!-- #ifdef BLEEDING_EDGE -->
+
 ## Account Users, Roles & Policies Management.
 
 Starting at version 7.2.0, [Accounts](#account) can have multiple users
@@ -402,8 +402,6 @@ Finally, given that policies' rules are associated to account roles, `<principal
 can be omitted, since any role member will be allowed to perform any action
 defined by the rules associated with that role. (It's to say, `<principals>`
 always will be like `*`).
-
-<!-- #endif -->
 
 
 # API Introduction
@@ -1046,7 +1044,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 
 
-<!-- #ifdef BLEEDING_EDGE -->
 # Users
 
 ## ListUsers (GET /:account/users)
@@ -1981,9 +1978,6 @@ Creates a new key record. See [CreateKey](#CreateKey).
 ## DeleteUserKey (DELETE /:account/users/:user/keys/:key)
 
 Removes a key. See [GetKey](#GetKey).
-
-<!-- #endif -->
-
 
 
 
