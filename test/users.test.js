@@ -103,19 +103,6 @@ test('setup', function (t) {
 });
 
 
-test('list users (empty) OK', function (t) {
-    client.get('/my/users', function (err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
-        common.checkHeaders(t, res.headers);
-        t.ok(body);
-        t.ok(Array.isArray(body));
-        t.equal(body.length, 0);
-        t.end();
-    });
-});
-
-
 test('create user with invalid login', function (t) {
     var user = {
         login: '_invalid_login',
@@ -265,12 +252,12 @@ test('get user by UUID', function (t) {
 
 test('list users OK', function (t) {
     client.get('/my/users', function (err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
+        t.ifError(err, 'list users err');
+        t.equal(res.statusCode, 200, 'list users status');
         common.checkHeaders(t, res.headers);
-        t.ok(body);
-        t.ok(Array.isArray(body));
-        t.equal(body.length, 1);
+        t.ok(body, 'list users body');
+        t.ok(Array.isArray(body), 'list users returns array');
+        t.equal(body.length, 2, 'list users array length');
         t.end();
     });
 });
@@ -426,7 +413,8 @@ test('create role', function (t) {
 
     var entry = {
         name: name,
-        members: SUB_LOGIN_TWO
+        members: SUB_LOGIN_TWO,
+        default_members: SUB_LOGIN_TWO
     };
 
     client.post('/my/roles', entry, function (err, req, res, body) {
@@ -471,6 +459,7 @@ test('update role', function (t) {
     var members = [SUB_LOGIN_TWO, SUB_LOGIN];
     client.post('/my/roles/' + ROLE_NAME, {
         members: members,
+        default_members: members,
         name: 'role-name-can-be-modified'
     }, function (err, req, res, body) {
         t.ifError(err);
@@ -481,6 +470,7 @@ test('update role', function (t) {
         t.equal(body.name, 'role-name-can-be-modified');
         ROLE_NAME = body.name;
         t.ok(body.members.indexOf(SUB_LOGIN) !== -1);
+        t.ok(body.default_members.indexOf(SUB_LOGIN) !== -1);
         t.end();
     });
 });
@@ -520,7 +510,7 @@ test('create another role', function (t) {
 
     var entry = {
         name: name,
-        members: [SUB_LOGIN, SUB_LOGIN_TWO ],
+        members: [SUB_LOGIN, SUB_LOGIN_TWO],
         policies: [POLICY_NAME]
     };
 
@@ -570,7 +560,9 @@ test('get user with roles', function (t) {
         t.ok(body);
         t.equal(body.id, SUB_UUID);
         t.ok(body.roles);
+        t.ok(body.default_roles);
         t.ok(Array.isArray(body.roles));
+        t.ok(Array.isArray(body.default_roles));
         t.end();
     });
 });
