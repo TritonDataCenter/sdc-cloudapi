@@ -330,6 +330,7 @@ Additionally, these account users can be organized using [Roles](#roles):
         id: '802fbab6-ec2b-41c3-9399-064ccb65075b',
         name: 'devs',
         members: [ 'bob', 'fred', 'pedro' ],
+        default_members: [ 'bob', 'fred' ],
         policies: [ 'createMachine', 'resizeMachine', 'CreateImageFromMachine']
     }
 
@@ -1150,6 +1151,7 @@ Array of user objects. Each user object has the following fields:
 ||created||Date (ISO8601)||When this user was created||
 ||updated||Date (ISO8601)||When this user was updated||
 ||roles||Array||User role names (only when `membership` option is present)||
+||default_roles||Array||User active role names (only when `membership` option is present)||
 
 ### Errors
 
@@ -1181,6 +1183,7 @@ Array of user objects. Each user object has the following fields:
         login: 'a4ce91ff',
         email: 'a4ce91ff_test@test.com',
         roles: ['devs', 'admins'],
+        default_roles: ['devs'],
         updated: '2014-02-13T09:18:46.644Z',
         created: '2014-02-13T09:18:46.644Z'
     }
@@ -1422,6 +1425,7 @@ Returns an array of account roles
 ||**Field**||**Type**||**Description**||
 ||name||String||The role name||
 ||members||Array||The list of account's sub-users logins to be added to this role (Optional)||
+||default_members||Array||The list of account's sub-users logins to be added to this role and have it enabled by default (Optional)||
 ||policies||Array||The list of account's policies to be given to this role (Optional)||
 ||id||String||(UUID) Unique role identifier. Identifier purpose is just to allow role name modifications||
 
@@ -1456,6 +1460,7 @@ Returns an array of account roles
         "id": "4025de02-b4b6-4041-ae72-0749e99a5ac4",
         "name": "reboot",
         "members": ["bob","fred","pedro"],
+        "default_members": ["bob","fred"],
         "policies": ["rebootMachine"]
     }]
 
@@ -1474,6 +1479,7 @@ Get an account role (`:role`) either by `name` or `id`.
 ||**Field**||**Type**||**Description**||
 ||name||String||The role name||
 ||members||Array||The list of account's sub-users logins to be added to this role (Optional)||
+||default_members||Array||The list of account's sub-users logins to be added to this role and have it enabled by default (Optional)||
 ||policies||Array||The list of account's policies to be given to this role (Optional)||
 ||id||String||(UUID) Unique role identifier. Identifier purpose is just to allow role name modifications||
 
@@ -1521,6 +1527,7 @@ Create a new role for your account.
 ||**Field**||**Type**||**Description**||
 ||name||String||(Required) The role name||
 ||members||Array||The list of account's sub-users logins to be added to this role (Optional)||
+||default_members||Array||The list of account's sub-users logins to be added to this role and have it enabled by default (Optional)||
 ||policies||Array||The list of account's policies to be given to this role (Optional)||
 
 ### Returns
@@ -1530,6 +1537,7 @@ Account role
 ||**Field**||**Type**||**Description**||
 ||name||String||The role name||
 ||members||Array||The list of account's sub-users logins to be added to this role (Optional)||
+||default_members||Array||The list of account's sub-users logins to be added to this role and have it enabled by default (Optional)||
 ||policies||Array||The list of account's policies to be given to this role (Optional)||
 ||id||String||(UUID) Unique role identifier. Identifier purpose is just to allow role name modifications||
 
@@ -1586,6 +1594,7 @@ Modifies an account role. Everything but id can be modified.
 ||**Field**||**Type**||**Description**||
 ||name||String||(Required) The role name||
 ||members||Array||The list of account's sub-users logins to be added to this role (Optional)||
+||default_members||Array||The list of account's sub-users logins to be added to this role and have it enabled by default (Optional)||
 ||policies||Array||The list of account's policies to be given to this role (Optional)||
 
 ### Returns
@@ -1595,6 +1604,7 @@ Account role
 ||**Field**||**Type**||**Description**||
 ||name||String||The role name||
 ||members||Array||The list of account's sub-users logins to be added to this role (Optional)||
+||default_members||Array||The list of account's sub-users logins to be added to this role and have it enabled by default (Optional)||
 ||policies||Array||The list of account's policies to be given to this role (Optional)||
 ||id||String||(UUID) Unique role identifier. Identifier purpose is just to allow role name modifications||
 
