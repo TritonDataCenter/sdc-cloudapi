@@ -148,7 +148,7 @@ test('get base dataset', TAP_CONF, function (t) {
         t.ok(body.length, 'GET /my/datasets body array has elements');
         body.forEach(function (d) {
             if (d.version && d.version === '13.4.0') {
-                DATASET = body[0].id;
+                DATASET = body[d].id;
             }
         });
         t.end();
