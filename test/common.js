@@ -17,7 +17,14 @@ var PAPI = require('sdc-clients').PAPI;
 var app = require('../lib').app;
 var util = require('util');
 var fs = require('fs');
-
+var mahi = require('mahi');
+var apertureConfig = {
+    typeTable: {
+        ip: 'ip',
+        requestip: 'ip',
+        tag: 'string'
+    }
+};
 // --- Globals
 
 var PASSWD = 'secret123';
@@ -143,7 +150,17 @@ function _papi() {
 }
 
 
+function _mahi() {
+    return mahi.createClient({
+        url: process.env.MAHI_URL || config.mahi.url ||
+        'http://10.99.99.34:8080',
+        typeTable: apertureConfig.typeTable
+    });
+}
+
+
 function clientTeardown(cb) {
+    client.mahi.close();
     client.close();
     client.ufds.deleteKey(client.testUser, 'id_rsa', function (er4) {
         client.ufds.deleteKey(client.subuser, 'sub_id_rsa', function (er5) {
@@ -227,7 +244,8 @@ function ufdsConnectCb(callback) {
         login: client.testUser,
         email: client.testUser,
         userpassword: PASSWD,
-        registered_developer: true
+        registered_developer: true,
+        approved_for_provisioning: true
     };
 
     return ufds.addUser(entry, function (err, customer) {
@@ -274,6 +292,7 @@ function setupClient(version, callback) {
     client.napi = _napi();
     client.imgapi = _imgapi();
     client.papi = _papi();
+    client.mahi = _mahi();
 
     client.testUser = user;
     client.KEY_ID = KEY_ID = '/' + client.testUser + '/keys/id_rsa';
