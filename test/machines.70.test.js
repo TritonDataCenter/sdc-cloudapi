@@ -149,7 +149,7 @@ test('get smartos dataset', TAP_CONF, function (t) {
         t.ok(body.length, 'GET /my/datasets body array has elements');
         body.forEach(function (d) {
             if (d.version && d.version === '1.6.3') {
-                DATASET = body[d].id;
+                DATASET = d.id;
             }
         });
         t.end();
