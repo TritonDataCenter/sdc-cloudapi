@@ -2130,6 +2130,10 @@ An array of images. Image objects include the following fields:
 || type         || String ||Whether this is a smartmachine or virtualmachine dataset||
 || requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
 || homepage     || String ||(New in 7.0.) The URL for a web page including detailed information for this image||
+|| files     || Array ||(New in 7.1.) The array of image files that make up each image. Currently only a single file per image is supported.||
+|| files[0].compression     || String ||(New in 7.1.) The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'.||
+|| files[0].sha1     || String ||(New in 7.1.) SHA-1 hex digest of the file content. Used for download corruption checking.||
+|| files[0].size     || Number ||(New in 7.1.) File size in bytes.||
 || published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
 || public       || Boolean ||(New in 7.1.) Indicates if this image is publicly available.||
 || state        || String ||(New in 7.1.) The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed'.||
@@ -2217,6 +2221,10 @@ None
 || requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
 || homepage     || String ||(New in 7.0.) The URL for a web page including detailed information for this image||
 || published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
+|| files     || Array ||(New in 7.1.) The array of image files that make up each image. Currently only a single file per image is supported.||
+|| files[0].compression     || String ||(New in 7.1.) The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'.||
+|| files[0].sha1     || String ||(New in 7.1.) SHA-1 hex digest of the file content. Used for download corruption checking.||
+|| files[0].size     || Number ||(New in 7.1.) File size in bytes.||
 || owner        || String ||(New in 7.1.) The UUID of the user who owns this image.||
 || public       || Boolean ||(New in 7.1.) Indicates if this image is publicly available.||
 || state        || String ||(New in 7.1.) The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed'.||
@@ -2463,6 +2471,10 @@ not all fields listed there can be specified here.
 || requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
 || homepage     || String ||(New in 7.0.) The URL for a web page including detailed information for this image||
 || published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
+|| files     || Array ||(New in 7.1.) The array of image files that make up each image. Currently only a single file per image is supported.||
+|| files[0].compression     || String ||(New in 7.1.) The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'.||
+|| files[0].sha1     || String ||(New in 7.1.) SHA-1 hex digest of the file content. Used for download corruption checking.||
+|| files[0].size     || Number ||(New in 7.1.) File size in bytes.||
 || owner        || String ||(New in 7.1.) The UUID of the user who owns this image.||
 || public       || Boolean ||(New in 7.1.) Indicates if this image is publicly available. Currently all custom images are private.||
 || state        || String ||(New in 7.1.) The current state of the image. The value returned here will be 'creating'.||
@@ -2571,6 +2583,10 @@ An updated image object.
 || requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
 || homepage     || String ||(New in 7.0.) The URL for a web page including detailed information for this image||
 || published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
+|| files     || Array ||(New in 7.1.) The array of image files that make up each image. Currently only a single file per image is supported.||
+|| files[0].compression     || String ||(New in 7.1.) The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'.||
+|| files[0].sha1     || String ||(New in 7.1.) SHA-1 hex digest of the file content. Used for download corruption checking.||
+|| files[0].size     || Number ||(New in 7.1.) File size in bytes.||
 || owner        || String ||(New in 7.1.) The UUID of the user who owns this image.||
 || public       || Boolean ||(New in 7.1.) Indicates if this image is publicly available. Currently all custom images are private.||
 || state        || String ||(New in 7.1.) The current state of the image. The value returned here will be 'creating'.||
