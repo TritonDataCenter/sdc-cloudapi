@@ -40,8 +40,7 @@ module.exports = function (suite, client, machine, pkg, callback) {
             t.ok(jobs, 'list jobs OK');
             t.ok(jobs.length, 'update jobs is array');
             var resize_jobs = jobs.filter(function (job) {
-                return (
-                    typeof (job.params.max_physical_memory) !== 'undefined');
+                return (job.params.subtask === 'resize');
             });
             t.ok(resize_jobs.length, 'resize jobs is an array');
             waitForJob(client, resize_jobs[0].uuid, function (err2) {

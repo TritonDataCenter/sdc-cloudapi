@@ -39,7 +39,7 @@ module.exports = function (suite, client, machine, callback) {
             t.ok(jobs, 'list jobs OK');
             t.ok(jobs.length, 'update jobs is array');
             var rename_jobs = jobs.filter(function (job) {
-                return (typeof (job.params.alias) !== 'undefined');
+                return (job.params.subtask === 'rename');
             });
             t.ok(rename_jobs.length, 'rename jobs is an array');
             waitForJob(client, rename_jobs[0].uuid, function (err2) {
