@@ -14,6 +14,7 @@ var restify = require('restify');
 
 var common = require('./common');
 
+
 // --- Globals
 
 var SIGNATURE = 'Signature keyId="%s",algorithm="%s" %s';
@@ -24,6 +25,38 @@ var sub_fp = 'f4:1a:34:3c:2c:81:69:5b:83:20:72:e2:b4:57:3e:71';
 var privateKey, publicKey;
 var subPrivateKey, subPublicKey;
 var SDC_SSO_URI, TOKEN;
+
+
+// Helpers
+function checkMahiCache(mahi, path, cb) {
+    mahi._get(path, function (err, res) {
+        if (err) {
+            if (err.name === 'AccountDoesNotExistError' ||
+                err.name === 'UserDoesNotExistError') {
+                return cb(null, false);
+            } else {
+                return cb(err);
+            }
+        }
+        return cb(null, true);
+
+    });
+}
+
+function waitForMahiCache(mahi, path, cb) {
+    client.log.info('Polling mahi for %s', path);
+    return checkMahiCache(mahi, path, function (err, ready) {
+        if (err) {
+            return cb(err);
+        }
+        if (!ready) {
+            return setTimeout(function () {
+                waitForMahiCache(mahi, path, cb);
+            }, (process.env.POLL_INTERVAL || 1000));
+        }
+        return cb(null);
+    });
+}
 
 // --- Tests
 
@@ -342,7 +375,98 @@ if (process.env.SDC_SSO_ADMIN_IP) {
 // Also, request version will always be >= 7.2 here.
 // PLEASE, NOTE SUB-USER REQUESTS USING "/my" WILL BE USELESS, NEED TO PROVIDE
 // MAIN ACCOUNT "login" COMPLETE "/:account".
-test('sub-user signature auth (0.10)', function (t) {
+
+// Before we can test authorize, we need to add couple roles/policies:
+var USER_FMT = 'uuid=%s, ou=users, o=smartdc';
+var POLICY_FMT = 'policy-uuid=%s, ' + USER_FMT;
+var ROLE_FMT = 'role-uuid=%s, ' + USER_FMT;
+var A_POLICY_UUID, A_POLICY_DN, A_POLICY_NAME;
+var A_ROLE_UUID, A_ROLE_DN, A_ROLE_NAME;
+
+
+test('create policy', function (t) {
+    var policy_uuid = libuuid.create();
+    var name = 'a' + policy_uuid.substr(0, 7);
+
+    var entry = {
+        name: name,
+        rules: [
+            '* CAN get * IF route::string = getaccount',
+            '* CAN get AND head * IF route::string = listusers',
+            '* CAN post * IF route::string = createuser',
+            'Foobar CAN get * IF route::string = listkeys',
+            util.format('%s CAN get * IF route::string = listuserkeys',
+                client.testSubUser)
+        ],
+        description: 'This is the account/users policy'
+    };
+
+    client.post('/my/policies', entry, function (err, req, res, body) {
+        t.ifError(err);
+        t.ok(body);
+        t.equal(res.statusCode, 201);
+        common.checkHeaders(t, res.headers);
+        A_POLICY_UUID = body.id;
+        A_POLICY_NAME = body.name;
+        A_POLICY_DN = util.format(POLICY_FMT, A_POLICY_UUID, account.uuid);
+        t.end();
+    });
+});
+
+
+test('create role', function (t) {
+    var role_uuid = libuuid.create();
+    var name = 'a' + role_uuid.substr(0, 7);
+
+    var entry = {
+        name: name,
+        members: client.testSubUser,
+        policies: [A_POLICY_NAME],
+        default_members: client.testSubUser
+    };
+
+    client.post('/my/roles', entry, function (err, req, res, body) {
+        t.ifError(err);
+        t.ok(body);
+        t.equal(res.statusCode, 201);
+        common.checkHeaders(t, res.headers);
+        A_ROLE_UUID = body.id;
+        A_ROLE_NAME = body.name;
+        A_ROLE_DN = util.format(ROLE_FMT, A_ROLE_UUID, account.uuid);
+        t.end();
+    });
+});
+
+
+test('tag resource with role', function (t) {
+    client.put('/my/users', {
+        'role-tag': [A_ROLE_NAME]
+    }, function (err, req, res, body) {
+        t.ifError(err, 'resource role err');
+        t.ok(body, 'resource role body');
+        t.ok(body.name, 'resource role name');
+        t.ok(body['role-tag'], 'resource role tag');
+        t.ok(body['role-tag'].length, 'resource role tag ary');
+        t.end();
+    });
+});
+
+
+test('get resource role-tag', function (t) {
+    var p = '/my/users?role-tag=true';
+    client.get(p, function (err, req, res, body) {
+        t.ifError(err, 'resource role err');
+        t.ok(body, 'resource role body');
+        t.ok(body.name, 'resource role name');
+        t.ok(body['role-tag'], 'resource role tag');
+        t.ok(body['role-tag'].length, 'resource role tag ary');
+        t.equal(body['role-tag'][0], A_ROLE_NAME, 'resource role');
+        t.end();
+    });
+});
+
+
+test('sub-user signature auth (0.10)', { timeout: 'Infinity' }, function (t) {
     function subRequestSigner(req) {
         httpSignature.sign(req, {
             key: subPrivateKey,
@@ -350,29 +474,90 @@ test('sub-user signature auth (0.10)', function (t) {
         });
     }
 
-    var cli = restify.createJsonClient({
-        url: server ? server.url : 'https://127.0.0.1',
-        retryOptions: {
-            retry: 0
-        },
-        log: client.log,
-        rejectUnauthorized: false,
-        signRequest: subRequestSigner
-    });
+    var mPath = util.format('/user/%s/%s', account, client.testSubUser);
+    waitForMahiCache(client.mahi, mPath, function (er) {
+        t.ifError(er, 'wait for mahi cache error');
+        var cli = restify.createJsonClient({
+            url: server ? server.url : 'https://127.0.0.1',
+            retryOptions: {
+                retry: 0
+            },
+            log: client.log,
+            rejectUnauthorized: false,
+            signRequest: subRequestSigner
+        });
 
-    cli.get({
-        path: '/' + account,
-        headers: {
-            'accept-version': '~7.2'
-        }
-    }, function (err, req, res, obj) {
-        console.log(util.inspect(err, false, 8, true));
-        t.ok(err);
-        t.equal(res.statusCode, 403);
-        cli.close();
+        // TODO: Any user should be able to read account, write account
+        // should be the forbidden piece:
+        t.test('sub-user get account', { timeout: 'Infinity' }, function (t2) {
+            cli.get({
+                path: '/' + account,
+                headers: {
+                    'accept-version': '~7.2'
+                }
+            }, function (err, req, res, obj) {
+                t2.ok(err, 'sub-user get account error');
+                t2.equal(res.statusCode, 403, 'sub-user auth statusCode');
+                t2.end();
+            });
+        });
+
+        t.test('sub-user get users', { timeout: 'Infinity' }, function (t1) {
+            cli.get({
+                path: '/' + account + '/users',
+                headers: {
+                    'accept-version': '~7.2'
+                }
+            }, function (err, req, res, obj) {
+                t1.ifError(err, 'sub-user get users error');
+                t1.equal(res.statusCode, 200, 'sub-user auth statusCode');
+                t1.end();
+            });
+        });
+
+        // TODO: Any user should be able to get thyself
+        t.test('sub-user get thyself', { timeout: 'Infinity' }, function (t3) {
+            cli.get({
+                path: util.format('/%s/users/%s', account, client.testSubUser),
+                headers: {
+                    'accept-version': '~7.2'
+                }
+            }, function (err, req, res, obj) {
+                t3.ok(err, 'sub-user get thyself error');
+                t3.equal(res.statusCode, 403, 'sub-user auth statusCode');
+                cli.close();
+                t3.end();
+            });
+        });
+
         t.end();
     });
 });
+
+
+// We also have to cleanup all the roles/policies:
+
+test('delete role', function (t) {
+    var url = '/my/roles/' + A_ROLE_UUID;
+    client.del(url, function (err, req, res) {
+        t.ifError(err);
+        t.equal(res.statusCode, 204);
+        common.checkHeaders(t, res.headers);
+        t.end();
+    });
+});
+
+
+test('delete policy', function (t) {
+    var url = '/my/policies/' + A_POLICY_UUID;
+    client.del(url, function (err, req, res) {
+        t.ifError(err);
+        t.equal(res.statusCode, 204);
+        common.checkHeaders(t, res.headers);
+        t.end();
+    });
+});
+
 
 test('teardown', { timeout: 'Infinity' }, function (t) {
     function nuke(callback) {
