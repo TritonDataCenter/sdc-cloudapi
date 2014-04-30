@@ -34,7 +34,8 @@ module.exports = function (suite, client, machine, callback) {
             t.ok(jobs, 'list jobs OK');
             t.ok(jobs.length, 'update jobs is array');
             var firewall_jobs = jobs.filter(function (job) {
-                return (typeof (job.params.firewall_enabled) !== 'undefined');
+                return (typeof (job.params.payload.firewall_enabled) !==
+                    'undefined');
             });
             t.ok(firewall_jobs.length, 'firewall jobs is an array');
             waitForJob(client, firewall_jobs[0].uuid, function (err2) {
@@ -64,7 +65,8 @@ module.exports = function (suite, client, machine, callback) {
             t.ok(jobs, 'list jobs OK');
             t.ok(jobs.length, 'update jobs is array');
             var firewall_jobs = jobs.filter(function (job) {
-                return (typeof (job.params.firewall_enabled) !== 'undefined');
+                return (typeof (job.params.payload.firewall_enabled) !==
+                    'undefined');
             });
             t.ok(firewall_jobs.length, 'firewall jobs is an array');
             waitForJob(client, firewall_jobs[0].uuid, function (err2) {
