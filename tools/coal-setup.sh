@@ -40,10 +40,10 @@ function errexit {
 
 
 function hack_dapi_for_headnode_provisioning {
-    local dapi_zone=$(vmadm lookup -1 alias=dapi0)
+    local cnapi_zone=$(vmadm lookup -1 alias=cnapi0)
     # TODO: don't change if already done
     echo "# Hack DAPI to allow headnode provisioning"
-    local config_path=/zones/$dapi_zone/root/opt/smartdc/dapi/sapi_manifests/dapi/template
+    local config_path=/zones/$cnapi_zone/root/opt/smartdc/cnapi/sapi_manifests/cnapi/template
     sed -e "
         s:hard-filter-headnode:identity:g;
         s:hard-filter-min-ram:identity:g;
@@ -51,7 +51,8 @@ function hack_dapi_for_headnode_provisioning {
         s:hard-filter-min-cpu:identity:g;
         " $config_path >$config_path.new
     mv $config_path.new $config_path
-    svcadm -z $dapi_zone restart config-agent
+    svcadm -z $cnapi_zone restart config-agent
+    svcadm -z $cnapi_zone restart cnapi
 }
 
 
