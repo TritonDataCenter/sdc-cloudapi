@@ -14,7 +14,10 @@ var TAP_CONF = {
 };
 
 module.exports = function (suite, client, machine, pkg, callback) {
-    if (!machine) {
+    // FIXME: Restore resize tests into nightly-1 when we finally get
+    // some room for them
+    var cfg = common.getCfg();
+    if (!machine || cfg.datacenters['nightly-1']) {
         return callback();
     }
 
