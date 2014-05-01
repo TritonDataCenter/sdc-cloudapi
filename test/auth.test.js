@@ -487,8 +487,6 @@ test('sub-user signature auth (0.10)', { timeout: 'Infinity' }, function (t) {
             signRequest: subRequestSigner
         });
 
-        // TODO: Any user should be able to read account, write account
-        // should be the forbidden piece:
         t.test('sub-user get account', { timeout: 'Infinity' }, function (t2) {
             cli.get({
                 path: '/' + account,
@@ -515,7 +513,6 @@ test('sub-user signature auth (0.10)', { timeout: 'Infinity' }, function (t) {
             });
         });
 
-        // TODO: Any user should be able to get thyself
         t.test('sub-user get thyself', { timeout: 'Infinity' }, function (t3) {
             cli.get({
                 path: util.format('/%s/users/%s', account, client.testSubUser),
