@@ -438,7 +438,7 @@ test('create role', function (t) {
 });
 
 
-test('tag resource with role', function (t) {
+test('tag resource collection with role', function (t) {
     client.put('/my/users', {
         'role-tag': [A_ROLE_NAME]
     }, function (err, req, res, body) {
@@ -452,7 +452,7 @@ test('tag resource with role', function (t) {
 });
 
 
-test('get resource role-tag', function (t) {
+test('get resource collection role-tag', function (t) {
     var p = '/my/users?role-tag=true';
     client.get(p, function (err, req, res, body) {
         t.ifError(err, 'resource role err');
@@ -464,6 +464,21 @@ test('get resource role-tag', function (t) {
         t.end();
     });
 });
+
+
+test('tag individual resource with role', function (t) {
+    client.put('/my/users/' + client.testSubUser, {
+        'role-tag': [A_ROLE_NAME]
+    }, function (err, req, res, body) {
+        t.ifError(err, 'resource role err');
+        t.ok(body, 'resource role body');
+        t.ok(body.name, 'resource role name');
+        t.ok(body['role-tag'], 'resource role tag');
+        t.ok(body['role-tag'].length, 'resource role tag ary');
+        t.end();
+    });
+});
+
 
 
 test('sub-user signature auth (0.10)', { timeout: 'Infinity' }, function (t) {
