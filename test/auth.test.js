@@ -453,14 +453,18 @@ test('tag resource collection with role', function (t) {
 
 
 test('get resource collection role-tag', function (t) {
-    var p = '/my/users?role-tag=true';
-    client.get(p, function (err, req, res, body) {
+    var p = '/my/users';
+    client.get({
+        path: p,
+        headers: {
+            'role-tag': true
+        }
+    }, function (err, req, res, body) {
         t.ifError(err, 'resource role err');
         t.ok(body, 'resource role body');
-        t.ok(body.name, 'resource role name');
-        t.ok(body['role-tag'], 'resource role tag');
-        t.ok(body['role-tag'].length, 'resource role tag ary');
-        t.equal(body['role-tag'][0], A_ROLE_NAME, 'resource role');
+        t.ok(body[0].login, 'resource is a user');
+        t.ok(res.headers['role-tag'], 'resource role-tag header');
+        t.equal(res.headers['role-tag'], A_ROLE_NAME, 'resource role-tag');
         t.end();
     });
 });
