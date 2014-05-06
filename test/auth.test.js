@@ -13,7 +13,7 @@ function uuid() {
 var restify = require('restify');
 
 var common = require('./common');
-
+var vasync = require('vasync');
 
 // --- Globals
 
@@ -484,6 +484,24 @@ test('tag individual resource with role', function (t) {
 });
 
 
+test('get individual resource role-tag', function (t) {
+    var p = '/my/users/' + client.testSubUser;
+    client.get({
+        path: p,
+        headers: {
+            'role-tag': true
+        }
+    }, function (err, req, res, body) {
+        t.ifError(err, 'resource role err');
+        t.ok(body, 'resource role body');
+        t.ok(body.login, 'resource is a user');
+        t.ok(res.headers['role-tag'], 'resource role-tag header');
+        t.equal(res.headers['role-tag'], A_ROLE_NAME, 'resource role-tag');
+        t.end();
+    });
+});
+
+
 
 test('sub-user signature auth (0.10)', { timeout: 'Infinity' }, function (t) {
     function subRequestSigner(req) {
@@ -531,7 +549,8 @@ test('sub-user signature auth (0.10)', { timeout: 'Infinity' }, function (t) {
                 t1.end();
             });
         });
-
+        // Even when we've added the role-tag, the policies into the role don't
+        // include a rule with route::string = 'getuser', therefore the 403:
         t.test('sub-user get thyself', { timeout: 'Infinity' }, function (t3) {
             cli.get({
                 path: util.format('/%s/users/%s', account, client.testSubUser),
@@ -571,6 +590,25 @@ test('delete policy', function (t) {
         t.equal(res.statusCode, 204);
         common.checkHeaders(t, res.headers);
         t.end();
+    });
+});
+
+
+test('cleanup sdcAccountResources', function (t) {
+    var id = client.account.uuid;
+    client.ufds.listResources(id, function (err, resources) {
+        t.ifError(err);
+        vasync.forEachPipeline({
+            inputs: resources,
+            func: function (r, _cb) {
+                client.ufds.deleteResource(id, r.uuid, function (er2) {
+                    return _cb(er2);
+                });
+            }
+        }, function (er3, results) {
+            t.ifError(er3);
+            t.end();
+        });
     });
 });
 
