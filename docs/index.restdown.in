@@ -1122,7 +1122,7 @@ Array of user objects. Each user object has the following fields:
 
 ## GetUser (GET /:account/users/:user)
 
-Get an account sub-user (`:user`) either by `login` or `id`. (`id` purpose is
+Get an account sub-user (`:user`) by `id`. (`id` purpose is
 just to allow sub-user `login` modifications).
 
 
@@ -1161,7 +1161,7 @@ Array of user objects. Each user object has the following fields:
 ### Example Request
 
 
-    GET /my/users/a4ce91ff?membership=true HTTP/1.1
+    GET /my/users/ed976ee5-80a4-42cd-b0d6-5493b7d41132?membership=true HTTP/1.1
     Accept: application/json
     Host: api.example.com
     Api-Version: ~7.2
@@ -1338,7 +1338,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### Example Request
 
-    POST /my/users/a4ce91ff/change_password HTTP/1.1
+    POST /my/users/ed976ee5-80a4-42cd-b0d6-5493b7d41132/change_password HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
@@ -1389,7 +1389,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 #### Example Request
 
-    DELETE /my/users/a4ce91ff HTTP/1.1
+    DELETE /my/users/ed976ee5-80a4-42cd-b0d6-5493b7d41132 HTTP/1.1
     Host: api.example.com
     Accept: application/json
     Api-Version: ~7.2
