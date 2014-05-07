@@ -1746,7 +1746,7 @@ Retrieves a list of account policies.
 
 ## GetPolicy (GET /:account/policies/:policy)
 
-Get an account policy (`:policy`) either by `name` or `id`.
+Get an account policy (`:policy`) either by `id`.
 
 
 ### Inputs
@@ -1770,7 +1770,7 @@ Get an account policy (`:policy`) either by `name` or `id`.
 ### Example Request
 
 
-    GET /my/policies/rebootMachine HTTP/1.1
+    GET /my/policies/4025de02-b4b6-4041-ae72-0749e99a5ac4 HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
@@ -1887,7 +1887,7 @@ Upgrades an existing account policy. Everything but id can be modified.
 ### Example Request
 
 
-    POST /my/policies/rebootMachine HTTP/1.1
+    POST /my/policies/4025de02-b4b6-4041-ae72-0749e99a5ac4 HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
@@ -1941,7 +1941,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 #### Example Request
 
-    DELETE /my/policies/rebootMachine HTTP/1.1
+    DELETE /my/policies/4025de02-b4b6-4041-ae72-0749e99a5ac4 HTTP/1.1
     Host: api.example.com
     Accept: application/json
     Api-Version: ~7.2

@@ -332,18 +332,6 @@ test('get policy by UUID', function (t) {
 });
 
 
-test('get policy by name', function (t) {
-    client.get('/my/policies/' + POLICY_NAME, function (err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
-        common.checkHeaders(t, res.headers);
-        t.ok(body);
-        t.equal(body.id, POLICY_UUID);
-        t.end();
-    });
-});
-
-
 test('list policies (OK)', function (t) {
     client.get('/my/policies', function (err, req, res, body) {
         t.ifError(err);
@@ -443,21 +431,9 @@ test('get role (by UUID)', function (t) {
 });
 
 
-test('get role (by name)', function (t) {
-    client.get('/my/roles/' + ROLE_NAME, function (err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
-        common.checkHeaders(t, res.headers);
-        t.ok(body);
-        t.equal(body.id, ROLE_UUID);
-        t.end();
-    });
-});
-
-
 test('update role', function (t) {
     var members = [SUB_LOGIN_TWO, SUB_LOGIN];
-    client.post('/my/roles/' + ROLE_NAME, {
+    client.post('/my/roles/' + ROLE_UUID, {
         members: members,
         default_members: members,
         name: 'role-name-can-be-modified'
@@ -477,7 +453,7 @@ test('update role', function (t) {
 
 
 test('add existing policy to role', function (t) {
-    client.post('/my/roles/' + ROLE_NAME, {
+    client.post('/my/roles/' + ROLE_UUID, {
         policies: [POLICY_NAME]
     }, function (err, req, res, body) {
         t.ifError(err);
@@ -493,7 +469,7 @@ test('add existing policy to role', function (t) {
 
 test('add unexisting policy to role', function (t) {
     var FAKE_POLICY = libuuid.create();
-    client.post('/my/roles/' + ROLE_NAME, {
+    client.post('/my/roles/' + ROLE_UUID, {
         policies: [POLICY_NAME, FAKE_POLICY]
     }, function (err, req, res, body) {
         t.ok(err);
