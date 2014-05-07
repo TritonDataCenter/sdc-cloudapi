@@ -570,6 +570,67 @@ test('sub-user signature auth (0.10)', { timeout: 'Infinity' }, function (t) {
 });
 
 
+// Adding role-tag at creation time:
+var B_ROLE_UUID, B_ROLE_DN, B_ROLE_NAME;
+
+test('create role with role-tag', function (t) {
+    var role_uuid = libuuid.create();
+    var name = 'a' + role_uuid.substr(0, 7);
+
+    var entry = {
+        name: name,
+        members: client.testSubUser,
+        policies: [A_POLICY_NAME],
+        default_members: client.testSubUser
+    };
+
+    client.post({
+        path: '/my/roles',
+        headers: {
+            'role-tag': [A_ROLE_NAME]
+        }
+    }, entry, function (err, req, res, body) {
+        t.ifError(err);
+        t.ok(body);
+        t.equal(res.statusCode, 201);
+        common.checkHeaders(t, res.headers);
+        B_ROLE_UUID = body.id;
+        B_ROLE_NAME = body.name;
+        B_ROLE_DN = util.format(ROLE_FMT, B_ROLE_UUID, account.uuid);
+        t.end();
+    });
+});
+
+
+test('update role with role-tag', function (t) {
+    var p = '/my/roles/' + B_ROLE_UUID;
+    B_ROLE_NAME = 'Something-different';
+    client.post({
+        path: p,
+        headers: {
+            'role-tag': [A_ROLE_NAME]
+        }
+    }, {
+        name: B_ROLE_NAME
+    }, function (err, req, res, body) {
+        t.ifError(err, 'resource role err');
+        t.ok(body, 'resource role body');
+        t.end();
+    });
+});
+
+
+test('delete role with role-tag', function (t) {
+    var url = '/my/roles/' + B_ROLE_UUID;
+    client.del(url, function (err, req, res) {
+        t.ifError(err);
+        t.equal(res.statusCode, 204);
+        common.checkHeaders(t, res.headers);
+        t.end();
+    });
+});
+
+
 // We also have to cleanup all the roles/policies:
 
 test('delete role', function (t) {

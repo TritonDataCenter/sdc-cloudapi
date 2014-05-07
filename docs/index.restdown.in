@@ -1467,7 +1467,7 @@ Returns an array of account roles
 
 ## GetRole (GET /:account/roles/:role)
 
-Get an account role (`:role`) either by `name` or `id`.
+Get an account role (`:role`) by `id`.
 
 
 ### Inputs
@@ -1492,7 +1492,7 @@ Get an account role (`:role`) either by `name` or `id`.
 ### Example Request
 
 
-    GET /my/roles/reboot HTTP/1.1
+    GET /my/roles/4025de02-b4b6-4041-ae72-0749e99a5ac4 HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
@@ -1570,7 +1570,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ### Example Response
 
     HTTP/1.1 201 Created
-    Location: /my/roles/reboot
+    Location: /my/roles/4025de02-b4b6-4041-ae72-0749e99a5ac4
     Content-Type: application/json
     Content-Length: 97
     Server: Joyent SmartDataCenter 7.2.0
@@ -1620,7 +1620,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### Example Request
 
-    POST /my/roles/reboot HTTP/1.1
+    POST /my/roles/4025de02-b4b6-4041-ae72-0749e99a5ac4 HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
@@ -1671,7 +1671,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 #### Example Request
 
-    DELETE /my/roles/reboot HTTP/1.1
+    DELETE /my/roles/4025de02-b4b6-4041-ae72-0749e99a5ac4 HTTP/1.1
     Host: api.example.com
     Accept: application/json
     Api-Version: ~7.2
