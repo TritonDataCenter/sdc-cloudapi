@@ -53,6 +53,8 @@ var SSH_KEY_TWO = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDY2qV5e2q8qb+kYtn' +
 'X/bVsFHitmyyYgba+X90uIR8KGLFZ4eWJNPprJFnCWXrpY5bSOgcS9aWVgCoH8sqHatNKUiQpZ4' +
 'Lsqr+Z4fAf4enldx/KMW91iKn whatever@wherever.local';
 
+var FP_ONE, FP_TWO;
+
 // --- Helpers
 function checkUser(t, user) {
     t.ok(user, 'checkUser user OK');
@@ -169,20 +171,8 @@ test('create user', function (t) {
 });
 
 
-test('get user by login', function (t) {
-    client.get('/my/users/' + SUB_LOGIN, function (err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
-        common.checkHeaders(t, res.headers);
-        t.ok(body);
-        t.equal(body.id, SUB_UUID);
-        t.end();
-    });
-});
-
-
 test('update user', function (t) {
-    client.post('/my/users/' + SUB_LOGIN, {
+    client.post('/my/users/' + SUB_UUID, {
         phone: '+34 626 626 626'
     }, function (err, req, res, body) {
         t.ifError(err);
@@ -197,7 +187,7 @@ test('update user', function (t) {
 
 
 test('change password (missing params)', function (t) {
-    client.post('/my/users/' + SUB_LOGIN + '/change_password', {
+    client.post('/my/users/' + SUB_UUID + '/change_password', {
         password: 'whatever'
     }, function (err, req, res, body) {
         t.ok(err);
@@ -210,7 +200,7 @@ test('change password (missing params)', function (t) {
 
 
 test('change password (confirmation missmatch)', function (t) {
-    client.post('/my/users/' + SUB_LOGIN + '/change_password', {
+    client.post('/my/users/' + SUB_UUID + '/change_password', {
         password: 'whatever',
         password_confirmation: 'somethingelse'
     }, function (err, req, res, body) {
@@ -224,7 +214,7 @@ test('change password (confirmation missmatch)', function (t) {
 
 
 test('change password (OK)', function (t) {
-    client.post('/my/users/' + SUB_LOGIN + '/change_password', {
+    client.post('/my/users/' + SUB_UUID + '/change_password', {
         password: 'whatever123',
         password_confirmation: 'whatever123'
     }, function (err, req, res, body) {
@@ -528,7 +518,7 @@ test('get user by UUID', function (t) {
 
 
 test('get user with roles', function (t) {
-    client.get('/my/users/' + SUB_LOGIN + '?membership=true',
+    client.get('/my/users/' + SUB_UUID + '?membership=true',
         function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
@@ -545,7 +535,7 @@ test('get user with roles', function (t) {
 
 
 test('ListKeys (empty) OK', function (t) {
-    var p = util.format('/my/users/%s/keys', SUB_LOGIN);
+    var p = util.format('/my/users/%s/keys', SUB_UUID);
     client.get(p, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
@@ -559,7 +549,7 @@ test('ListKeys (empty) OK', function (t) {
 
 
 test('CreateKey (missing key)', function (t) {
-    var p = util.format('/my/users/%s/keys', SUB_LOGIN);
+    var p = util.format('/my/users/%s/keys', SUB_UUID);
     client.post(p, {}, function (err) {
         t.ok(err);
         t.equal(err.statusCode, 409);
@@ -575,7 +565,7 @@ test('CreateKey (named) OK', function (t) {
         key: KEY,
         name: 'id_rsa 1'
     };
-    var p = util.format('/my/users/%s/keys', SUB_LOGIN);
+    var p = util.format('/my/users/%s/keys', SUB_UUID);
     client.post(p, key, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
@@ -583,6 +573,7 @@ test('CreateKey (named) OK', function (t) {
         common.checkHeaders(t, res.headers);
         checkKey(t, body, 'CreateKey body');
         t.equal(body.name, key.name, 'CreateKey name');
+        FP_ONE = body.fingerprint;
         client.get(p, function (err2, req2, res2, body2) {
             t.ifError(err2);
             t.equal(res2.statusCode, 200);
@@ -608,7 +599,7 @@ test('Create (named) key with duplicate name', function (t) {
         key: SSH_KEY_TWO,
         name: 'id_rsa 1'
     };
-    var p = util.format('/my/users/%s/keys', SUB_LOGIN);
+    var p = util.format('/my/users/%s/keys', SUB_UUID);
     client.post(p, key, function (err, req, res, body) {
         t.ok(err);
         t.equal(err.statusCode, 409);
@@ -622,7 +613,7 @@ test('Attempt to create with invalid key', function (t) {
         key: 'asdf',
         name: 'Not so valid'
     };
-    var p = util.format('/my/users/%s/keys', SUB_LOGIN);
+    var p = util.format('/my/users/%s/keys', SUB_UUID);
     client.post(p, key, function (err, req, res, body) {
         t.ok(err);
         t.equal(err.statusCode, 409);
@@ -634,7 +625,7 @@ test('Attempt to create with invalid key', function (t) {
 
 
 test('ListKeys OK', function (t) {
-    var p = util.format('/my/users/%s/keys', SUB_LOGIN);
+    var p = util.format('/my/users/%s/keys', SUB_UUID);
     client.get(p, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
@@ -650,8 +641,8 @@ test('ListKeys OK', function (t) {
 
 
 test('GetKey OK', function (t) {
-    var p = util.format('/my/users/%s/keys/', SUB_LOGIN);
-    var url = p + encodeURIComponent('id_rsa 1');
+    var p = util.format('/my/users/%s/keys/', SUB_UUID);
+    var url = p + encodeURIComponent(FP_ONE);
     client.get(url, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
@@ -664,8 +655,8 @@ test('GetKey OK', function (t) {
 
 
 test('DeleteKey OK', function (t) {
-    var p = util.format('/my/users/%s/keys/', SUB_LOGIN);
-    var url = p + encodeURIComponent('id_rsa 1');
+    var p = util.format('/my/users/%s/keys/', SUB_UUID);
+    var url = p + encodeURIComponent(FP_ONE);
     client.del(url, function (err, req, res) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
@@ -699,7 +690,7 @@ test('delete policy', function (t) {
 
 
 test('delete user', function (t) {
-    var url = '/my/users/' + SUB_LOGIN;
+    var url = '/my/users/' + SUB_UUID;
     client.del(url, function (err, req, res) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
@@ -710,7 +701,7 @@ test('delete user', function (t) {
 
 
 test('delete another user', function (t) {
-    var url = '/my/users/' + SUB_LOGIN_TWO;
+    var url = '/my/users/' + SUB_UUID_TWO;
     client.del(url, function (err, req, res) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
