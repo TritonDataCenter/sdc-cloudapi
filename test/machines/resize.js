@@ -17,7 +17,7 @@ module.exports = function (suite, client, machine, pkg, callback) {
     // FIXME: Restore resize tests into nightly-1 when we finally get
     // some room for them
     var cfg = common.getCfg();
-    if (!machine || cfg.datacenters['nightly-1']) {
+    if (!machine || cfg.datacenters['nightly-1'] || cfg.datacenters.coal) {
         return callback();
     }
 
