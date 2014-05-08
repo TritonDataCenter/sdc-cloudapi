@@ -3336,20 +3336,20 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     X-Response-Time: 115
     Content-Length: 0
 
+
 ## ResizeMachine (POST /:login/machines/:id?action=resize)
 
-Allows you to resize a SmartMachine.  POST to the machine id with an action of `resize`.
+Resize a machine to a new [package](#packages) (a.k.a. instance type).
+**Note:** Resizing is only supported for SmartMachines (machines with
+`type=smartmachine`, a.k.a. SmartOS zones). KVM virtual machines cannot be
+resized.
 
-Virtual machines can also be resized but,
-**only resizing virtual machines to a higher capacity package is supported**.
-
-You must additionally include a new package name, as you can only resize a
-machine to another package.
 
 ### Inputs
 
-||action||String||Use the exact string resize||
-||package||String||Use a package name returned from ListPackages||
+||action||String||"resize"||
+||package||String||A package name, as returned from [ListPackages](#ListPackages).||
+
 
 ### Returns
 
