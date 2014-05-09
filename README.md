@@ -123,3 +123,82 @@ To edit the SMF manifest:
 If you want to test image management using COAL, the faster approach is to run
 the aforementioned coal-setup.sh script from the global zone. Among others, local
 image management setup will be completed.
+
+
+# How CloudAPI Auth works using RBAC
+
+Roles and Policies are used in CloudAPI to provide access control for accounts'
+sub users. Authorization for account sub users is always made using HTTP
+Signature. The following is a brief description of CloudAPI access control
+process for sub users (all of this assuming `account_mgmt` feature is enabled
+and `req.version >= 7.2.0`):
+
+1. CloudAPI identifies the `name` of the `resource` for the request. This can
+be either a collection of resources or an individual one. While this usually
+matches the request path, it's not always true. For example:
+
+  a. `ListFirewallRules`: Firewal Rules Resource Collection: `/:account/fwrules`.
+  b. `GetFirewallRule`: Individual Firewall Rule Resource: `/:account/fwrules/:fwruleid`
+  c. `EnableFirewallRule`: The same individual firewall Rule resource than for
+  `GetFirewallRule`, identified by `/:account/fwrules/:fwruleid` even when the
+  path for this request would be `/:account/fwrules/:fwruleid/enable`.
+
+It's to say, for a given individual resource, all actions happening over this
+resource will share the `name` which is the path for the main `GetResource`
+request. For example, every action listed under the `Machines` epigraph in
+CloudAPI docs related to an individual machine will have the same resource,
+*"the machine"*, identified by `/:account/machines/:machineid`, even when these
+actions could be rename machine, enable firewall, add tags, create snapshot,
+audit ...
+
+2. Once the `name` of the `resource` for the current request has been identified,
+CloudAPI checks if there are any `role-tag` associated with the current resource.
+
+(`role-tag`s are just a set of one or more roles associated with the current
+resource. CloudAPI customers can associate `role-tag` to resources using the
+names of the roles they want to provide some kind of access to the resource.)
+
+`role-tag` loading is done differently depending if the current resource is an
+individual machine (given machines store `role-tag` by themselves) or something
+else. Everything but machines uses UFDS' `sdcAccountResource` objectclass,
+which has the following attributes:
+
+    dn: resource-uuid=:resource_uuid, uuid=:account_uuid, ou=users, o=smartdc
+    account: account_uuid
+    memberrole: [aRoleDN, anotherRoleDN, ...]
+    name: :resource_name
+    objectclass: sdcaccountresource
+    uuid: :resource_uuid
+
+Behind the scences, CloudAPI *"translates"* the role DNs into their respective
+role objects.
+
+For machines, given each machine may have a `role_tag` member in VMAPI, which
+is an array of roles' UUIDs, CloudAPI does exactly the same regarding role
+translation from UUID into the collection of role objects.
+
+(Please, note that, in order to be able to use machine `role-tag` to handle
+sub-user auth, we need to preload machine loading for all the machine related
+requests).
+
+In both cases, our request object will have the following properties:
+
+    req.resourcename = :resource_name
+    req.resource = {
+        name: req.resourcename,
+        account: req.account.uuid,
+        roles: [[ {role_object}[ , {role_object}, ... ] ]]
+    };
+
+3. When CloudAPI detects that the current request is being performed by an account
+sub-user, it will load the sub-user active roles (i.e. `user.default_roles`), and
+will pass those, together with the current resource roles collected into the
+previous step,  to `aperture` for user authorization. Additionally, the current
+request `path`, `method` and `route name` are also given to aperture.
+
+What needs to happen for the user to get access to the current resource then?:
+
+a. The user must have at least one of the roles assigned to the resource.
+b. For these roles, at least one of the policies associated with them must have
+a rule which allows the current request method for the given route name, for
+example: `CAN get AND head IF route::string = listusers`
