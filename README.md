@@ -133,7 +133,9 @@ Signature. The following is a brief description of CloudAPI access control
 process for sub users (all of this assuming `account_mgmt` feature is enabled
 and `req.version >= 7.2.0`):
 
-1. CloudAPI identifies the `name` of the `resource` for the request. This can
+### Identify request resource
+
+CloudAPI identifies the `name` of the `resource` for the request. This can
 be either a collection of resources or an individual one. While this usually
 matches the request path, it's not always true. For example:
 
@@ -151,7 +153,9 @@ CloudAPI docs related to an individual machine will have the same resource,
 actions could be rename machine, enable firewall, add tags, create snapshot,
 audit ...
 
-2. Once the `name` of the `resource` for the current request has been identified,
+### Load resource role-tags when exist
+
+Once the `name` of the `resource` for the current request has been identified,
 CloudAPI checks if there are any `role-tag` associated with the current resource.
 
 (`role-tag`s are just a set of one or more roles associated with the current
@@ -190,7 +194,9 @@ In both cases, our request object will have the following properties:
         roles: [[ {role_object}[ , {role_object}, ... ] ]]
     };
 
-3. When CloudAPI detects that the current request is being performed by an account
+### Ask MAHI to authorize/deny user access
+
+When CloudAPI detects that the current request is being performed by an account
 sub-user, it will load the sub-user active roles (i.e. `user.default_roles`), and
 will pass those, together with the current resource roles collected into the
 previous step,  to `aperture` for user authorization. Additionally, the current
