@@ -12,7 +12,10 @@ function uuid() {
 }
 var restify = require('restify');
 
-var common = require('./common');
+var common = require('./common'),
+    checkMahiCache = common.checkMahiCache,
+    waitForMahiCache = common.waitForMahiCache;
+
 var vasync = require('vasync');
 
 // --- Globals
@@ -26,37 +29,11 @@ var privateKey, publicKey;
 var subPrivateKey, subPublicKey;
 var SDC_SSO_URI, TOKEN;
 
-
-// Helpers
-function checkMahiCache(mahi, path, cb) {
-    mahi._get(path, function (err, res) {
-        if (err) {
-            if (err.name === 'AccountDoesNotExistError' ||
-                err.name === 'UserDoesNotExistError') {
-                return cb(null, false);
-            } else {
-                return cb(err);
-            }
-        }
-        return cb(null, true);
-
-    });
-}
-
-function waitForMahiCache(mahi, path, cb) {
-    client.log.info('Polling mahi for %s', path);
-    return checkMahiCache(mahi, path, function (err, ready) {
-        if (err) {
-            return cb(err);
-        }
-        if (!ready) {
-            return setTimeout(function () {
-                waitForMahiCache(mahi, path, cb);
-            }, (process.env.POLL_INTERVAL || 1000));
-        }
-        return cb(null);
-    });
-}
+var USER_FMT = 'uuid=%s, ou=users, o=smartdc';
+var POLICY_FMT = 'policy-uuid=%s, ' + USER_FMT;
+var ROLE_FMT = 'role-uuid=%s, ' + USER_FMT;
+var A_POLICY_NAME;
+var A_ROLE_NAME;
 
 // --- Tests
 
@@ -72,6 +49,8 @@ test('setup', function (t) {
         account = client.account.login;
         KEY_ID = client.KEY_ID;
         SUB_KEY_ID = client.SUB_ID;
+        A_ROLE_NAME = client.role.name;
+        A_POLICY_NAME = client.policy.name;
         if (!process.env.SDC_SETUP_TESTS) {
             t.ok(_server);
         }
@@ -373,69 +352,6 @@ if (process.env.SDC_SSO_ADMIN_IP) {
 // Account sub-users will use only http-signature >= 0.10.x, given this
 // feature has been added after moving from 0.9.
 // Also, request version will always be >= 7.2 here.
-// PLEASE, NOTE SUB-USER REQUESTS USING "/my" WILL BE USELESS, NEED TO PROVIDE
-// MAIN ACCOUNT "login" COMPLETE "/:account".
-
-// Before we can test authorize, we need to add couple roles/policies:
-var USER_FMT = 'uuid=%s, ou=users, o=smartdc';
-var POLICY_FMT = 'policy-uuid=%s, ' + USER_FMT;
-var ROLE_FMT = 'role-uuid=%s, ' + USER_FMT;
-var A_POLICY_UUID, A_POLICY_DN, A_POLICY_NAME;
-var A_ROLE_UUID, A_ROLE_DN, A_ROLE_NAME;
-
-
-test('create policy', function (t) {
-    var policy_uuid = libuuid.create();
-    var name = 'a' + policy_uuid.substr(0, 7);
-
-    var entry = {
-        name: name,
-        rules: [
-            '* CAN get * IF route::string = getaccount',
-            '* CAN get AND head * IF route::string = listusers',
-            '* CAN post * IF route::string = createuser',
-            'Foobar CAN get * IF route::string = listkeys',
-            util.format('%s CAN get * IF route::string = listuserkeys',
-                client.testSubUser)
-        ],
-        description: 'This is the account/users policy'
-    };
-
-    client.post('/my/policies', entry, function (err, req, res, body) {
-        t.ifError(err);
-        t.ok(body);
-        t.equal(res.statusCode, 201);
-        common.checkHeaders(t, res.headers);
-        A_POLICY_UUID = body.id;
-        A_POLICY_NAME = body.name;
-        A_POLICY_DN = util.format(POLICY_FMT, A_POLICY_UUID, account.uuid);
-        t.end();
-    });
-});
-
-
-test('create role', function (t) {
-    var role_uuid = libuuid.create();
-    var name = 'a' + role_uuid.substr(0, 7);
-
-    var entry = {
-        name: name,
-        members: client.testSubUser,
-        policies: [A_POLICY_NAME],
-        default_members: client.testSubUser
-    };
-
-    client.post('/my/roles', entry, function (err, req, res, body) {
-        t.ifError(err);
-        t.ok(body);
-        t.equal(res.statusCode, 201);
-        common.checkHeaders(t, res.headers);
-        A_ROLE_UUID = body.id;
-        A_ROLE_NAME = body.name;
-        A_ROLE_DN = util.format(ROLE_FMT, A_ROLE_UUID, account.uuid);
-        t.end();
-    });
-});
 
 
 test('tag resource collection with role', function (t) {
@@ -512,8 +428,28 @@ test('sub-user signature auth (0.10)', { timeout: 'Infinity' }, function (t) {
     }
 
     var mPath = util.format('/user/%s/%s', account, client.testSubUser);
-    waitForMahiCache(client.mahi, mPath, function (er) {
-        t.ifError(er, 'wait for mahi cache error');
+    // We need to check that mahi-replicator has caught up with our latest
+    // operation, which is adding the test-role to the test sub user:
+    function waitMahiReplicator(cb) {
+        waitForMahiCache(client.mahi, mPath, function (er, cache) {
+            if (er) {
+                t.fail('Error fetching mahi resource');
+                t.end();
+            } else {
+                if (!cache.roles || Object.keys(cache.roles).length === 0 ||
+                    Object.keys(cache.roles).indexOf(client.role.uuid) === -1) {
+                    setTimeout(function () {
+                        waitMahiReplicator(cb);
+                    }, 1000);
+                } else {
+                    cb();
+                }
+            }
+        });
+    }
+
+
+    waitMahiReplicator(function () {
         var cli = restify.createJsonClient({
             url: server ? server.url : 'https://127.0.0.1',
             retryOptions: {
@@ -631,39 +567,15 @@ test('delete role with role-tag', function (t) {
 });
 
 
-// We also have to cleanup all the roles/policies:
-
-test('delete role', function (t) {
-    var url = '/my/roles/' + A_ROLE_UUID;
-    client.del(url, function (err, req, res) {
-        t.ifError(err);
-        t.equal(res.statusCode, 204);
-        common.checkHeaders(t, res.headers);
-        t.end();
-    });
-});
-
-
-test('delete policy', function (t) {
-    var url = '/my/policies/' + A_POLICY_UUID;
-    client.del(url, function (err, req, res) {
-        t.ifError(err);
-        t.equal(res.statusCode, 204);
-        common.checkHeaders(t, res.headers);
-        t.end();
-    });
-});
-
-
 test('cleanup sdcAccountResources', function (t) {
     var id = client.account.uuid;
     client.ufds.listResources(id, function (err, resources) {
         t.ifError(err);
         vasync.forEachPipeline({
             inputs: resources,
-            func: function (r, _cb) {
-                client.ufds.deleteResource(id, r.uuid, function (er2) {
-                    return _cb(er2);
+            func: function (resource, _cb) {
+                client.ufds.deleteResource(id, resource.uuid, function (er2) {
+                    return _cb();
                 });
             }
         }, function (er3, results) {

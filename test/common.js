@@ -1,4 +1,9 @@
-// Copyright 2013 Joyent, Inc. All rights reserved.
+/*
+ * Copyright (c) 2014, Joyent, Inc. All rights reserved.
+ *
+ * Functions used in more than one test file + setup/teardown
+ * preparation for every test suite.
+ */
 var assert = require('assert');
 var crypto = require('crypto');
 var path = require('path');
@@ -43,7 +48,7 @@ try {
 
 var SDC_SETUP_TESTS = process.env.SDC_SETUP_TESTS || false;
 
-var user, ufds, client, server, account, sub_login, subuser;
+var user, ufds, client, server, account, sub_login, subuser, policy, role;
 
 var SIGNATURE = 'Signature keyId="%s",algorithm="%s" %s';
 var KEY_ID;
@@ -154,7 +159,9 @@ function _mahi() {
     return mahi.createClient({
         url: process.env.MAHI_URL || config.mahi.url ||
         'http://10.99.99.34:8080',
-        typeTable: apertureConfig.typeTable
+        typeTable: apertureConfig.typeTable,
+        maxAuthCacheSize: 1,
+        maxAuthCacheAgeMs: 5
     });
 }
 
@@ -162,19 +169,70 @@ function _mahi() {
 function clientTeardown(cb) {
     client.mahi.close();
     client.close();
-    client.ufds.deleteKey(client.testUser, 'id_rsa', function (er4) {
-        client.ufds.deleteKey(client.subuser, 'sub_id_rsa', function (er5) {
-            client.ufds.deleteUser(client.subuser, function (err3) {
-                client.ufds.deleteUser(client.testUser, function (err2) {
-                    ufds.client.removeAllListeners('close');
-                    ufds.client.removeAllListeners('timeout');
-                    ufds.removeAllListeners('timeout');
-                    ufds.close(function () {
-                        return cb(null);
+    var id = client.account.uuid;
+    client.ufds.deleteRole(id, client.role.uuid, function (er6) {
+        client.ufds.deletePolicy(id, client.policy.uuid, function (er7) {
+            client.ufds.deleteKey(client.testUser, 'id_rsa', function (er4) {
+                client.ufds.deleteKey(client.subuser, 'sub_id_rsa',
+                    function (er5) {
+                    client.ufds.deleteUser(client.subuser, function (err3) {
+                        client.ufds.deleteUser(client.testUser,
+                            function (err2) {
+                            ufds.client.removeAllListeners('close');
+                            ufds.client.removeAllListeners('timeout');
+                            ufds.removeAllListeners('timeout');
+                            ufds.close(function () {
+                                return cb(null);
+                            });
+                        });
                     });
                 });
             });
         });
+    });
+}
+
+
+function createTestRole(callback) {
+    var entry = {
+        name: 'test-role',
+        uniquemember: [client.subuser.dn],
+        memberpolicy: [policy.dn],
+        uniquememberdefault: [client.subuser.dn],
+        account: client.account.uuid
+    };
+
+    client.ufds.addRole(client.account.uuid, entry, function (err, r) {
+        if (err) {
+            return callback(err);
+        }
+        client.role = role = r;
+        return callback(null, client, server);
+    });
+}
+
+
+function createTestPolicy(callback) {
+    var entry = {
+        name: 'test-policy',
+        rule: [
+            '* CAN get * IF route::string = getaccount',
+            '* CAN get AND head * IF route::string = listusers',
+            '* CAN post * IF route::string = createuser',
+            'Foobar CAN get * IF route::string = listkeys',
+            util.format('%s CAN get * IF route::string = listuserkeys',
+                client.testSubUser)
+        ],
+        description: 'Policy used by test helper',
+        account: client.account.uuid
+    };
+
+    client.ufds.addPolicy(client.account.uuid, entry, function (err, p) {
+        if (err) {
+            return callback(err);
+        }
+        client.policy = policy = p;
+        return createTestRole(callback);
     });
 }
 
@@ -199,12 +257,11 @@ function addSubUserKey(callback) {
                     return callback(er3);
                 }
                 client.subPrivateKey = d;
-                return callback(null, client, server);
+                return createTestPolicy(callback);
             });
         });
     });
 }
-
 
 
 function addUserKey(callback) {
@@ -237,8 +294,6 @@ function addUserKey(callback) {
 }
 
 
-
-
 function ufdsConnectCb(callback) {
     var entry = {
         login: client.testUser,
@@ -261,6 +316,9 @@ function ufdsConnectCb(callback) {
             account: customer.uuid
         };
         return ufds.addUser(sub_entry, function (err2, sub) {
+            if (err2) {
+                return callback(err2);
+            }
             client.subuser = subuser = sub;
             return addUserKey(callback);
         });
@@ -337,6 +395,38 @@ function setupClient(version, callback) {
 }
 
 
+function checkMahiCache(mahiclient, apath, cb) {
+    mahiclient._get(apath, function (err, res) {
+        if (err) {
+            if (err.name === 'AccountDoesNotExistError' ||
+                err.name === 'UserDoesNotExistError') {
+                return cb(null, false);
+            } else {
+                return cb(err);
+            }
+        }
+        return cb(null, true, res);
+
+    });
+}
+
+
+function waitForMahiCache(mahiclient, apath, cb) {
+    client.log.info('Polling mahi for %s', apath);
+    return checkMahiCache(mahiclient, apath, function (err, ready, res) {
+        if (err) {
+            return cb(err);
+        }
+        if (!ready) {
+            return setTimeout(function () {
+                waitForMahiCache(mahiclient, apath, cb);
+            }, (process.env.POLL_INTERVAL || 1000));
+        }
+        return cb(null, res);
+    });
+}
+
+
 // --- Library
 
 module.exports = {
@@ -390,5 +480,8 @@ module.exports = {
 
     getCfg: function () {
         return config;
-    }
+    },
+
+    checkMahiCache: checkMahiCache,
+    waitForMahiCache: waitForMahiCache
 };
