@@ -392,6 +392,30 @@ test('Get Machine Include Credentials', TAP_CONF, function (t) {
 });
 
 
+test('Check default external (only) network present', TAP_CONF, function (t) {
+    if (!machine) {
+        return t.end();
+    }
+
+    var url = '/my/machines/' + machine;
+    return client.get(url, function (err, req, res, vmDetails) {
+        t.ifError(err);
+        t.equal(vmDetails.ips.length, 1);
+
+        client.napi.listNics({
+            belongs_to_uuid: machine
+        }, function (err2, nics) {
+            t.ifError(err2);
+
+            t.equal(nics.length, 1);
+            t.equal(nics[0].ip, vmDetails.ips[0]);
+            t.equal(nics[0].nic_tag, 'external');
+            t.end();
+        });
+    });
+});
+
+
 test('Stop test', TAP_CONF, function (t) {
     var stopTest = require('./machines/stop');
     stopTest(t, client, machine, function () {
