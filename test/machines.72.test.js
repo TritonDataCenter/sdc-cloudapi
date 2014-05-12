@@ -91,7 +91,13 @@ var sdc_128_ok = {
 var sdc_256_entry, sdc_256_inactive_entry, sdc_128_ok_entry;
 
 var HEADNODE = null;
+var DATASET;
+
 var account;
+
+var A_POLICY_NAME;
+var A_ROLE_NAME;
+
 // --- Tests
 
 test('setup', TAP_CONF, function (t) {
@@ -100,6 +106,8 @@ test('setup', TAP_CONF, function (t) {
         t.ok(_client, 'common _client ok');
         client = _client;
         account = client.account.login;
+        A_ROLE_NAME = client.role.name;
+        A_POLICY_NAME = client.policy.name;
         if (!process.env.SDC_SETUP_TESTS) {
             t.ok(_server);
         }
@@ -137,8 +145,6 @@ test('Get Headnode', TAP_CONF, function (t) {
 });
 
 
-var DATASET;
-
 test('get base dataset', TAP_CONF, function (t) {
     client.get('/my/datasets?name=base', function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets error');
@@ -157,62 +163,15 @@ test('get base dataset', TAP_CONF, function (t) {
 });
 
 
-var USER_FMT = 'uuid=%s, ou=users, o=smartdc';
-var POLICY_FMT = 'policy-uuid=%s, ' + USER_FMT;
-var ROLE_FMT = 'role-uuid=%s, ' + USER_FMT;
-var A_POLICY_UUID, A_POLICY_DN, A_POLICY_NAME;
-var A_ROLE_UUID, A_ROLE_DN, A_ROLE_NAME;
-
-
-test('create policy', function (t) {
-    var policy_uuid = libuuid.create();
-    var name = 'a' + policy_uuid.substr(0, 7);
-
-    var entry = {
-        name: name,
-        rules: [
-            '* CAN get * IF route::string = getaccount',
-            '* CAN get AND head * IF route::string = listusers',
-            '* CAN post * IF route::string = createuser',
-            'Foobar CAN get * IF route::string = listkeys',
-            util.format('%s CAN get * IF route::string = listuserkeys',
-                client.testSubUser)
-        ],
-        description: 'This is the account/users policy'
-    };
-
-    client.post('/my/policies', entry, function (err, req, res, body) {
-        t.ifError(err);
-        t.ok(body);
-        t.equal(res.statusCode, 201);
-        common.checkHeaders(t, res.headers);
-        A_POLICY_UUID = body.id;
-        A_POLICY_NAME = body.name;
-        A_POLICY_DN = util.format(POLICY_FMT, A_POLICY_UUID, account.uuid);
-        t.end();
-    });
-});
-
-
-test('create role', function (t) {
-    var role_uuid = libuuid.create();
-    var name = 'a' + role_uuid.substr(0, 7);
-
-    var entry = {
-        name: name,
-        members: client.testSubUser,
-        policies: [A_POLICY_NAME],
-        default_members: client.testSubUser
-    };
-
-    client.post('/my/roles', entry, function (err, req, res, body) {
-        t.ifError(err);
-        t.ok(body);
-        t.equal(res.statusCode, 201);
-        common.checkHeaders(t, res.headers);
-        A_ROLE_UUID = body.id;
-        A_ROLE_NAME = body.name;
-        A_ROLE_DN = util.format(ROLE_FMT, A_ROLE_UUID, account.uuid);
+test('tag machines resource collection with role', function (t) {
+    client.put('/my/machines', {
+        'role-tag': [A_ROLE_NAME]
+    }, function (err, req, res, body) {
+        t.ifError(err, 'resource role err');
+        t.ok(body, 'resource role body');
+        t.ok(body.name, 'resource role name');
+        t.ok(body['role-tag'], 'resource role tag');
+        t.ok(body['role-tag'].length, 'resource role tag ary');
         t.end();
     });
 });
@@ -225,17 +184,19 @@ test('CreateMachine', TAP_CONF, function (t) {
         'package': 'sdc_128_ok',
         name: 'a' + uuid().substr(0, 7),
         server_uuid: HEADNODE.uuid,
-        firewall_enabled: true,
-        // TODO: This should work with role names at cloudapi level, and
-        // translated internally into role uuid for vmapi.
-        role_tags: [A_ROLE_UUID]
+        firewall_enabled: true
     };
     obj['metadata.' + META_KEY] = META_VAL;
     obj['tag.' + TAG_KEY] = TAG_VAL;
 
     obj['metadata.credentials'] = META_CREDS;
 
-    client.post('/my/machines', obj, function (err, req, res, body) {
+    client.post({
+        path: '/my/machines',
+        headers: {
+            'role-tag': [A_ROLE_NAME]
+        }
+    }, obj, function (err, req, res, body) {
         t.ifError(err, 'POST /my/machines error');
         t.equal(res.statusCode, 201, 'POST /my/machines status');
         common.checkHeaders(t, res.headers);
@@ -277,7 +238,12 @@ test('Wait For Running', TAP_CONF,  function (t) {
 
 test('Get Machine', TAP_CONF, function (t) {
     if (machine) {
-        client.get('/my/machines/' + machine, function (err, req, res, body) {
+        client.get({
+            path: '/my/machines/' + machine,
+            headers: {
+                'role-tag': true
+            }
+        }, function (err, req, res, body) {
             t.ifError(err, 'GET /my/machines/:id error');
             t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
             common.checkHeaders(t, res.headers);
@@ -291,46 +257,8 @@ test('Get Machine', TAP_CONF, function (t) {
             var tags = {};
             tags[TAG_KEY] = TAG_VAL;
             t.equivalent(body.tags, tags, 'Machine tags');
-            t.end();
-        });
-    }
-});
-
-
-// PENDING: would like to be able to add role-tags on machine creation:
-test('Add machine role-tags until (temporary)', TAP_CONF, function (t) {
-    client.vmapi.addRoleTags({
-        uuid: machine,
-        owner_uuid: client.account.id,
-        role_tags: [ A_ROLE_UUID ]
-    }, function (err, role_tags) {
-        t.ifError(err);
-        t.ok(role_tags);
-        t.end();
-    });
-});
-
-
-
-test('Get Machine', TAP_CONF, function (t) {
-    if (machine) {
-        client.get('/my/machines/' + machine, function (err, req, res, body) {
-            t.ifError(err, 'GET /my/machines/:id error');
-            t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
-            common.checkHeaders(t, res.headers);
-            t.ok(body, 'GET /my/machines/:id body');
-            checkMachine(t, body);
-            t.ok(body.compute_node, 'machine compute_node');
-            t.ok(body.firewall_enabled, 'machine firewall enabled');
-            t.ok(body.networks, 'machine networks');
-            t.ok(Array.isArray(body.networks), 'machine networks array');
-            // Double check tags are OK, due to different handling by VMAPI:
-            var tags = {};
-            tags[TAG_KEY] = TAG_VAL;
-            t.equivalent(body.tags, tags, 'Machine tags');
-            t.ok(body['role-tag']);
-            t.ok(Array.isArray(body['role-tag']));
-            t.equal(body['role-tag'][0], A_ROLE_NAME);
+            t.ok(res.headers['role-tag'], 'resource role-tag header');
+            t.equal(res.headers['role-tag'], A_ROLE_NAME, 'resource role-tag');
             t.end();
         });
     }

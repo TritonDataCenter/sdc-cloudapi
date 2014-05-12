@@ -221,7 +221,9 @@ function createTestPolicy(callback) {
             '* CAN post * IF route::string = createuser',
             'Foobar CAN get * IF route::string = listkeys',
             util.format('%s CAN get * IF route::string = listuserkeys',
-                client.testSubUser)
+                client.testSubUser),
+            'CAN post IF route::string = RebootMachine',
+            'CAN post IF route::string = CreateMachine'
         ],
         description: 'Policy used by test helper',
         account: client.account.uuid
