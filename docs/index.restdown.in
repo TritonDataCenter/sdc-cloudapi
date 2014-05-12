@@ -3418,12 +3418,25 @@ More generally, the metadata keys can be set either at machine-creation time
 or after the fact.  You must either pass in plain-string values, or a JSON
 encoded string.  On metadata retrieval, you will get back a JSON object.
 
+Networks are usually provided by the package, although they can be specified
+using the networks attribute. If neither the package, nor the inputs, contains
+an array of networks the machine should attach to, the machine will default to
+attaching to a single externally-accessible network (it will have one public
+IP). This behaviour can be overridden by specifying 'external' and/or 'internal'
+in a default_networks array. 'external' is like the default behaviour, while
+'internal' attaches the machine to an internal non-public network. Ergo, it's
+possible to have a machine only attached to an internal network, or both public
+and internal. NB: 'internal' cannot be reached from the Internet, but all
+users also on the internal network can reach it.
+
+
 ### Inputs
 
 ||name||String||Friendly name for this machine; default is a randomly generated name||
 ||package||String||Id of the package to use on provisioning; default is indicated in ListPackages||
 ||image||String||The image UUID (the "id" field in [ListImages](#ListImages))||
 ||networks||Array||Desired networks ids, obtained from ListNetworks||
+||default_networks||Array||Alter the default networks IPs are drawn from if Inputs or the package have no networks||
 ||metadata.$name||String||An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata."||
 ||tag.$name||String||An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag."||
 ||firewall_enabled||Boolean||(Added in SDC 7.0.)Completely enable or disable firewall for this machine||
