@@ -28,7 +28,7 @@
         "ctype": "0.5.2",
         "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#5604fc",
         "aperture": "git+ssh://git@github.com:joyent/node-aperture.git#e59aa4",
-        "mahi": "git+ssh://git@git.joyent.com:node-mahi.git#b88b3f"
+        "mahi": "git+ssh://git@git.joyent.com:node-mahi.git#7c0499"
     },
     "devDependencies": {
         "tap": "~0.4",
