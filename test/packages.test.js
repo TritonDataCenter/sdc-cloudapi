@@ -104,11 +104,11 @@ function add512Ownership(t, owner_uuid, cb) {
 function checkPackage_6_5(t, pkg) {
     t.ok(pkg, 'Package OK');
     t.ok(pkg.name, 'Package name');
-    t.notOk(pkg.id, 'Package id not OK');
+    t.notOk(pkg.id, 'Package has not id');
     t.ok(pkg.memory, 'Package memory');
     t.ok(pkg.disk, 'Package Disk');
     t.ok(!isNaN(pkg.vcpus), 'Package VCPUs OK');
-    t.notOk(pkg.version, 'Package version not OK');
+    t.notOk(pkg.version, 'Package has not version');
     t.ok(pkg.swap, 'Package swap');
     t.ok(pkg['default'] !== undefined, 'Package default');
 }

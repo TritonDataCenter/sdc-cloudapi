@@ -3,12 +3,15 @@
 var fs = require('fs');
 var util = require('util');
 var test = require('tap').test;
+var restify = require('restify');
 var libuuid = require('libuuid');
 function uuid() {
     return (libuuid.create());
 }
 var sprintf = util.format;
-var common = require('./common');
+var common = require('./common'),
+    checkMahiCache = common.checkMahiCache,
+    waitForMahiCache = common.waitForMahiCache;
 var machinesCommon = require('./machines/common');
 var checkMachine = machinesCommon.checkMachine;
 var checkJob = machinesCommon.checkJob;
@@ -97,6 +100,10 @@ var account;
 
 var A_POLICY_NAME;
 var A_ROLE_NAME;
+var subPrivateKey;
+var SUB_KEY_ID;
+
+var httpSignature = require('http-signature');
 
 // --- Tests
 
@@ -108,6 +115,8 @@ test('setup', TAP_CONF, function (t) {
         account = client.account.login;
         A_ROLE_NAME = client.role.name;
         A_POLICY_NAME = client.policy.name;
+        subPrivateKey = client.subPrivateKey;
+        SUB_KEY_ID = client.SUB_ID;
         if (!process.env.SDC_SETUP_TESTS) {
             t.ok(_server);
         }
@@ -262,6 +271,105 @@ test('Get Machine', TAP_CONF, function (t) {
             t.end();
         });
     }
+});
+
+
+test('sub-user tests', { timeout: 'Infinity' }, function (t) {
+    function subRequestSigner(req) {
+        httpSignature.sign(req, {
+            key: subPrivateKey,
+            keyId: SUB_KEY_ID
+        });
+    }
+
+    var mPath = util.format('/user/%s/%s', account, client.testSubUser);
+    // We need to check that mahi-replicator has caught up with our latest
+    // operation, which is adding the test-role to the test sub user:
+    function waitMahiReplicator(cb) {
+        waitForMahiCache(client.mahi, mPath, function (er, cache) {
+            if (er) {
+                console.log(util.inspect(er, false, 8, true));
+                t.fail('Error fetching mahi resource');
+                t.end();
+            } else {
+                if (!cache.roles || Object.keys(cache.roles).length === 0 ||
+                    Object.keys(cache.roles).indexOf(client.role.uuid) === -1) {
+                    setTimeout(function () {
+                        waitMahiReplicator(cb);
+                    }, 1000);
+                } else {
+                    cb();
+                }
+            }
+        });
+    }
+
+
+    waitMahiReplicator(function () {
+        var cli = restify.createJsonClient({
+            url: server ? server.url : 'https://127.0.0.1',
+            retryOptions: {
+                retry: 0
+            },
+            log: client.log,
+            rejectUnauthorized: false,
+            signRequest: subRequestSigner
+        });
+
+        // Need it to be able to poll jobs:
+        cli.vmapi = client.vmapi;
+
+        // Sub user tests go here, using a different client instance
+        t.test('sub-user get machine', { timeout: 'Infinity' }, function (t1) {
+            if (machine) {
+                cli.get({
+                    path: '/' + account + '/machines/' + machine,
+                    headers: {
+                        'accept-version': '~7.2',
+                        'role-tag': true
+                    }
+                }, function (err, req, res, obj) {
+                    t1.ifError(err, 'sub-user get machine error');
+                    t1.equal(res.statusCode, 200, 'sub-user auth statusCode');
+                    t1.ok(res.headers['role-tag'], 'resource role-tag header');
+                    t1.equal(res.headers['role-tag'], A_ROLE_NAME,
+                        'resource role-tag');
+                    t1.equal(machine, obj.id, 'machine uuid');
+                    cli.close();
+                    t1.end();
+                });
+            } else {
+                console.log('Eh no machine!: %j', machine);
+                t1.end();
+            }
+        });
+
+        t.test('Reboot test', TAP_CONF, function (t2) {
+            var rebootTest = require('./machines/reboot');
+            rebootTest(t2, cli, machine, function () {
+                t2.end();
+            });
+        });
+
+        // The sub-user role lacks of "POST" + 'stopmachine' route:
+        t.test('Sub user cannot stop machine', TAP_CONF, function (t3) {
+            cli.post({
+                path: '/' + account + '/machines/' + machine,
+                headers: {
+                    'accept-version': '~7.2'
+                }
+            }, {
+                action: 'stop'
+            }, function (err, req, res, obj) {
+                t3.ok(err, 'sub-user get account error');
+                t3.equal(res.statusCode, 403, 'sub-user auth statusCode');
+                cli.close();
+                t3.end();
+            });
+        });
+
+        t.end();
+    });
 });
 
 
