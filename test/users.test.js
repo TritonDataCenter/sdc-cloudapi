@@ -273,19 +273,6 @@ test('create another user', function (t) {
 });
 
 
-test('list policies (empty)', function (t) {
-    client.get('/my/policies', function (err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
-        common.checkHeaders(t, res.headers);
-        t.ok(body);
-        t.ok(Array.isArray(body));
-        t.equal(body.length, 0);
-        t.end();
-    });
-});
-
-
 test('create policy', function (t) {
     var policy_uuid = libuuid.create();
     var name = 'a' + policy_uuid.substr(0, 7);
@@ -329,7 +316,7 @@ test('list policies (OK)', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.ok(Array.isArray(body));
-        t.equal(body.length, 1);
+        t.equal(body.length, 2);
         t.end();
     });
 });
@@ -355,7 +342,7 @@ test('update policy', function (t) {
 });
 
 
-test('update policy with rule not OK', function (t) {
+test('update policy with wrong rule', function (t) {
     var str = 'Pedro can delete * when baz = bar';
     POLICY_DOC.push(str);
     client.post('/my/policies/' + POLICY_UUID, {
@@ -367,19 +354,6 @@ test('update policy with rule not OK', function (t) {
         t.ok(body);
         t.ok(/baz/.test(body.message));
         t.equal(res.statusCode, 409);
-        t.end();
-    });
-});
-
-
-test('list roles (empty)', function (t) {
-    client.get('/my/roles', function (err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
-        common.checkHeaders(t, res.headers);
-        t.ok(body);
-        t.ok(Array.isArray(body));
-        t.equal(body.length, 0);
         t.end();
     });
 });
@@ -498,7 +472,7 @@ test('list roles (OK)', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.ok(Array.isArray(body));
-        t.equal(body.length, 2);
+        t.equal(body.length, 3);
         checkRole(t, body[0]);
         checkRole(t, body[1]);
         t.end();
