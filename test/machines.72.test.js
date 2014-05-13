@@ -102,6 +102,8 @@ var A_POLICY_NAME;
 var A_ROLE_NAME;
 var subPrivateKey;
 var SUB_KEY_ID;
+// This is the sub-user created machine:
+var submachine;
 
 var httpSignature = require('http-signature');
 
@@ -363,8 +365,65 @@ test('sub-user tests', { timeout: 'Infinity' }, function (t) {
             }, function (err, req, res, obj) {
                 t3.ok(err, 'sub-user get account error');
                 t3.equal(res.statusCode, 403, 'sub-user auth statusCode');
-                cli.close();
                 t3.end();
+            });
+        });
+
+        t.test('CreateMachine', TAP_CONF, function (t4) {
+            var obj = {
+                image: DATASET,
+                'package': 'sdc_128_ok',
+                name: 'a' + uuid().substr(0, 7),
+                server_uuid: HEADNODE.uuid,
+                firewall_enabled: true
+            };
+            obj['metadata.' + META_KEY] = META_VAL;
+            obj['tag.' + TAG_KEY] = TAG_VAL;
+
+            obj['metadata.credentials'] = META_CREDS;
+
+            cli.post({
+                path: '/' + account + '/machines',
+                headers: {
+                    'accept-version': '~7.2'
+                }
+            }, obj, function (err, req, res, body) {
+                t4.ifError(err, 'POST /my/machines error');
+                console.log(util.inspect(res.headers, false, 8, true));
+                t4.equal(res.statusCode, 201, 'POST /my/machines status');
+                common.checkHeaders(t, res.headers);
+                t4.equal(res.headers.location,
+                    util.format('/%s/machines/%s', client.testUser, body.id));
+                t4.ok(body, 'POST /my/machines body');
+                checkMachine(t4, body);
+                submachine = body.id;
+                // Handy to output this to stdout in order to poke around COAL:
+                console.log('Requested provision of machine: %s', submachine);
+                t4.end();
+            });
+        });
+
+        t.test('Wait For Running', TAP_CONF,  function (t5) {
+            cli.vmapi.listJobs({
+                vm_uuid: submachine,
+                task: 'provision'
+            }, function (err, jobs) {
+                if (err) {
+                    // Skip machine tests when machine creation fails
+                    submachine = null;
+                }
+                t5.ifError(err, 'list jobs error');
+                t5.ok(jobs, 'list jobs ok');
+                t5.ok(jobs.length, 'list jobs is an array');
+                waitForJob(cli, jobs[0].uuid, function (err2) {
+                    if (err2) {
+                        // Skip machine tests when machine creation fails
+                        submachine = null;
+                    }
+                    t5.ifError(err2, 'Check state error');
+                    cli.close();
+                    t5.end();
+                });
             });
         });
 
@@ -380,6 +439,13 @@ test('Delete tests', TAP_CONF, function (t) {
     });
 });
 
+
+test('Delete sub-user machine tests', TAP_CONF, function (t) {
+    var deleteTest = require('./machines/delete');
+    deleteTest(t, client, submachine, function () {
+        t.end();
+    });
+});
 
 test('teardown', {timeout: 'Infinity '}, function (t) {
     client.del('/my/keys/' + keyName, function (err, req, res) {
