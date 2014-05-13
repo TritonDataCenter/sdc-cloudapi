@@ -1,4 +1,11 @@
-// Copyright 2014 Joyent, Inc.  All rights reserved.
+/*
+ * Copyright (c) 2014, Joyent, Inc. All rights reserved.
+ *
+ * Tests for users, roles and policies resources.
+ *
+ * Note there is a default role/policy couple created by
+ * test common during test setup.
+ */
 
 var test = require('tap').test;
 
@@ -13,6 +20,7 @@ var USER_FMT = 'uuid=%s, ou=users, o=smartdc';
 var SUB_FMT = 'uuid=%s, ' + USER_FMT;
 var POLICY_FMT = 'policy-uuid=%s, ' + USER_FMT;
 var ROLE_FMT = 'role-uuid=%s, ' + USER_FMT;
+var ADMIN_ROLE_NAME = 'administrator';
 
 var client, server, account;
 var SUB_ID = libuuid.create();
@@ -54,6 +62,7 @@ var SSH_KEY_TWO = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDY2qV5e2q8qb+kYtn' +
 'Lsqr+Z4fAf4enldx/KMW91iKn whatever@wherever.local';
 
 var FP_ONE, FP_TWO;
+var ADMIN_ROLE_ID;
 
 // --- Helpers
 function checkUser(t, user) {
@@ -503,6 +512,68 @@ test('get user with roles', function (t) {
         t.ok(body.default_roles);
         t.ok(Array.isArray(body.roles));
         t.ok(Array.isArray(body.default_roles));
+        t.end();
+    });
+});
+
+
+test('Attempt to create administrator role with policies fails', function (t) {
+    var entry = {
+        name: ADMIN_ROLE_NAME,
+        members: [SUB_LOGIN, SUB_LOGIN_TWO],
+        policies: [POLICY_NAME]
+    };
+
+    client.post('/my/roles', entry, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(res.statusCode, 409);
+        t.ok(/administrator/i.test(body.message));
+        t.end();
+    });
+});
+
+
+test('Create administrator role', function (t) {
+    var entry = {
+        name: ADMIN_ROLE_NAME,
+        members: [SUB_LOGIN, SUB_LOGIN_TWO]
+    };
+
+    client.post('/my/roles', entry, function (err, req, res, body) {
+        t.ifError(err);
+        t.ok(body);
+        t.equal(res.statusCode, 201);
+        common.checkHeaders(t, res.headers);
+        checkRole(t, body);
+        ADMIN_ROLE_ID = body.id;
+        t.end();
+    });
+});
+
+
+test('Update administrator role with policies fails', function (t) {
+    var entry = {
+        name: ADMIN_ROLE_NAME,
+        members: [SUB_LOGIN, SUB_LOGIN_TWO],
+        policies: [POLICY_NAME]
+    };
+
+    client.post('/my/roles/' + ADMIN_ROLE_ID, entry,
+        function (err, req, res, body) {
+        t.ok(err);
+        t.equal(res.statusCode, 409);
+        t.ok(/administrator/i.test(body.message));
+        t.end();
+    });
+});
+
+
+test('delete administrator role', function (t) {
+    var url = '/my/roles/' + ADMIN_ROLE_ID;
+    client.del(url, function (err, req, res) {
+        t.ifError(err);
+        t.equal(res.statusCode, 204);
+        common.checkHeaders(t, res.headers);
         t.end();
     });
 });
