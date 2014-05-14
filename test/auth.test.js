@@ -433,6 +433,7 @@ test('sub-user signature auth (0.10)', { timeout: 'Infinity' }, function (t) {
     function waitMahiReplicator(cb) {
         waitForMahiCache(client.mahi, mPath, function (er, cache) {
             if (er) {
+                client.log.error({err: er}, 'Error fetching mahi resource');
                 t.fail('Error fetching mahi resource');
                 t.end();
             } else {

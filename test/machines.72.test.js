@@ -290,7 +290,7 @@ test('sub-user tests', { timeout: 'Infinity' }, function (t) {
     function waitMahiReplicator(cb) {
         waitForMahiCache(client.mahi, mPath, function (er, cache) {
             if (er) {
-                console.log(util.inspect(er, false, 8, true));
+                client.log.error({err: er}, 'Error fetching mahi resource');
                 t.fail('Error fetching mahi resource');
                 t.end();
             } else {
@@ -389,7 +389,6 @@ test('sub-user tests', { timeout: 'Infinity' }, function (t) {
                 }
             }, obj, function (err, req, res, body) {
                 t4.ifError(err, 'POST /my/machines error');
-                console.log(util.inspect(res.headers, false, 8, true));
                 t4.equal(res.statusCode, 201, 'POST /my/machines status');
                 common.checkHeaders(t, res.headers);
                 t4.equal(res.headers.location,
