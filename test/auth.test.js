@@ -352,8 +352,6 @@ if (process.env.SDC_SSO_ADMIN_IP) {
 // Account sub-users will use only http-signature >= 0.10.x, given this
 // feature has been added after moving from 0.9.
 // Also, request version will always be >= 7.2 here.
-
-
 test('tag resource collection with role', function (t) {
     client.put('/my/users', {
         'role-tag': [A_ROLE_NAME]
@@ -371,10 +369,7 @@ test('tag resource collection with role', function (t) {
 test('get resource collection role-tag', function (t) {
     var p = '/my/users';
     client.get({
-        path: p,
-        headers: {
-            'role-tag': true
-        }
+        path: p
     }, function (err, req, res, body) {
         t.ifError(err, 'resource role err');
         t.ok(body, 'resource role body');
@@ -403,10 +398,7 @@ test('tag individual resource with role', function (t) {
 test('get individual resource role-tag', function (t) {
     var p = '/my/users/' + client.testSubUser;
     client.get({
-        path: p,
-        headers: {
-            'role-tag': true
-        }
+        path: p
     }, function (err, req, res, body) {
         t.ifError(err, 'resource role err');
         t.ok(body, 'resource role body');
