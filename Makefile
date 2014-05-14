@@ -199,6 +199,8 @@ users_test: $(TAP)
 
 test: auth_test account_test datacenters_test datasets_test keys_test networks_test machines_test packages_test users_test
 
+no_machines_test: auth_test account_test datacenters_test datasets_test keys_test networks_test packages_test users_test
+
 include ./tools/mk/Makefile.deps
 ifeq ($(shell uname -s),SunOS)
 	include ./tools/mk/Makefile.node_prebuilt.targ
