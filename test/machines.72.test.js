@@ -99,7 +99,7 @@ var DATASET;
 var account;
 
 var A_POLICY_NAME;
-var A_ROLE_NAME;
+var A_ROLE_NAME, A_ROLE_UUID;
 var subPrivateKey;
 var SUB_KEY_ID;
 // This is the sub-user created machine:
@@ -116,6 +116,7 @@ test('setup', TAP_CONF, function (t) {
         client = _client;
         account = client.account.login;
         A_ROLE_NAME = client.role.name;
+        A_ROLE_UUID = client.role.id;
         A_POLICY_NAME = client.policy.name;
         subPrivateKey = client.subPrivateKey;
         SUB_KEY_ID = client.SUB_ID;
@@ -420,12 +421,68 @@ test('sub-user tests', { timeout: 'Infinity' }, function (t) {
                         submachine = null;
                     }
                     t5.ifError(err2, 'Check state error');
-                    cli.close();
                     t5.end();
                 });
             });
         });
 
+        t.test('Add machine role-tag', function (t6) {
+            cli.put({
+                path: '/' + account + '/machines/' + submachine,
+                headers: {
+                    'accept-version': '~7.2'
+                }
+            }, {
+                'role-tag': [A_ROLE_NAME]
+            }, function (err, req, res, body) {
+                t6.ifError(err);
+                t6.equal(res.statusCode, 200);
+                t6.ok(body['role-tag']);
+                t6.ok(Array.isArray(body['role-tag']));
+                t6.equal(body['role-tag'][0], A_ROLE_NAME);
+                t6.end();
+            });
+        });
+
+        // Must be the last one or the sub-user will not be able to access
+        // the machine:
+        t.test('Remove machine role-tag', function (t7) {
+            cli.put({
+                path: '/' + account + '/machines/' + submachine,
+                headers: {
+                    'accept-version': '~7.2'
+                }
+            }, {
+                'role-tag': []
+            }, function (err, req, res, body) {
+                t7.ifError(err);
+                t7.equal(res.statusCode, 200);
+                t7.ok(body['role-tag']);
+                t7.ok(Array.isArray(body['role-tag']));
+                t7.equal(0, body['role-tag'].length);
+                cli.close();
+                t7.end();
+            });
+        });
+
+        t.end();
+    });
+});
+
+test('Add submachine role-tag', function (t) {
+    client.put({
+        path: '/' + account + '/machines/' + submachine,
+        headers: {
+            'accept-version': '~7.2'
+        }
+    }, {
+        'role-tag': [A_ROLE_NAME]
+    }, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        t.ok(body['role-tag']);
+        t.ok(Array.isArray(body['role-tag']));
+        t.equal(body['role-tag'][0], A_ROLE_NAME);
         t.end();
     });
 });

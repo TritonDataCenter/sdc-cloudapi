@@ -224,7 +224,8 @@ function createTestPolicy(callback) {
                 client.testSubUser),
             'CAN post IF route::string = rebootmachine',
             'CAN post IF route::string = createmachine',
-            'CAN get IF route::string = getmachine'
+            'CAN get IF route::string = getmachine',
+            'CAN put'
         ],
         description: 'Policy used by test helper',
         account: client.account.uuid
