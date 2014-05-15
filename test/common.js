@@ -216,15 +216,15 @@ function createTestPolicy(callback) {
     var entry = {
         name: 'test-policy',
         rule: [
-            '* CAN get * IF route::string = getaccount',
-            '* CAN get AND head * IF route::string = listusers',
-            '* CAN post * IF route::string = createuser',
-            'Foobar CAN get * IF route::string = listkeys',
-            util.format('%s CAN get * IF route::string = listuserkeys',
+            '* CAN get * IF route = getaccount',
+            '* CAN get AND head * IF route = listusers',
+            '* CAN post * IF route = createuser',
+            'Foobar CAN get * IF route = listkeys',
+            util.format('%s CAN get * IF route = listuserkeys',
                 client.testSubUser),
-            'CAN post IF route::string = rebootmachine',
-            'CAN post IF route::string = createmachine',
-            'CAN get IF route::string = getmachine',
+            'CAN post IF route = rebootmachine',
+            'CAN post IF route = createmachine',
+            'CAN get IF route = getmachine',
             'CAN put'
         ],
         description: 'Policy used by test helper',
