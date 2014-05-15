@@ -188,7 +188,10 @@ machines_70_test:
 machines_71_test:
 	$(NODE_EXEC) $(TAP) --tap --timeout 480 test/machines.71.test.js
 
-machines_test: machines_all_test machines_65_test machines_70_test machines_71_test
+machines_72_test:
+	$(NODE_EXEC) $(TAP) --tap --timeout 480 test/machines.72.test.js
+
+machines_test: machines_all_test machines_65_test machines_70_test machines_71_test machines_72_test
 
 packages_test: $(TAP)
 	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/packages.test.js
