@@ -1,7 +1,7 @@
 {
     "typeTable": {
         "ip": "ip",
-        "requestip": "ip",
-        "tag": "string"
+        "tag": "string",
+        "route": "string"
     }
 }
