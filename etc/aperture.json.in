@@ -1,7 +1,7 @@
 {
     "typeTable": {
         "ip": "ip",
-        "tag": "string",
-        "route": "string"
+        "sourceip": "ip",
+        "user-agent": "string"
     }
 }
