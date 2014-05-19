@@ -293,19 +293,17 @@ test('List NICs', TAP_CONF, function (t) {
 
         vmNic = body[0];
         t.ok(vmNic.mac.match(MAC_RE));
-        t.equal(vmNic.owner_uuid, client.account.uuid);
         t.equal(vmNic.primary, true);
         t.ok(vmNic.ip.match(IP_RE));
+        t.ok(vmNic.netmask.match(IP_RE));
         t.ok(vmNic.gateway.match(IP_RE));
-        t.ok(typeof (vmNic.vlan_id) === 'number');
-        t.equal(vmNic.nic_tag, 'external');
-        t.ok(vmNic.network_uuid.match(UUID_RE));
 
-        t.ok(Array.isArray(vmNic.resolvers));
-        vmNic.resolvers.forEach(function (resolver) {
-            t.ok(resolver.match(IP_RE));
-        });
-
+        t.ifError(vmNic.resolvers);
+        t.ifError(vmNic.owner_uuid);
+        t.ifError(vmNic.network_uuid);
+        t.ifError(vmNic.nic_tag);
+        t.ifError(vmNic.belongs_to_type);
+        t.ifError(vmNic.belongs_to_uuid);
         t.ifError(vmNic.belongs_to_type);
         t.ifError(vmNic.belongs_to_uuid);
 
@@ -567,19 +565,17 @@ test('Create NIC', TAP_CONF, function (t) {
 
         t.ok(nic.mac.match(MAC_RE));
         t.ok(nic.ip.match(IP_RE));
+        t.equal(nic.primary, false);
 
         var nicFront = nic.ip.split('.').slice(0, 3).join('.');
         var netFront = NETWORKS[0].subnet.split('.').slice(0, 3).join('.');
         t.equal(nicFront, netFront);
 
-        t.equal(nic.owner_uuid, client.account.uuid);
-        t.equal(nic.primary, false);
-        t.equal(nic.vlan_id, NETWORKS[0].vlan_id);
-        t.equal(nic.nic_tag, NETWORKS[0].nic_tag);
-        t.equal(nic.network_uuid, NETWORKS[0].uuid);
-        t.equivalent(nic.resolvers, []);
-
         t.ifError(nic.gateway);
+        t.ifError(nic.resolvers);
+        t.ifError(nic.owner_uuid);
+        t.ifError(nic.network_uuid);
+        t.ifError(nic.nic_tag);
         t.ifError(nic.belongs_to_type);
         t.ifError(nic.belongs_to_uuid);
 
