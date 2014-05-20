@@ -72,10 +72,10 @@ Once you've installed Node.js and npm, install the CloudAPI CLI like this:
 
     $ npm install smartdc -g
 
-You will also want to install [jsontool](https://github.com/trentm/json), a tool that
+You will also want to install [json](https://github.com/trentm/json), a tool that
 makes it easier to work with JSON-formatted output. You can install it like this:
 
-    $ npm install jsontool -g
+    $ npm install json -g
 
 In both cases the `-g` switch installs the tools globally,
 usually in `/usr/local/bin`,
