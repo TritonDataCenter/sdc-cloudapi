@@ -23,6 +23,7 @@ TAP		:= ./node_modules/.bin/tap
 # Files
 #
 DOC_FILES	 = index.restdown admin.restdown 65.restdown
+RESTDOWN_FLAGS   = --brand-dir=deps/docbrand
 JS_FILES	:= $(shell ls *.js) $(shell find lib -maxdepth 1 -name '*.js') \
 	$(shell find test -name '*.js') $(shell find bench -name '*.js') \
 	$(shell find plugins -name '*.js') \
