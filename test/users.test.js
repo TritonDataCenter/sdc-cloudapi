@@ -409,7 +409,7 @@ test('update role', function (t) {
     var members = [SUB_LOGIN_TWO, SUB_LOGIN];
     client.post('/my/roles/' + ROLE_UUID, {
         members: members,
-        default_members: members,
+        default_members: [SUB_LOGIN],
         name: 'role-name-can-be-modified'
     }, function (err, req, res, body) {
         t.ifError(err);
@@ -421,6 +421,24 @@ test('update role', function (t) {
         ROLE_NAME = body.name;
         t.ok(body.members.indexOf(SUB_LOGIN) !== -1);
         t.ok(body.default_members.indexOf(SUB_LOGIN) !== -1);
+        t.end();
+    });
+});
+
+
+test('enable member role', function (t) {
+    client.post('/my/roles/' + ROLE_UUID, {
+        default_members: [SUB_LOGIN, SUB_LOGIN_TWO]
+    }, function (err, req, res, body) {
+        t.ifError(err);
+        t.ok(body);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        checkRole(t, body);
+        t.ok(body.members.indexOf(SUB_LOGIN) !== -1);
+        t.ok(body.default_members.indexOf(SUB_LOGIN) !== -1);
+        t.ok(body.members.indexOf(SUB_LOGIN_TWO) !== -1);
+        t.ok(body.default_members.indexOf(SUB_LOGIN_TWO) !== -1);
         t.end();
     });
 });
