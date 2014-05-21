@@ -37,7 +37,8 @@ var SUB_UUID_TWO;
 var SUB_DN_TWO;
 
 var POLICY_DOC = [
-    'Fred can read *.js when foo::string = bar and tag = examples and ' +
+    'Fred can read *.js when foo::string = bar and ' +
+    'tag::string = examples and ' +
     'sourceip::ip = 10.0.0.0/8',
     'Bob can read and write timesheet if requesttime::time > 07:30:00 and ' +
         'requesttime::time < 18:30:00 and ' +
