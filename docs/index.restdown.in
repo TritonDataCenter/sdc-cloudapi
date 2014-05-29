@@ -1,7 +1,7 @@
 ---
 title: Joyent CloudAPI
 mediaroot: ./media
-apisections: Account, Keys, Datacenters, Datasets, Images, Packages, Machines, Analytics, FirewallRules, Networks, Users, Roles, Policies, User SSH Keys
+apisections: Account, Keys, Datacenters, Datasets, Images, Packages, Machines, Analytics, FirewallRules, Networks, Users, Roles, Policies, User SSH Keys, Role Tags
 markdown2extras: wiki-tables, code-friendly
 ---
 
@@ -306,7 +306,7 @@ through the guide, so go ahead and delete the one we setup:
     $ sdc-deletekey id_rsa
 
 <!-- #ifdef BLEEDING_EDGE -->
-## Account Users, Roles & Policies Management.
+## RBAC: Users, Roles & Policies.
 
 Starting at version 7.2.0, [Accounts](#account) can have multiple users
 and roles associated with them.
@@ -315,12 +315,12 @@ While the [main account](#GetAccount) behavior remains the same, including
 the [SSH keys](#keys) associated with it, now it's possible to have multiple
 [Users](#users) subordinated to such account, each of them with a different
 set of [SSH Keys](#sshKeys). Both, the subordinated users and their associated
-ssh keys have the same format than the main account object and the keys
+SSH keys have the same format than the main account object and the keys
 associated with it.
 
 Worth mentioning is the fact that login for account's subordinated users must
 be different only between the users of such account, not globally. That way,
-we could have an account with login _"mark"_, another account "exampleOne" with
+we could have an account with login *"mark"*, another account "exampleOne" with
 a subordinated user with login "mark", another account "exampleTwo" with
 another subordinated user with login "mark", and so forth ...
 
@@ -334,12 +334,12 @@ Additionally, these account users can be organized using [Roles](#roles):
         policies: [ 'createMachine', 'resizeMachine', 'CreateImageFromMachine']
     }
 
-Each group can have an arbitrary set of [Policies](#policies):
+Each role can have an arbitrary set of [Policies](#policies):
 
     {
         id: '9d99a799-8234-4dd8-b37d-9af14b96da25',
         name: 'restart machines',
-        rules: [ '* can rebootMachine if requesttime::time > 07:30:00 and requesttime::time < 18:30:00 and requesttime::day in (Mon, Tue, Wed, THu, Fri)', '* can stopMachine', '* can startMachine' ],
+        rules: [ 'CAN rebootmachine if requesttime::time > 07:30:00 and requesttime::time < 18:30:00 and requesttime::day in (Mon, Tue, Wed, THu, Fri)', 'CAN stopmachine', 'CAN startmachine' ],
         description: 'This is completely optional'
     }
 
@@ -348,60 +348,61 @@ rules use [Aperture](https://github.com/joyent/node-aperture) as policy language
 and are described in detail into the next section.
 
 Our recommendation is to limit each policy set of rules to a very scoped collection
-and, then, add one or more of these policies to each group, in order to be able to
+and, then, add one or more of these policies to each role, in order to be able to
 easily re-use existing policies for one or more roles, allowing fine-grained
 definition of each role abilities.
 
 ## Rules definition for access control
 
 As commented, the policies' rules use [Aperture Policy Language](https://github.com/joyent/node-aperture#policy-language),
-with the following general *basic format*: `<principals> CAN <actions> <resources> WHEN <conditions>`.
+with the following general *basic format*:
+
+    <principals> CAN <actions> <resources> WHEN <conditions>
 
 You should refer to the [Aperture documentation](https://github.com/joyent/node-aperture) for the whole
 details on the different possibilities when defining new rules. This section
 will cover just the possibilities strictly related to CloudAPI's usage of
 such language.
 
-By default, applications will `DENY` any attempt made by any account sub-user to
-access a given resource, unless that sub-user is included into a role which
+Access control lists (ACLs) are one form of access control where rules are
+stored with resources (like in a UNIX file system). ACLs describe which
+identities can access the resource they are attached to.
+
+In the case of CloudAPI, `<principal>` will be always the user performing the
+HTTP request. Likewise, `<resource>` will always be the URL
+of such request, for example `/:account/machines/:machine_id`.
+
+We add one or more roles to a resource to explicitly define the active roles a
+user trying to access a given resource must have. Therefore, we don't need to
+specify `<principal>` in our rules, given it'll be always defined by the
+role-tags of the resource the user is trying to get access to. For the same
+reason, we don't need to specify `<resource>` in our rules.
+
+Therefore, CloudAPI's Aperture rules will have the format:
+
+        CAN <actions> WHEN <conditions>
+
+By default, acess policy will `DENY` any attempt made by any account sub-user
+to access a given resource, unless that sub-user is included into a role which
 has defined a policy with a rule that explicitly `GRANTS` access to such
-resource.
+resource, that role is active, and the resource role-tags include the role.
 
-The `<resources>` we can include into account policies are:
+For example, a user with an active role `read`, which includes a policy rule
+like `CAN listmachines and getmachines` will not get access to resources like
+`/:account/machines` or `/:account/machines/:machine_id` unless these resources
+are *role-tagged* with the role `read` too.
 
-- CloudAPI Routes (CloudAPI).
-- Account Instances (Smart Login).
-- Manta Resources (Manta).
+Additionally, given that the `<actions>` included in the policy rule are just
+`listmachines` and `getmachine`, the user will be able to retrieve a machine
+details provided by [GetMachine](#GetMachine) action, but will not be able to
+perform any other machine actions, like [StopMachine](#StopMachine) unless the
+`<action>` StopMachine is included into any other rule either on this or a
+different user's active role.
 
-### Account's Instances SSH and CloudAPI's routes access
+For more details on how Access Control works for both, CloudAPI and Manta,
+please, refer to [Access Control User Guide][acuguide]
 
-Obviously, the list of `<actions>` will be different depending on each resource.
-For example, if we're defining a route to provide SSH access to a given Account's
-Instance, the only meaningful value will be `ssh`. For example, to allow all the
-members of a role including the following policy to ssh into the instance with
-the given id: `* can ssh $vm_id`.
-
-And for Cloud API's routes, the action will match the name of each route as
-defined into this documentation, **all lowercased** to prevent case related issues.
-For example: `* can rebootmachine * when ip=192.168.1.0/24`
-
-Both, Instances SSH and CloudAPI's routes referred to Instances can use either
-the instance `tags` or `ip` (also IP ranges) as `<conditions>`.
-For the remaining CloudAPI's routes referred to resources which are not instances,
-the only applicable conditions would be `requestip` value or range for the
-current request, or the `requesttime`.
-
-For `<resources>`, in the case of Smart Login, it'll either be an instance ID
-or the *catch all* asterisk. For Cloud API, the same logic will be applied either
-if the route defines a machine or any other resource (ssh key, policy, role,
-image, ...): `<resources>` can take exactly the same values, either the *catch all*
-or the identifier for whatever the resource the route defined into `<actions>`
-is related to.
-
-Finally, given that policies' rules are associated to account roles, `<principals>`
-can be omitted, since any role member will be allowed to perform any action
-defined by the rules associated with that role. (It's to say, `<principals>`
-always will be like `*`).
+[acuguide]: Access control Guide URL
 
 <!-- #endif -->
 
@@ -1736,6 +1737,77 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Response-Time: 65
     Content-Length: 0
 
+
+# Role Tags
+
+## SetRoleTags (PUT /:resource_path)
+
+Sets the given role tags to the provided resource path. `resource_path`
+can be the path to any of the CloudAPI resources described into this document:
+account, keys, users, roles, policies, user's ssh keys, datacenters, images,
+packages, machines, analytics, instrumentations, firewall rules and networks.
+
+For each of these you can set role tags either for an individual resource or
+for the whole group; i.e., you can set role tags for all the machines using:
+
+        PUT /:account/machines
+
+or just for a given machine using
+
+        PUT /:account/machines/:machine_id
+
+### Inputs
+
+||**Field**||**Type**||**Description**||
+||role-tag||Array||The list role-tags to be added to this resource||
+
+### Returns
+
+Resource role tags
+
+||**Field**||**Type**||**Description**||
+||name||String||Path to the resource||
+||role-tag||Array||The list of role tags assigned to this resource||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||InvalidArgument||The provided resource path is not valid||
+||ResourceNotFound||If :resource_path does not exist||
+
+
+### Example Request
+
+    PUT /my/machines HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Host: api.example.com
+    Api-Version: ~7.2
+    content-length: 26
+    content-md5: KwJKP+w/roeR+pRgKTMo7w==
+    Authorization: Signature keyId...
+
+    {
+        "role-tag": ["test-role"]
+    }
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Content-Length: 97
+    Server: Joyent SmartDataCenter 7.2.0
+    Api-Version: 7.2.0
+    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+
+    {
+        "name": "/my/machines",
+        "role-tag": [
+          "test-role"
+        ]
+    }
 
 
 # Policies
