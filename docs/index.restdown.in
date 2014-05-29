@@ -1084,6 +1084,12 @@ Array of user objects. Each user object has the following fields:
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If :account does not exist||
 
+
+### CLI Command:
+
+    $ sdc-user list
+
+
 ### Example Request
 
 
@@ -1158,6 +1164,11 @@ Array of user objects. Each user object has the following fields:
 
 ||**Error Code**||**Description**||
 ||ResourceNotFound||When `:account` or `:user` do not exist||
+
+### CLI Command:
+
+    $ sdc-user get ed976ee5-80a4-42cd-b0d6-5493b7d41132
+
 
 ### Example Request
 
@@ -1238,6 +1249,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||InvalidArgument||If any of the parameters are invalid, for example, you try to add a login name already taken by another sub user of your account||
 ||MissingParameter||If you didn't send a login, email or password||
 ||ResourceNotFound||If :account does not exist||
+
+
+### CLI Command:
+
+    $ sdc-user create --login=bob --email=bob@test.joyent.com --password=123secret
 
 
 ### Request:
@@ -1341,6 +1357,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||ResourceNotFound||If :account  or :user do not exist||
 
 
+### CLI Command:
+
+    $ sdc-user update 93c3d419-a927-6195-b6fc-b3a4af541aa3 --login=joe
 
 ## ChangeUserPassword (POST /:account/users/:user/change_password)
 
@@ -1385,6 +1404,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||MissingParameter||Either password or password\_confirmation parameters are missing||
 ||ResourceNotFound||If :account or :user do not exist||
 
+
+### CLI Command:
+
+    $ sdc-user change-password 93c3d419-a927-6195-b6fc-b3a4af541aa3 --password=foo123bar --password-confirmation=foo123bar
 
 ### Example Request
 
@@ -1437,6 +1460,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||ResourceNotFound||If :account does not exist or there isn't a user with either the `login` or `id` given as `:user` value||
 
 
+### CLI Command:
+
+    $ sdc-user delete 707811cd-d0fa-c5cc-f41f-bfd2d9f545d1
+
 #### Example Request
 
     DELETE /my/users/ed976ee5-80a4-42cd-b0d6-5493b7d41132 HTTP/1.1
@@ -1484,6 +1511,11 @@ Returns an array of account roles
 
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If :account does not exist||
+
+
+### CLI Command:
+
+    $ sdc-role list
 
 ### Example Request
 
@@ -1538,6 +1570,11 @@ Get an account role (`:role`) by `id`.
 
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If :account or :role do not exist||
+
+
+### CLI Command:
+
+    $ sdc-role get 4025de02-b4b6-4041-ae72-0749e99a5ac4
 
 ### Example Request
 
@@ -1599,6 +1636,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||InvalidArgument||If member or policies are invalid, for example, you try to add an unexisting user||
 ||MissingParameter||If you didn't send a name||
 ||ResourceNotFound||If :account does not exist||
+
+
+### CLI Command:
+
+    $ sdc-role create --name='test-role' --members='bob, fred' --default-members='bob' --policies='test-policy'
 
 
 ### Example Request
@@ -1667,6 +1709,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||MissingParameter||If you didn't send a name||
 ||ResourceNotFound||If :account does not exist||
 
+### CLI Command:
+
+    $ sdc-role update 3c2ef9da-b137-6a87-f227-dad1db4219b7 --members=joe --members=bob --default-members=bob --default-members=joe
+
 
 ### Example Request
 
@@ -1718,6 +1764,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If :account or :role do not exist||
 
+
+### CLI Command:
+
+    $ sdc-role delete 4025de02-b4b6-4041-ae72-0749e99a5ac4
 
 #### Example Request
 
@@ -1778,6 +1828,15 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||ResourceNotFound||If :resource_path does not exist||
 
 
+### CLI Command:
+
+    $ sdc-chmod -- =read,create /my/machines
+
+The list of role-tags assigned to a given resource can be obtained from the
+command line with `sdc-info /:resource_path`:
+
+    $ sdc-info /my/machines
+
 ### Example Request
 
     PUT /my/machines HTTP/1.1
@@ -1835,6 +1894,11 @@ Retrieves a list of account policies.
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If :account does not exist||
 
+
+### CLI Command:
+
+    $ sdc-policy list
+
 ### Example Request
 
 
@@ -1887,6 +1951,11 @@ Get an account policy (`:policy`) either by `id`.
 
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If :account or :role do not exist||
+
+
+### CLI Command:
+
+    $ sdc-policy get 1e14dd3e-dc9d-6cd6-dd5a-ab5a159e96d7
 
 ### Example Request
 
@@ -1942,6 +2011,11 @@ Creates a new account policy.
 
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If :account or :role do not exist||
+
+
+### CLI Command:
+
+    $ sdc-policy create --name=test-policy --description='Policy to test cmdln tool' --rules='CAN rebootmachine, createmachine AND getmachine' --rules='CAN listkeys AND listuserkeys'
 
 ### Example Request
 
@@ -2005,6 +2079,11 @@ Upgrades an existing account policy. Everything but id can be modified.
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If :account or :role do not exist||
 
+
+### CLI Command:
+
+    $ sdc-policy update 1e14dd3e-dc9d-6cd6-dd5a-ab5a159e96d7 --rules='CAN rebootmachine, createmachine AND getmachine' --rules='CAN listkeys AND listuserkeys' --rules='CAN stopmachine, startmachine, renamemachine, enablemachinefirewall AND disablemachinefirewall'
+
 ### Example Request
 
 
@@ -2059,6 +2138,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If :account or :policy do not exist||
 
+### CLI Command:
+
+    $ sdc-policy delete 1e14dd3e-dc9d-6cd6-dd5a-ab5a159e96d7
 
 #### Example Request
 
@@ -2090,18 +2172,36 @@ path from where you can access subordinated users' keys:
 Lists all public keys we have on record for the specified account sub-user.
 See [ListKeys](#ListKeys).
 
+### CLI Command:
+
+    $ sdc-user keys dd71f8bb-f310-4746-8e36-afd7c6dd2895
+
 ## GetUserKey (GET /:account/users/:user/keys/:key)
 
 Retrieves the given key record either by fingerprint or name.
 See [GetKey](#GetKey).
 
+### CLI Command:
+
+    $ sdc-user key dd71f8bb-f310-4746-8e36-afd7c6dd2895 '0b:56:ae:c5:d1:7b:7a:98:09:58:1a:a2:0c:22:63:9f'
+
+
 ## CreateUserKey (POST /:account/users/:user/keys)
 
 Creates a new key record. See [CreateKey](#CreateKey).
 
+### CLI Command:
+
+    $ sdc-user upload-key -n test 93c3d419-a927-6195-b6fc-b3a4af541aa3 ~/.ssh/id_rsa.pub
+
 ## DeleteUserKey (DELETE /:account/users/:user/keys/:key)
 
 Removes a key. See [GetKey](#GetKey).
+
+### CLI Command:
+
+    $ sdc-user delete-key dd71f8bb-f310-4746-8e36-afd7c6dd2895 '0b:56:ae:c5:d1:7b:7a:98:09:58:1a:a2:0c:22:63:9f'
+
 
 <!-- #endif -->
 
