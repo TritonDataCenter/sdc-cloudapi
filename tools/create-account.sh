@@ -63,4 +63,4 @@ EOM
 
 ${SCP} /tmp/account.ldif ${HOST}:/var/tmp/
 
-${SSH} ${HOST} "sdc-ldap add -f /var/tmp/account.ldif"
+${SSH} ${HOST} "/opt/smartdc/bin/sdc-ldap add -f /var/tmp/account.ldif"
