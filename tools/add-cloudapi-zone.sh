@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2014, Joyent, Inc. All rights reserved.
 #
-# add-cloudapi-zon.sh: This script creates the cloudapi0 zone into the
+# add-cloudapi-zone.sh: This script creates the cloudapi0 zone into the
 #     given ssh host
 set -o xtrace
 set -o errexit
