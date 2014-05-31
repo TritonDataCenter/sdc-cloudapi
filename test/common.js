@@ -221,7 +221,7 @@ function createTestPolicy(callback) {
             'CAN createuser',
             'CAN listkeys AND listuserkeys',
             'CAN rebootmachine, createmachine AND getmachine',
-            'CAN replaceresourceroletags AND replacemachineroletags'
+            'CAN setroletags'
         ],
         description: 'Policy used by test helper',
         account: client.account.uuid
