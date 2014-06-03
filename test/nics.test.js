@@ -91,7 +91,7 @@ var MAC_RE  = /^(?:[0-9a-f]{2}\:){5}[0-9a-f]{2}/i;
 
 
 var client, cnapiServer, machineUuid, headnode, vmNic, serverMac, adminUser,
-    otherMachineUuid, otherVmNic, otherNetwork;
+    otherMachineUuid, otherVmNic, otherNetwork, location;
 
 
 
@@ -566,6 +566,7 @@ test('Create NIC', TAP_CONF, function (t) {
         t.ok(nic.mac.match(MAC_RE));
         t.ok(nic.ip.match(IP_RE));
         t.equal(nic.primary, false);
+        t.equal(nic.status, 'provisioning');
 
         var nicFront = nic.ip.split('.').slice(0, 3).join('.');
         var netFront = NETWORKS[0].subnet.split('.').slice(0, 3).join('.');
@@ -579,7 +580,8 @@ test('Create NIC', TAP_CONF, function (t) {
         t.ifError(nic.belongs_to_type);
         t.ifError(nic.belongs_to_uuid);
 
-        var location = res.headers.location;
+
+        location = res.headers.location;
         t.ok(location);
 
         client.get(location, function (err2, req2, res2, nic2) {
@@ -592,6 +594,32 @@ test('Create NIC', TAP_CONF, function (t) {
             t.end();
         });
     });
+});
+
+
+
+test('Wait until create NIC completes', TAP_CONF, function (t) {
+    var count = 30;
+
+    function check() {
+        count--;
+        if (count === 0) {
+            t.ifError('NIC did not provision in time');
+            return t.end();
+        }
+
+        return client.get(location, function (err, req, res, nic) {
+            t.ifError(err);
+
+            if (nic.status === 'running') {
+                return t.end();
+            } else {
+                return setTimeout(check, 5000);
+            }
+        });
+    }
+
+    check();
 });
 
 
@@ -662,11 +690,11 @@ test('Create NIC on server missing nic tag', TAP_CONF, function (t) {
 
     var expectedErr = {
         message: 'Server does not have NIC tag: test_tag_gamma',
-        statusCode: 500,
-        restCode: 'InternalError',
-        name: 'InternalError',
+        statusCode: 409,
+        restCode: 'InvalidArgument',
+        name: 'InvalidArgumentError',
         body: {
-            code: 'InternalError',
+            code: 'InvalidArgument',
             message: 'Server does not have NIC tag: test_tag_gamma'
         }
     };
@@ -883,20 +911,34 @@ test('Remove NIC', TAP_CONF, function (t) {
         t.equal(res.statusCode, 204);
         t.equivalent(body, {});
 
-        var expectedErr = {
-            message: 'nic not found',
-            statusCode: 404,
-            restCode: 'ResourceNotFound',
-            name: 'ResourceNotFoundError',
-            body: {
-                code: 'ResourceNotFound',
-                message: 'nic not found'
-            }
-        };
-
-        // check it's gone
-        getErr(t, path, expectedErr);
+        location = path;
+        t.end();
     });
+});
+
+
+
+test('Wait until remove NIC completes', TAP_CONF, function (t) {
+    var count = 30;
+
+    function check() {
+        count--;
+        if (count === 0) {
+            t.ifError('NIC did not delete in time');
+            return t.end();
+        }
+
+        return client.get(location, function (err, req, res, nic) {
+            if (err) {
+                t.equal(err.statusCode, 404);
+                return t.end();
+            } else {
+                return setTimeout(check, 5000);
+            }
+        });
+    }
+
+    check();
 });
 
 
