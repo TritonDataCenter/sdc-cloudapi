@@ -6300,6 +6300,8 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     }
 
 
+
+
 # Nics
 
 CloudAPI provides a way to list, add and remove NICs attached to a machine.
@@ -6322,14 +6324,15 @@ An array of NIC objects. NICs are:
 ||primary||Boolean||Whether this is the VM's primary NIC||
 ||netmask||String||IPv4 netmask||
 ||gateway||String||IPv4 gateway||
+||status||String||Describes the state of the NIC (e.g. provisioning, running, or stopped)||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
 ||**Error Code**||**Description**||
-||ResourceNotFound||If :login or :id does not exist||
-||InvalidArgument||If :id isn't a UUID||
+||ResourceNotFound||If `:login or `:id` does not exist||
+||InvalidArgument||If `:id` isn't a UUID||
 
 #### Example Request
 
@@ -6367,16 +6370,18 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
             "primary": true,
             "ip": "10.88.88.137",
             "netmask": "255.255.255.0",
-            "gateway": "10.88.88.2"
+            "gateway": "10.88.88.2",
+            "status": "running"
         }
     ]
+
 
 ## GetNic (GET /:login/machines/:id/nics/:mac)
 
 Gets a specific NIC on a machine belonging to a given account.
 
-NB: the :mac element in the path must have all the colons (':') stripped from it
-in the request.
+NB: the `:mac` element in the path must have all the colons (':') stripped from
+it in the request.
 
 ### Inputs
 
@@ -6392,14 +6397,15 @@ A NIC object:
 ||primary||Boolean||Whether this is the VM's primary NIC||
 ||netmask||String||IPv4 netmask||
 ||gateway||String||IPv4 gateway||
+||status||String||Describes the state of the NIC (e.g. provisioning, running, or stopped)||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
 ||**Error Code**||**Description**||
-||ResourceNotFound||If :login, :id, or :mac does not exist||
-||InvalidArgument||If :id isn't a UUID, or :mac isn't a MAC address (without colons)||
+||ResourceNotFound||If `:login`, `:id`, or `:mac` does not exist||
+||InvalidArgument||If `:id` isn't a UUID, or `:mac` isn't a MAC address (without colons)||
 
 #### Example Request
 
@@ -6436,8 +6442,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
         "primary": true,
         "ip": "10.88.88.137",
         "netmask": "255.255.255.0",
-        "gateway": "10.88.88.2"
+        "gateway": "10.88.88.2",
+        "status": "running"
     }
+
 
 ## AddNic (POST /:login/machines/:id/nics)
 
@@ -6460,19 +6468,26 @@ The newly-created NIC object:
 ||primary||Boolean||Whether this is the VM's primary NIC||
 ||netmask||String||IPv4 netmask||
 ||gateway||String||IPv4 gateway||
+||status||String||Describes the state of the NIC (most likely 'provisioning')||
 
 It also returns the Location in the headers where the new NIC lives in the HTTP
 API. If a NIC already exists for that network, a 302 redirect will be returned
 instead of the object.
+
+NICs do not appear on a machine immediately, so the state of the new NIC can be
+checked by polling that location. While the NIC is provisioning, it will have a
+`status` of 'provisioning'. Once it's 'running', the NIC is active on the
+machine. If the provision fails, the NIC will be removed and the location will
+start returning 404.
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
 ||**Error Code**||**Description**||
-||ResourceNotFound||If :login or :id does not exist||
-||InvalidArgument||If :id isn't a UUID, the network argument isn't a valid UUID||
-||MissingParameter||If the network argument isn't present||
+||ResourceNotFound||If `:login` or `:id` does not exist||
+||InvalidArgument||If `:id` isn't a UUID, or the `network` argument isn't a valid UUID||
+||MissingParameter||If the `network` argument isn't present||
 
 #### Example Request
 
@@ -6514,12 +6529,18 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
         "primary": false,
         "ip": "10.88.88.137",
         "netmask": "255.255.255.0",
-        "gateway": "10.88.88.2"
+        "gateway": "10.88.88.2",
+        "status": "provisioning"
     }
+
 
 ## RemoveNic (POST /:login/machines/:id/nics/:mac)
 
 Removes a NIC on a machine belonging to a given account.
+
+Like [AddNic](#AddNic) above, the NIC won't be removed from the machine
+immediately. After the NIC is removed, it will start returning 404 through
+CloudAPI.
 
 *WARNING*: this causes the machine to reboot while removing the NIC.
 
@@ -6536,8 +6557,8 @@ Removes a NIC on a machine belonging to a given account.
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
 ||**Error Code**||**Description**||
-||ResourceNotFound||If :login or :id does not exist||
-||InvalidArgument||If :id isn't a UUID, the network argument isn't a valid UUID||
+||ResourceNotFound||If `:login`, `:id` or `:mac` does not exist||
+||InvalidArgument||If `:id` isn't a UUID||
 
 #### Example Request
 
@@ -6567,6 +6588,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     x-request-id: 6b8c5170-d45a-11e3-8db6-c7649670227d
     x-api-version: 7.2.0
     x-response-time: 183
+
 
 
 # Appendix A: Machine States
