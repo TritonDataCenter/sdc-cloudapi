@@ -103,6 +103,20 @@ hack_dapi_for_headnode_provisioning
 # TODO: how to offer alternative to hook up to remote Manta?
 hack_imgapi_to_allow_local_custom_images
 
+echo "# Create test_128 package"
+sdc-papi /packages -X POST -d '{
+    "cpu_cap": 100,
+    "max_lwps": 1000,
+    "max_physical_memory": 128,
+    "max_swap": 256,
+    "name": "test_128",
+    "quota": 12800,
+    "zfs_io_priority": 10,
+    "active": true,
+    "default": false,
+    "version": "1.0.0"
+}' | json -H
+
 # This is base-13.4.0:
 base=`joyent-imgadm list os=smartos name=base version=13.4.0 -o uuid|tail -1`
 install_image $base
