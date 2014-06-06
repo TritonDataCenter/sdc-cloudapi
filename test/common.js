@@ -23,13 +23,8 @@ var app = require('../lib').app;
 var util = require('util');
 var fs = require('fs');
 var mahi = require('mahi');
-var apertureConfig = {
-    typeTable: {
-        ip: 'ip',
-        requestip: 'ip',
-        tag: 'string'
-    }
-};
+var apertureConfig = require('aperture-config').config;
+
 // --- Globals
 
 var PASSWD = 'secret123';
