@@ -110,7 +110,7 @@ sdc-papi /packages -X POST -d '{
     "max_physical_memory": 128,
     "max_swap": 256,
     "name": "test_128",
-    "quota": 12800,
+    "quota": 12288,
     "zfs_io_priority": 10,
     "active": true,
     "default": false,
