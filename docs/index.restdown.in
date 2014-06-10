@@ -524,8 +524,8 @@ Additionally, given that the `<actions>` included in the policy rule are just
 `listmachines` and `getmachine`, the user will be able to retrieve a machine's
 details provided by the [GetMachine](#GetMachine) action, but will not be able
 to perform any other machine actions (like [StopMachine](#StopMachine)).
-However, if the role has a rule including that `<action` (like StopMachine), or
-the user has an additional role which includes taht rule, then the user can
+However, if the role has a rule including that `<action>` (like StopMachine), or
+the user has an additional role which includes that rule, then the user can
 invoke that action too.
 
 For more details on how Access Control works for both CloudAPI and Manta,
@@ -1905,6 +1905,8 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Content-Length: 0
 
 
+
+
 # Role Tags
 
 ## SetRoleTags (PUT /:resource_path)
@@ -2977,7 +2979,7 @@ Provides a list of packages available in this datacenter.
 
 ||name||String||The "friendly" name for this package||
 ||memory||Number||How much memory will by available (in MiB)||
-||disk||Number||How much disk space will be available (in GiB)||
+||disk||Number||How much disk space will be available (in MiB)||
 ||swap||Number||How much swap space will be available (in MiB)||
 ||version||String||The version of this package||
 ||vcpus||Number||Number of vCPUs for this package||
@@ -2992,7 +2994,7 @@ An array of objects, of the form:
 
 ||name||String||The "friendly" name for this package||
 ||memory||Number||How much memory will by available (in MiB)||
-||disk||Number||How much disk space will be available (in GiB)||
+||disk||Number||How much disk space will be available (in MiB)||
 ||swap||Number||How much swap space will be available (in MiB)||
 ||vcpus||Number||Number of vCPUs for this package||
 ||default||Boolean||Whether this is the default package in this datacenter||
@@ -3087,7 +3089,7 @@ Gets a package by `name` or `id`.
 
 ||name||String||The "friendly" name for this package||
 ||memory||Number||How much memory will by available (in MiB)||
-||disk||Number||How much disk space will be available (in GiB)||
+||disk||Number||How much disk space will be available (in MiB)||
 ||swap||Number||How much swap space will be available (in MiB)||
 ||vcpus||Number||Number of vCPUs for this package||
 ||default||Boolean||Whether this is the default package in this datacenter||
@@ -3186,7 +3188,7 @@ An array of machine objects, which contain:
 ||state||String||The current state of this machine (e.g. running)||
 ||dataset||URN||The dataset urn this machine was provisioned with (for new images without a URN, this value will be the image id)||
 ||memory||Number||The amount of RAM this machine has (in MiB)||
-||disk||Number||The amount of disk this machine has (in GiB)||
+||disk||Number||The amount of disk this machine has (in MiB)||
 ||ips||Array[String]||The IP addresses this machine has||
 ||metadata||Object[String => String]||Any additional metadata this machine has||
 ||created||Date (ISO8601)||When this machine was created||
@@ -3296,7 +3298,7 @@ Gets the details for an individual machine.
 ||state||String||The current state of this machine (e.g. running)||
 ||dataset||URN||The dataset urn this machine was provisioned with (for new images without a URN, this value will be the image id)||
 ||memory||Number||The amount of RAM this machine has (in MiB)||
-||disk||Number||The amount of disk this machine has (in GiB)||
+||disk||Number||The amount of disk this machine has (in MiB)||
 ||ips||Array[String]||The IP addresses this machine has||
 ||metadata||Object[String => String]||Any additional metadata this machine has||
 ||created||Date (ISO8601)||When this machine was created||
@@ -3423,7 +3425,7 @@ encoded string.  On metadata retrieval, you will get back a JSON object.
 ||state||String||The current state of this machine (e.g. running)||
 ||dataset||URN||The dataset urn this machine was provisioned with (for new images without a URN, this value will be the image id)||
 ||memory||Number||The amount of RAM this machine has (in MiB)||
-||disk||Number||The amount of disk this machine has (in GiB)||
+||disk||Number||The amount of disk this machine has (in MiB)||
 ||ips||Array[String]||The IP addresses this machine has||
 ||metadata||Object[String => String]||Any additional metadata this machine has||
 ||created||Date (ISO8601)||When this machine was created||
