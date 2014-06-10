@@ -410,7 +410,6 @@ test('get individual resource role-tag', function (t) {
 });
 
 
-
 test('sub-user signature auth (0.10)', { timeout: 'Infinity' }, function (t) {
     function subRequestSigner(req) {
         httpSignature.sign(req, {
@@ -558,6 +557,38 @@ test('delete role with role-tag', function (t) {
         t.end();
     });
 });
+
+
+test('tag /:account with role', function (t) {
+    client.put('/' + account, {
+        'role-tag': [A_ROLE_NAME]
+    }, function (err, req, res, body) {
+        t.ifError(err, 'resource role err');
+        t.ok(body, 'resource role body');
+        t.ok(body.name, 'resource role name');
+        t.ok(body['role-tag'], 'resource role tag');
+        t.ok(body['role-tag'].length, 'resource role tag ary');
+        t.end();
+    });
+});
+
+
+test('get /:account role-tag', function (t) {
+    var p = '/' + account;
+    client.get({
+        path: p
+    }, function (err, req, res, body) {
+        t.ifError(err, 'resource role err');
+        t.ok(body, 'resource role body');
+        t.ok(body.login, 'resource is a user');
+        t.ok(res.headers['role-tag'], 'resource role-tag header');
+        t.equal(res.headers['role-tag'], A_ROLE_NAME, 'resource role-tag');
+        t.end();
+    });
+});
+
+
+
 
 
 test('cleanup sdcAccountResources', function (t) {

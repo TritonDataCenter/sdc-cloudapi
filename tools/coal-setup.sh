@@ -114,6 +114,7 @@ sdc-papi /packages -X POST -d '{
     "zfs_io_priority": 10,
     "active": true,
     "default": false,
+    "vcpus": 1,
     "version": "1.0.0"
 }' | json -H
 
