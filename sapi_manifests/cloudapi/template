@@ -86,7 +86,7 @@
     },
     {{#MAHI_SERVICE}}
     "mahi": {
-        "url": "http://{{{mahi_domain}}}:8080",
+        "url": "http://{{{mahi_domain}}}",
         "maxAuthCacheSize": 1000,
         "maxAuthCacheAgeMs": 300,
         "maxTranslationCacheSize": 1000,
