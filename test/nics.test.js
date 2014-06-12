@@ -84,6 +84,16 @@ var NETWORKS = [ {
     ]
 } ];
 
+var NETWORK_POOLS = [ {
+    // uuid, nic_tag, owner_uuid and networks filled in by createNetwork()
+    // during setup
+    'name': 'test-network-pool-alpha'
+}, {
+    // uuid, nic_tag, owner_uuid and networks filled in by createNetwork()
+    // during setup
+    'name': 'test-network-pool-gamma'
+} ];
+
 var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 var IP_RE   = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
 var MAC_RE  = /^(?:[0-9a-f]{2}\:){5}[0-9a-f]{2}/i;
@@ -127,11 +137,11 @@ test('setup', TAP_CONF, function (t) {
     };
 
     var addNetwork_0 = function (_, next) {
-        createNetwork(t, NETWORKS[0], true, next);
+        createNetwork(t, NETWORKS[0], NETWORK_POOLS[0], true, next);
     };
 
     var addNetwork_1 = function (_, next) {
-        createNetwork(t, NETWORKS[1], false, next);
+        createNetwork(t, NETWORKS[1], NETWORK_POOLS[1], false, next);
     };
 
     var findHeadnode = function (_, next) {
@@ -555,7 +565,7 @@ test('Get NIC from nonexistent machine', TAP_CONF, function (t) {
 
 
 // NB: changes value of vmNic global
-test('Create NIC', TAP_CONF, function (t) {
+test('Create NIC using network', TAP_CONF, function (t) {
     var path = '/my/machines/' + machineUuid + '/nics';
     var args = { network: NETWORKS[0].uuid };
 
@@ -598,28 +608,8 @@ test('Create NIC', TAP_CONF, function (t) {
 
 
 
-test('Wait until create NIC completes', TAP_CONF, function (t) {
-    var count = 30;
-
-    function check() {
-        count--;
-        if (count === 0) {
-            t.ifError('NIC did not provision in time');
-            return t.end();
-        }
-
-        return client.get(location, function (err, req, res, nic) {
-            t.ifError(err);
-
-            if (nic.status === 'running') {
-                return t.end();
-            } else {
-                return setTimeout(check, 5000);
-            }
-        });
-    }
-
-    check();
+test('Wait til network NIC added', TAP_CONF, function (t) {
+    waitTilNicAdded(t, location);
 });
 
 
@@ -689,13 +679,33 @@ test('Create NIC on server missing nic tag', TAP_CONF, function (t) {
     var args = { network: NETWORKS[1].uuid };  // NB: 1, not 0
 
     var expectedErr = {
-        message: 'Server does not have NIC tag: test_tag_gamma',
+        message: 'Server does not support that network',
         statusCode: 409,
         restCode: 'InvalidArgument',
         name: 'InvalidArgumentError',
         body: {
             code: 'InvalidArgument',
-            message: 'Server does not have NIC tag: test_tag_gamma'
+            message: 'Server does not support that network'
+        }
+    };
+
+    postErr(t, path, args, expectedErr);
+});
+
+
+
+test('Create NIC with pool on server missing nic tag', TAP_CONF, function (t) {
+    var path = '/my/machines/' + machineUuid + '/nics';
+    var args = { network: NETWORK_POOLS[1].uuid };
+
+    var expectedErr = {
+        message: 'Server does not support that network',
+        statusCode: 409,
+        restCode: 'InvalidArgument',
+        name: 'InvalidArgumentError',
+        body: {
+            code: 'InvalidArgument',
+            message: 'Server does not support that network'
         }
     };
 
@@ -750,11 +760,11 @@ test('Create with nonexistent network', TAP_CONF, function (t) {
 
     var expectedErr = {
         message: 'network not found',
-        statusCode: 404,      // XXX should be 409
-        restCode: 'ResourceNotFound',
-        name: 'ResourceNotFoundError',
+        statusCode: 409,
+        restCode: 'InvalidArgument',
+        name: 'InvalidArgumentError',
         body: {
-            code: 'ResourceNotFound',
+            code: 'InvalidArgument',
             message: 'network not found'
         }
     };
@@ -902,44 +912,68 @@ test('Remove nonexistent NIC', TAP_CONF, function (t) {
 
 
 
-test('Remove NIC', TAP_CONF, function (t) {
-    var mac  = vmNic.mac.replace(/\:/g, '');
-    var path = '/my/machines/' + machineUuid + '/nics/' + mac;
+test('Remove NIC using network', TAP_CONF, function (t) {
+    removeNic(t, vmNic);
+});
 
-    client.del(path, function (err, req, res, body) {
+
+
+test('Wait til network NIC removed', TAP_CONF, waitTilNicDeleted);
+
+
+
+// NB: changes value of vmNic global
+test('Create NIC using network pool', TAP_CONF, function (t) {
+    var path = '/my/machines/' + machineUuid + '/nics';
+    var args = { network: NETWORK_POOLS[0].uuid };
+
+    client.post(path, args, function (err, req, res, nic) {
         t.ifError(err);
-        t.equal(res.statusCode, 204);
-        t.equivalent(body, {});
+        t.equal(res.statusCode, 201);
 
-        location = path;
-        t.end();
+        t.ok(nic.mac.match(MAC_RE));
+        t.ok(nic.ip.match(IP_RE));
+        t.equal(nic.primary, false);
+        t.equal(nic.status, 'provisioning');
+
+        t.ifError(nic.gateway);
+        t.ifError(nic.resolvers);
+        t.ifError(nic.owner_uuid);
+        t.ifError(nic.network_uuid);
+        t.ifError(nic.nic_tag);
+        t.ifError(nic.belongs_to_type);
+        t.ifError(nic.belongs_to_uuid);
+
+        location = res.headers.location;
+        t.ok(location);
+
+        client.get(location, function (err2, req2, res2, nic2) {
+            t.ifError(err2);
+            t.equal(res2.statusCode, 200);
+
+            t.equivalent(nic, nic2);
+            vmNic = nic;
+
+            t.end();
+        });
     });
 });
 
 
 
-test('Wait until remove NIC completes', TAP_CONF, function (t) {
-    var count = 30;
-
-    function check() {
-        count--;
-        if (count === 0) {
-            t.ifError('NIC did not delete in time');
-            return t.end();
-        }
-
-        return client.get(location, function (err, req, res, nic) {
-            if (err) {
-                t.equal(err.statusCode, 404);
-                return t.end();
-            } else {
-                return setTimeout(check, 5000);
-            }
-        });
-    }
-
-    check();
+test('Wait til network pool NIC added', TAP_CONF, function (t) {
+    waitTilNicAdded(t, location);
 });
+
+
+
+test('Remove NIC using network pool', TAP_CONF, function (t) {
+    removeNic(t, vmNic);
+});
+
+
+
+test('Wait til network pool NIC removed', TAP_CONF, waitTilNicDeleted);
 
 
 
@@ -958,11 +992,11 @@ test('teardown', TAP_CONF, function (t) {
     };
 
     var removeNetwork_0 = function (_, next) {
-        removeNetwork(t, NETWORKS[0], next);
+        removeNetwork(t, NETWORKS[0], NETWORK_POOLS[0], next);
     };
 
     var removeNetwork_1 = function (_, next) {
-        removeNetwork(t, NETWORKS[1], next);
+        removeNetwork(t, NETWORKS[1], NETWORK_POOLS[1], next);
     };
 
     var removeKey = function (_, next) {
@@ -1016,33 +1050,53 @@ test('teardown', TAP_CONF, function (t) {
 
 
 
-function createNetwork(t, net, addOwner, callback) {
+function createNetwork(t, net, pool, addOwner, callback) {
     client.napi.createNicTag(net.nic_tag, function (err) {
         t.ifError(err);
 
+        pool.nic_tag = net.nic_tag;
+
         if (addOwner) {
-            // Fill in owner_uuids entries in NETWORKS global
+            // Fill in owner_uuids entries in NETWORKS and NETWORK_POOLS globals
             net.owner_uuids.push(client.account.uuid);
+            pool.owner_uuids = net.owner_uuids;
         }
 
         client.napi.createNetwork(net, function (err2, _net) {
-            t.ifError(err);
+            t.ifError(err2);
 
             // Fill in uuid entries in NETWORKS global
             net.uuid = _net.uuid;
 
-            callback();
+            // Fill in networks entries in NETWORK_POOLS global
+            pool.networks = [net.uuid];
+
+            var name = pool.name;
+            client.napi.createNetworkPool(name, pool, function (err3, _pool) {
+                t.ifError(err3);
+
+                // Fill in uuid entries in NETWORK_POOLS global
+                pool.uuid = _pool.uuid;
+
+                callback();
+            });
         });
     });
 }
 
 
 
-function removeNetwork(t, net, callback) {
-    client.napi.deleteNetwork(net.uuid, function (err) {
-        client.napi.deleteNicTag(net.nic_tag, function (err2) {
+function removeNetwork(t, net, pool, callback) {
+    client.napi.deleteNetworkPool(pool.uuid, function (err) {
+        t.ifError(err);
+
+        client.napi.deleteNetwork(net.uuid, function (err2) {
             t.ifError(err2);
-            callback();
+
+            client.napi.deleteNicTag(net.nic_tag, function (err3) {
+                t.ifError(err3);
+                callback();
+            });
         });
     });
 }
@@ -1160,4 +1214,73 @@ function sortNics(nics) {
     return nics.sort(function (a, b) {
         return (a.mac > b.mac) ? 1 : -1;
     });
+}
+
+
+
+function waitTilNicAdded(t, path) {
+    var count = 30;
+
+    function check() {
+        count--;
+        if (count === 0) {
+            t.ifError('NIC did not provision in time');
+            return t.end();
+        }
+
+        return client.get(path, function (err, req, res, nic) {
+            t.ifError(err);
+
+            if (nic.status === 'running') {
+                return t.end();
+            } else {
+                console.log(nic.status);
+                return setTimeout(check, 5000);
+            }
+        });
+    }
+
+    check();
+}
+
+
+
+function removeNic(t, nic) {
+    var mac  = nic.mac.replace(/\:/g, '');
+    var path = '/my/machines/' + machineUuid + '/nics/' + mac;
+
+    client.del(path, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 204);
+        t.equivalent(body, {});
+
+        location = path;
+        t.end();
+    });
+}
+
+
+
+// depends on 'location' global set by removeNic() above
+function waitTilNicDeleted(t) {
+    var count = 30;
+
+    function check() {
+        count--;
+        if (count === 0) {
+            t.ifError('NIC did not delete in time');
+            return t.end();
+        }
+
+        return client.get(location, function (err, req, res, nic) {
+            if (err) {
+                t.equal(err.statusCode, 404);
+                return t.end();
+            } else {
+                return setTimeout(check, 5000);
+            }
+        });
+    }
+
+    check();
 }
