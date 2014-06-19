@@ -178,19 +178,19 @@ networks_test: $(TAP)
 	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/networks.test.js
 
 machines_all_test:
-	$(NODE_EXEC) $(TAP) --tap --timeout 480 test/machines.test.js
+	$(NODE_EXEC) $(TAP) --tap --timeout 720 test/machines.test.js
 
 machines_65_test:
-	$(NODE_EXEC) $(TAP) --tap --timeout 480 test/machines.65.test.js
+	$(NODE_EXEC) $(TAP) --tap --timeout 720 test/machines.65.test.js
 
 machines_70_test:
-	$(NODE_EXEC) $(TAP) --tap --timeout 480 test/machines.70.test.js
+	$(NODE_EXEC) $(TAP) --tap --timeout 720 test/machines.70.test.js
 
 machines_71_test:
-	$(NODE_EXEC) $(TAP) --tap --timeout 480 test/machines.71.test.js
+	$(NODE_EXEC) $(TAP) --tap --timeout 720 test/machines.71.test.js
 
 machines_72_test:
-	$(NODE_EXEC) $(TAP) --tap --timeout 480 test/machines.72.test.js
+	$(NODE_EXEC) $(TAP) --tap --timeout 720 test/machines.72.test.js
 
 machines_test: machines_all_test machines_65_test machines_70_test machines_71_test machines_72_test
 
