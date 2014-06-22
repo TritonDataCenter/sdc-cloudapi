@@ -345,6 +345,101 @@ test('CloneInstrumentation OK', function (t) {
 
 
 
+// PUBAPI-923
+test('Check analytics roles are preserved', function (t) {
+    var roleName = 'foobarbaz';
+    var instrumentationsPath = '/my/analytics/instrumentations';
+    var clonePath, rolePath;
+
+    // ||role-tag||Array||The list role-tags to be added to this resource||
+    function createRole(next) {
+        var args = { name: roleName };
+
+        client.post('/my/roles', args, function (err, req, res, body) {
+            t.ifError(err);
+            t.equal(res.statusCode, 201);
+            rolePath = res.headers.location;
+
+            next();
+        });
+    }
+
+    function createClone(next) {
+        var path = instrumentationsPath + '/' + instId;
+
+        client.post(path, { action: 'clone' }, function (err, req, res, body) {
+            t.ifError(err);
+            t.equal(res.statusCode, 200);
+            clonePath = res.headers.location;
+
+            next();
+        });
+    }
+
+    function addRole(next) {
+        var args = { 'role-tag': [ roleName ] };
+
+        client.put(instrumentationsPath, args, function (err, req, res, body) {
+            t.ifError(err);
+            t.equal(res.statusCode, 200);
+            next();
+        });
+    }
+
+    function deleteClone(next) {
+        client.del(clonePath, function (err, req, res, body) {
+            t.ifError(err);
+            t.equal(res.statusCode, 204);
+            next();
+        });
+    }
+
+    function checkRole(next) {
+        client.head(instrumentationsPath, function (err, req, res, body) {
+            t.ifError(err);
+            t.equal(res.statusCode, 200);
+            t.equal(res.headers['role-tag'], roleName);
+            next();
+        });
+    }
+
+    function removeRole(next) {
+        var args = { 'role-tag': []};
+
+        client.put(instrumentationsPath, args, function (err, req, res, body) {
+            t.ifError(err);
+            t.equal(res.statusCode, 200);
+            next();
+        });
+    }
+
+    function deleteRole(next) {
+        client.del(rolePath, function (err, req, res, body) {
+            t.ifError(err);
+            t.equal(res.statusCode, 204);
+            next();
+        });
+    }
+
+
+    function runStep(steps) {
+        if (steps.length === 0) {
+            return t.end();
+        }
+
+        var next = steps.shift();
+
+        return next(function () {
+            runStep(steps);
+        });
+    }
+
+    runStep([createRole, createClone, addRole, deleteClone, checkRole,
+            removeRole, deleteRole]);
+});
+
+
+
 test('DeleteInstrumentation OK', function (t) {
     var path = '/my/analytics/instrumentations/' + instId;
 
