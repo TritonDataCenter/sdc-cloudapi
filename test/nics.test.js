@@ -576,7 +576,7 @@ test('Create NIC using network', TAP_CONF, function (t) {
         t.ok(nic.mac.match(MAC_RE));
         t.ok(nic.ip.match(IP_RE));
         t.equal(nic.primary, false);
-        t.equal(nic.status, 'provisioning');
+        t.equal(nic.state, 'provisioning');
 
         var nicFront = nic.ip.split('.').slice(0, 3).join('.');
         var netFront = NETWORKS[0].subnet.split('.').slice(0, 3).join('.');
@@ -619,13 +619,13 @@ test('Create non-owner network on owner machine', TAP_CONF, function (t) {
     var args = { network: otherNetwork.uuid };
 
     var expectedErr = {
-        message: 'Owner cannot provision on network',
+        message: 'owner cannot provision on network',
         statusCode: 403,
         restCode: 'NotAuthorized',
         name: 'NotAuthorizedError',
         body: {
             code: 'NotAuthorized',
-            message: 'Owner cannot provision on network'
+            message: 'owner cannot provision on network'
         }
     };
 
@@ -934,7 +934,7 @@ test('Create NIC using network pool', TAP_CONF, function (t) {
         t.ok(nic.mac.match(MAC_RE));
         t.ok(nic.ip.match(IP_RE));
         t.equal(nic.primary, false);
-        t.equal(nic.status, 'provisioning');
+        t.equal(nic.state, 'provisioning');
 
         t.ifError(nic.gateway);
         t.ifError(nic.resolvers);
@@ -1231,10 +1231,10 @@ function waitTilNicAdded(t, path) {
         return client.get(path, function (err, req, res, nic) {
             t.ifError(err);
 
-            if (nic.status === 'running') {
+            if (nic.state === 'running') {
                 return t.end();
             } else {
-                console.log(nic.status);
+                console.log(nic.state);
                 return setTimeout(check, 5000);
             }
         });
