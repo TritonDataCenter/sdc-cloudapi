@@ -6324,7 +6324,7 @@ An array of NIC objects. NICs are:
 ||primary||Boolean||Whether this is the VM's primary NIC||
 ||netmask||String||IPv4 netmask||
 ||gateway||String||IPv4 gateway||
-||status||String||Describes the state of the NIC (e.g. provisioning, running, or stopped)||
+||state||String||Describes the state of the NIC (e.g. provisioning, running, or stopped)||
 
 ### Errors
 
@@ -6371,7 +6371,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
             "ip": "10.88.88.137",
             "netmask": "255.255.255.0",
             "gateway": "10.88.88.2",
-            "status": "running"
+            "state": "running"
         }
     ]
 
@@ -6397,7 +6397,7 @@ A NIC object:
 ||primary||Boolean||Whether this is the VM's primary NIC||
 ||netmask||String||IPv4 netmask||
 ||gateway||String||IPv4 gateway||
-||status||String||Describes the state of the NIC (e.g. provisioning, running, or stopped)||
+||state||String||Describes the state of the NIC (e.g. provisioning, running, or stopped)||
 
 ### Errors
 
@@ -6443,7 +6443,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
         "ip": "10.88.88.137",
         "netmask": "255.255.255.0",
         "gateway": "10.88.88.2",
-        "status": "running"
+        "state": "running"
     }
 
 
@@ -6468,7 +6468,7 @@ The newly-created NIC object:
 ||primary||Boolean||Whether this is the VM's primary NIC||
 ||netmask||String||IPv4 netmask||
 ||gateway||String||IPv4 gateway||
-||status||String||Describes the state of the NIC (most likely 'provisioning')||
+||state||String||Describes the state of the NIC (most likely 'provisioning')||
 
 It also returns the Location in the headers where the new NIC lives in the HTTP
 API. If a NIC already exists for that network, a 302 redirect will be returned
@@ -6476,7 +6476,7 @@ instead of the object.
 
 NICs do not appear on a machine immediately, so the state of the new NIC can be
 checked by polling that location. While the NIC is provisioning, it will have a
-`status` of 'provisioning'. Once it's 'running', the NIC is active on the
+`state` of 'provisioning'. Once it's 'running', the NIC is active on the
 machine. If the provision fails, the NIC will be removed and the location will
 start returning 404.
 
@@ -6530,7 +6530,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
         "ip": "10.88.88.137",
         "netmask": "255.255.255.0",
         "gateway": "10.88.88.2",
-        "status": "provisioning"
+        "state": "provisioning"
     }
 
 
