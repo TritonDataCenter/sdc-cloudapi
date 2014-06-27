@@ -54,11 +54,16 @@ function filterLimits(req_image, cfg_limits, limits) {
                 if (typeof (limits[0][k]) === 'string') {
                     limits[0][k] = [limits[0][k]];
                 }
-                limits[0][k].forEach(function (j) {
-                    try {
-                        parsedLimits.push(JSON.parse(j));
-                    } catch (e) {}
-                });
+                if (!Array.isArray(limits[0][k]) &&
+                    typeof (limits[0][k]) === 'object') {
+                    parsedLimits.push(limits[0][k]);
+                } else {
+                    limits[0][k].forEach(function (j) {
+                        try {
+                            parsedLimits.push(JSON.parse(j));
+                        } catch (e) {}
+                    });
+                }
             } else if (['dn',
                 'controls',
                 '_parent',
