@@ -200,13 +200,16 @@ machines_test: machines_all_test machines_65_test machines_70_test machines_71_t
 packages_test: $(TAP)
 	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/packages.test.js
 
+populate_network_test: $(TAP)
+	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/populate_network.test.js
+
 users_test: $(TAP)
 	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/users.test.js
 
 
-test: auth_test account_test analytics_test datacenters_test datasets_test keys_test networks_test packages_test users_test machines_test
+test: auth_test account_test analytics_test datacenters_test datasets_test keys_test networks_test packages_test populate_network_test users_test machines_test
 
-no_machines_test: auth_test account_test analytics_test datacenters_test datasets_test keys_test networks_test packages_test users_test
+no_machines_test: auth_test account_test analytics_test datacenters_test datasets_test keys_test networks_test packages_test populate_network_test users_test
 
 include ./tools/mk/Makefile.deps
 ifeq ($(shell uname -s),SunOS)
