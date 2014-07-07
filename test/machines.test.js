@@ -67,7 +67,6 @@ var sdc_256_inactive = {
     zfs_io_priority: 10,
     'default': false,
     vcpus: 1,
-    urn: 'sdc:4633473b-aae9-466b-8bde-3c410e5072cc:sdc_256_inactive:1.0.0',
     active: false
 };
 
@@ -84,7 +83,6 @@ var sdc_128_ok = {
     fss: 25,
     'default': false,
     vcpus: 1,
-    urn: 'sdc:897779dc-9ce7-4042-8879-a4adccc94353:sdc_128_ok:1.0.0',
     active: true
 };
 
@@ -101,7 +99,6 @@ var sdc_128_os = {
     zfs_io_priority: 10,
     'default': false,
     vcpus: 1,
-    urn: 'sdc:0f06a3b8-4c54-4408-bb17-ffb34290867e:sdc_128_os:1.0.0',
     active: true
 };
 

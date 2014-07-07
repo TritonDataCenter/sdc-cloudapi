@@ -27,7 +27,6 @@ var sdc_512_ownership = {
     zfs_io_priority: 10,
     'default': false,
     vcpus: 1,
-    urn: 'sdc:4667d1b8-0bc7-466c-bf62-aae98ba5efa9:sdc_512_ownership:1.0.0',
     active: true,
     owner_uuids: ['b99598ca-d56c-4374-8fdd-32e60f4d1592']
 };
@@ -44,7 +43,6 @@ var sdc_128_ok = {
     zfs_io_priority: 10,
     'default': false,
     vcpus: 1,
-    urn: 'sdc:df27bb35-8569-48fb-8dd7-ffd61a118aff:sdc_128_ok:1.0.0',
     active: true,
     owner_uuids: ['f1ea132f-e460-4061-ad62-727c2a25a5b0']
 };

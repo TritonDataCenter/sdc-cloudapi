@@ -231,7 +231,6 @@ for (i = 0; i <= RESIZE_ATTEMPTS; i += 1) {
         zfs_io_priority: 10 + i,
         'default': false,
         vcpus: 1,
-        urn: 'sdc:' + newUuid + ':sdc_256:' + i + '.0.0',
         active: true
     };
 };
