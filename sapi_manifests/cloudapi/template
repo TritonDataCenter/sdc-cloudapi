@@ -10,7 +10,7 @@
         "bindPassword": "{{{ufds_ldap_root_pw}}}",
         "cache": {
             "size": 5000,
-            "expiry": 60
+            "age": 60
         },
         "maxConnections": 1,
         "retry": {
@@ -24,7 +24,7 @@
         "bindPassword": "{{{ufds_ldap_root_pw}}}",
         "cache": {
             "size": 5000,
-            "expiry": 60
+            "age": 60
         },
         "maxConnections": 1,
         "retry": {
@@ -32,54 +32,23 @@
         },
         "clientTimeout": 120000
     },
-    "wfapi": {
-        "url": "http://{{{workflow_domain}}}",
-        "cache": {
-            "size": 1000,
-            "expiry": 300
-        }
-    },
     "vmapi": {
-        "url": "http://{{{vmapi_domain}}}",
-        "cache": {
-            "size": 5000,
-            "expiry": 60
-        }
+        "url": "http://{{{vmapi_domain}}}"
     },
     "cnapi": {
-        "url": "http://{{{cnapi_domain}}}",
-        "cache": {
-            "size": 5000,
-            "expiry": 60
-        }
+        "url": "http://{{{cnapi_domain}}}"
     },
     "napi": {
-        "url": "http://{{{napi_domain}}}",
-        "cache": {
-            "size": 5000,
-            "expiry": 300
-        }
+        "url": "http://{{{napi_domain}}}"
     },
     "fwapi": {
-        "url": "http://{{{fwapi_domain}}}",
-        "cache": {
-            "size": 1000,
-            "expiry": 300
-        }
+        "url": "http://{{{fwapi_domain}}}"
     },
     "imgapi": {
-        "url": "http://{{{imgapi_domain}}}",
-        "cache": {
-            "size": 5000,
-            "expiry": 300
-        }
+        "url": "http://{{{imgapi_domain}}}"
     },
     "papi": {
-        "url": "http://{{{papi_domain}}}",
-        "cache": {
-            "size": 1000,
-            "expiry": 300
-        }
+        "url": "http://{{{papi_domain}}}"
     },
     "ca": {
         "url": "http://{{{ca_domain}}}:23181"
