@@ -29,7 +29,8 @@
         "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#beb70b",
         "aperture": "git+ssh://git@github.com:joyent/node-aperture.git#e59aa4",
         "mahi": "git+ssh://git@git.joyent.com:node-mahi.git#7c0499",
-        "aperture-config": "git+ssh://git@git.joyent.com:aperture-config.git#master"
+        "aperture-config": "git+ssh://git@git.joyent.com:aperture-config.git#master",
+        "redis": "0.11"
     },
     "devDependencies": {
         "tap": "~0.4",
