@@ -117,7 +117,7 @@ You need to know the following information in order to interact with CloudAPI:
 An example for `SDC_URL` is `https://us-west-1.api.joyentcloud.com`.  Each
 datacenter in a cloud has its own CloudAPI endpoint; a different cloud that uses
 SmartDataCenter would have a different URL.
- 
+
 In this document, we'll use `api.example.com` as the `SDC_URL` endpoint; please
 replace it with the URL of your DC(s).  Note that CloudAPI always uses secure
 HTTP, which means that the endpoint URL must begin with `https`.
@@ -432,7 +432,6 @@ going through the guide, so delete the one we setup:
     $ sdc-deletekey id_rsa
 
 
-<!-- #ifdef BLEEDING_EDGE -->
 ## RBAC: Users, Roles & Policies.
 
 Starting at version 7.2.0, [Accounts](#account) can have multiple users and
@@ -529,11 +528,10 @@ the user has an additional role which includes that rule, then the user can
 invoke that action too.
 
 For more details on how Access Control works for both CloudAPI and Manta,
-please refer to [Access Control User Guide][acuguide].
+please refer to [Role Based Access Controll][acuguide] documentation.
 
-[acuguide]: Access control Guide URL
+[acuguide]: https://docs.joyent.com/jpc/rbac/
 
-<!-- #endif -->
 
 
 
@@ -1190,7 +1188,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 
 
-<!-- #ifdef BLEEDING_EDGE -->
 # Users
 
 ## ListUsers (GET /:account/users)
@@ -2302,8 +2299,6 @@ Removes a key.  See [GetKey](#GetKey).
     $ sdc-user delete-key dd71f8bb-f310-4746-8e36-afd7c6dd2895 '0b:56:ae:c5:d1:7b:7a:98:09:58:1a:a2:0c:22:63:9f'
 
 
-<!-- #endif -->
-
 
 
 
@@ -2921,7 +2916,7 @@ Some typical and specific errors for this endpoint:
 
 ### Example CLI Command
 
-    $ sdc-updateimage --name=my-renamed-image eca995fe-b904-11e3-b05a-83a4899322dc 
+    $ sdc-updateimage --name=my-renamed-image eca995fe-b904-11e3-b05a-83a4899322dc
 
 #### Example HTTP Request
 
@@ -6391,7 +6386,7 @@ failed.  Consider the following code using
         });
     }
 
-With this code, you can poll when a machine with a given uuid is running by 
+With this code, you can poll when a machine with a given uuid is running by
 doing:
 
     var machine = 'd19432ff-d921-4d6c-b5f9-6b0e4de6665c';
