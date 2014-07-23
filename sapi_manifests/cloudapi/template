@@ -32,6 +32,9 @@
         },
         "clientTimeout": 120000
     },
+    "wfapi": {
+        "url": "http://{{{workflow_domain}}}"
+    },
     "vmapi": {
         "url": "http://{{{vmapi_domain}}}"
     },
