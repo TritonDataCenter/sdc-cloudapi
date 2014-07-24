@@ -78,7 +78,7 @@ Once you've installed Node.js and npm, install the CloudAPI CLI as follows:
 
     $ npm install smartdc -g
 
-You will also want to install [json](https://github.com/trentm/json), a tool
+You will also want to install [json](https://www.npmjs.org/package/json), a tool
 that makes it easier to work with JSON-formatted output.  You can install it
 like this:
 
@@ -402,7 +402,7 @@ point, for a full discussion of analytics, be sure to read
 
 After going through this `Getting Started` section, you should now have at least
 one SSH key, one machine and one instrumentation.  The rest of the commands
-assume you have [jsontool](https://github.com/trentm/json) installed.
+assume you have [json](https://www.npmjs.org/package/json) installed.
 
 ### Deleting Instrumentations
 
