@@ -115,6 +115,12 @@ test('Create (named) key with duplicate name', function (t) {
     client.post('/my/keys', key, function (err, req, res, body) {
         t.ok(err);
         t.equal(err.statusCode, 409);
+
+        t.equivalent(body, {
+            code: 'InvalidArgument',
+            message: 'key already exists or is invalid'
+        });
+
         t.end();
     });
 });
@@ -130,6 +136,12 @@ test('Attempt to create with invalid key', function (t) {
         t.equal(err.statusCode, 409);
         t.equal(err.restCode, 'InvalidArgument');
         t.ok(err.message);
+
+        t.equivalent(body, {
+            code: 'InvalidArgument',
+            message: 'key is invalid'
+        });
+
         t.end();
     });
 });
