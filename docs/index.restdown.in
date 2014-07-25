@@ -1756,7 +1756,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command:
 
-    $ sdc-role create --name='test-role' --members='bob, fred' --default-members='bob' --policies='test-policy'
+    $ sdc-role create --name='test-role' --members='bob' --members='fred' --default-members='bob' --policies='test-policy'
 
 
 ### Example Request
