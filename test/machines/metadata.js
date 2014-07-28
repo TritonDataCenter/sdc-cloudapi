@@ -1,9 +1,13 @@
-// Copyright 2013 Joyent, Inc. All rights reserved.
-
+// Copyright 2014 Joyent, Inc. All rights reserved.
+var util = require('util');
 var test = require('tap').test;
 var common = require('../common');
 var machinesCommon = require('./common');
 var checkMachine = machinesCommon.checkMachine;
+var checkJob = machinesCommon.checkJob;
+var waitForJob = machinesCommon.waitForJob;
+var checkWfJob = machinesCommon.checkWfJob;
+var waitForWfJob = machinesCommon.waitForWfJob;
 var TAP_CONF = {
     timeout: 'Infinity '
 };
@@ -52,6 +56,22 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
+    suite.test('wait for add metadata job', TAP_CONF,  function (t) {
+        client.vmapi.listJobs({
+            vm_uuid: machine,
+            task: 'update'
+        }, function (err, jobs) {
+            t.ifError(err, 'list jobs error');
+            t.ok(jobs, 'list jobs ok');
+            t.ok(jobs.length, 'list jobs is an array');
+            waitForJob(client, jobs[0].uuid, function (err2) {
+                t.ifError(err2, 'Check state error');
+                t.end();
+            });
+        });
+    });
+
+
     suite.test('GetMetadata', TAP_CONF, function (t) {
         var path = '/my/machines/' + machine + '/metadata/' + META_KEY;
         client.get(path, function (err, req, res, body) {
@@ -76,12 +96,44 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
+    suite.test('wait for delete metadata job', TAP_CONF,  function (t) {
+        client.vmapi.listJobs({
+            vm_uuid: machine,
+            task: 'update'
+        }, function (err, jobs) {
+            t.ifError(err, 'list jobs error');
+            t.ok(jobs, 'list jobs ok');
+            t.ok(jobs.length, 'list jobs is an array');
+            waitForJob(client, jobs[0].uuid, function (err2) {
+                t.ifError(err2, 'Check state error');
+                t.end();
+            });
+        });
+    });
+
+
     suite.test('DeleteMetadataCredentials', TAP_CONF, function (t) {
         var url = '/my/machines/' + machine + '/metadata/credentials';
         client.del(url, function (err, req, res) {
             t.ok(err);
             t.equal(res.statusCode, 409);
             t.end();
+        });
+    });
+
+
+    suite.test('wait for delete credentials job', TAP_CONF,  function (t) {
+        client.vmapi.listJobs({
+            vm_uuid: machine,
+            task: 'update'
+        }, function (err, jobs) {
+            t.ifError(err, 'list jobs error');
+            t.ok(jobs, 'list jobs ok');
+            t.ok(jobs.length, 'list jobs is an array');
+            waitForJob(client, jobs[0].uuid, function (err2) {
+                t.ifError(err2, 'Check state error');
+                t.end();
+            });
         });
     });
 
@@ -95,6 +147,23 @@ module.exports = function (suite, client, machine, callback) {
             t.end();
         });
     });
+
+
+    suite.test('wait for delete all metadata job', TAP_CONF,  function (t) {
+        client.vmapi.listJobs({
+            vm_uuid: machine,
+            task: 'update'
+        }, function (err, jobs) {
+            t.ifError(err, 'list jobs error');
+            t.ok(jobs, 'list jobs ok');
+            t.ok(jobs.length, 'list jobs is an array');
+            waitForJob(client, jobs[0].uuid, function (err2) {
+                t.ifError(err2, 'Check state error');
+                t.end();
+            });
+        });
+    });
+
 
     return callback();
 };

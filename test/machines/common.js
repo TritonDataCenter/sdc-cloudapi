@@ -15,7 +15,7 @@ function checkJob(client, id, callback) {
         }
 
         if (job.execution === 'failed') {
-            return callback(new Error('Job failed'));
+            return callback(new Error(sprintf('Job %s failed', job.uuid)));
         }
 
         return callback(null, (job ? job.execution === 'succeeded' : false));

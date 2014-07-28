@@ -1,9 +1,13 @@
-// Copyright 2013 Joyent, Inc. All rights reserved.
-
+// Copyright 2014 Joyent, Inc. All rights reserved.
+var util = require('util');
 var test = require('tap').test;
 var common = require('../common');
 var machinesCommon = require('./common');
 var checkMachine = machinesCommon.checkMachine;
+var checkJob = machinesCommon.checkJob;
+var waitForJob = machinesCommon.waitForJob;
+var checkWfJob = machinesCommon.checkWfJob;
+var waitForWfJob = machinesCommon.waitForWfJob;
 var TAP_CONF = {
     timeout: 'Infinity '
 };
@@ -104,6 +108,22 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
+    suite.test('wait for add tag job', TAP_CONF,  function (t) {
+        client.vmapi.listJobs({
+            vm_uuid: machine,
+            task: 'update'
+        }, function (err, jobs) {
+            t.ifError(err, 'list jobs error');
+            t.ok(jobs, 'list jobs ok');
+            t.ok(jobs.length, 'list jobs is an array');
+            waitForJob(client, jobs[0].uuid, function (err2) {
+                t.ifError(err2, 'Check state error');
+                t.end();
+            });
+        });
+    });
+
+
     suite.test('GetTag', TAP_CONF, function (t) {
         var path = '/my/machines/' + machine + '/tags/' + TAG_KEY;
         client.get(path, function (err, req, res, body) {
@@ -128,6 +148,22 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
+    suite.test('wait for delete tag job', TAP_CONF,  function (t) {
+        client.vmapi.listJobs({
+            vm_uuid: machine,
+            task: 'update'
+        }, function (err, jobs) {
+            t.ifError(err, 'list jobs error');
+            t.ok(jobs, 'list jobs ok');
+            t.ok(jobs.length, 'list jobs is an array');
+            waitForJob(client, jobs[0].uuid, function (err2) {
+                t.ifError(err2, 'Check state error');
+                t.end();
+            });
+        });
+    });
+
+
     suite.test('ReplaceTags', TAP_CONF, function (t) {
         var path = '/my/machines/' + machine + '/tags',
         tags = {};
@@ -146,6 +182,22 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
+    suite.test('wait for replace tags job', TAP_CONF,  function (t) {
+        client.vmapi.listJobs({
+            vm_uuid: machine,
+            task: 'update'
+        }, function (err, jobs) {
+            t.ifError(err, 'list jobs error');
+            t.ok(jobs, 'list jobs ok');
+            t.ok(jobs.length, 'list jobs is an array');
+            waitForJob(client, jobs[0].uuid, function (err2) {
+                t.ifError(err2, 'Check state error');
+                t.end();
+            });
+        });
+    });
+
+
     suite.test('DeleteAllTags', TAP_CONF, function (t) {
         var url = '/my/machines/' + machine + '/tags';
         client.del(url, function (err, req, res) {
@@ -155,6 +207,23 @@ module.exports = function (suite, client, machine, callback) {
             t.end();
         });
     });
+
+
+    suite.test('wait for delete all tags job', TAP_CONF,  function (t) {
+        client.vmapi.listJobs({
+            vm_uuid: machine,
+            task: 'update'
+        }, function (err, jobs) {
+            t.ifError(err, 'list jobs error');
+            t.ok(jobs, 'list jobs ok');
+            t.ok(jobs.length, 'list jobs is an array');
+            waitForJob(client, jobs[0].uuid, function (err2) {
+                t.ifError(err2, 'Check state error');
+                t.end();
+            });
+        });
+    });
+
 
     return callback();
 };
