@@ -100,9 +100,9 @@ test('setup', function (t) {
         t.ok(_client);
         if (!process.env.SDC_SETUP_TESTS) {
             t.ok(_server);
+            server = _server;
         }
         client = _client;
-        server = _server;
         createTestNicTag(function (err1, _1) {
             t.ifError(err1);
             createTestNetwork(function (err2, _2) {

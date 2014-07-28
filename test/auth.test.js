@@ -53,8 +53,8 @@ test('setup', function (t) {
         A_POLICY_NAME = client.policy.name;
         if (!process.env.SDC_SETUP_TESTS) {
             t.ok(_server);
+            server = _server;
         }
-        server = _server;
         t.end();
     });
 });

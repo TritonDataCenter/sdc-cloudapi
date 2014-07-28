@@ -108,8 +108,8 @@ test('setup', function (t) {
         account = client.account;
         if (!process.env.SDC_SETUP_TESTS) {
             t.ok(_server);
+            server = _server;
         }
-        server = _server;
         t.end();
     });
 });

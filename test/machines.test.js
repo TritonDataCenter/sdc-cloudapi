@@ -117,10 +117,10 @@ test('setup', TAP_CONF, function (t) {
 
         if (!process.env.SDC_SETUP_TESTS) {
             t.ok(_server);
+            server = _server;
         }
 
         client = _client;
-        server = _server;
 
         saveKey(KEY, keyName, client, t, function () {
             // Add custom packages; "sdc_" ones will be owned by admin user:

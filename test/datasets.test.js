@@ -54,9 +54,9 @@ test('setup', function (t) {
         t.ok(_client);
         if (!process.env.SDC_SETUP_TESTS) {
             t.ok(_server);
+            server = _server;
         }
         client = _client;
-        server = _server;
         t.end();
     });
 });

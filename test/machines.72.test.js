@@ -120,8 +120,8 @@ test('setup', TAP_CONF, function (t) {
         SUB_KEY_ID = client.SUB_ID;
         if (!process.env.SDC_SETUP_TESTS) {
             t.ok(_server);
+            server = _server;
         }
-        server = _server;
         saveKey(KEY, keyName, client, t, function () {
             // Add custom packages; "sdc_" ones will be owned by admin user:
             addPackage(client, sdc_128_ok, function (err2, entry) {

@@ -28,9 +28,12 @@ test('setup', function (t) {
         t.ifError(err);
 
         client = _client;
-        server = _server;
+        if (!process.env.SDC_SETUP_TESTS) {
+            t.ok(_server);
+            server = _server;
+        }
 
-        server._clients.ufds.getUser('admin', function (err2, _account) {
+        client.ufds.getUser('admin', function (err2, _account) {
             t.ifError(err2);
 
             account = _account;

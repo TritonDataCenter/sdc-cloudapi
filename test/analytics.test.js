@@ -4,13 +4,92 @@ var test = require('tap').test;
 var libuuid = require('libuuid');
 var common = require('./common');
 
+
+var client, server, instId, cloneId;
+
 function uuid() {
     return libuuid.create();
 }
 
 
+// since typeof() is kinda terrible, something more useful
+function type(obj) {
+    if (obj === undefined) {
+        return 'undefined';
+    } else if (obj === null) {
+        return 'null';
+    } else if (obj === true || obj === false) {
+        return 'boolean';
+    } else if (typeof (obj) === 'string') {
+        return 'string';
+    } else if (typeof (obj) === 'number') {
+        return 'number';
+    } else if (Array.isArray(obj)) {
+        return 'array';
+    } else if (typeof (obj) === 'object') {
+        return 'object';
+    } else {
+        // we shouldn't ever get here!
+        return 'unknown';
+    }
+}
 
-var client, server, instId, cloneId;
+
+function checkTypes(t, types, obj) {
+    Object.keys(types).forEach(function (name) {
+        var expectedType = types[name];
+
+        t.equal(type(obj[name]), expectedType);
+    });
+}
+
+
+function checkHead(t, path) {
+    client.head(path, function (err, req, res, body) {
+        t.ifError(err);
+        common.checkHeaders(t, res.headers);
+        t.equal(res.statusCode, 200);
+        t.equivalent(body, {});
+        t.end();
+    });
+}
+
+
+function checkInstrumentation(t, inst, justCreated) {
+    t.equal(type(inst),  'object');
+
+    if (justCreated) {
+        t.equal(inst.module, 'fs');
+        t.equal(inst.stat,   'logical_ops');
+        t.equal(inst.enabled, true);
+
+        t.equivalent(inst.predicate,       { eq: [ 'optype', 'read' ] });
+        t.equivalent(inst.decomposition,   [ 'latency' ]);
+        t.equivalent(inst.transformations, {});
+    }
+
+    var expectedTypes = {
+        module:            'string',
+        stat:              'string',
+        enabled:           'boolean',
+        predicate:         'object',
+        decomposition:     'array',
+        transformations:   'object',
+        id:                'string',
+        nsources:          'number',
+        granularity:       'number',
+        crtime:            'number',
+        uris:              'array',
+        'value-dimension': 'number',
+        'value-arity':     'string',
+        'retention-time':  'number',
+        'idle-max':        'number',
+        'persist-data':    'boolean',
+        'value-scope':     'string'
+    };
+
+    checkTypes(t, expectedTypes, inst);
+}
 
 
 
@@ -23,10 +102,10 @@ test('setup', function (t) {
 
         if (!process.env.SDC_SETUP_TESTS) {
             t.ok(_server);
+            server = _server;
         }
 
         client = _client;
-        server = _server;
 
         t.end();
     });
@@ -509,91 +588,3 @@ test('teardown', function (t) {
         });
     });
 });
-
-
-
-// ---
-
-
-
-function checkHead(t, path) {
-    client.head(path, function (err, req, res, body) {
-        t.ifError(err);
-        common.checkHeaders(t, res.headers);
-        t.equal(res.statusCode, 200);
-        t.equivalent(body, {});
-        t.end();
-    });
-}
-
-
-
-function checkInstrumentation(t, inst, justCreated) {
-    t.equal(type(inst),  'object');
-
-    if (justCreated) {
-        t.equal(inst.module, 'fs');
-        t.equal(inst.stat,   'logical_ops');
-        t.equal(inst.enabled, true);
-
-        t.equivalent(inst.predicate,       { eq: [ 'optype', 'read' ] });
-        t.equivalent(inst.decomposition,   [ 'latency' ]);
-        t.equivalent(inst.transformations, {});
-    }
-
-    var expectedTypes = {
-        module:            'string',
-        stat:              'string',
-        enabled:           'boolean',
-        predicate:         'object',
-        decomposition:     'array',
-        transformations:   'object',
-        id:                'string',
-        nsources:          'number',
-        granularity:       'number',
-        crtime:            'number',
-        uris:              'array',
-        'value-dimension': 'number',
-        'value-arity':     'string',
-        'retention-time':  'number',
-        'idle-max':        'number',
-        'persist-data':    'boolean',
-        'value-scope':     'string'
-    };
-
-    checkTypes(t, expectedTypes, inst);
-}
-
-
-
-function checkTypes(t, types, obj) {
-    Object.keys(types).forEach(function (name) {
-        var expectedType = types[name];
-
-        t.equal(type(obj[name]), expectedType);
-    });
-}
-
-
-
-// since typeof() is kinda terrible, something more useful
-function type(obj) {
-    if (obj === undefined) {
-        return 'undefined';
-    } else if (obj === null) {
-        return 'null';
-    } else if (obj === true || obj === false) {
-        return 'boolean';
-    } else if (typeof (obj) === 'string') {
-        return 'string';
-    } else if (typeof (obj) === 'number') {
-        return 'number';
-    } else if (Array.isArray(obj)) {
-        return 'array';
-    } else if (typeof (obj) === 'object') {
-        return 'object';
-    } else {
-        // we shouldn't ever get here!
-        return 'unknown';
-    }
-}

@@ -134,8 +134,8 @@ test('setup', function (t) {
         client = _client;
         if (!process.env.SDC_SETUP_TESTS) {
             t.ok(_server);
+            server = _server;
         }
-        server = _server;
         add128Ok(t, function () {
             add512Ownership(t, client.account.uuid, function () {
                 t.end();
