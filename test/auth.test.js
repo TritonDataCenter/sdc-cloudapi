@@ -477,6 +477,7 @@ test('sub-user signature auth (0.10)', { timeout: 'Infinity' }, function (t) {
                 t1.end();
             });
         });
+
         // Even when we've added the role-tag, the policies into the role don't
         // include a rule with route::string = 'getuser', therefore the 403:
         t.test('sub-user get thyself', { timeout: 'Infinity' }, function (t3) {
@@ -490,6 +491,85 @@ test('sub-user signature auth (0.10)', { timeout: 'Infinity' }, function (t) {
                 t3.equal(res.statusCode, 403, 'sub-user auth statusCode');
                 cli.close();
                 t3.end();
+            });
+        });
+
+        t.test('sub-user with as-role', { timeout: 'Infinity' }, function (t4) {
+            var accountUuid = client.account.uuid;
+            var roleUuid    = client.role.uuid;
+            var ufds        = client.ufds;
+
+            var oldDefaultMembers;
+            function getRole(_, cb) {
+                ufds.getRole(accountUuid, roleUuid, function (err, role) {
+                    if (err) {
+                        return cb(err);
+                    }
+
+                    oldDefaultMembers = role.uniquememberdefault;
+
+                    return cb();
+                });
+            }
+
+            function removeDefaultMembers(_, cb) {
+                var changes = { uniquememberdefault: null };
+                ufds.modifyRole(accountUuid, roleUuid, changes, cb);
+            }
+
+            function checkCannotGet(_, cb) {
+                cli.get({
+                    path: '/' + account + '/users',
+                    headers: {
+                        'accept-version': '~7.2'
+                    }
+                }, function (err, req, res, obj) {
+                    cli.close();
+
+                    if (err && err.statusCode !== 403) {
+                        return cb(err);
+                    }
+
+                    return cb();
+                });
+            }
+
+            function checkCanGetWithRole(_, cb) {
+                cli.get({
+                    path: '/' + account + '/users?as-role=' + client.role.name,
+                    headers: {
+                        'accept-version': '~7.2'
+                    }
+                }, function (err, req, res, obj) {
+                    if (err) {
+                        return cb(err);
+                    }
+
+                    cli.close();
+
+
+                    if (res.statusCode !== 200) {
+                        var msg = 'checkCanGetWithRole did not return 200';
+                        return cb(new Error(msg));
+                    }
+
+                    return cb();
+                });
+            }
+
+            function revertDefaultMembers(_, cb) {
+                var changes = { uniquememberdefault: oldDefaultMembers };
+                ufds.modifyRole(accountUuid, roleUuid, changes, cb);
+            }
+
+            vasync.pipeline({
+                funcs: [
+                    getRole, removeDefaultMembers, checkCannotGet,
+                    checkCanGetWithRole, revertDefaultMembers
+                ]
+            }, function (err) {
+                t4.ifError(err, 'sub-user with as-role error');
+                t4.end();
             });
         });
 

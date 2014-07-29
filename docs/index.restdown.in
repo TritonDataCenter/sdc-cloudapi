@@ -527,6 +527,14 @@ However, if the role has a rule including that `<action>` (like StopMachine), or
 the user has an additional role which includes that rule, then the user can
 invoke that action too.
 
+As an aside, the active roles of a user are set by the `default_members`
+attribute in a role. If three different roles contain the "john" user (amongst
+others) in their default-members list, then the "john" user will have those
+three roles as active roles by default. This can be overridden by passing in
+`?as-role=<comma-separated list of role names>` as part of the URL; provided
+that each role contains that user in their `members` list, then those roles are
+set as the currently-active roles for a request instead.
+
 For more details on how Access Control works for both CloudAPI and Manta,
 please refer to [Role Based Access Controll][acuguide] documentation.
 
