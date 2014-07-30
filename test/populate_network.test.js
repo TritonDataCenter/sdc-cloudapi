@@ -21,7 +21,9 @@ var keyName = 'cloudapi.test.key.delete.if.seen';
 
 var client, server, account, key, caZone;
 
-
+var TAP_CONF = {
+    timeout: 'Infinity '
+};
 
 test('setup', function (t) {
     common.setup('~7.1', function (err, _client, _server) {
@@ -72,7 +74,7 @@ test('setup', function (t) {
 
 
 
-test('ListMachines populates networks', function (t) {
+test('ListMachines populates networks', TAP_CONF, function (t) {
     client.get('/my/machines', function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
@@ -91,7 +93,7 @@ test('ListMachines populates networks', function (t) {
 
 
 
-test('GetMachine populates networks', function (t) {
+test('GetMachine populates networks', TAP_CONF, function (t) {
     client.get('/my/machines/' + caZone.id, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
@@ -107,7 +109,7 @@ test('GetMachine populates networks', function (t) {
 
 
 
-test('ListFirewallRuleMachines populates networks', function (t) {
+test('ListFirewallRuleMachines populates networks', TAP_CONF, function (t) {
     client.post('/my/fwrules', {
         description: 'rule from cloudapi test. Delete if found',
         rule: 'FROM vm ' + caZone.id + ' TO subnet 10.99.99.0/24 ' +
