@@ -4,6 +4,9 @@ var test = require('tap').test;
 var libuuid = require('libuuid');
 var common = require('./common');
 
+var TAP_CONF = {
+    timeout: 'Infinity '
+};
 
 var client, server, instId, cloneId;
 
@@ -425,7 +428,7 @@ test('CloneInstrumentation OK', function (t) {
 
 
 // PUBAPI-923
-test('Check analytics roles are preserved', function (t) {
+test('Check analytics roles are preserved', TAP_CONF, function (t) {
     var roleName = 'foobarbaz';
     var instrumentationsPath = '/my/analytics/instrumentations';
     var clonePath, rolePath;

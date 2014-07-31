@@ -26,7 +26,7 @@ var TAP_CONF = {
 };
 
 test('setup', function (t) {
-    common.setup('~7.1', function (err, _client, _server) {
+    common.setup('~7.1', TAP_CONF, function (err, _client, _server) {
         t.ifError(err);
 
         client = _client;
