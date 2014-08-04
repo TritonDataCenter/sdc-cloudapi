@@ -8,7 +8,9 @@ function uuid() {
 var util = require('util');
 var common = require('./common');
 
-
+var TAP_CONF = {
+    timeout: 'Infinity '
+};
 
 ///--- Globals
 
@@ -94,7 +96,7 @@ function checkNetwork(t, net) {
     t.ok(net['public'] !== undefined, 'Network public');
 }
 
-test('setup', function (t) {
+test('setup', TAP_CONF, function (t) {
     common.setup(function (err, _client, _server) {
         t.ifError(err);
         t.ok(_client);
