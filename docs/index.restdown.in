@@ -536,7 +536,7 @@ that each role contains that user in their `members` list, then those roles are
 set as the currently-active roles for a request instead.
 
 For more details on how Access Control works for both CloudAPI and Manta,
-please refer to [Role Based Access Controll][acuguide] documentation.
+please refer to [Role Based Access Control][acuguide] documentation.
 
 [acuguide]: https://docs.joyent.com/jpc/rbac/
 
