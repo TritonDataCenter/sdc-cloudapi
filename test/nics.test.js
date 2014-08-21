@@ -378,13 +378,18 @@ test('List NICs on invalid machine', TAP_CONF, function (t) {
     var path = '/my/machines/wowzers/nics';
 
     var expectedErr = {
-        message: 'VM has invalid format',
+        message: 'Invalid Parameters',
         statusCode: 409,
-        restCode: 'InvalidArgument',
-        name: 'InvalidArgumentError',
+        restCode: 'ValidationFailed',
+        name: 'ValidationFailedError',
         body: {
-            code: 'InvalidArgument',
-            message: 'VM has invalid format'
+            code: 'ValidationFailed',
+            message: 'Invalid Parameters',
+            errors: [ {
+                field: 'uuid',
+                code: 'Invalid',
+                message: 'Invalid UUID'
+            } ]
         }
     };
 
@@ -468,13 +473,18 @@ test('Get NIC from invalid machine', TAP_CONF, function (t) {
     var path = '/my/machines/wowzers/nics/' + mac;
 
     var expectedErr = {
-        message: 'VM has invalid format',
+        message: 'Invalid Parameters',
         statusCode: 409,
-        restCode: 'InvalidArgument',
-        name: 'InvalidArgumentError',
+        restCode: 'ValidationFailed',
+        name: 'ValidationFailedError',
         body: {
-            code: 'InvalidArgument',
-            message: 'VM has invalid format'
+            code: 'ValidationFailed',
+            message: 'Invalid Parameters',
+            errors: [ {
+                field: 'uuid',
+                code: 'Invalid',
+                message: 'Invalid UUID'
+            } ]
         }
     };
 
@@ -739,13 +749,18 @@ test('Create with invalid machine', TAP_CONF, function (t) {
     var args = { network: NETWORKS[0].uuid };
 
     var expectedErr = {
-        message: 'VM has invalid format',
+        message: 'Invalid Parameters',
         statusCode: 409,
-        restCode: 'InvalidArgument',
-        name: 'InvalidArgumentError',
+        restCode: 'ValidationFailed',
+        name: 'ValidationFailedError',
         body: {
-            code: 'InvalidArgument',
-            message: 'VM has invalid format'
+            code: 'ValidationFailed',
+            message: 'Invalid Parameters',
+            errors: [ {
+                field: 'uuid',
+                code: 'Invalid',
+                message: 'Invalid UUID'
+            } ]
         }
     };
 
@@ -878,13 +893,18 @@ test('Remove NIC from invalid machine', TAP_CONF, function (t) {
     var path = '/my/machines/wowzers/nics/' + mac;
 
     var expectedErr = {
-        message: 'VM has invalid format',
+        message: 'Invalid Parameters',
         statusCode: 409,
-        restCode: 'InvalidArgument',
-        name: 'InvalidArgumentError',
+        restCode: 'ValidationFailed',
+        name: 'ValidationFailedError',
         body: {
-            code: 'InvalidArgument',
-            message: 'VM has invalid format'
+            code: 'ValidationFailed',
+            message: 'Invalid Parameters',
+            errors: [ {
+                field: 'uuid',
+                code: 'Invalid',
+                message: 'Invalid UUID'
+            } ]
         }
     };
 
@@ -986,9 +1006,34 @@ test('teardown', TAP_CONF, function (t) {
         });
     };
 
+    var waitTilMachineDeleted = function (_, next) {
+        client.vmapi.listJobs({
+            vm_uuid: machineUuid,
+            task: 'destroy'
+        }, function (err, jobs) {
+            t.ifError(err);
+            t.ok(Array.isArray(jobs));
+
+            var job = jobs[0];
+            t.ok(job);
+
+            machinesCommon.waitForJob(client, job.uuid, function (err2) {
+                t.ifError(err2);
+                next();
+            });
+        });
+    };
+
     var removeServerTags = function (_, next) {
         var tags = [ NETWORKS[0].nic_tag ];
-        removeTagsFromServer(t, tags, headnode, next);
+        removeTagsFromServer(t, tags, headnode, function (err, job) {
+            t.ifError(err);
+
+            machinesCommon.waitForJob(client, job.job_uuid, function (err2) {
+                t.ifError(err2);
+                next();
+            });
+        });
     };
 
     var removeNetwork_0 = function (_, next) {
@@ -1035,8 +1080,8 @@ test('teardown', TAP_CONF, function (t) {
 
     vasync.pipeline({
         'funcs': [
-            deleteMachine, removeServerTags, removeNetwork_0, removeNetwork_1,
-            removeKey, teardown
+            deleteMachine, waitTilMachineDeleted, removeServerTags,
+            removeNetwork_0, removeNetwork_1, removeKey, teardown
         ]
     }, function (err) {
         t.ifError(err);
@@ -1139,9 +1184,9 @@ function removeTagsFromServer(t, nicTags, server, callback) {
         } ]
     };
 
-    client.cnapi.updateNics(server.uuid, args, function (err) {
+    client.cnapi.updateNics(server.uuid, args, function (err, res) {
         t.ifError(err);
-        callback();
+        callback(null, res);
     });
 }
 
@@ -1224,7 +1269,7 @@ function waitTilNicAdded(t, path) {
     function check() {
         count--;
         if (count === 0) {
-            t.ifError('NIC did not provision in time');
+            t.ifError(true, 'NIC did not provision in time');
             return t.end();
         }
 
@@ -1234,7 +1279,6 @@ function waitTilNicAdded(t, path) {
             if (nic.state === 'running') {
                 return t.end();
             } else {
-                console.log(nic.state);
                 return setTimeout(check, 5000);
             }
         });
@@ -1268,7 +1312,7 @@ function waitTilNicDeleted(t) {
     function check() {
         count--;
         if (count === 0) {
-            t.ifError('NIC did not delete in time');
+            t.ifError(true, 'NIC did not delete in time');
             return t.end();
         }
 

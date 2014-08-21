@@ -180,6 +180,9 @@ keys_test: $(TAP)
 networks_test: $(TAP)
 	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/networks.test.js
 
+nics_test: $(TAP)
+	$(NODE_EXEC) $(TAP) --tap --timeout 720 test/nics.test.js
+
 machines_all_test:
 	$(NODE_EXEC) $(TAP) --tap --timeout 720 test/machines.test.js
 
@@ -207,7 +210,7 @@ users_test: $(TAP)
 	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/users.test.js
 
 
-test: auth_test account_test analytics_test datacenters_test datasets_test keys_test networks_test packages_test populate_network_test users_test machines_test
+test: auth_test account_test analytics_test datacenters_test datasets_test keys_test networks_test nics_test packages_test populate_network_test users_test machines_test
 
 no_machines_test: auth_test account_test analytics_test datacenters_test datasets_test keys_test networks_test packages_test populate_network_test users_test
 
