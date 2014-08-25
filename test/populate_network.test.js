@@ -1,6 +1,14 @@
 /*
- * Copyright 2014 Joyent, Inc. All rights reserved.
- *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+/*
+ * Copyright (c) 2014, Joyent, Inc.
+ */
+
+/*
  * Unlike other tests, here we make the client point at the admin user.
  * Adding zones missing network_uuid in the nics isn't simple in tests, but
  * headnode zones are created without them, so we're making use of that fact

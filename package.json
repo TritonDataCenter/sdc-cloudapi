@@ -4,11 +4,13 @@
     "version": "7.1.1",
     "author": "Joyent (joyent.com)",
     "private": true,
-    "engines" : { "node" : ">=0.10" },
+    "engines": {
+        "node": ">=0.10"
+    },
     "engineStrict": true,
     "repository": {
-        "type" : "git",
-        "url" : "git+ssh://git@git.joyent.com:cloudapi.git"
+        "type": "git",
+        "url": "git+ssh://git@git.joyent.com:cloudapi.git"
     },
     "dependencies": {
         "vasync": "1.4.3",
@@ -38,5 +40,6 @@
     "scripts": {
         "start": "node ./main.js",
         "test": "./node_modules/.bin/tap ./test/*.test.js"
-    }
+    },
+    "license": "MPL-2.0"
 }
