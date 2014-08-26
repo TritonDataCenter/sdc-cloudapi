@@ -141,7 +141,7 @@ test('setup', TAP_CONF, function (t) {
             t.ok(_client);
             client = _client;
 
-            t.ok(_server);
+            t.ok(_server || process.env.SDC_SETUP_TESTS);
             cnapiServer = _server;
 
             next();
