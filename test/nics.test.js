@@ -87,9 +87,19 @@ var NETWORKS = [ {
     'provision_start_ip': '10.66.62.10',
     'provision_end_ip': '10.66.62.240',
     'nic_tag': 'test_tag_gamma',
-    'owner_uuids': [
-        // added during setup
-    ]
+    'owner_uuids': []
+}, {
+    // only added if there is no internal network on the test machine
+
+    // uuid filled by createNetwork() during setup
+    'name': 'internal',
+    'vlan_id': 8,
+    'subnet': '10.66.64.0/24',
+    'netmask': '255.255.255.0',
+    'provision_start_ip': '10.66.64.10',
+    'provision_end_ip': '10.66.64.240',
+    'nic_tag': 'internal',
+    'owner_uuids': []
 } ];
 
 var NETWORK_POOLS = [ {
@@ -100,6 +110,12 @@ var NETWORK_POOLS = [ {
     // uuid, nic_tag, owner_uuid and networks filled in by createNetwork()
     // during setup
     'name': 'test-network-pool-gamma'
+}, {
+    // only added if there is no internal network on the test machine
+
+    // uuid, nic_tag, owner_uuid and networks filled in by createNetwork()
+    // during setup
+    'name': 'internal'
 } ];
 
 var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -152,6 +168,18 @@ test('setup', TAP_CONF, function (t) {
         createNetwork(t, NETWORKS[1], NETWORK_POOLS[1], false, next);
     };
 
+    var addInternalNetwork = function (_, next) {
+        client.napi.listNetworks({ nic_tag: 'internal' }, function (err, nets) {
+            t.ifError(err);
+
+            if (nets.length > 0) {
+                return next();
+            }
+
+            return createNetwork(t, NETWORKS[2], NETWORK_POOLS[2], false, next);
+        });
+    };
+
     var findHeadnode = function (_, next) {
         var args = { extras: 'sysinfo' };
 
@@ -170,6 +198,12 @@ test('setup', TAP_CONF, function (t) {
 
     var addServerTags = function (_, next) {
         var tags = [ NETWORKS[0].nic_tag ];
+
+        // if we created an internal network above, we want to add to server too
+        var internal = NETWORKS[2];
+        if (internal.uuid) {
+            tags.push(internal.nic_tag);
+        }
 
         addTagsToServer(t, tags, headnode, function (err, job) {
             t.ifError(err);
@@ -287,9 +321,10 @@ test('setup', TAP_CONF, function (t) {
 
     vasync.pipeline({
         'funcs': [
-            setup, addKey, addPackage, addNetwork_0, addNetwork_1, findHeadnode,
-            addServerTags, findDataset, createMachine, waitTilMachineCreated,
-            getAdmin, getOtherMachine, getOtherNic, getOtherNetwork
+            setup, addKey, addPackage, addNetwork_0, addNetwork_1,
+            addInternalNetwork, findHeadnode, addServerTags, findDataset,
+            createMachine, waitTilMachineCreated, getAdmin, getOtherMachine,
+            getOtherNic, getOtherNetwork
         ]
     }, function (err) {
         t.ifError(err);
@@ -299,6 +334,8 @@ test('setup', TAP_CONF, function (t) {
 
 
 
+// this also checks that a VM creates with an external and internal nic by
+// default if the package doesn't list networks
 test('List NICs', TAP_CONF, function (t) {
     var path = '/my/machines/' + machineUuid + '/nics';
 
@@ -306,24 +343,46 @@ test('List NICs', TAP_CONF, function (t) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
 
-        t.ok(Array.isArray(body));
-        t.equal(body.length, 1);
+        var nics = body;
 
-        vmNic = body[0];
-        t.ok(vmNic.mac.match(MAC_RE));
-        t.equal(vmNic.primary, true);
-        t.ok(vmNic.ip.match(IP_RE));
-        t.ok(vmNic.netmask.match(IP_RE));
-        t.ok(vmNic.gateway.match(IP_RE));
+        t.ok(Array.isArray(nics));
+        t.equal(nics.length, 2);
 
-        t.ifError(vmNic.resolvers);
-        t.ifError(vmNic.owner_uuid);
-        t.ifError(vmNic.network_uuid);
-        t.ifError(vmNic.nic_tag);
-        t.ifError(vmNic.belongs_to_type);
-        t.ifError(vmNic.belongs_to_uuid);
-        t.ifError(vmNic.belongs_to_type);
-        t.ifError(vmNic.belongs_to_uuid);
+        var externalNic;
+        var internalNic;
+
+        if (nics[0].ip.match(/^10.88.88/)) {
+            externalNic = nics[0];
+            internalNic = nics[1];
+        } else if (nics[1].ip.match(/^10.88.88/)) {
+            externalNic = nics[1];
+            internalNic = nics[0];
+        } else {
+            t.ok(false, 'problem with created nics');
+        }
+
+        t.ok(externalNic.mac.match(MAC_RE));
+        t.ok(externalNic.netmask.match(IP_RE));
+        t.ok(externalNic.gateway.match(IP_RE));
+        t.equal(externalNic.primary, true);
+
+        t.ok(internalNic.ip.match(/^10.66.64/));
+        t.ok(internalNic.mac.match(MAC_RE));
+        t.ok(internalNic.netmask.match(IP_RE));
+        t.equal(internalNic.primary, false);
+
+        nics.forEach(function (nic) {
+            t.ifError(nic.resolvers);
+            t.ifError(nic.owner_uuid);
+            t.ifError(nic.network_uuid);
+            t.ifError(nic.nic_tag);
+            t.ifError(nic.belongs_to_type);
+            t.ifError(nic.belongs_to_uuid);
+            t.ifError(nic.belongs_to_type);
+            t.ifError(nic.belongs_to_uuid);
+        });
+
+        vmNic = externalNic;
 
         t.end();
     });
@@ -1034,6 +1093,13 @@ test('teardown', TAP_CONF, function (t) {
 
     var removeServerTags = function (_, next) {
         var tags = [ NETWORKS[0].nic_tag ];
+
+        // if we added an internal network for testing, we want to remove the
+        // tag from the server now
+        if (NETWORKS[2].uuid) {
+            tags.push(NETWORKS[2].nic_tag);
+        }
+
         removeTagsFromServer(t, tags, headnode, function (err, job) {
             t.ifError(err);
 
@@ -1050,6 +1116,16 @@ test('teardown', TAP_CONF, function (t) {
 
     var removeNetwork_1 = function (_, next) {
         removeNetwork(t, NETWORKS[1], NETWORK_POOLS[1], next);
+    };
+
+    var removeInternalNetwork = function (_, next) {
+        var internal = NETWORKS[2];
+
+        if (internal.uuid) {
+            removeNetwork(t, internal, NETWORK_POOLS[2], next);
+        } else {
+            next();
+        }
     };
 
     var removeKey = function (_, next) {
@@ -1089,7 +1165,8 @@ test('teardown', TAP_CONF, function (t) {
     vasync.pipeline({
         'funcs': [
             deleteMachine, waitTilMachineDeleted, removeServerTags,
-            removeNetwork_0, removeNetwork_1, removeKey, teardown
+            removeNetwork_0, removeNetwork_1, removeInternalNetwork, removeKey,
+            teardown
         ]
     }, function (err) {
         t.ifError(err);

@@ -3421,13 +3421,12 @@ encoded string.  On metadata retrieval, you will get back a JSON object.
 Networks are usually provided by the package, although they can be specified
 using the networks attribute. If neither the package, nor the inputs, contains
 an array of networks the machine should attach to, the machine will default to
-attaching to a single externally-accessible network (it will have one public
-IP). This behaviour can be overridden by specifying 'external' and/or 'internal'
-in a default_networks array. 'external' is like the default behaviour, while
-'internal' attaches the machine to an internal non-public network. Ergo, it's
+attaching to one externally-accessible network (it will have one public
+IP), and one internally-accessible network. This behaviour can be overridden by
+specifying 'external' and/or 'internal' in a default_networks array. Ergo, it's
 possible to have a machine only attached to an internal network, or both public
-and internal. NB: 'internal' cannot be reached from the Internet, but all
-users also on the internal network can reach it.
+and internal, or just external. NB: 'internal' cannot be reached from the
+Internet, but all users also on the internal network can reach it.
 
 
 ### Inputs
