@@ -22,6 +22,7 @@
         "restify": "git+ssh://git@github.com:mcavage/node-restify.git#0d7b4ba",
         "bunyan": "0.22.1",
         "sdc-clients": "git+ssh://git@github.com:joyent/node-sdc-clients.git#1715a3",
+        "ufds": "git+ssh://git@github.com:joyent/node-ufds.git#master",
         "semver": "2.2.1",
         "nodemailer": "0.3.29",
         "clone": "0.1.5",
