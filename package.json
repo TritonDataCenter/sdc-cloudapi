@@ -10,7 +10,7 @@
     "engineStrict": true,
     "repository": {
         "type": "git",
-        "url": "git+ssh://git@git.joyent.com:cloudapi.git"
+        "url": "git+ssh://git@github.com:joyent/sdc-cloudapi.git"
     },
     "dependencies": {
         "vasync": "1.4.3",

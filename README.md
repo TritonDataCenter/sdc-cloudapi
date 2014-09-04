@@ -8,23 +8,19 @@
     Copyright (c) 2014, Joyent, Inc.
 -->
 
-# Joyent CloudAPI
+# sdc-cloudapi
 
-Repository: <git@git.joyent.com:cloudapi.git>
-Browsing: <https://mo.joyent.com/cloudapi>
-Who: Mark Cavage, Pedro Palazón Candel et others.
-Docs: <https://mo.joyent.com/docs/cloudapi/master/>
-Tickets/bugs: <https://devhub.joyent.com/jira/browse/PUBAPI>
+This repository is part of the Joyent SmartDataCenter project (SDC).  For
+contribution guidelines, issues, and general documentation, visit the main
+[SDC](http://github.com/joyent/sdc) project page.
 
+CloudAPI is the HTTP API that customers use to interact with SmartDataCenter
+product.
 
-# Overview
+## Adding CloudAPI to SDC 7.0
 
-CloudAPI is the API that customers use to interact with SmartDataCenter product
-
-# Adding CloudAPI zone to SDC 7.0
-
-`cloudapi` zone is not created by default as a core zone. If your setup lacks
-of cloudapi zone, you can create it by running:
+`cloudapi` is not created by default during SDC setup. You can create it
+by running:
 
     ./tools/add-cloudapi-zone.sh <ssh hostname>
 
@@ -39,67 +35,18 @@ VM", you'd rather take a look and make sure SAPI is not in proto mode. If
 that's the case, you can always set it to full mode from the GZ before you
 retry: `sdc-sapi /mode?mode=full -X POST`.
 
-# Testing RBAC
 
-This section assumes your setup includes a reasonably recent version of
-UFDS and MAHI. If you're not sure, please, update both to latest.
-
-There's an utility script intented to speed up ENV setup for RBAC testing
-in your local setup. Assuming you want to test RBAC in COAL, you'll need to:
-
-- Setup CloudAPI zone (see above).
-- Update config to enable account management:
-
-    /zones/`vmadm lookup -1 \
-    alias=cloudapi0`/root/opt/smartdc/cloudapi/bin/enable-account-mgmt
-
-- Add the account `account` and the user `user`, both with password
-`joypass123`, and both of them using the SSH key `~/.ssh/id_rsa.pub`:
-
-    ./tools/create-account.sh headnode
-
-- Clone v7.3 branch of node-smartdc from https://github.com/joyent/node-smartdc/tree/v7.3
-- Assuming you want to test in COAL, you should have the following ENV
-vars setup to operate as the account owner:
-
-        SDC_URL=https://10.99.99.38
-        SDC_TESTING=true
-        SDC_ACCOUNT=account
-        SDC_KEY_ID=`ssh-keygen -l -f ~/.ssh/id_rsa.pub | awk '{print $2}' | tr -d '\n'`
-
-And, in order to operate as the account user instead, you just need to add the
-ENV var:
-
-        SDC_USER=user
-
-given we already created both with the same SSH key/fingerprint.
-
-If you want to also test machines creation and the associated actions, you'll
-need to hack the setup the same way we do for testing:
-
-    /zones/`vmadm lookup -1 \
-    alias=cloudapi0`/root/opt/smartdc/cloudapi/tools/coal-setup.sh
-
-For more information on RBAC you can check [CloudAPI docs][cloudapi] and
-the [Access Control User Guide][acuguide].
-
-[cloudapi]: https://mo.joyent.com/docs/cloudapi/master/
-[acuguide]: https://mo.joyent.com/docs/engdoc/master/rbac/index.html
-
-# Development
+## Development
 
 To run the CloudAPI server:
 
-    git clone git@git.joyent.com:cloudapi.git
+    git clone git@github.com:joyent/sdc-cloudapi.git
     cd cloudapi
     git submodule update --init
     make all
     node main.js -f ./etc/cloudapi.config.json 2>&1 | bunyan
 
-Before commiting/pushing run `make prepush` and, if possible, get a code
-review.
-
-# Configuration file.
+## Configuration file.
 
 The configuration file `./etc/cloudapi.cfg` needs to be created before
 the CloudAPI server can run. Consequently, **this file is also required in
@@ -115,7 +62,7 @@ zone, the config file is created - and automatically updated - by the
 (`sapi_manifests/cloudapi/template`) and the SAPI configuration values.
 
 
-# Testing
+## Testing
 
 Before testing, you need to import base image and create some packages into the
 headnode you're using for tests. Assuming that you'll be testing using COAL's
@@ -160,7 +107,7 @@ need to boot a server instance, since there's one already running).
 Also, the contents of the aforementioned `./etc/cloudapi.cfg` file
 should have been properly set.
 
-# COAL headnode provisionability
+## COAL headnode provisionability
 
 For testing changes on a COAL headnode-only configuration you will need to
 set the `SERVER_UUID` environment variable in the SMF manifest for the cloudapi
@@ -180,14 +127,63 @@ To edit the SMF manifest:
     svccfg import cloudapi.xml
     svcadm restart cloudapi
 
-# Image management
+## Image management
 
 If you want to test image management using COAL, the faster approach is to run
 the aforementioned coal-setup.sh script from the global zone. Among others, local
 image management setup will be completed.
 
 
-# How CloudAPI Auth works using RBAC
+## Testing RBAC
+
+This section assumes your setup includes a reasonably recent version of
+UFDS and MAHI. If you're not sure, please, update both to latest.
+
+There's an utility script intented to speed up ENV setup for RBAC testing
+in your local setup. Assuming you want to test RBAC in COAL, you'll need to:
+
+- Setup CloudAPI zone (see above).
+- Update config to enable account management:
+
+    /zones/`vmadm lookup -1 \
+    alias=cloudapi0`/root/opt/smartdc/cloudapi/bin/enable-account-mgmt
+
+- Add the account `account` and the user `user`, both with password
+`joypass123`, and both of them using the SSH key `~/.ssh/id_rsa.pub`:
+
+    ./tools/create-account.sh headnode
+
+- Clone v7.3 branch of node-smartdc from https://github.com/joyent/node-smartdc/tree/v7.3
+- Assuming you want to test in COAL, you should have the following ENV
+vars setup to operate as the account owner:
+
+        SDC_URL=https://10.99.99.38
+        SDC_TESTING=true
+        SDC_ACCOUNT=account
+        SDC_KEY_ID=`ssh-keygen -l -f ~/.ssh/id_rsa.pub | awk '{print $2}' | tr -d '\n'`
+
+And, in order to operate as the account user instead, you just need to add the
+ENV var:
+
+        SDC_USER=user
+
+given we already created both with the same SSH key/fingerprint.
+
+If you want to also test machines creation and the associated actions, you'll
+need to hack the setup the same way we do for testing:
+
+    /zones/`vmadm lookup -1 \
+    alias=cloudapi0`/root/opt/smartdc/cloudapi/tools/coal-setup.sh
+
+For more information on RBAC you can check [CloudAPI docs][cloudapi] and
+the [Access Control User Guide][acuguide].
+
+[cloudapi]: https://apidocs.joyent.com/cloudapi/
+[acuguide]: https://docs.joyent.com/jpc/rbac
+
+
+
+## How CloudAPI Auth works using RBAC
 
 Roles and Policies are used in CloudAPI to provide access control for accounts'
 sub users. Authorization for account sub users is always made using HTTP
