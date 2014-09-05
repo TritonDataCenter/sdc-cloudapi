@@ -125,7 +125,7 @@ var MAC_RE  = /^(?:[0-9a-f]{2}\:){5}[0-9a-f]{2}/i;
 
 
 var client, cnapiServer, machineUuid, headnode, vmNic, serverMac, adminUser,
-    otherMachineUuid, otherVmNic, otherNetwork, location;
+    otherMachineUuid, otherVmNic, otherNetwork, location, externalNetRE;
 
 
 
@@ -135,7 +135,7 @@ var client, cnapiServer, machineUuid, headnode, vmNic, serverMac, adminUser,
 
 test('setup', TAP_CONF, function (t) {
     var setup = function (_, next) {
-        common.setup('~7.1', function (err, _client, _server) {
+        common.setup('~7.2', function (err, _client, _server) {
             t.ifError(err);
 
             t.ok(_client);
@@ -177,6 +177,17 @@ test('setup', TAP_CONF, function (t) {
             }
 
             return createNetwork(t, NETWORKS[2], NETWORK_POOLS[2], false, next);
+        });
+    };
+
+    var getExternalNetworkIp = function (_, next) {
+        client.napi.listNetworks({ nic_tag: 'external' }, function (err, nets) {
+            t.ifError(err);
+
+            externalNetRE = new RegExp('^' + nets[0].subnet.split('.').
+                                        slice(0, 2).join('.'));
+
+            next();
         });
     };
 
@@ -322,9 +333,9 @@ test('setup', TAP_CONF, function (t) {
     vasync.pipeline({
         'funcs': [
             setup, addKey, addPackage, addNetwork_0, addNetwork_1,
-            addInternalNetwork, findHeadnode, addServerTags, findDataset,
-            createMachine, waitTilMachineCreated, getAdmin, getOtherMachine,
-            getOtherNic, getOtherNetwork
+            getExternalNetworkIp, addInternalNetwork, findHeadnode,
+            addServerTags, findDataset, createMachine, waitTilMachineCreated,
+            getAdmin, getOtherMachine, getOtherNic, getOtherNetwork
         ]
     }, function (err) {
         t.ifError(err);
@@ -351,10 +362,10 @@ test('List NICs', TAP_CONF, function (t) {
         var externalNic;
         var internalNic;
 
-        if (nics[0].ip.match(/^10.88.88/)) {
+        if (nics[0].ip.match(externalNetRE)) {
             externalNic = nics[0];
             internalNic = nics[1];
-        } else if (nics[1].ip.match(/^10.88.88/)) {
+        } else if (nics[1].ip.match(externalNetRE)) {
             externalNic = nics[1];
             internalNic = nics[0];
         } else {
