@@ -374,6 +374,25 @@ test('tag resource collection with role', function (t) {
 });
 
 
+test('tag resource collection with non-existent role', function (t) {
+    client.put('/my/users', {
+        'role-tag': ['asdasdasdasd']
+    }, function (err, req, res, body) {
+        t.equivalent(err, {
+            message: 'Role(s) asdasdasdasd not found',
+            statusCode: 409,
+            restCode: 'InvalidArgument',
+            name: 'InvalidArgumentError',
+            body: {
+                code: 'InvalidArgument',
+                message: 'Role(s) asdasdasdasd not found'
+            }
+        });
+        t.end();
+    });
+});
+
+
 test('get resource collection role-tag', function (t) {
     var p = '/my/users';
     client.get({
@@ -398,6 +417,25 @@ test('tag individual resource with role', function (t) {
         t.ok(body.name, 'resource role name');
         t.ok(body['role-tag'], 'resource role tag');
         t.ok(body['role-tag'].length, 'resource role tag ary');
+        t.end();
+    });
+});
+
+
+test('tag individual resource with non-existent role', function (t) {
+    client.put('/my/users/' + client.testSubUser, {
+        'role-tag': ['asdasdasdasd']
+    }, function (err, req, res, body) {
+        t.equivalent(err, {
+            message: 'Role(s) asdasdasdasd not found',
+            statusCode: 409,
+            restCode: 'InvalidArgument',
+            name: 'InvalidArgumentError',
+            body: {
+                code: 'InvalidArgument',
+                message: 'Role(s) asdasdasdasd not found'
+            }
+        });
         t.end();
     });
 });
