@@ -515,6 +515,7 @@ test('list roles (OK)', function (t) {
     });
 });
 
+
 test('get user by UUID', function (t) {
     client.get('/my/users/' + SUB_UUID, function (err, req, res, body) {
         t.ifError(err);
@@ -539,6 +540,47 @@ test('get user with roles', function (t) {
         t.ok(body.default_roles);
         t.ok(Array.isArray(body.roles));
         t.ok(Array.isArray(body.default_roles));
+        t.end();
+    });
+});
+
+
+test('add role to user resource', function (t) {
+    var path = '/my/users/' + SUB_UUID;
+    var role = client.role.name;
+
+    client.put(path, {
+        'role-tag': [role]
+    }, function (err) {
+        t.ifError(err);
+
+        client.get(path, function (err2, req, res, body) {
+            t.ifError(err2);
+            t.equal(res.headers['role-tag'], role);
+            t.end();
+        });
+    });
+});
+
+
+test('add role to non-existent user resource', function (t) {
+    var badPath = '/my/users/d26f4257-a795-4a7e-a360-e5441b39def0';
+    var role = client.role.name;
+
+    client.put(badPath, {
+        'role-tag': [role]
+    }, function (err) {
+        t.equivalent(err, {
+            message: 'd26f4257-a795-4a7e-a360-e5441b39def0 does not exist',
+            statusCode: 404,
+            restCode: 'ResourceNotFound',
+            name: 'ResourceNotFoundError',
+            body: {
+                code: 'ResourceNotFound',
+                message: 'd26f4257-a795-4a7e-a360-e5441b39def0 does not exist'
+            }
+        });
+
         t.end();
     });
 });
