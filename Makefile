@@ -93,16 +93,7 @@ build: haproxy $(SMF_MANIFESTS) | $(TAP) $(REPO_DEPS)
 $(TAP): | $(NPM_EXEC)
 	$(NPM) install
 
-# Doc preprocessing to enable getting public and bleeding-edge
-# docs out of the same index.restdown.in.
-#
-# To make the bleeding edge docs:
-# 	make clean-docs docs DOCS_PREPROCESS_FLAGS="-D BLEEDING_EDGE"
-docs/index.restdown: docs/index.restdown.in
-	python tools/preprocess.py -o $@ $(DOCS_PREPROCESS_FLAGS) $<
-
-DOC_CLEAN_FILES = docs/{index,admin}.{html,json} \
-	docs/index.restdown build/docs
+DOC_CLEAN_FILES = docs/{index,admin}.{html,json} build/docs
 .PHONY: clean-docs
 clean-docs:
 	-$(RMTREE) $(DOC_CLEAN_FILES)
