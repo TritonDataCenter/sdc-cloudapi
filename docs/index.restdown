@@ -119,6 +119,8 @@ file called ~/.ssh/id_rsa.
 You need to know the following information in order to interact with CloudAPI:
 
 * `SDC_ACCOUNT`: Your username.  The login you use for SDC.
+* `SDC_USER`: The account subuser when you are using
+  [Role Based Access Control](#rbac-users-roles-policies).
 * `SDC_URL`: The URL of the CloudAPI endpoint.
 * `SDC_KEY_ID`: Fingerprint for the key you uploaded to SmartDC through portal.
 
@@ -130,7 +132,7 @@ In this document, we'll use `api.example.com` as the `SDC_URL` endpoint; please
 replace it with the URL of your DC(s).  Note that CloudAPI always uses secure
 HTTP, which means that the endpoint URL must begin with `https`.
 
-You can quickly get your key fingerprint for `SDC_KEY_TO` by running:
+You can quickly get your key fingerprint for `SDC_KEY_ID` by running:
 
     $ ssh-keygen -l -f ~/.ssh/id_rsa.pub | awk '{print $2}' | tr -d '\n'
 
@@ -154,6 +156,7 @@ this document assume that these variables have been set:
 
 || **CLI Flags** || **Description** || **Environment Variable** ||
 ||--account<br/>-a||Login name (account)||SDC\_ACCOUNT||
+||--user||Subuser name when using [Role Based Access Control](#rbac-users-roles-policies)||SDC\_USER||
 ||--keyId<br/>-k||Fingerprint of the key to use for signing||SDC\_KEY\_ID||
 ||--url<br/>-u||URL of the CloudAPI endpoint||SDC\_URL||
 
@@ -442,14 +445,17 @@ going through the guide, so delete the one we setup:
 
 ## RBAC: Users, Roles & Policies.
 
-Starting at version 7.2.0, [Accounts](#account) can have multiple users and
+Starting at version 7.2.0, CloudAPI supports
+Role Based Access Control (RBAC),
+which means that
+[accounts](#account) can have multiple users and
 roles associated with them.
 
 While the behaviour of the [main account](#GetAccount) remains the same,
 including the [SSH keys](#keys) associated with it, it's now possible to have
 multiple [Users](#users) subordinate to the main account.  Each of these
 users have a different set of [SSH Keys](#sshKeys).  Both the users and their
-associated ssh keys have the same format as the main account object (and the
+associated SSH keys have the same format as the main account object (and the
 keys associated with it).
 
 It's worth mentioning that the `login` for an account's users must be different
