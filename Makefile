@@ -43,7 +43,7 @@ JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS    = -f tools/jsstyle.conf
 SMF_MANIFESTS_IN    = smf/manifests/cloudapi.xml.in smf/manifests/haproxy.xml.in
 
-CLEAN_FILES	+= node_modules cscope.files docs/index.restdown
+CLEAN_FILES	+= node_modules cscope.files
 
 # The prebuilt sdcnode version we want. See
 # "tools/mk/Makefile.node_prebuilt.targ" for details.
