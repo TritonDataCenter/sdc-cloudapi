@@ -143,10 +143,6 @@ There's an utility script intented to speed up ENV setup for RBAC testing
 in your local setup. Assuming you want to test RBAC in COAL, you'll need to:
 
 - Setup CloudAPI zone (see above).
-- Update config to enable account management:
-
-    /zones/`vmadm lookup -1 \
-    alias=cloudapi0`/root/opt/smartdc/cloudapi/bin/enable-account-mgmt
 
 - Add the account `account` and the user `user`, both with password
 `joypass123`, and both of them using the SSH key `~/.ssh/id_rsa.pub`:
