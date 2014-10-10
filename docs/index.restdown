@@ -3333,7 +3333,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-Getg the details for the machine with id 75cfe125-a5ce-49e8-82ac-09aa31ffdf26:
+Get the details for the machine with id 75cfe125-a5ce-49e8-82ac-09aa31ffdf26:
 
     $ sdc-getmachine 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
 
