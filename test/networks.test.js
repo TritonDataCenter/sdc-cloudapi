@@ -15,6 +15,7 @@ function uuid() {
 }
 var util = require('util');
 var common = require('./common');
+var vasync = require('vasync');
 
 var TAP_CONF = {
     timeout: 'Infinity '
@@ -22,7 +23,7 @@ var TAP_CONF = {
 
 ///--- Globals
 
-var client, server, NET_UUID, NIC_TAG_NAME, NIC_TAG, NETWORK, POOL;
+var client, server, NET_UUID, NIC_TAG_NAME, NIC_TAG, NETWORK1, NETWORK2, POOL;
 
 // -- Network helpers
 
@@ -46,28 +47,22 @@ function deleteTestNicTag(cb) {
 }
 
 
-function createTestNetwork(cb) {
+function createTestNetwork(id, vlan_id, cb) {
     var params = {
-        name: 'network-test-' + process.pid,
-        vlan_id: 0,
+        name: 'network-test-' + id,
+        vlan_id: vlan_id,
         subnet: '10.99.99.0/24',
         provision_start_ip: '10.99.99.5',
         provision_end_ip: '10.99.99.250',
         nic_tag: NIC_TAG_NAME
     };
-    client.napi.createNetwork(params, function (err, res) {
-        if (err) {
-            return cb(err);
-        } else {
-            NETWORK = res;
-            return cb(null, res);
-        }
-    });
+
+    client.napi.createNetwork(params, cb);
 }
 
 
-function deleteTestNetwork(cb) {
-    client.napi.deleteNetwork(NETWORK.uuid, { force: true }, function (err) {
+function deleteTestNetwork(net, cb) {
+    client.napi.deleteNetwork(net.uuid, { force: true }, function (err) {
         return cb(err);
     });
 }
@@ -76,7 +71,7 @@ function deleteTestNetwork(cb) {
 function createTestPool(cb) {
     var params = {
         name: 'network_pool' + process.pid,
-        networks: [ NETWORK.uuid ]
+        networks: [ NETWORK1.uuid ]
     };
 
     client.napi.createNetworkPool(params.name, params, function (err, res) {
@@ -113,21 +108,37 @@ test('setup', TAP_CONF, function (t) {
             server = _server;
         }
         client = _client;
-        createTestNicTag(function (err1, _1) {
-            t.ifError(err1);
-            createTestNetwork(function (err2, _2) {
-                t.ifError(err2);
-                createTestPool(function (err3, _3) {
-                    t.ifError(err3);
-                    t.end();
+
+        vasync.pipeline({ funcs: [
+            function createTag(_, next) {
+                createTestNicTag(next);
+            },
+            function createNetwork1(_, next) {
+                createTestNetwork(process.pid, 0, function (err2, net1) {
+                    NETWORK1 = net1;
+                    next(err2);
                 });
-            });
+            },
+            function createNetwork2(_, next) {
+                createTestNetwork(process.pid + 1, 99, function (err2, net2) {
+                    NETWORK2 = net2;
+                    next(err2);
+                });
+            },
+            function createPool(_, next) {
+                createTestPool(next);
+            }
+        ] }, function (err2) {
+            t.ifError(err2);
+            t.end();
         });
     });
 });
 
 test('list networks', function (t) {
-    var pool_found = false;
+    var poolFound = false;
+    var netFound  = false;
+
     client.get('/my/networks', function (err, req, res, body) {
         t.ifError(err, 'GET /my/networks error');
         t.equal(res.statusCode, 200, 'GET /my/networks status');
@@ -135,13 +146,21 @@ test('list networks', function (t) {
         t.ok(body, 'GET /my/networks body');
         t.ok(Array.isArray(body), 'GET /my/networks body is an array');
         t.ok(body.length, 'GET /my/networks body array has elements');
+
         body.forEach(function (n) {
+            t.ok(n.id !== NETWORK1.uuid, 'should not list network in pool');
             checkNetwork(t, n);
             if (n.id === POOL.uuid) {
-                pool_found = true;
+                poolFound = true;
+            }
+            if (n.id === NETWORK2.uuid) {
+                netFound = true;
             }
         });
-        t.ok(pool_found);
+
+        t.ok(poolFound);
+        t.ok(netFound);
+
         // This will likely be our default setup external network
         NET_UUID = body[0].id;
         t.end();
@@ -170,33 +189,40 @@ test('get network (404)', function (t) {
 });
 
 test('teardown', function (t) {
-    deleteTestPool(function (e1) {
-        t.ifError(e1);
-        deleteTestNetwork(function (e2) {
-            t.ifError(e2);
-            deleteTestNicTag(function (e3) {
-                t.iferror(e3);
-                client.teardown(function (err) {
-                    t.ifError(err, 'client teardown error');
-                    if (!process.env.SDC_SETUP_TESTS) {
-                        var cli = server._clients;
-                        Object.keys(cli).forEach(function (c) {
-                            if (typeof (cli[c].client) !== 'undefined' &&
-                                typeof (cli[c].client.close) ===
-                                    'function') {
-                                cli[c].client.close();
-                                }
-                        });
-                        cli.ufds.client.removeAllListeners('close');
-                        server.close(function () {
-                            t.end();
-                        });
-                    } else {
-                        t.end();
+    vasync.pipeline({ funcs: [
+        function deletePool(_, next) {
+            deleteTestPool(next);
+        },
+        function deleteNetwork1(_, next) {
+            deleteTestNetwork(NETWORK1, next);
+        },
+        function deleteNetwork2(_, next) {
+            deleteTestNetwork(NETWORK2, next);
+        },
+        function deleteTag(_, next) {
+            deleteTestNicTag(next);
+        }
+    ] }, function (err) {
+        t.ifError(err);
+
+        client.teardown(function (err2) {
+            t.ifError(err2, 'client teardown error');
+
+            if (!process.env.SDC_SETUP_TESTS) {
+                var cli = server._clients;
+                Object.keys(cli).forEach(function (c) {
+                    if (cli[c].client && cli[c].client.close) {
+                        cli[c].client.close();
                     }
                 });
+                cli.ufds.client.removeAllListeners('close');
 
-            });
+                server.close(function () {
+                    t.end();
+                });
+            } else {
+                t.end();
+            }
         });
     });
 });
