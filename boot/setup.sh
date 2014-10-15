@@ -92,7 +92,6 @@ function setup_cloudapi {
     done
 
     cp $SVC_ROOT/etc/stud.cfg.in /opt/local/etc/stud.conf
-    svccfg import /opt/local/share/smf/stud/manifest.xml
     svcadm enable stud || fatal "unable to start stud"
 
     unset IFS
