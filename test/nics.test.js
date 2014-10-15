@@ -233,7 +233,12 @@ test('setup', TAP_CONF, function (t) {
             t.equal(res.statusCode, 200);
             t.ok(Array.isArray(body));
 
-            dataset = body[0];
+            body.forEach(function (d) {
+                if (d.version && d.version === '13.4.0') {
+                    dataset = d;
+                }
+            });
+
             t.ok(dataset);
 
             next();
