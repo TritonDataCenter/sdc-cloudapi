@@ -91,7 +91,8 @@ function setup_cloudapi {
             fatal "unable to start $cloudapi_instance"
     done
 
-    cp $SVC_ROOT/etc/stud.cfg.in /opt/local/etc/stud.conf
+    cp $SVC_ROOT/etc/stud.cfg.in /opt/local/etc/stud/stud.conf
+    svccfg import /opt/local/lib/svc/manifest
     svcadm enable stud || fatal "unable to start stud"
 
     unset IFS
