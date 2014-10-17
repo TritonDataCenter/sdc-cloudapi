@@ -494,7 +494,7 @@ test('Check analytics roles are preserved', TAP_CONF, function (t) {
     }
 
     function removeRole(next) {
-        var args = { 'role-tag': []};
+        var args = { 'role-tag': [] };
 
         client.put(instrumentationsPath, args, function (err, req, res, body) {
             t.ifError(err);
@@ -508,6 +508,20 @@ test('Check analytics roles are preserved', TAP_CONF, function (t) {
             t.ifError(err);
             t.equal(res.statusCode, 204);
             next();
+        });
+    }
+
+    // deleting a role doesn't remove the sdcaccountresource object, but if we
+    // want to remove the test user after this test, we cannot have a child
+    // object on the user in LDAP
+    function deleteResourceObject(next) {
+        var account = client.account;
+        var name = '/' + account.login + '/analytics/instrumentations';
+
+        client.ufds.getResource(account.uuid, name, function (err, resource) {
+            t.ifError(err);
+
+            client.ufds.deleteResource(account.uuid, resource.uuid, next);
         });
     }
 
@@ -525,7 +539,7 @@ test('Check analytics roles are preserved', TAP_CONF, function (t) {
     }
 
     runStep([createRole, createClone, addRole, deleteClone, checkRole,
-            removeRole, deleteRole]);
+            removeRole, deleteRole, deleteResourceObject]);
 });
 
 
