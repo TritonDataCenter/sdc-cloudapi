@@ -56,7 +56,7 @@ var POLICY_DOC = [
 
 var POLICY_UUID, POLICY_DN, POLICY_NAME;
 
-var ROLE_UUID, ROLE_DN, ROLE_NAME;
+var ROLE_UUID, ROLE_DN, ROLE_NAME, SECOND_ROLE_UUID;
 
 var KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAvad19ePSDckmgmo6Unqmd8' +
     'n2G7o1794VN3FazVhV09yooXIuUhA+7OmT7ChiHueayxSubgL2MrO/HvvF/GGVUs/t3e0u4' +
@@ -481,8 +481,7 @@ test('add unexisting policy to role', function (t) {
 
 
 test('create another role', function (t) {
-    var role_uuid = libuuid.create();
-    var name = 'a' + role_uuid.substr(0, 7);
+    var name = 'a' + libuuid.create().substr(0, 7);
 
     var entry = {
         name: name,
@@ -496,6 +495,7 @@ test('create another role', function (t) {
         t.equal(res.statusCode, 201);
         common.checkHeaders(t, res.headers);
         checkRole(t, body);
+        SECOND_ROLE_UUID = body.id;
         t.end();
     });
 });
@@ -790,6 +790,16 @@ test('delete role', function (t) {
     });
 });
 
+
+test('delete second role', function (t) {
+    var url = '/my/roles/' + SECOND_ROLE_UUID;
+    client.del(url, function (err, req, res) {
+        t.ifError(err);
+        t.equal(res.statusCode, 204);
+        common.checkHeaders(t, res.headers);
+        t.end();
+    });
+});
 
 
 test('delete policy', function (t) {
