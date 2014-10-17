@@ -60,7 +60,6 @@ var PACKAGE = {
     fss: 25,
     'default': false,
     vcpus: 1,
-    urn: 'sdc:897779dc-9ce7-4042-8879-a4adccc94353:sdc_128_ok:1.0.0',
     active: true
 };
 
