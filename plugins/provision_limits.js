@@ -188,7 +188,11 @@ module.exports = {
                 limits = limits.filter(function (l) {
                     return (l.datacenter === cfg.datacenter);
                 });
-                limits = filterLimits(req.dataset, cfg.defaults, limits);
+
+                var defaults = (req.account.tenant &&
+                                cfg[req.account.tenant]) ?
+                                cfg[req.account.tenant] : cfg.defaults;
+                limits = filterLimits(req.dataset, defaults, limits);
                 log.debug({provisioning_limits: limits},
                         'Limits to be applied.');
 
