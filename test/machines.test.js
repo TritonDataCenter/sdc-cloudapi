@@ -488,7 +488,8 @@ test('machine audit', TAP_CONF, function (t) {
         t.ifError(err);
         t.ok(Array.isArray(body));
         t.ok(body.length);
-        var f = body.reverse()[0];
+
+        var f = body[body.length - 1];
         t.ok(f.success);
         t.ok(f.time);
         t.ok(f.action);
@@ -497,6 +498,25 @@ test('machine audit', TAP_CONF, function (t) {
         t.equal(f.caller.type, 'signature');
         t.ok(f.caller.ip);
         t.ok(f.caller.keyId);
+
+        var expectedJobs = [
+            'destroy', 'delete_snapshot', 'rollback_snapshot',
+            'create_snapshot', 'replace_metadata', 'remove_metadata',
+            'set_metadata', 'remove_tags', 'replace_tags', 'remove_tags',
+            'set_tags', 'reboot', 'start', 'stop', 'provision'
+        ];
+
+        for (var i = 0; i !== expectedJobs.length; i++) {
+            var expected = expectedJobs[i];
+            var job      = body[i];
+            var caller   = job.caller;
+
+            t.ok(job.action.indexOf(expected) !== -1);
+            t.equal(caller.type, 'signature');
+            t.ok(caller.ip);
+            t.ok(caller.keyId.indexOf('test@joyent.com/keys/id_rsa') !== -1);
+        }
+
         t.end();
     });
 });
