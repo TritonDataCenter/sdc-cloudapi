@@ -252,6 +252,78 @@ test('Create machine with os mismatch', TAP_CONF, function (t) {
 });
 
 
+// NB: this test only applies if the config doesn't set
+// allow_multiple_public_networks to true, which isn't set in JPC standups
+test('Create machine with too many public networks', TAP_CONF, function (t) {
+    var fakeNetwork = {
+        'name': 'test external 2',
+        'vlan_id': 613,
+        'subnet': '10.66.62.0/24',
+        'netmask': '255.255.255.0',
+        'provision_start_ip': '10.66.62.10',
+        'provision_end_ip': '10.66.62.240',
+        'nic_tag': 'external',
+        'owner_uuids': []
+    };
+
+    function createMachine(networkUuids, next) {
+        var obj = {
+            image: DATASET,
+            'package': 'sdc_128_ok',
+            name: 'a' + uuid().substr(0, 7),
+            server_uuid: HEADNODE.uuid,
+            firewall_enabled: true,
+            networks: networkUuids
+        };
+
+        client.post('/my/machines', obj, function (err, req, res, body) {
+            t.ok(err);
+            t.equal(err.statusCode, 409);
+            t.equal(body.code, 'InvalidArgument');
+            t.equal(body.message, 'Can specify a maximum of 1 public networks');
+            next();
+        });
+    }
+
+    function addNetwork(networkDesc, next) {
+        client.napi.createNetwork(networkDesc, function (err, network) {
+            t.ifError(err);
+            next(null, network.uuid);
+        });
+    }
+
+    function removeNetwork(networkUuid, next) {
+        client.napi.deleteNetwork(networkUuid, next);
+    }
+
+    client.napi.listNetworks({ nic_tag: 'external' }, function (err, nets) {
+        t.ifError(err);
+
+        var networkUuids = nets.map(function (net) { return net.uuid; });
+
+        if (nets.length > 1) {
+            createMachine(networkUuids, function () {
+                t.end();
+            });
+
+        } else if (nets.length == 1) {
+            addNetwork(fakeNetwork, function (_, newNetUuid) {
+                createMachine(networkUuids.concat(newNetUuid), function () {
+                    removeNetwork(newNetUuid, function () {
+                        t.end();
+                    });
+                });
+            });
+
+        } else {
+            // shouldn't end up here
+            t.ok(false);
+            t.end();
+        }
+    });
+});
+
+
 test('Create machine with invalid parameters', TAP_CONF, function (t) {
     var obj = {
         image: DATASET,

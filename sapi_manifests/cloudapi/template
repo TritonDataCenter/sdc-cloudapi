@@ -105,6 +105,12 @@
         {{/CLOUDAPI_BLEEDING_EDGE_LOGIN_WHITELIST}}
         "": false
     },
+    {{^CLOUDAPI_MULTIPLE_PUB_NETWORKS}}
+    "allow_multiple_public_networks": false,
+    {{/CLOUDAPI_MULTIPLE_PUB_NETWORKS}}
+    {{#CLOUDAPI_MULTIPLE_PUB_NETWORKS}}
+    "allow_multiple_public_networks": {{{CLOUDAPI_MULTIPLE_PUB_NETWORKS}}},
+    {{/CLOUDAPI_MULTIPLE_PUB_NETWORKS}}
     {{^CLOUDAPI_TEST_MODE}}
     "test": false
     {{/CLOUDAPI_TEST_MODE}}
