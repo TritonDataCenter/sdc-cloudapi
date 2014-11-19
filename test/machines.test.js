@@ -12,9 +12,7 @@ var fs = require('fs');
 var util = require('util');
 var test = require('tap').test;
 var libuuid = require('libuuid');
-function uuid() {
-    return (libuuid.create());
-}
+
 var sprintf = util.format;
 var common = require('./common');
 var machinesCommon = require('./machines/common');
@@ -381,28 +379,7 @@ test('CreateMachine', TAP_CONF, function (t) {
 });
 
 
-test('Wait For Running', TAP_CONF,  function (t) {
-    client.vmapi.listJobs({
-        vm_uuid: machine,
-        task: 'provision'
-    }, function (err, jobs) {
-        if (err) {
-            // Skip machine tests when machine creation fails
-            machine = null;
-        }
-        t.ifError(err, 'list jobs error');
-        t.ok(jobs, 'list jobs ok');
-        t.ok(jobs.length, 'list jobs is an array');
-        waitForJob(client, jobs[0].uuid, function (err2) {
-            if (err2) {
-                // Skip machine tests when machine creation fails
-                machine = null;
-            }
-            t.ifError(err2, 'Check state error');
-            t.end();
-        });
-    });
-});
+test('Wait For Running', TAP_CONF, waitForRunning);
 
 
 test('ListMachines all', TAP_CONF, function (t) {
@@ -641,6 +618,39 @@ test('ListMachines destroyed', TAP_CONF, function (t) {
 });
 
 
+test('CreateMachine using query args', TAP_CONF, function (t) {
+    var query = '/my/machines?image=' + DATASET +
+                '&package=sdc_128_ok' +
+                '&server_uuid=' + HEADNODE.uuid;
+
+    client.post(query, {}, function (err, req, res, body) {
+        t.ifError(err, 'POST /my/machines error');
+        t.equal(res.statusCode, 201, 'POST /my/machines status');
+        common.checkHeaders(t, res.headers);
+        t.equal(res.headers.location,
+            util.format('/%s/machines/%s', client.testUser, body.id));
+        t.ok(body, 'POST /my/machines body');
+        checkMachine(t, body);
+        machine = body.id;
+        // Handy to output this to stdout in order to poke around COAL:
+        console.log('Requested provision of machine: %s', machine);
+        t.end();
+    });
+});
+
+
+test('Wait For Running Machine', TAP_CONF, waitForRunning);
+
+
+test('DeleteMachine which used query args', TAP_CONF, function (t) {
+    client.del('/my/machines/' + machine, function (err, req, res) {
+        t.ifError(err, 'DELETE /my/machines error');
+        t.equal(res.statusCode, 204, 'DELETE /my/machines status');
+        t.end();
+    });
+});
+
+
 test('teardown', {timeout: 'Infinity '}, function (t) {
     client.del('/my/keys/' + keyName, function (err, req, res) {
         t.ifError(err, 'delete key error');
@@ -667,3 +677,35 @@ test('teardown', {timeout: 'Infinity '}, function (t) {
         });
     });
 });
+
+
+// helpers
+
+
+function uuid() {
+    return (libuuid.create());
+}
+
+
+function waitForRunning(t) {
+    client.vmapi.listJobs({
+        vm_uuid: machine,
+        task: 'provision'
+    }, function (err, jobs) {
+        if (err) {
+            // Skip machine tests when machine creation fails
+            machine = null;
+        }
+        t.ifError(err, 'list jobs error');
+        t.ok(jobs, 'list jobs ok');
+        t.ok(jobs.length, 'list jobs is an array');
+        waitForJob(client, jobs[0].uuid, function (err2) {
+            if (err2) {
+                // Skip machine tests when machine creation fails
+                machine = null;
+            }
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
+    });
+}
