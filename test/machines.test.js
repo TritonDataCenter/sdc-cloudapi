@@ -344,7 +344,31 @@ test('Create machine with invalid parameters', TAP_CONF, function (t) {
         t.notOk(/server/.test(err.message));
         t.end();
     });
+});
 
+
+test('Create machine with invalid locality', TAP_CONF, function (t) {
+    var obj = {
+        image: DATASET,
+        'package': 'sdc_128_ok',
+        name: 'a' + uuid().substr(0, 7),
+        server_uuid: HEADNODE.uuid,
+        locality: { near: 'asdasd' }
+    };
+
+    client.post('/my/machines', obj, function (err, req, res, body) {
+        t.equal(err.statusCode, 409);
+        t.equivalent(body, {
+            code: 'ValidationFailed',
+            message: 'Invalid VM parameters',
+            errors: [ {
+                field: 'locality',
+                code: 'Invalid',
+                message: 'locality contains malformed UUID'
+            } ]
+        });
+        t.end();
+    });
 });
 
 
@@ -354,6 +378,7 @@ test('CreateMachine', TAP_CONF, function (t) {
         image: DATASET,
         'package': 'sdc_128_ok',
         name: 'a' + uuid().substr(0, 7),
+        locality: { far: 'af4167f0-beda-4af9-9ae4-99d544499c14' }, // fake UUID
         server_uuid: HEADNODE.uuid,
         firewall_enabled: true
     };

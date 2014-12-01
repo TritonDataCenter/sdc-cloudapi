@@ -3434,6 +3434,23 @@ possible to have a machine only attached to an internal network, or both public
 and internal, or just external. NB: 'internal' cannot be reached from the
 Internet, but all users also on the internal network can reach it.
 
+Typically, SDC will allocate the new machine somewhere reasonable within the
+cloud.  You may want this machine to be placed close to, or far away from, other
+existing machines belonging to you;  if so, you can provide locality hints to
+cloudapi.  Locality hints are not guarantees, but SDC will attempt to satisfy
+the hints if possible. An example of a locality hint is:
+
+    "locality": {
+      "near": ["af7ebb74-59be-4481-994f-f6e05fa53075"],
+      "far": ["da568166-9d93-42c8-b9b2-bce9a6bb7e0a", "d45eb2f5-c80b-4fea-854f-32e4a9441e53"]
+    }
+
+UUIDs provided should be the ids of machines belonging to you.
+
+Locality hints are optional. Both `near` and `far` are also optional; you can
+provide just one if desired. Lastly, if there's only a single UUID entry in an
+array, you can omit the array and provide the UUID string directly as the value
+to a near/far key.
 
 ### Inputs
 
@@ -3442,6 +3459,7 @@ Internet, but all users also on the internal network can reach it.
 ||image||String||The image UUID (the "id" field in [ListImages](#ListImages))||
 ||networks||Array||Desired networks ids, obtained from ListNetworks||
 ||default_networks||Array||Alter the default networks IPs are drawn from if Inputs or the package have no networks||
+||locality||Object[String => Array]||Optionally specify which machines the new machine should be near or far from||
 ||metadata.$name||String||An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata."||
 ||tag.$name||String||An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag."||
 ||firewall_enabled||Boolean||(Added in SDC 7.0.)Completely enable or disable firewall for this machine||
