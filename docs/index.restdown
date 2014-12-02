@@ -6428,6 +6428,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||ResourceNotFound||If `:login or `:id` does not exist||
 ||InvalidArgument||If `:id` isn't a UUID||
 
+### CLI
+
+    $ sdc-nics list 76a533e9-aa3c-4fd4-a194-03fa05663e0e
+
 #### Example Request
 
     GET /my/machine/76a533e9-aa3c-4fd4-a194-03fa05663e0e/nics HTTP/1.1
@@ -6500,6 +6504,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If `:login`, `:id`, or `:mac` does not exist||
 ||InvalidArgument||If `:id` isn't a UUID, or `:mac` isn't a MAC address (without colons)||
+
+### CLI
+
+    $ sdc-nics get 90:b8:d0:2f:b8:f9 76a533e9-aa3c-4fd4-a194-03fa05663e0e
 
 #### Example Request
 
@@ -6583,6 +6591,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||InvalidArgument||If `:id` isn't a UUID, or the `network` argument isn't a valid UUID||
 ||MissingParameter||If the `network` argument isn't present||
 
+### CLI
+
+    $ sdc-nics create 7007b198-f6aa-48f0-9843-78a3149de3d7 76a533e9-aa3c-4fd4-a194-03fa05663e0e
+
 #### Example Request
 
     POST /my/machine/76a533e9-aa3c-4fd4-a194-03fa05663e0e/nics HTTP/1.1
@@ -6653,6 +6665,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If `:login`, `:id` or `:mac` does not exist||
 ||InvalidArgument||If `:id` isn't a UUID||
+
+### CLI
+
+    $ sdc-nics delete 90:b8:d0:2f:b8:f9 76a533e9-aa3c-4fd4-a194-03fa05663e0e
 
 #### Example Request
 
