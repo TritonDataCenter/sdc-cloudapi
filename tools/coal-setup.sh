@@ -47,20 +47,10 @@ function errexit {
 
 
 
-function hack_dapi_for_headnode_provisioning {
-    local cnapi_zone=$(vmadm lookup -1 alias=cnapi0)
-    # TODO: don't change if already done
-    echo "# Hack DAPI to allow headnode provisioning"
-    local config_path=/zones/$cnapi_zone/root/opt/smartdc/cnapi/sapi_manifests/cnapi/template
-    sed -e "
-        s:hard-filter-headnode:identity:g;
-        s:hard-filter-min-ram:identity:g;
-        s:hard-filter-min-disk:identity:g;
-        s:hard-filter-min-cpu:identity:g;
-        " $config_path >$config_path.new
-    mv $config_path.new $config_path
-    svcadm -z $cnapi_zone restart config-agent
-    svcadm -z $cnapi_zone restart cnapi
+function set_metadata_for_headnode_provisioning {
+    local sdc_uuid=$(sdc-sapi /applications?name=sdc | json -Ha uuid)
+    echo "# Set SAPI metadata to allow headnode provisioning"
+    sdc-sapi /applications/$sdc_uuid -X POST -d '{ "metadata": { "ALLOC_FILTER_HEADNODE": false, "ALLOC_FILTER_MIN_RESOURCES": false } }'
 }
 
 
@@ -107,7 +97,7 @@ echo "# Setup CloudAPI and prepare COAL DC for ."
 [[ $(bash /lib/sdc/config.sh -json | json datacenter_name) == "coal" ]] \
     || fatal "datacenter_name is not COAL, refusing to run"
 
-hack_dapi_for_headnode_provisioning
+set_metadata_for_headnode_provisioning
 # TODO: how to offer alternative to hook up to remote Manta?
 hack_imgapi_to_allow_local_custom_images
 
