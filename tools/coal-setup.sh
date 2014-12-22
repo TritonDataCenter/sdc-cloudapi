@@ -50,7 +50,7 @@ function errexit {
 function set_metadata_for_headnode_provisioning {
     local sdc_uuid=$(sdc-sapi /applications?name=sdc | json -Ha uuid)
     echo "# Set SAPI metadata to allow headnode provisioning"
-    sdc-sapi /applications/$sdc_uuid -X POST -d '{ "metadata": { "ALLOC_FILTER_HEADNODE": false, "ALLOC_FILTER_MIN_RESOURCES": false } }'
+    sdc-sapi /applications/$sdc_uuid -X PUT -d '{ "metadata": { "ALLOC_FILTER_HEADNODE": false, "ALLOC_FILTER_MIN_RESOURCES": false } }'
 }
 
 
