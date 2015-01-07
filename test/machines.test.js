@@ -728,13 +728,47 @@ test('CreateMachine using query args', TAP_CONF, function (t) {
 test('Wait For Running Machine 2', TAP_CONF, waitForRunning);
 
 
-test('DeleteMachine which used query args', TAP_CONF, function (t) {
-    client.del('/my/machines/' + machine, function (err, req, res) {
-        t.ifError(err, 'DELETE /my/machines error');
-        t.equal(res.statusCode, 204, 'DELETE /my/machines status');
+test('DeleteMachine which used query args', TAP_CONF, deleteMachine);
+
+
+// passing in multiple same networks should flatten to single network added
+test('CreateMachine using multiple same networks', TAP_CONF, function (t) {
+    client.napi.listNetworks({ nic_tag: 'external' }, function (err, nets) {
+        t.ifError(err);
+
+        var networkUuid = nets[0].uuid;
+
+        var obj = {
+            image: DATASET,
+            'package': 'sdc_128_ok',
+            server_uuid: HEADNODE.uuid,
+            networks: [networkUuid, networkUuid, networkUuid]
+        };
+
+        client.post('/my/machines', obj, function (err2, req, res, body) {
+            t.ifError(err2);
+            machine = body.id;
+            // see next couple following tests for asserts
+            t.end();
+        });
+    });
+
+});
+
+
+test('Wait For Running Machine 3', TAP_CONF, waitForRunning);
+
+
+test('Check CreateMachine flattens same networks', TAP_CONF, function (t) {
+    client.vmapi.getVm({ uuid: machine }, function (err, vm) {
+        t.ifError(err);
+        t.equal(vm.nics.length, 1);
         t.end();
     });
 });
+
+
+test('DeleteMachine which flattened networks', TAP_CONF, deleteMachine);
 
 
 test('teardown', {timeout: 'Infinity '}, function (t) {
@@ -793,5 +827,14 @@ function waitForRunning(t) {
             t.ifError(err2, 'Check state error');
             t.end();
         });
+    });
+}
+
+
+function deleteMachine(t) {
+    client.del('/my/machines/' + machine, function (err, req, res) {
+        t.ifError(err, 'DELETE /my/machines error');
+        t.equal(res.statusCode, 204, 'DELETE /my/machines status');
+        t.end();
     });
 }
