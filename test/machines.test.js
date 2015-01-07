@@ -322,6 +322,67 @@ test('Create machine with too many public networks', TAP_CONF, function (t) {
 });
 
 
+test('CreateMachine using invalid networks', TAP_CONF, function (t) {
+    var obj = {
+        image: DATASET,
+        'package': 'sdc_128_ok',
+        server_uuid: HEADNODE.uuid,
+        networks: ['8180ef72-40fa-4b86-915b-803bcf96b442'] // invalid
+    };
+
+    client.post('/my/machines', obj, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.statusCode, 409);
+        t.equivalent(body, {
+            code: 'InvalidArgument',
+            message: 'Invalid Networks'
+        });
+
+        t.end();
+    });
+});
+
+
+test('CreateMachine using network without permissions', TAP_CONF, function (t) {
+    var netDetails = {
+        name: 'network-test-fake',
+        vlan_id: 99,
+        subnet: '10.99.66.0/24',
+        provision_start_ip: '10.99.66.5',
+        provision_end_ip: '10.99.66.250',
+        nic_tag: 'external',
+        owner_uuids: ['fbae7be9-922f-48cf-b935-e3027881fca0']
+    };
+
+    var vmDetails = {
+        image: DATASET,
+        'package': 'sdc_128_ok',
+        server_uuid: HEADNODE.uuid
+    };
+
+    client.napi.createNetwork(netDetails, function (err, net) {
+        t.ifError(err);
+
+        vmDetails.networks = [net.uuid];
+
+        client.post('/my/machines', vmDetails, function (err2, req, res, body) {
+            t.ok(err2);
+            t.equal(err2.statusCode, 409);
+            t.equivalent(body, {
+                code: 'InvalidArgument',
+                message: 'Invalid Networks'
+            });
+
+            client.napi.deleteNetwork(net.uuid, {}, function (err3) {
+                t.ifError(err3);
+                t.end();
+            });
+        });
+    });
+});
+
+
+
 test('Create machine with invalid parameters', TAP_CONF, function (t) {
     var obj = {
         image: DATASET,
@@ -404,7 +465,7 @@ test('CreateMachine', TAP_CONF, function (t) {
 });
 
 
-test('Wait For Running', TAP_CONF, waitForRunning);
+test('Wait For Running Machine 1', TAP_CONF, waitForRunning);
 
 
 test('ListMachines all', TAP_CONF, function (t) {
@@ -664,7 +725,7 @@ test('CreateMachine using query args', TAP_CONF, function (t) {
 });
 
 
-test('Wait For Running Machine', TAP_CONF, waitForRunning);
+test('Wait For Running Machine 2', TAP_CONF, waitForRunning);
 
 
 test('DeleteMachine which used query args', TAP_CONF, function (t) {

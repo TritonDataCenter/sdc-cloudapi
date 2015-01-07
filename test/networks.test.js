@@ -62,9 +62,7 @@ function createTestNetwork(id, vlan_id, cb) {
 
 
 function deleteTestNetwork(net, cb) {
-    client.napi.deleteNetwork(net.uuid, { force: true }, function (err) {
-        return cb(err);
-    });
+    client.napi.deleteNetwork(net.uuid, { force: true }, cb);
 }
 
 
