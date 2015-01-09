@@ -433,6 +433,41 @@ test('Create machine with invalid locality', TAP_CONF, function (t) {
 });
 
 
+test('CreateMachine using dataset without permission', TAP_CONF, function (t) {
+    client.imgapi.listImages(function (err, images) {
+        t.ifError(err);
+
+        var accountUuid = client.account.uuid;
+        var inaccessibleImage = images.filter(function (img) {
+            return img.owner !== accountUuid && !img.public;
+        })[0];
+
+        if (!inaccessibleImage) {
+            // can't continue test, so move on
+            return t.end();
+        }
+
+        var obj = {
+            image: inaccessibleImage.uuid,
+            'package': 'sdc_128_ok',
+            server_uuid: HEADNODE.uuid
+        };
+
+        return client.post('/my/machines', obj, function (er2, req, res, body) {
+            t.ok(er2);
+            t.equal(er2.statusCode, 404);
+
+            t.equivalent(body, {
+                code: 'ResourceNotFound',
+                message: 'image not found'
+            });
+
+            t.end();
+        });
+    });
+});
+
+
 // Test using IMAGE.uuid instead of IMAGE.name due to PUBAPI-625:
 test('CreateMachine', TAP_CONF, function (t) {
     var obj = {

@@ -171,6 +171,35 @@ test('GetDataset OK', function (t) {
 });
 
 
+test('GetDataset should not return non-permission datasets', function (t) {
+    client.imgapi.listImages(function (err, images) {
+        t.ifError(err);
+
+        var accountUuid = client.account.uuid;
+        var inaccessibleImage = images.filter(function (img) {
+            return img.owner !== accountUuid && !img.public;
+        })[0];
+
+        if (!inaccessibleImage) {
+            // can't continue test, so move on
+            return t.end();
+        }
+
+        var path = '/my/datasets/' + inaccessibleImage.uuid;
+        return client.get(path, function (err2, req, res, body) {
+            t.ok(err2);
+
+            t.equivalent(body, {
+                code: 'ResourceNotFound',
+                message: 'image not found'
+            });
+
+            t.end();
+        });
+    });
+});
+
+
 test('Get Image By URN OK', function (t) {
     client.get('/my/images/' + encodeURIComponent(DATASET.urn),
         function (err, req, res, body) {
