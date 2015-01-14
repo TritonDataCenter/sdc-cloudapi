@@ -33,7 +33,7 @@ var sdc_512_ownership = {
     quota: 10240,
     max_swap: 1024,
     cpu_cap: 150,
-    max_lwps: 1000,
+    max_lwps: 2000,
     zfs_io_priority: 10,
     'default': false,
     vcpus: 1,
@@ -131,6 +131,7 @@ function checkPackage_7(t, pkg) {
     t.ok(!isNaN(pkg.vcpus), 'Package VCPUs OK');
     t.ok(pkg.version, 'Package version OK');
     t.ok(pkg.swap, 'Package swap');
+    t.ok(pkg.lwps, 'Package lwps');
     t.ok(pkg['default'] !== undefined, 'Package default');
 }
 

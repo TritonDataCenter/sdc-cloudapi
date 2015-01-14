@@ -289,6 +289,7 @@ You can list packages available in your cloud with:
         "memory": 8192,
         "disk": 807936,
         "swap": 16384,
+        "lwps": 2000,
         "vcpus": 0,
         "default": false,
         "id": "28d8c3f1-cf62-422a-a41d-fdf8b5110d00",
@@ -3015,6 +3016,7 @@ Provides a list of packages available in this datacenter.
 ||memory||Number||How much memory will by available (in MiB)||
 ||disk||Number||How much disk space will be available (in MiB)||
 ||swap||Number||How much swap space will be available (in MiB)||
+||lwps||Number||Maximum number of light-weight processes (threads) allowed||
 ||version||String||The version of this package||
 ||vcpus||Number||Number of vCPUs for this package||
 ||group||String||The group this package belongs to||
@@ -3030,9 +3032,10 @@ An array of objects, of the form:
 ||memory||Number||How much memory will by available (in MiB)||
 ||disk||Number||How much disk space will be available (in MiB)||
 ||swap||Number||How much swap space will be available (in MiB)||
+||lwps||Number||Maximum number of light-weight processes (threads) allowed||
 ||vcpus||Number||Number of vCPUs for this package||
 ||default||Boolean||Whether this is the default package in this datacenter||
-||id||String||Unique identifier for this package||
+|id||String||Unique identifier for this package||
 ||version||String||The version of this package||
 ||group||String||The group this package belongs to||
 ||description||String||A human-friendly description about this package||
@@ -3078,6 +3081,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
         "memory": 128,
         "disk": 5120,
         "swap": 256,
+        "lwps": 1000,
         "version": "1.0.0",
         "vcpus": 1,
         "default": true
@@ -3088,6 +3092,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
         "memory": 256,
         "disk": 5120,
         "swap": 512,
+        "lwps": 2000,
         "version": "1.0.0",
         "default": false
       },
@@ -3097,6 +3102,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
         "memory": 512,
         "disk": 10240,
         "swap": 1024,
+        "lwps": 2000,
         "version": "1.0.1",
         "default": false
       },
@@ -3106,6 +3112,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
         "memory": 1024,
         "disk": 15360,
         "swap": 2048,
+        "lwps": 4000,
         "version": "1.2.0",
         "default": false
       }
@@ -3126,6 +3133,7 @@ Gets a package by `name` or `id`.
 ||disk||Number||How much disk space will be available (in MiB)||
 ||swap||Number||How much swap space will be available (in MiB)||
 ||vcpus||Number||Number of vCPUs for this package||
+||lwps||Number||Maximum number of light-weight processes (threads) allowed||
 ||default||Boolean||Whether this is the default package in this datacenter||
 ||id||String||Unique identifier for this package||
 ||version||String||The version of this package||
@@ -3171,6 +3179,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       "memory": 128,
       "swap": 256,
       "disk": 5120,
+      "lwps": 1000,
       "default": true,
       "id": "5968a8a4-5bff-4c5e-8034-d79de962e7f6",
       "vcpus": 1,
