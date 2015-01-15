@@ -504,66 +504,113 @@ test('Wait For Running Machine 1', TAP_CONF, waitForRunning);
 
 
 test('ListMachines all', TAP_CONF, function (t) {
-    if (machine) {
-        client.get('/my/machines', function (err, req, res, body) {
-            t.ifError(err, 'GET /my/machines error');
-            t.equal(res.statusCode, 200, 'GET /my/machines status');
-            common.checkHeaders(t, res.headers);
-            t.ok(body, 'GET /my/machines body');
-            t.ok(Array.isArray(body), 'GET /my/machines body is array');
-            t.ok(body.length, 'GET /my/machines list is not empty');
-            body.forEach(function (m) {
-                checkMachine(t, m);
-            });
-            t.end();
+    client.get('/my/machines', function (err, req, res, body) {
+        t.ifError(err, 'GET /my/machines error');
+        t.equal(res.statusCode, 200, 'GET /my/machines status');
+        common.checkHeaders(t, res.headers);
+        t.ok(body, 'GET /my/machines body');
+        t.ok(Array.isArray(body), 'GET /my/machines body is array');
+        t.ok(body.length, 'GET /my/machines list is not empty');
+
+        body.forEach(function (m) {
+            checkMachine(t, m);
         });
-    } else {
+
         t.end();
-    }
+    });
 });
 
 
 // Fixed by PUBAPI-774, again!
 test('ListMachines (filter by dataset)', TAP_CONF, function (t) {
-    if (machine) {
-        client.get('/my/machines?image=' + DATASET,
-            function (err, req, res, body) {
-            t.ifError(err, 'GET /my/machines by dataset error');
-            t.equal(res.statusCode, 200, 'GET /my/machines by dataset status');
-            common.checkHeaders(t, res.headers);
-            t.ok(body, 'GET /my/machines by dataset body');
-            t.ok(Array.isArray(body),
-                'GET /my/machines by dataset body is array');
-            t.ok(body.length, 'GET /my/machines by dataset list is not empty');
-            body.forEach(function (m) {
-                checkMachine(t, m);
-            });
-            t.end();
+    searchAndCheck('image=' + DATASET, t, function (m) {
+        t.equal(m.image, DATASET);
+    });
+});
+
+
+test('ListMachines (filter by state)', TAP_CONF, function (t) {
+    searchAndCheck('state=running', t, function (m) {
+        t.equal(m.state, 'running');
+    });
+});
+
+
+test('ListMachines (filter by memory)', TAP_CONF, function (t) {
+    searchAndCheck('memory=128', t, function (m) {
+        t.equal(m.memory, 128);
+    });
+});
+
+
+test('ListMachines (filter by package)', TAP_CONF, function (t) {
+    searchAndCheck('package=sdc_128_ok', t, function (m) {
+        t.equal(m['package'], 'sdc_128_ok');
+    });
+});
+
+
+test('ListMachines (filter by smartmachine type)', TAP_CONF, function (t) {
+    searchAndCheck('type=smartmachine', t, function (m) {
+        t.equal(m.type, 'smartmachine');
+    });
+});
+
+
+test('ListMachines (filter by virtualmachine type)', TAP_CONF, function (t) {
+    var path = '/my/machines?type=virtualmachine';
+
+    return client.get(path, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(Array.isArray(body));
+
+        body.forEach(function (m) {
+            checkMachine(t, m);
+            t.equal(m.type, 'virtualmachine');
         });
-    } else {
+
         t.end();
-    }
+    });
+});
+
+
+test('ListMachines (filter by bad type)', TAP_CONF, function (t) {
+    var path = '/my/machines?type=0xdeadbeef';
+
+    return client.get(path, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(res.statusCode, 409);
+        common.checkHeaders(t, res.headers);
+
+        t.equivalent(body, {
+            code: 'InvalidArgument',
+            message: '0xdeadbeef is not a valid type'
+        });
+
+        t.end();
+    });
 });
 
 
 test('Get Machine Include Credentials', TAP_CONF, function (t) {
-    if (machine) {
-        var url = '/my/machines/' + machine + '?credentials=true';
-        client.get(url, function (err, req, res, body) {
-            t.ifError(err, 'GET /my/machines/:id error');
-            t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
-            common.checkHeaders(t, res.headers);
-            t.ok(body, 'GET /my/machines/:id body');
-            checkMachine(t, body);
-            t.equal(typeof (body.metadata.credentials), 'object');
-            Object.keys(META_CREDS).forEach(function (k) {
-                t.equal(body.metadata.credentials[k], META_CREDS[k]);
-            });
-            t.end();
+    var url = '/my/machines/' + machine + '?credentials=true';
+
+    client.get(url, function (err, req, res, body) {
+        t.ifError(err, 'GET /my/machines/:id error');
+        t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
+        common.checkHeaders(t, res.headers);
+        t.ok(body, 'GET /my/machines/:id body');
+        checkMachine(t, body);
+
+        t.equal(typeof (body.metadata.credentials), 'object');
+        Object.keys(META_CREDS).forEach(function (k) {
+            t.equal(body.metadata.credentials[k], META_CREDS[k]);
         });
-    } else {
+
         t.end();
-    }
+    });
 });
 
 
@@ -870,6 +917,27 @@ function deleteMachine(t) {
     client.del('/my/machines/' + machine, function (err, req, res) {
         t.ifError(err, 'DELETE /my/machines error');
         t.equal(res.statusCode, 204, 'DELETE /my/machines status');
+        t.end();
+    });
+}
+
+
+function searchAndCheck(query, t, checkAttr) {
+    var path = '/my/machines?' + query;
+
+    return client.get(path, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+
+        t.ok(Array.isArray(body));
+        t.ok(body.length > 0);
+
+        body.forEach(function (m) {
+            checkMachine(t, m);
+            checkAttr(m);
+        });
+
         t.end();
     });
 }
