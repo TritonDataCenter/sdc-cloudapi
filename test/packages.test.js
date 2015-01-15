@@ -30,13 +30,13 @@ var sdc_512_ownership = {
     name: 'sdc_512_ownership',
     version: '1.0.0',
     max_physical_memory: 512,
-    quota: 10240,
+    quota: 20480,
     max_swap: 1024,
     cpu_cap: 150,
     max_lwps: 2000,
     zfs_io_priority: 10,
     'default': false,
-    vcpus: 1,
+    vcpus: 2,
     active: true,
     owner_uuids: ['b99598ca-d56c-4374-8fdd-32e60f4d1592']
 };
@@ -136,6 +136,31 @@ function checkPackage_7(t, pkg) {
 }
 
 
+function searchAndCheck(query, t, checkAttr) {
+    client.get({
+        path: '/my/packages?' + query,
+        headers: {
+            'accept-version': '~7.0'
+        }
+    }, function (err, req, res, body) {
+        t.ifError(err);
+
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+
+        t.ok(Array.isArray(body));
+        t.ok(body.length > 0);
+
+        body.forEach(function (p) {
+            checkPackage_7(t, p);
+            checkAttr(p);
+        });
+
+        t.end();
+    });
+}
+
+
 ///--- Tests
 
 test('setup', TAP_CONF, function (t) {
@@ -186,10 +211,19 @@ test('GetPackage OK (6.5)', function (t) {
         }
     }, function (err, req, res, body) {
         t.ifError(err);
-        t.ok(body);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
-//        checkPackage_6_5(t, body);
+
+        t.equivalent(body, {
+            name: 'sdc_512_ownership',
+            memory: 512,
+            disk: 20480,
+            swap: 1024,
+            vcpus: 2,
+            lwps: 2000,
+            default: false
+        });
+
         t.end();
     });
 });
@@ -216,26 +250,54 @@ test('ListPackages OK (7.0)', function (t) {
 });
 
 
-test('search packages (7.0)', function (t) {
-    client.get({
-        path: '/my/packages?memory=128',
-        headers: {
-            'accept-version': '~7.0'
-        }
-    }, function (err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
-        common.checkHeaders(t, res.headers);
-        t.ok(body);
-        t.ok(Array.isArray(body));
-        t.ok(body.length);
-        body.forEach(function (p) {
-            checkPackage_7(t, p);
-            t.equal(128, p.memory);
-        });
-        t.end();
+test('search packages by name (7.0)', function (t) {
+    searchAndCheck('name=sdc_512_ownership', t, function (pkg) {
+        t.equal(pkg.name, 'sdc_512_ownership');
     });
 });
+
+
+test('search packages by memory (7.0)', function (t) {
+    searchAndCheck('memory=128', t, function (pkg) {
+        t.equal(pkg.memory, 128);
+    });
+});
+
+
+test('search packages by disk (7.0)', function (t) {
+    searchAndCheck('disk=10240', t, function (pkg) {
+        t.equal(pkg.disk, 10240);
+    });
+});
+
+
+test('search packages by swap (7.0)', function (t) {
+    searchAndCheck('swap=512', t, function (pkg) {
+        t.equal(pkg.swap, 512);
+    });
+});
+
+
+test('search packages by lwps (7.0)', function (t) {
+    searchAndCheck('lwps=2000', t, function (pkg) {
+        t.equal(pkg.lwps, 2000);
+    });
+});
+
+
+test('search packages by vcpus (7.0)', function (t) {
+    searchAndCheck('vcpus=2', t, function (pkg) {
+        t.equal(pkg.vcpus, 2);
+    });
+});
+
+
+test('search packages by version (7.0)', function (t) {
+    searchAndCheck('version=1.0.0', t, function (pkg) {
+        t.equal(pkg.version, '1.0.0');
+    });
+});
+
 
 test('GetPackage by name OK (7.0)', function (t) {
     client.get({
@@ -245,10 +307,21 @@ test('GetPackage by name OK (7.0)', function (t) {
         }
     }, function (err, req, res, body) {
         t.ifError(err);
-        t.ok(body);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
-        checkPackage_7(t, body);
+
+        t.equivalent(body, {
+            name: 'sdc_512_ownership',
+            memory: 512,
+            disk: 20480,
+            swap: 1024,
+            vcpus: 2,
+            lwps: 2000,
+            default: false,
+            id: '4667d1b8-0bc7-466c-bf62-aae98ba5efa9',
+            version: '1.0.0'
+        });
+
         THE_PACKAGE = body;
         t.end();
     });
@@ -263,10 +336,21 @@ test('GetPackage by id OK (7.0)', function (t) {
         }
     }, function (err, req, res, body) {
         t.ifError(err);
-        t.ok(body);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
-        checkPackage_7(t, body);
+
+        t.equivalent(body, {
+            name: 'sdc_512_ownership',
+            memory: 512,
+            disk: 20480,
+            swap: 1024,
+            vcpus: 2,
+            lwps: 2000,
+            default: false,
+            id: '4667d1b8-0bc7-466c-bf62-aae98ba5efa9',
+            version: '1.0.0'
+        });
+
         t.end();
     });
 });
