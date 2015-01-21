@@ -1,7 +1,7 @@
 ---
 title: Joyent CloudAPI
 mediaroot: ./media
-apisections: Account, Keys, Datacenters, Datasets, Images, Packages, Machines, Analytics, FirewallRules, Networks, Nics, Users, Roles, Policies, Services, User SSH Keys, Role Tags
+apisections: Account, Keys, Datacenters, Datasets, Images, Packages, Machines, Analytics, FirewallRules, Networks, Nics, Users, Roles, Policies, Services, User SSH Keys, Role Tags, Fabrics
 markdown2extras: wiki-tables, code-friendly
 ---
 <!--
@@ -553,10 +553,29 @@ please refer to [Role Based Access Control][acuguide] documentation.
 
 [acuguide]: https://docs.joyent.com/jpc/rbac/
 
+## Fabrics
+
+A fabric is the basis for building your own private networks that
+cannot be accessed by any other user. It represents the physical infrastructure
+that makes up a network; however, you don't have to cable or program it. Every
+account has its own unique `fabric` in every data center.
+
+On a fabric, you can create your own VLANs and layer three IPv4 networks. You
+can create any VLAN from 0-4095, and you can create any number of IPv4 networks
+on top of the VLANs, with all of the traditional IPv4 private addresses spaces -
+`10.0.0.0/8`, `192.168.0.0/16`, and `172.16.0.0/12` - available for use.
+
+You can create networks on your fabrics to create most network topologies. For
+example, you could create a single isolated private network that nothing else
+could reach, or you could create a traditional configuration where you have a
+database network, a web network, and a load balancer network, each on their own
+VLAN.
+
+XXX We should put information on creating and destroying these networks down below.
 
 # An important note about RBAC and certain reads after writes
 
-Cloudapi uses replication and caching behind the scenes for user, role and
+CloudAPI uses replication and caching behind the scenes for user, role and
 policy data. This implies that API reads after a write on these particular
 objects can be up to several seconds out of date.
 
@@ -572,8 +591,6 @@ a outdated object with old object details.
 For the time being, please keep in mind that user, role and policy
 creation/updates/deletion may potentially take several seconds to settle. They
 have eventual consistency, not read-after-write.
-
-
 
 
 # API Introduction
@@ -760,6 +777,7 @@ Where the code element is one of:
 ||**Code**||**Description**||
 ||BadRequest||You sent bad HTTP||
 ||InternalError||Something was wrong on our end||
+||InUseError||The object is in use and cannot be operated on||
 ||InvalidArgument||You sent bad arguments or a bad value for an argument||
 ||InvalidCredentials||Try authenticating correctly||
 ||InvalidHeader||You sent a bad HTTP header||
@@ -6357,17 +6375,250 @@ Will return the collection of machines affected by the firewall rule given by
 [List Machines](#ListMachines).
 
 
+# Fabrics
 
+CloudAPI provides a way to create and manipulate a fabric. On the fabric you can
+create VLANs and then under that create layer three networks.
+
+## GetFabricVLANs (GET /:login/fabrics/vlans)
+
+### Inputs
+
+* None
+
+### Returns
+
+An array of VLAN objects that exist on the fabric. Each VLAN object has the
+following properties:
+
+||*Field*||*Type*||*Description*||
+||uuid||String||A unique identifier that refers to this VLAN||
+||vland_id||Integer||A number from 0-4095 that indicates the VLAN's id||
+||name||String||A unique name to identify a network||
+||description||String||An optional description of the VLAN||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+## CreateFabricVLAN (POST /:login/fabrics/vlans)
+
+Creates a new VLAN on the fabric.
+
+### Inputs
+
+||*Field*||*Type*||*Description*||
+|| name || String || A unique name for this VLAN ||
+|| vlan_id || Number || The VLAN identifier, must be in the range of 0-4095 ||
+|| description || String || An optional description of the VLAN ||
+
+### Returns
+
+A VLAN Object.
+
+||*Field*||*Type*||*Description*||
+||uuid||String||A unique identifier that refers to this VLAN||
+||vland_id||Integer||A number from 0-4095 that indicates the VLAN's id||
+||name||String||A unique name to identify a network||
+||description||String||An optional description of the VLAN||
+
+### Errors
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+||MissingParameter||If you didn't send a key||
+||InvalidArgument||vlan_id or name are in use, or vlan_id is outside the valid range||
+
+## GetFabricVLAN (GET /:login/fabrics/vlans/:id)
+
+### Inputs
+
+* None
+
+### Returns
+
+A VLAN Object.
+
+||*Field*||*Type*||*Description*||
+||uuid||String||A unique identifier that refers to this VLAN||
+||vland_id||Integer||A number from 0-4095 that indicates the VLAN's id||
+||name||String||A unique name to identify a network||
+||description||String||An optional description of the VLAN||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If `:login` or `:id` does not exist||
+
+## DeleteFabricVLAN (DELETE /:login/fabrics/vlans/:id)
+
+Deletes the specified VLAN. Note there must be no networks on that VLAN in order
+for the VLAN to be deleted.
+
+### Inputs
+
+* None
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If `:login` or `:id` does not exist||
+||InUseError||The VLAN currently has active networks on it||
+
+## ListFabricNetworks (GET /:login/fabrics/vlans/:id/networks)
+
+Lists all of the networks in a fabric on the VLAN specified by `:id`.
+
+### Inputs
+
+* None
+
+### Returns
+
+Returns an array of Network Objects. Each network object has the following
+information:
+
+||**Field**||**Type**||**Description**||
+||uuid||String||Unique identifier for this network||
+||name||String||The network name||
+||public||Boolean||Whether this a public or private (rfc1918) network||
+||fabric||Boolean||Whether this networks is created on a fabric||
+||description||String||Description of this network (optional)||
+||subnet||String||A CIDR formatted string that describes the network||
+||provision_start_ip||String||The first IP on the network that may be assigned||
+||provision_end_ip||String||The last IP on the network that may be assigned||
+||gateway||String||Optional Gateway IP address||
+||resolvers||String||Optional Resolver IP addresses||
+||routes||Routes Object||Optional Static routes for hosts on this network||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If `:login` or `:id` does not exist||
+
+## CreateFabricNetwork (POST /:login/fabrics/vlans/:id/networks)
+
+### Inputs
+
+||name||String||The network name, it must be unique||
+||description||String||Description of this network (optional)||
+||subnet||String||A CIDR formatted string that describes the network||
+||provision_start_ip||String||The first IP on the network that may be assigned||
+||provision_end_ip||String||The last IP on the network that may be assigned||
+||gateway||String||Optional Gateway IP address||
+||resolvers||String||Optional Resolver IP addresses||
+||routes||Routes Object||Optional Static routes for hosts on this network||
+
+### Returns
+
+Network Object:
+
+||uuid||String||Unique identifier for this network||
+||name||String||The network name||
+||public||Boolean||Whether this a public or private (rfc1918) network||
+||fabric||Boolean||Whether this networks is created on a fabric||
+||description||String||Description of this network (optional)||
+||subnet||String||A CIDR formatted string that describes the network||
+||provision_start_ip||String||The first IP on the network that may be assigned||
+||provision_end_ip||String||The last IP on the network that may be assigned||
+||gateway||String||Optional Gateway IP address||
+||resolvers||String||Optional Resolver IP addresses||
+||routes||Routes Object||Optional Static routes for hosts on this network||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+## GetFabricNetwork (GET /:login/fabrics/vlan/:id/networks/:id)
+
+### Inputs
+
+* None
+
+### Returns
+
+The details of the network object:
+
+||uuid||String||Unique identifier for this network||
+||name||String||The network name||
+||public||Boolean||Whether this a public or private (rfc1918) network||
+||fabric||Boolean||Whether this networks is created on a fabric||
+||description||String||Description of this network (optional)||
+||subnet||String||A CIDR formatted string that describes the network||
+||provision_start_ip||String||The first IP on the network that may be assigned||
+||provision_end_ip||String||The last IP on the network that may be assigned||
+||gateway||String||Optional Gateway IP address||
+||resolvers||String||Optional Resolver IP addresses||
+||routes||Routes Object||Optional Static routes for hosts on this network||
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login does not exist||
+
+## DeleteFabricNetwork (DELETE /:login/fabrics/vlans/:id/networks/:id)
+
+Deletes the specified Network. Note that no VMs may be provisioned on the
+Network.
+
+### Inputs
+
+* None
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If `:login` or `:id` does not exist||
+||InUseError||The VLAN currently has active networks on it||
 
 # Networks
 
 CloudAPI provides a way to get details on public and customer-specific networks
-in a datacenter.
+in a datacenter. This also includes all of the networks available in your
+fabric.
+
+||uuid||String||Unique identifier for this network||
+||name||String||The network name||
+||public||Boolean||Whether this a public or private (rfc1918) network||
+||fabric||Boolean||Whether this networks is created on a fabric||
+||description||String||Description of this network (optional)||
+||subnet||String||A CIDR formatted string that describes the network||
+||provision_start_ip||String||The first IP on the network that may be assigned||
+||provision_end_ip||String||The last IP on the network that may be assigned||
+||gateway||String||Optional Gateway IP address||
+||resolvers||String||Optional Resolver IP addresses||
+||routes||Routes Object||Optional Static routes for hosts on this network||
+
 
 
 ## ListNetworks (GET /:login/networks)
 
-List all the networks which can be used by the given account.
+List all the networks which can be used by the given account. If a network was
+created on a fabric, then additional information will be shown:
 
 ### Inputs
 
@@ -6381,7 +6632,19 @@ An array of network objects.  Networks are:
 ||id||String||Unique identifier for this network||
 ||name||String||The network name||
 ||public||Boolean||Whether this a public or private (rfc1918) network||
+||fabric||Boolean||Whether this networks is created on a fabric||
 ||description||String||Description of this network (optional)||
+
+If the network is on a fabric, the following additional fields are included:
+
+||**Field**||**Type**||**Description**||
+||subnet||String||A CIDR formatted string that describes the network||
+||provision_start_ip||String||The first IP on the network that may be assigned||
+||provision_end_ip||String||The last IP on the network that may be assigned||
+||gateway||String||Optional Gateway IP address||
+||resolvers||String||Optional Resolver IP addresses||
+||routes||Routes Object||Optional Static routes for hosts on this network||
+
 
 ### Errors
 
