@@ -11,6 +11,7 @@
 var util = require('util');
 var fs = require('fs');
 var crypto = require('crypto');
+var Keyapi = require('keyapi');
 var qs = require('querystring');
 
 var test = require('tap').test;
@@ -29,13 +30,12 @@ var vasync = require('vasync');
 // --- Globals
 
 var SIGNATURE = 'Signature keyId="%s",algorithm="%s" %s';
-var client, server, account, ssoClient, sigClient;
+var client, server, account;
 var KEY_ID, SUB_KEY_ID;
 var fingerprint = '66:ca:1c:09:75:99:35:69:be:91:08:25:03:c0:17:c0';
 var sub_fp = 'f4:1a:34:3c:2c:81:69:5b:83:20:72:e2:b4:57:3e:71';
 var privateKey, publicKey;
 var subPrivateKey, subPublicKey;
-var SDC_SSO_URI, TOKEN;
 
 var USER_FMT = 'uuid=%s, ou=users, o=smartdc';
 var POLICY_FMT = 'policy-uuid=%s, ' + USER_FMT;
@@ -240,121 +240,131 @@ test('signature auth (http-signature 0.10.x)', function (t) {
 });
 
 
-function createToken(t, callback) {
-    var url = require('url');
-    var opts = {
-        keyid: encodeURIComponent(KEY_ID),
-        nonce: encodeURIComponent('whateveryouwant'),
-        now: encodeURIComponent(new Date().toISOString()),
-        permissions: encodeURIComponent(JSON.stringify({
-            'cloudapi': ['/admin/keys/*', '/admin/keys']
-        })),
-        returnto: encodeURIComponent(url.format(client.url))
-    };
 
-    var query = qs.stringify(opts);
-    var urlstring = encodeURIComponent(SDC_SSO_URI + '/login?' + query);
-    var signer = crypto.createSign('SHA256');
-    signer.update(urlstring);
-    var signature = signer.sign(privateKey, 'base64');
+test('token auth', function (t) {
+    var config = common.getCfg();
+    var keyapi = new Keyapi({ log: config.log, ufds: config.ufds });
 
-    opts.sig = signature;
+    var now = new Date().toUTCString();
+    var alg = 'RSA-SHA256';
 
-    ssoClient = restify.createJsonClient({
-        url: SDC_SSO_URI,
+    var signer = crypto.createSign(alg);
+    signer.update(now);
+
+    var authorization = util.format(SIGNATURE, KEY_ID, alg.toLowerCase(),
+                                    signer.sign(privateKey, 'base64'));
+
+    var sigClient = restify.createJsonClient({
+        url: server ? server.url : 'https://127.0.0.1',
         version: '*',
-        rejectUnauthorized: false,
-        agent: false,
         retryOptions: {
             retry: 0
-        }
+        },
+        log: client.log,
+        rejectUnauthorized: false
     });
 
-    opts.username = 'admin';
-    opts.password = 'joypass123';
+    function generateRequest(token) {
+        return {
+            path: '/admin/keys',
+            headers: {
+                // do not change case of 'date'; some versions of restify won't
+                // override the date then, and sporadic failures occur
+                date: now,
+                'x-auth-token': JSON.stringify(token),
+                'x-api-version': '~6.5',
+                authorization: authorization
+            }
+        };
+    }
 
-    ssoClient.post('/login', opts, function (err, req, res, obj) {
-        t.ifError(err, 'Create Token Error');
-        t.equal(200, res.statusCode, 'Create Token Status');
-        t.ok(obj, 'Create Token Response');
-        t.ok(obj.token, 'Create Token TOKEN');
-        t.ok(obj.token.data, 'Create Token Data');
-        t.ok(obj.token.hash);
-        ssoClient.close();
-        if (err) {
-            return callback(err);
-        } else {
-            return callback(null, obj.token);
-        }
-    });
-}
+    function callWithBadDetails(_t, details) {
+        keyapi.token(details, function (err, token) {
+            _t.ifError(err);
 
+            var obj = generateRequest(token);
 
-// Given the sdcsso zone is optional, do not try to run tests unless we
-// already created it and let tests know about:
-if (process.env.SDC_SSO_ADMIN_IP) {
-    SDC_SSO_URI = 'https://' + process.env.SDC_SSO_ADMIN_IP;
-    test('token auth', function (t) {
-        createToken(t, function (err, token) {
-            t.ifError(err);
-            TOKEN = token;
-
-            var now = new Date().toUTCString();
-            var alg = 'RSA-SHA256';
-
-            var obj = {
-                path: '/admin/keys',
-                headers: {
-                    Date: now,
-                    'x-api-version': '~6.5'
-                }
-            };
-
-            var signer = crypto.createSign(alg);
-            signer.update(now);
-            obj.headers.Authorization = util.format(SIGNATURE,
-                                            KEY_ID,
-                                            alg.toLowerCase(),
-                                            signer.sign(privateKey, 'base64'));
-
-            // Magic goes here:
-            obj.headers['X-Auth-Token'] = JSON.stringify(TOKEN);
-
-
-
-            // The following test is failing.
-            // Skipping until can check with John:
-            t.test('token auth response', function (t2) {
-
-                sigClient = restify.createJsonClient({
-                    url: server ? server.url : 'https://127.0.0.1',
-                    version: '*',
-                    retryOptions: {
-                        retry: 0
-                    },
-                    log: client.log,
-                    rejectUnauthorized: false
+            sigClient.get(obj, function (err2, req, res, body) {
+                _t.ok(err2);
+                _t.equivalent(body, {
+                    code: 'InvalidCredentials',
+                    message: 'The token provided is not authorized for this ' +
+                            'application'
                 });
 
-                sigClient.get(obj, function (er1, req, res, body) {
-                    t2.ifError(er1, 'Token client error');
-                    t2.equal(res.statusCode, 200, 'Token client status code');
-                    common.checkHeaders(t2, res.headers);
-                    t2.ok(/Signature/.test(req._headers.authorization), 'Sig');
-                    t2.ok(body, 'Token body');
-                    t2.ok(Array.isArray(body), 'Token body is array');
-                    // This is admin user, which always has keys
-                    t2.ok(body.length, 'Admin has keys');
-
-                    sigClient.close();
-                    t2.end();
-                });
+                _t.end();
             });
+        });
+    }
 
-            t.end();
+    t.test('token with empty details', function (t2) {
+        callWithBadDetails(t2, {});
+    });
+
+    t.test('token with wrong permission path', function (t2) {
+        var tokenDetails = {
+            account: client.account,
+            devkeyId: KEY_ID,
+            permissions: { cloudapi: ['/admin/other_things'] },
+            expires: new Date(+new Date() + 3600).toISOString()
+        };
+
+        callWithBadDetails(t2, tokenDetails);
+    });
+
+    t.test('token with wrong expires', function (t2) {
+        var tokenDetails = {
+            account: client.account,
+            devkeyId: KEY_ID,
+            permissions: { cloudapi: ['/admin/keys'] },
+            expires: new Date(+new Date() - 1).toISOString()
+        };
+
+        callWithBadDetails(t2, tokenDetails);
+    });
+
+    t.test('token with wrong devkeyId', function (t2) {
+        var tokenDetails = {
+            account: client.account,
+            devkeyId: '/verybadkey@joyent.com/keys/id_rsa',
+            permissions: { cloudapi: ['/admin/keys'] },
+            expires: new Date(+new Date() + 3600).toISOString()
+        };
+
+        callWithBadDetails(t2, tokenDetails);
+    });
+
+    t.test('token auth response', function (t2) {
+        var tokenDetails = {
+            account: client.account,
+            devkeyId: KEY_ID,
+            permissions: { cloudapi: ['/admin/keys'] },
+            expires: new Date(+new Date() + 10).toISOString()
+        };
+
+        keyapi.token(tokenDetails, function (err, token) {
+            t2.ifError(err);
+
+            var obj = generateRequest(token);
+
+            sigClient.get(obj, function (er1, req, res, body) {
+                t2.ifError(er1, 'Token client error');
+                t2.equal(res.statusCode, 200, 'Token client status code');
+                common.checkHeaders(t2, res.headers);
+                t2.ok(/Signature/.test(req._headers.authorization), 'Sig');
+                t2.ok(body, 'Token body');
+                t2.ok(Array.isArray(body), 'Token body is array');
+                // This is admin user, which always has keys
+                t2.ok(body.length, 'Admin has keys');
+
+                sigClient.close();
+                t2.end();
+            });
         });
     });
-}
+
+    t.end();
+});
 
 
 // Account sub-users will use only http-signature >= 0.10.x, given this
@@ -712,9 +722,6 @@ test('get /:account role-tag', function (t) {
         t.end();
     });
 });
-
-
-
 
 
 test('cleanup sdcAccountResources', function (t) {
