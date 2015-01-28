@@ -47,13 +47,13 @@ function deleteTestNicTag(cb) {
 }
 
 
-function createTestNetwork(id, vlan_id, cb) {
+function createTestNetwork(id, octet, cb) {
     var params = {
         name: 'network-test-' + id,
-        vlan_id: vlan_id,
-        subnet: '10.99.99.0/24',
-        provision_start_ip: '10.99.99.5',
-        provision_end_ip: '10.99.99.250',
+        vlan_id: 59,
+        subnet: '10.99.' + octet + '.0/24',
+        provision_start_ip: '10.99.' + octet + '.5',
+        provision_end_ip: '10.99.' + octet + '.250',
         nic_tag: NIC_TAG_NAME
     };
 
@@ -112,13 +112,13 @@ test('setup', TAP_CONF, function (t) {
                 createTestNicTag(next);
             },
             function createNetwork1(_, next) {
-                createTestNetwork(process.pid, 0, function (err2, net1) {
+                createTestNetwork(process.pid, 90, function (err2, net1) {
                     NETWORK1 = net1;
                     next(err2);
                 });
             },
             function createNetwork2(_, next) {
-                createTestNetwork(process.pid + 1, 99, function (err2, net2) {
+                createTestNetwork(process.pid + 1, 91, function (err2, net2) {
                     NETWORK2 = net2;
                     next(err2);
                 });
