@@ -513,8 +513,9 @@ test('ListMachines all', TAP_CONF, function (t) {
         t.ok(body.length, 'GET /my/machines list is not empty');
 
         body.forEach(function (m) {
-            if (m.state === 'failed')
+            if (m.state === 'failed') {
                 return;
+            }
 
             checkMachine(t, m);
         });
