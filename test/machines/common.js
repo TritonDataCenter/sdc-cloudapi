@@ -50,7 +50,6 @@ function waitForJob(client, id, callback) {
 function checkMachine(t, m) {
     t.ok(m, 'checkMachine ok');
     t.ok(m.id, 'checkMachine id ok');
-    t.ok(m.name, 'checkMachine name ok');
     t.ok(m.type, 'checkMachine type ok');
     t.ok(m.state, 'checkMachine state ok');
     t.ok((m.dataset || m.image), 'checkMachine dataset ok');
