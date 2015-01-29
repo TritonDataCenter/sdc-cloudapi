@@ -56,7 +56,15 @@ function checkMachine(t, m) {
     t.ok(m.ips, 'checkMachine ips ok');
     t.ok(m.memory, 'checkMachine memory ok');
     t.ok(m.metadata, 'checkMachine metadata ok');
-    t.ok(m['package'], 'checkMachine package ok');
+
+    // Sometimes test suites from other applications create zones with a
+    // 00000000-0000-0000-0000-000000000000 billing_id, which is changed by
+    // cloudapi to '' since it's not an actual package UUID. Alas, we work
+    // around that here, due to inertia.
+    if (m['package'] !== '') {
+        t.ok(m['package'], 'checkMachine package ok');
+    }
+
     // TODO:
     // Intentionally making disk, which is zero first, and created/updated,
     // which are not set at the beginning, fail until we decide how to proceed
