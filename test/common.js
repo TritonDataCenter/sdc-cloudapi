@@ -443,12 +443,14 @@ module.exports = {
 
         user = 'a' + uuid().substr(0, 7) + '.test@joyent.com';
         sub_login = 'a' + uuid().substr(0, 7) + '.sub.test@joyent.com';
+
+        config.log = LOG;
+
         if (SDC_SETUP_TESTS) {
             // We already got a running server instance,
             // no need to boot another one:
             return setupClient(version, callback);
         } else {
-            config.log = LOG;
             config.test = true;
             server = app.createServer(config, function (s) {
                 server = s;
