@@ -46,14 +46,6 @@ function errexit {
 }
 
 
-
-function set_metadata_for_headnode_provisioning {
-    local sdc_uuid=$(sdc-sapi /applications?name=sdc | json -Ha uuid)
-    echo "# Set SAPI metadata to allow headnode provisioning"
-    sdc-sapi /applications/$sdc_uuid -X PUT -d '{ "metadata": { "ALLOC_FILTER_HEADNODE": false, "ALLOC_FILTER_MIN_RESOURCES": false } }'
-}
-
-
 function install_image {
   [[ $# -ge 1 ]] || fatal "install_image requires at least 1 argument"
   local img_uuid=$1
@@ -97,7 +89,9 @@ echo "# Setup CloudAPI and prepare COAL DC for ."
 [[ $(bash /lib/sdc/config.sh -json | json datacenter_name) == "coal" ]] \
     || fatal "datacenter_name is not COAL, refusing to run"
 
-set_metadata_for_headnode_provisioning
+echo "# Allow headnode provisioning"
+sdcadm post-setup dev-headnode-prov
+
 # TODO: how to offer alternative to hook up to remote Manta?
 hack_imgapi_to_allow_local_custom_images
 
