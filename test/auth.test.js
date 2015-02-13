@@ -14,7 +14,7 @@ var crypto = require('crypto');
 var Keyapi = require('keyapi');
 var qs = require('querystring');
 
-var test = require('tap').test;
+var test = require('tape').test;
 var libuuid = require('libuuid');
 function uuid() {
     return (libuuid.create());
@@ -286,7 +286,7 @@ test('token auth', function (t) {
 
             sigClient.get(obj, function (err2, req, res, body) {
                 _t.ok(err2);
-                _t.equivalent(body, {
+                _t.deepEqual(body, {
                     code: 'InvalidCredentials',
                     message: 'The token provided is not authorized for this ' +
                             'application'
@@ -388,7 +388,7 @@ test('tag resource collection with non-existent role', function (t) {
     client.put('/my/users', {
         'role-tag': ['asdasdasdasd']
     }, function (err, req, res, body) {
-        t.equivalent(err, {
+        t.deepEqual(err, {
             message: 'Role(s) asdasdasdasd not found',
             statusCode: 409,
             restCode: 'InvalidArgument',
@@ -436,7 +436,7 @@ test('tag individual resource with non-existent role', function (t) {
     client.put('/my/users/' + client.testSubUser, {
         'role-tag': ['asdasdasdasd']
     }, function (err, req, res, body) {
-        t.equivalent(err, {
+        t.deepEqual(err, {
             message: 'Role(s) asdasdasdasd not found',
             statusCode: 409,
             restCode: 'InvalidArgument',
@@ -466,7 +466,7 @@ test('get individual resource role-tag', function (t) {
 });
 
 
-test('sub-user signature auth (0.10)', { timeout: 'Infinity' }, function (t) {
+test('sub-user signature auth (0.10)', function (t) {
     function subRequestSigner(req) {
         httpSignature.sign(req, {
             key: subPrivateKey,
@@ -508,7 +508,7 @@ test('sub-user signature auth (0.10)', { timeout: 'Infinity' }, function (t) {
             signRequest: subRequestSigner
         });
 
-        t.test('sub-user get account', { timeout: 'Infinity' }, function (t2) {
+        t.test('sub-user get account', function (t2) {
             cli.get({
                 path: '/' + account,
                 headers: {
@@ -521,7 +521,7 @@ test('sub-user signature auth (0.10)', { timeout: 'Infinity' }, function (t) {
             });
         });
 
-        t.test('sub-user get users', { timeout: 'Infinity' }, function (t1) {
+        t.test('sub-user get users', function (t1) {
             cli.get({
                 path: '/' + account + '/users',
                 headers: {
@@ -536,7 +536,7 @@ test('sub-user signature auth (0.10)', { timeout: 'Infinity' }, function (t) {
 
         // Even when we've added the role-tag, the policies into the role don't
         // include a rule with route::string = 'getuser', therefore the 403:
-        t.test('sub-user get thyself', { timeout: 'Infinity' }, function (t3) {
+        t.test('sub-user get thyself', function (t3) {
             cli.get({
                 path: util.format('/%s/users/%s', account, client.testSubUser),
                 headers: {
@@ -550,7 +550,7 @@ test('sub-user signature auth (0.10)', { timeout: 'Infinity' }, function (t) {
             });
         });
 
-        t.test('sub-user with as-role', { timeout: 'Infinity' }, function (t4) {
+        t.test('sub-user with as-role', function (t4) {
             var accountUuid = client.account.uuid;
             var roleUuid    = client.role.uuid;
             var ufds        = client.ufds;
@@ -743,7 +743,7 @@ test('cleanup sdcAccountResources', function (t) {
 });
 
 
-test('teardown', { timeout: 'Infinity' }, function (t) {
+test('teardown', function (t) {
     function nuke(callback) {
         client.teardown(function (err) {
             if (err) {

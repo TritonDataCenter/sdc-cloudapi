@@ -10,7 +10,7 @@
 
 var fs = require('fs');
 var util = require('util');
-var test = require('tap').test;
+var test = require('tape').test;
 var libuuid = require('libuuid');
 function uuid() {
     return (libuuid.create());
@@ -56,10 +56,6 @@ var META_CREDS_TWO = {
     'jill': 'secret'
 };
 
-var TAP_CONF = {
-    timeout: 'Infinity '
-};
-
 
 // May or not be created by previous test run or whatever else:
 var sdc_256_inactive = {
@@ -101,7 +97,7 @@ var HEADNODE = null;
 
 // --- Tests
 
-test('setup', TAP_CONF, function (t) {
+test('setup', function (t) {
     common.setup('~7.0', function (err, _client, _server) {
         t.ifError(err, 'common setup error');
         t.ok(_client, 'common _client ok');
@@ -126,7 +122,7 @@ test('setup', TAP_CONF, function (t) {
 });
 
 
-test('Get Headnode', TAP_CONF, function (t) {
+test('Get Headnode', function (t) {
     client.cnapi.listServers(function (err, servers) {
         t.ifError(err);
         t.ok(servers);
@@ -145,7 +141,7 @@ test('Get Headnode', TAP_CONF, function (t) {
 
 var DATASET;
 
-test('get smartos dataset', TAP_CONF, function (t) {
+test('get smartos dataset', function (t) {
     client.get('/my/datasets?name=smartos', function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets error');
         t.equal(res.statusCode, 200, 'GET /my/datasets status');
@@ -164,7 +160,7 @@ test('get smartos dataset', TAP_CONF, function (t) {
 
 
 // PUBAPI-567: Verify it has been fixed as side effect of PUBAPI-566
-test('Create machine with invalid package', TAP_CONF, function (t) {
+test('Create machine with invalid package', function (t) {
     var obj = {
         dataset: DATASET,
         'package': uuid().substr(0, 7),
@@ -181,7 +177,7 @@ test('Create machine with invalid package', TAP_CONF, function (t) {
 });
 
 
-test('CreateMachine w/o dataset fails', TAP_CONF, function (t) {
+test('CreateMachine w/o dataset fails', function (t) {
     var obj = {
         'package': 'sdc_128_ok',
         name: 'a' + uuid().substr(0, 7),
@@ -201,7 +197,7 @@ test('CreateMachine w/o dataset fails', TAP_CONF, function (t) {
 });
 
 
-test('Create machine with invalid network', TAP_CONF, function (t) {
+test('Create machine with invalid network', function (t) {
     var obj = {
         dataset: DATASET,
         'package': 'sdc_128_ok',
@@ -220,7 +216,7 @@ test('Create machine with invalid network', TAP_CONF, function (t) {
 
 
 // Test using IMAGE.uuid instead of IMAGE.name due to PUBAPI-625:
-test('CreateMachine', TAP_CONF, function (t) {
+test('CreateMachine', function (t) {
     var obj = {
         image: DATASET,
         'package': 'sdc_128_ok',
@@ -249,7 +245,7 @@ test('CreateMachine', TAP_CONF, function (t) {
 });
 
 
-test('Wait For Running', TAP_CONF,  function (t) {
+test('Wait For Running', function (t) {
     client.vmapi.listJobs({
         vm_uuid: machine,
         task: 'provision'
@@ -273,7 +269,7 @@ test('Wait For Running', TAP_CONF,  function (t) {
 });
 
 
-test('Get Machine Firewall Enabled', TAP_CONF, function (t) {
+test('Get Machine Firewall Enabled', function (t) {
     if (machine) {
         client.get('/my/machines/' + machine, function (err, req, res, body) {
             t.ifError(err, 'GET /my/machines/:id error');
@@ -290,14 +286,14 @@ test('Get Machine Firewall Enabled', TAP_CONF, function (t) {
             // Double check tags are OK, due to different handling by VMAPI:
             var tags = {};
             tags[TAG_KEY] = TAG_VAL;
-            t.equivalent(body.tags, tags, 'Machine tags');
+            t.deepEqual(body.tags, tags, 'Machine tags');
             t.end();
         });
     }
 });
 
 
-test('Rename machine tests', TAP_CONF, function (t) {
+test('Rename machine tests', function (t) {
     var renameTest = require('./machines/rename');
     renameTest(t, client, machine, function () {
         t.end();
@@ -305,7 +301,7 @@ test('Rename machine tests', TAP_CONF, function (t) {
 });
 
 
-test('Firewall tests', TAP_CONF, function (t) {
+test('Firewall tests', function (t) {
     var firewallTest = require('./machines/firewall');
     firewallTest(t, client, machine, function () {
         t.end();
@@ -313,7 +309,7 @@ test('Firewall tests', TAP_CONF, function (t) {
 });
 
 
-test('Delete tests', TAP_CONF, function (t) {
+test('Delete tests', function (t) {
     var deleteTest = require('./machines/delete');
     deleteTest(t, client, machine, function () {
         t.end();
@@ -324,7 +320,7 @@ test('Delete tests', TAP_CONF, function (t) {
 var LINUX_DS = false;
 var KVM_MACHINE = false;
 
-test('KVM dataset', TAP_CONF, function (t) {
+test('KVM dataset', function (t) {
     client.get('/my/images?os=linux', function (er1, req1, res1, body1) {
         t.ifError(er1, 'GET /my/images error');
         t.equal(res1.statusCode, 200, 'GET /my/images status');
@@ -342,7 +338,7 @@ test('KVM dataset', TAP_CONF, function (t) {
 });
 
 
-test('Create KVM machine', TAP_CONF, function (t) {
+test('Create KVM machine', function (t) {
     if (LINUX_DS) {
         var obj = {
             image: LINUX_DS,
@@ -370,7 +366,7 @@ test('Create KVM machine', TAP_CONF, function (t) {
 
 
 
-test('Wait For KVM machine Running', TAP_CONF,  function (t) {
+test('Wait For KVM machine Running', function (t) {
     if (KVM_MACHINE) {
         client.vmapi.listJobs({
             vm_uuid: KVM_MACHINE,
@@ -395,7 +391,7 @@ test('Wait For KVM machine Running', TAP_CONF,  function (t) {
     }
 });
 
-test('Delete KVM tests', TAP_CONF, function (t) {
+test('Delete KVM tests', function (t) {
     if (KVM_MACHINE) {
         var deleteTest = require('./machines/delete');
         deleteTest(t, client, KVM_MACHINE, function () {
@@ -407,7 +403,7 @@ test('Delete KVM tests', TAP_CONF, function (t) {
 });
 
 
-test('teardown', {timeout: 'Infinity '}, function (t) {
+test('teardown', function (t) {
     client.del('/my/keys/' + keyName, function (err, req, res) {
         t.ifError(err, 'delete key error');
         t.equal(res.statusCode, 204);

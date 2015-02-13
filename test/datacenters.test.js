@@ -8,7 +8,7 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
-var test = require('tap').test;
+var test = require('tape').test;
 var libuuid = require('libuuid');
 function uuid() {
     return (libuuid.create());

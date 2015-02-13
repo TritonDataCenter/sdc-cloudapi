@@ -8,7 +8,7 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
-var test = require('tap').test;
+var test = require('tape').test;
 var libuuid = require('libuuid');
 function uuid() {
     return (libuuid.create());
@@ -189,7 +189,7 @@ test('GetDataset should not return non-permission datasets', function (t) {
         return client.get(path, function (err2, req, res, body) {
             t.ok(err2);
 
-            t.equivalent(body, {
+            t.deepEqual(body, {
                 code: 'ResourceNotFound',
                 message: 'image not found'
             });

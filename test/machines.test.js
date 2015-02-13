@@ -10,7 +10,7 @@
 
 var fs = require('fs');
 var util = require('util');
-var test = require('tap').test;
+var test = require('tape').test;
 var libuuid = require('libuuid');
 
 var sprintf = util.format;
@@ -53,10 +53,6 @@ var META_CREDS_TWO = {
     'root': 'secret',
     'admin': 'secret',
     'jill': 'secret'
-};
-
-var TAP_CONF = {
-    timeout: 'Infinity '
 };
 
 
@@ -116,7 +112,7 @@ var HEADNODE = null;
 
 // --- Tests
 
-test('setup', TAP_CONF, function (t) {
+test('setup', function (t) {
     common.setup(function (err, _client, _server) {
         t.ifError(err, 'common setup error');
         t.ok(_client, 'common _client ok');
@@ -151,7 +147,7 @@ test('setup', TAP_CONF, function (t) {
 });
 
 
-test('ListMachines (empty)', TAP_CONF, function (t) {
+test('ListMachines (empty)', function (t) {
     client.get('/my/machines', function (err, req, res, body) {
         t.ifError(err, 'GET /my/machines error');
         t.equal(res.statusCode, 200, 'GET /my/machines Status');
@@ -164,7 +160,7 @@ test('ListMachines (empty)', TAP_CONF, function (t) {
 });
 
 
-test('Get Headnode', TAP_CONF, function (t) {
+test('Get Headnode', function (t) {
     client.cnapi.listServers(function (err, servers) {
         t.ifError(err);
         t.ok(servers);
@@ -181,7 +177,7 @@ test('Get Headnode', TAP_CONF, function (t) {
 });
 
 
-test('Create machine with inactive package', TAP_CONF, function (t) {
+test('Create machine with inactive package', function (t) {
     var obj = {
         dataset: 'smartos',
         'package': sdc_256_inactive_entry.name,
@@ -212,7 +208,7 @@ test('Create machine with inactive package', TAP_CONF, function (t) {
 
 var DATASET;
 
-test('get smartos dataset', TAP_CONF, function (t) {
+test('get smartos dataset', function (t) {
     client.get('/my/datasets?name=smartos', function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets error');
         t.equal(res.statusCode, 200, 'GET /my/datasets status');
@@ -230,7 +226,7 @@ test('get smartos dataset', TAP_CONF, function (t) {
 });
 
 
-test('Create machine with os mismatch', TAP_CONF, function (t) {
+test('Create machine with os mismatch', function (t) {
     var obj = {
         image: DATASET,
         'package': 'sdc_128_os',
@@ -252,7 +248,7 @@ test('Create machine with os mismatch', TAP_CONF, function (t) {
 
 // NB: this test only applies if the config doesn't set
 // allow_multiple_public_networks to true, which isn't set in JPC standups
-test('Create machine with too many public networks', TAP_CONF, function (t) {
+test('Create machine with too many public networks', function (t) {
     var fakeNetwork = {
         'name': 'test external 2',
         'vlan_id': 613,
@@ -322,7 +318,7 @@ test('Create machine with too many public networks', TAP_CONF, function (t) {
 });
 
 
-test('CreateMachine using invalid networks', TAP_CONF, function (t) {
+test('CreateMachine using invalid networks', function (t) {
     var obj = {
         image: DATASET,
         'package': 'sdc_128_ok',
@@ -333,7 +329,7 @@ test('CreateMachine using invalid networks', TAP_CONF, function (t) {
     client.post('/my/machines', obj, function (err, req, res, body) {
         t.ok(err);
         t.equal(err.statusCode, 409);
-        t.equivalent(body, {
+        t.deepEqual(body, {
             code: 'InvalidArgument',
             message: 'Invalid Networks'
         });
@@ -343,7 +339,7 @@ test('CreateMachine using invalid networks', TAP_CONF, function (t) {
 });
 
 
-test('CreateMachine using network without permissions', TAP_CONF, function (t) {
+test('CreateMachine using network without permissions', function (t) {
     var netDetails = {
         name: 'network-test-fake',
         vlan_id: 99,
@@ -368,7 +364,7 @@ test('CreateMachine using network without permissions', TAP_CONF, function (t) {
         client.post('/my/machines', vmDetails, function (err2, req, res, body) {
             t.ok(err2);
             t.equal(err2.statusCode, 409);
-            t.equivalent(body, {
+            t.deepEqual(body, {
                 code: 'InvalidArgument',
                 message: 'Invalid Networks'
             });
@@ -383,7 +379,7 @@ test('CreateMachine using network without permissions', TAP_CONF, function (t) {
 
 
 
-test('Create machine with invalid parameters', TAP_CONF, function (t) {
+test('Create machine with invalid parameters', function (t) {
     var obj = {
         image: DATASET,
         'package': 'sdc_128_ok',
@@ -408,7 +404,7 @@ test('Create machine with invalid parameters', TAP_CONF, function (t) {
 });
 
 
-test('Create machine with invalid locality', TAP_CONF, function (t) {
+test('Create machine with invalid locality', function (t) {
     var obj = {
         image: DATASET,
         'package': 'sdc_128_ok',
@@ -419,7 +415,7 @@ test('Create machine with invalid locality', TAP_CONF, function (t) {
 
     client.post('/my/machines', obj, function (err, req, res, body) {
         t.equal(err.statusCode, 409);
-        t.equivalent(body, {
+        t.deepEqual(body, {
             code: 'ValidationFailed',
             message: 'Invalid VM parameters',
             errors: [ {
@@ -433,7 +429,7 @@ test('Create machine with invalid locality', TAP_CONF, function (t) {
 });
 
 
-test('CreateMachine using dataset without permission', TAP_CONF, function (t) {
+test('CreateMachine using dataset without permission', function (t) {
     client.imgapi.listImages(function (err, images) {
         t.ifError(err);
 
@@ -457,7 +453,7 @@ test('CreateMachine using dataset without permission', TAP_CONF, function (t) {
             t.ok(er2);
             t.equal(er2.statusCode, 404);
 
-            t.equivalent(body, {
+            t.deepEqual(body, {
                 code: 'ResourceNotFound',
                 message: 'image not found'
             });
@@ -469,7 +465,7 @@ test('CreateMachine using dataset without permission', TAP_CONF, function (t) {
 
 
 // Test using IMAGE.uuid instead of IMAGE.name due to PUBAPI-625:
-test('CreateMachine', TAP_CONF, function (t) {
+test('CreateMachine', function (t) {
     var obj = {
         image: DATASET,
         'package': 'sdc_128_ok',
@@ -500,10 +496,10 @@ test('CreateMachine', TAP_CONF, function (t) {
 });
 
 
-test('Wait For Running Machine 1', TAP_CONF, waitForRunning);
+test('Wait For Running Machine 1', waitForRunning);
 
 
-test('ListMachines all', TAP_CONF, function (t) {
+test('ListMachines all', function (t) {
     client.get('/my/machines', function (err, req, res, body) {
         t.ifError(err, 'GET /my/machines error');
         t.equal(res.statusCode, 200, 'GET /my/machines status');
@@ -526,42 +522,42 @@ test('ListMachines all', TAP_CONF, function (t) {
 
 
 // Fixed by PUBAPI-774, again!
-test('ListMachines (filter by dataset)', TAP_CONF, function (t) {
+test('ListMachines (filter by dataset)', function (t) {
     searchAndCheck('image=' + DATASET, t, function (m) {
         t.equal(m.image, DATASET);
     });
 });
 
 
-test('ListMachines (filter by state)', TAP_CONF, function (t) {
+test('ListMachines (filter by state)', function (t) {
     searchAndCheck('state=running', t, function (m) {
         t.equal(m.state, 'running');
     });
 });
 
 
-test('ListMachines (filter by memory)', TAP_CONF, function (t) {
+test('ListMachines (filter by memory)', function (t) {
     searchAndCheck('memory=128', t, function (m) {
         t.equal(m.memory, 128);
     });
 });
 
 
-test('ListMachines (filter by package)', TAP_CONF, function (t) {
+test('ListMachines (filter by package)', function (t) {
     searchAndCheck('package=sdc_128_ok', t, function (m) {
         t.equal(m['package'], 'sdc_128_ok');
     });
 });
 
 
-test('ListMachines (filter by smartmachine type)', TAP_CONF, function (t) {
+test('ListMachines (filter by smartmachine type)', function (t) {
     searchAndCheck('type=smartmachine', t, function (m) {
         t.equal(m.type, 'smartmachine');
     });
 });
 
 
-test('ListMachines (filter by virtualmachine type)', TAP_CONF, function (t) {
+test('ListMachines (filter by virtualmachine type)', function (t) {
     var path = '/my/machines?type=virtualmachine';
 
     return client.get(path, function (err, req, res, body) {
@@ -580,7 +576,7 @@ test('ListMachines (filter by virtualmachine type)', TAP_CONF, function (t) {
 });
 
 
-test('ListMachines (filter by bad type)', TAP_CONF, function (t) {
+test('ListMachines (filter by bad type)', function (t) {
     var path = '/my/machines?type=0xdeadbeef';
 
     return client.get(path, function (err, req, res, body) {
@@ -588,7 +584,7 @@ test('ListMachines (filter by bad type)', TAP_CONF, function (t) {
         t.equal(res.statusCode, 409);
         common.checkHeaders(t, res.headers);
 
-        t.equivalent(body, {
+        t.deepEqual(body, {
             code: 'InvalidArgument',
             message: '0xdeadbeef is not a valid type'
         });
@@ -598,7 +594,7 @@ test('ListMachines (filter by bad type)', TAP_CONF, function (t) {
 });
 
 
-test('Get Machine Include Credentials', TAP_CONF, function (t) {
+test('Get Machine Include Credentials', function (t) {
     var url = '/my/machines/' + machine + '?credentials=true';
 
     client.get(url, function (err, req, res, body) {
@@ -618,7 +614,7 @@ test('Get Machine Include Credentials', TAP_CONF, function (t) {
 });
 
 
-test('Stop test', TAP_CONF, function (t) {
+test('Stop test', function (t) {
     var stopTest = require('./machines/stop');
     stopTest(t, client, machine, function () {
         t.end();
@@ -626,7 +622,7 @@ test('Stop test', TAP_CONF, function (t) {
 });
 
 
-test('Start test', TAP_CONF, function (t) {
+test('Start test', function (t) {
     var startTest = require('./machines/start');
     startTest(t, client, machine, function () {
         t.end();
@@ -634,7 +630,7 @@ test('Start test', TAP_CONF, function (t) {
 });
 
 
-test('Reboot test', TAP_CONF, function (t) {
+test('Reboot test', function (t) {
     var rebootTest = require('./machines/reboot');
     rebootTest(t, client, machine, function () {
         t.end();
@@ -642,7 +638,7 @@ test('Reboot test', TAP_CONF, function (t) {
 });
 
 
-test('Resize machine to inactive package', TAP_CONF, function (t) {
+test('Resize machine to inactive package', function (t) {
     client.post('/my/machines/' + machine, {
         action: 'resize',
         'package': sdc_256_inactive_entry.name
@@ -654,7 +650,7 @@ test('Resize machine to inactive package', TAP_CONF, function (t) {
 });
 
 
-test('Resize machine tests', TAP_CONF, function (t) {
+test('Resize machine tests', function (t) {
     var resizeTest = require('./machines/resize');
     resizeTest(t, client, machine, sdc_128_ok_entry, function () {
         t.end();
@@ -662,7 +658,7 @@ test('Resize machine tests', TAP_CONF, function (t) {
 });
 
 
-test('Tags tests', TAP_CONF, function (t) {
+test('Tags tests', function (t) {
     var testTags = require('./machines/tags');
     testTags(t, client, machine, function () {
         t.end();
@@ -670,7 +666,7 @@ test('Tags tests', TAP_CONF, function (t) {
 });
 
 
-test('Metadata tests', TAP_CONF, function (t) {
+test('Metadata tests', function (t) {
     var testMetadata = require('./machines/metadata');
     testMetadata(t, client, machine, function () {
         t.end();
@@ -678,7 +674,7 @@ test('Metadata tests', TAP_CONF, function (t) {
 });
 
 
-test('Snapshots tests', TAP_CONF, function (t) {
+test('Snapshots tests', function (t) {
     var testSnapshots = require('./machines/snapshots');
     testSnapshots(t, client, machine, function () {
         t.end();
@@ -686,7 +682,7 @@ test('Snapshots tests', TAP_CONF, function (t) {
 });
 
 
-test('Firewall Rules tests', TAP_CONF, function (t) {
+test('Firewall Rules tests', function (t) {
     var testFirewallRules = require('./machines/firewall-rules');
     testFirewallRules(t, client, machine, function () {
         t.end();
@@ -695,7 +691,7 @@ test('Firewall Rules tests', TAP_CONF, function (t) {
 
 
 
-test('Delete tests', TAP_CONF, function (t) {
+test('Delete tests', function (t) {
     var deleteTest = require('./machines/delete');
     deleteTest(t, client, machine, function () {
         t.end();
@@ -703,7 +699,7 @@ test('Delete tests', TAP_CONF, function (t) {
 });
 
 
-test('machine audit', TAP_CONF, function (t) {
+test('machine audit', function (t) {
     var p = '/my/machines/' + machine + '/audit';
     client.get(p, function (err, req, res, body) {
         t.ifError(err);
@@ -743,7 +739,7 @@ test('machine audit', TAP_CONF, function (t) {
 });
 
 
-test('ListMachines tombstone', TAP_CONF, function (t) {
+test('ListMachines tombstone', function (t) {
     client.get('/my/machines?tombstone=20', function (err, req, res, body) {
         t.ifError(err, 'GET /my/machines error');
         t.equal(res.statusCode, 200, 'GET /my/machines status');
@@ -759,7 +755,7 @@ test('ListMachines tombstone', TAP_CONF, function (t) {
 });
 
 
-test('ListMachines exclude tombstone', TAP_CONF, function (t) {
+test('ListMachines exclude tombstone', function (t) {
     client.get('/my/machines', function (err, req, res, body) {
         t.ifError(err, 'GET /my/machines error');
         t.equal(res.statusCode, 200, 'GET /my/machines status');
@@ -774,7 +770,7 @@ test('ListMachines exclude tombstone', TAP_CONF, function (t) {
 });
 
 
-test('ListMachines destroyed', TAP_CONF, function (t) {
+test('ListMachines destroyed', function (t) {
     client.get('/my/machines?state=destroyed', function (err, req, res, body) {
         t.ifError(err, 'GET /my/machines error');
         t.equal(res.statusCode, 200, 'GET /my/machines status');
@@ -790,7 +786,7 @@ test('ListMachines destroyed', TAP_CONF, function (t) {
 });
 
 
-test('CreateMachine using query args', TAP_CONF, function (t) {
+test('CreateMachine using query args', function (t) {
     var query = '/my/machines?image=' + DATASET +
                 '&package=sdc_128_ok' +
                 '&server_uuid=' + HEADNODE.uuid;
@@ -811,14 +807,14 @@ test('CreateMachine using query args', TAP_CONF, function (t) {
 });
 
 
-test('Wait For Running Machine 2', TAP_CONF, waitForRunning);
+test('Wait For Running Machine 2', waitForRunning);
 
 
-test('DeleteMachine which used query args', TAP_CONF, deleteMachine);
+test('DeleteMachine which used query args', deleteMachine);
 
 
 // passing in multiple same networks should flatten to single network added
-test('CreateMachine using multiple same networks', TAP_CONF, function (t) {
+test('CreateMachine using multiple same networks', function (t) {
     client.napi.listNetworks({ nic_tag: 'external' }, function (err, nets) {
         t.ifError(err);
 
@@ -842,10 +838,10 @@ test('CreateMachine using multiple same networks', TAP_CONF, function (t) {
 });
 
 
-test('Wait For Running Machine 3', TAP_CONF, waitForRunning);
+test('Wait For Running Machine 3', waitForRunning);
 
 
-test('Check CreateMachine flattens same networks', TAP_CONF, function (t) {
+test('Check CreateMachine flattens same networks', function (t) {
     client.vmapi.getVm({ uuid: machine }, function (err, vm) {
         t.ifError(err);
         t.equal(vm.nics.length, 1);
@@ -854,10 +850,10 @@ test('Check CreateMachine flattens same networks', TAP_CONF, function (t) {
 });
 
 
-test('DeleteMachine which flattened networks', TAP_CONF, deleteMachine);
+test('DeleteMachine which flattened networks', deleteMachine);
 
 
-test('teardown', {timeout: 'Infinity '}, function (t) {
+test('teardown', function (t) {
     client.del('/my/keys/' + keyName, function (err, req, res) {
         t.ifError(err, 'delete key error');
         t.equal(res.statusCode, 204);

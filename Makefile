@@ -25,7 +25,7 @@ NAME		:= cloudapi
 #
 # Tools
 #
-TAP		:= ./node_modules/.bin/tap
+TAP		:= ./node_modules/.bin/tape
 
 #
 # Files
@@ -157,60 +157,60 @@ publish: release
 	mkdir -p $(BITS_DIR)/$(NAME)
 	cp $(ROOT)/$(RELEASE_TARBALL) $(BITS_DIR)/$(NAME)/$(RELEASE_TARBALL)
 
-.PHONY: test auth_test account_test analytics_test datacenters_test datasets_test keys_test machines_test packages_test users_test
+.PHONY: test no_machines_test auth_test account_test analytics_test datacenters_test datasets_test keys_test networks_test nics_test machines_all_test machines_65_test machines_70_test machines_71_test machines_72_test machines_test packages_test populate_networks_test users_test
 
 auth_test: $(TAP)
-	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/auth.test.js
+	$(NODE_EXEC) $(TAP) test/auth.test.js
 
 account_test: $(TAP)
-	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/account.test.js
+	$(NODE_EXEC) $(TAP) test/account.test.js
 
 analytics_test: $(TAP)
-	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/analytics.test.js
+	$(NODE_EXEC) $(TAP) test/analytics.test.js
 
 datacenters_test: $(TAP)
-	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/datacenters.test.js
+	$(NODE_EXEC) $(TAP) test/datacenters.test.js
 
 datasets_test: $(TAP)
-	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/datasets.test.js
+	$(NODE_EXEC) $(TAP) test/datasets.test.js
 
 keys_test: $(TAP)
-	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/keys.test.js
+	$(NODE_EXEC) $(TAP) test/keys.test.js
 
 networks_test: $(TAP)
-	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/networks.test.js
+	$(NODE_EXEC) $(TAP) test/networks.test.js
 
 nics_test: $(TAP)
-	$(NODE_EXEC) $(TAP) --tap --timeout 720 test/nics.test.js
+	$(NODE_EXEC) $(TAP) test/nics.test.js
 
 machines_all_test:
-	$(NODE_EXEC) $(TAP) --tap --timeout 720 test/machines.test.js
+	$(NODE_EXEC) $(TAP) test/machines.test.js
 
 machines_65_test:
-	$(NODE_EXEC) $(TAP) --tap --timeout 720 test/machines.65.test.js
+	$(NODE_EXEC) $(TAP) test/machines.65.test.js
 
 machines_70_test:
-	$(NODE_EXEC) $(TAP) --tap --timeout 720 test/machines.70.test.js
+	$(NODE_EXEC) $(TAP) test/machines.70.test.js
 
 machines_71_test:
-	$(NODE_EXEC) $(TAP) --tap --timeout 720 test/machines.71.test.js
+	$(NODE_EXEC) $(TAP) test/machines.71.test.js
 
 machines_72_test:
-	$(NODE_EXEC) $(TAP) --tap --timeout 720 test/machines.72.test.js
+	$(NODE_EXEC) $(TAP) test/machines.72.test.js
 
 machines_test: machines_all_test machines_65_test machines_70_test machines_71_test machines_72_test
 
 packages_test: $(TAP)
-	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/packages.test.js
+	$(NODE_EXEC) $(TAP) test/packages.test.js
 
 populate_network_test: $(TAP)
-	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/populate_network.test.js
+	$(NODE_EXEC) $(TAP) test/populate_network.test.js
 
 users_test: $(TAP)
-	$(NODE_EXEC) $(TAP) --tap --timeout 120 test/users.test.js
+	$(NODE_EXEC) $(TAP) test/users.test.js
 
 
-test: auth_test account_test analytics_test datacenters_test datasets_test keys_test networks_test nics_test packages_test populate_network_test users_test machines_test
+test: auth_test account_test analytics_test datacenters_test datasets_test keys_test networks_test packages_test populate_network_test users_test nics_test machines_test
 
 no_machines_test: auth_test account_test analytics_test datacenters_test datasets_test keys_test networks_test packages_test populate_network_test users_test
 

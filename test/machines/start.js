@@ -8,21 +8,18 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
-var test = require('tap').test;
+var test = require('tape').test;
 var common = require('../common');
 var machinesCommon = require('./common');
 var checkJob = machinesCommon.checkJob;
 var waitForJob = machinesCommon.waitForJob;
-var TAP_CONF = {
-    timeout: 'Infinity '
-};
 
 module.exports = function (suite, client, machine, callback) {
     if (!machine) {
         return callback();
     }
 
-    suite.test('StartMachine', TAP_CONF, function (t) {
+    suite.test('StartMachine', function (t) {
         client.post('/my/machines/' + machine, {
             action: 'start'
         }, function (err) {
@@ -32,7 +29,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('Wait For Started', TAP_CONF,  function (t) {
+    suite.test('Wait For Started', function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'start'

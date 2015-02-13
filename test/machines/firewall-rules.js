@@ -10,15 +10,12 @@
 
 var util = require('util');
 var sprintf = util.format;
-var test = require('tap').test;
+var test = require('tape').test;
 var libuuid = require('libuuid');
 
 var common = require('../common');
 var machinesCommon = require('./common');
 var checkMachine = machinesCommon.checkMachine;
-var TAP_CONF = {
-    timeout: 'Infinity '
-};
 
 module.exports = function (suite, client, machine, callback) {
     if (!machine) {
@@ -36,7 +33,7 @@ module.exports = function (suite, client, machine, callback) {
     }
 
 
-    suite.test('ListRules (empty set)', TAP_CONF, function (t) {
+    suite.test('ListRules (empty set)', function (t) {
         client.get(RULES_URL, function (err, req, res, body) {
             t.ifError(err, 'Error');
             t.equal(200, res.statusCode, 'Status Code');
@@ -47,7 +44,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('AddRule', TAP_CONF, function (t) {
+    suite.test('AddRule', function (t) {
         client.post(RULES_URL, {
             rule: 'FROM vm ' + machine +
                 ' TO subnet 10.99.99.0/24 ALLOW tcp port 80'
@@ -68,7 +65,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('ListRules (not empty set)', TAP_CONF, function (t) {
+    suite.test('ListRules (not empty set)', function (t) {
         client.get(RULES_URL, function (err, req, res, body) {
             t.ifError(err, 'Error');
             t.equal(200, res.statusCode, 'Status Code');
@@ -80,7 +77,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('List Rule Machines (not empty set)', TAP_CONF, function (t) {
+    suite.test('List Rule Machines (not empty set)', function (t) {
         if (RULE_UUID) {
             var p = sprintf(RULE_URL, RULE_UUID) + '/machines';
             client.get(p, function (err, req, res, body) {
@@ -100,7 +97,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('List Machine Rules (not empty set)', TAP_CONF, function (t) {
+    suite.test('List Machine Rules (not empty set)', function (t) {
         var u = '/my/machines/' + machine + '/fwrules';
         client.get(u, function (err, req, res, body) {
             t.ifError(err, 'Error');
@@ -113,7 +110,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('GetRule', TAP_CONF, function (t) {
+    suite.test('GetRule', function (t) {
         if (RULE_UUID) {
             client.get(sprintf(RULE_URL, RULE_UUID),
                 function (err, req, res, body) {
@@ -128,7 +125,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('Get unexisting rule', TAP_CONF, function (t) {
+    suite.test('Get unexisting rule', function (t) {
         client.get(sprintf(RULE_URL, libuuid.create()),
             function (err, req, res, body) {
                 t.ok(err);
@@ -138,7 +135,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('UpdateRule', TAP_CONF, function (t) {
+    suite.test('UpdateRule', function (t) {
         if (RULE_UUID) {
             client.post(sprintf(RULE_URL, RULE_UUID), {
                 rule: 'FROM vm ' + machine +
@@ -154,7 +151,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('GetUpdatedRule', TAP_CONF, function (t) {
+    suite.test('GetUpdatedRule', function (t) {
         if (RULE_UUID) {
             client.get(sprintf(RULE_URL, RULE_UUID),
                 function (err, req, res, body) {
@@ -169,7 +166,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('EnableRule', TAP_CONF, function (t) {
+    suite.test('EnableRule', function (t) {
         if (RULE_UUID) {
             client.post(sprintf(RULE_URL, RULE_UUID) + '/enable', {
             }, function (err, req, res, body) {
@@ -183,7 +180,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('GetEnabledRule', TAP_CONF, function (t) {
+    suite.test('GetEnabledRule', function (t) {
         if (RULE_UUID) {
             client.get(sprintf(RULE_URL, RULE_UUID),
                 function (err, req, res, body) {
@@ -198,7 +195,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('DeleteRule', TAP_CONF, function (t) {
+    suite.test('DeleteRule', function (t) {
         if (RULE_UUID) {
             client.del(sprintf(RULE_URL, RULE_UUID), function (err, req, res) {
                 t.ifError(err);

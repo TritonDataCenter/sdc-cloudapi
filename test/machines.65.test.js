@@ -10,7 +10,7 @@
 
 var fs = require('fs');
 var util = require('util');
-var test = require('tap').test;
+var test = require('tape').test;
 var libuuid = require('libuuid');
 function uuid() {
     return (libuuid.create());
@@ -56,10 +56,6 @@ var META_CREDS_TWO = {
     'jill': 'secret'
 };
 
-var TAP_CONF = {
-    timeout: 'Infinity '
-};
-
 
 // May or not be created by previous test run or whatever else:
 var sdc_256_inactive = {
@@ -100,7 +96,7 @@ var HEADNODE = null;
 
 // --- Tests
 
-test('setup', TAP_CONF, function (t) {
+test('setup', function (t) {
     common.setup('~6.5', function (err, _client, _server) {
         t.ifError(err, 'common setup error');
         t.ok(_client, 'common _client ok');
@@ -125,7 +121,7 @@ test('setup', TAP_CONF, function (t) {
 });
 
 
-test('Get Headnode', TAP_CONF, function (t) {
+test('Get Headnode', function (t) {
     client.cnapi.listServers(function (err, servers) {
         t.ifError(err);
         t.ok(servers);
@@ -144,7 +140,7 @@ test('Get Headnode', TAP_CONF, function (t) {
 
 var DATASET;
 
-test('get smartos dataset', TAP_CONF, function (t) {
+test('get smartos dataset', function (t) {
     client.get('/my/datasets?name=smartos', function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets error');
         t.equal(res.statusCode, 200, 'GET /my/datasets status');
@@ -162,7 +158,7 @@ test('get smartos dataset', TAP_CONF, function (t) {
 });
 
 
-test('CreateMachine', TAP_CONF, function (t) {
+test('CreateMachine', function (t) {
     var obj = {
         dataset: 'smartos',
         'package': 'sdc_128_ok',
@@ -191,7 +187,7 @@ test('CreateMachine', TAP_CONF, function (t) {
 });
 
 
-test('Wait For Running', TAP_CONF,  function (t) {
+test('Wait For Running', function (t) {
     client.vmapi.listJobs({
         vm_uuid: machine,
         task: 'provision'
@@ -214,7 +210,7 @@ test('Wait For Running', TAP_CONF,  function (t) {
     });
 });
 
-test('Get Machine', TAP_CONF, function (t) {
+test('Get Machine', function (t) {
     if (machine) {
         client.get('/my/machines/' + machine, function (err, req, res, body) {
             t.ifError(err, 'GET /my/machines/:id error');
@@ -230,14 +226,14 @@ test('Get Machine', TAP_CONF, function (t) {
             // Double check tags are OK, due to different handling by VMAPI:
             var tags = {};
             tags[TAG_KEY] = TAG_VAL;
-            t.equivalent(body.tags, tags, 'Machine tags');
+            t.deepEqual(body.tags, tags, 'Machine tags');
             t.end();
         });
     }
 });
 
 
-test('Rename Machine 6.5.0', TAP_CONF, function (t) {
+test('Rename Machine 6.5.0', function (t) {
     client.post('/my/machines/' + machine, {
         action: 'rename',
         name: 'b' + uuid().substr(0, 7)
@@ -248,7 +244,7 @@ test('Rename Machine 6.5.0', TAP_CONF, function (t) {
 });
 
 
-test('Delete tests', TAP_CONF, function (t) {
+test('Delete tests', function (t) {
     var deleteTest = require('./machines/delete');
     deleteTest(t, client, machine, function () {
         t.end();
@@ -256,7 +252,7 @@ test('Delete tests', TAP_CONF, function (t) {
 });
 
 
-test('teardown', {timeout: 'Infinity '}, function (t) {
+test('teardown', function (t) {
     client.del('/my/keys/' + keyName, function (err, req, res) {
         t.ifError(err, 'delete key error');
         t.equal(res.statusCode, 204);

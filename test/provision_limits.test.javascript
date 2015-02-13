@@ -17,7 +17,7 @@
  * unnecessary checks during each provision request.
  */
 
-var test = require('tap').test;
+var test = require('tape').test;
 
 var libuuid = require('libuuid');
 function uuid() {
@@ -70,10 +70,6 @@ var KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAvad19ePSDckmgmo6Unqmd8' +
     '5YwRC51EVhyDuqthVJWjKrYxgDMbHru8fc1oV51l0bKdmvmJWbA/VyeJvstoX+eiSGT3Jge' +
     'egSMVtc= mark@foo.local';
 var keyName = uuid();
-
-var TAP_CONF = {
-    timeout: 'Infinity '
-};
 
 var machine, machine2;
 var sdc_128_ok_entry;
@@ -162,7 +158,7 @@ test('setup', function (t) {
 });
 
 
-test('Get Headnode', TAP_CONF, function (t) {
+test('Get Headnode', function (t) {
     client.cnapi.listServers(function (err, servers) {
         t.ifError(err);
         t.ok(servers);
@@ -179,7 +175,7 @@ test('Get Headnode', TAP_CONF, function (t) {
 });
 
 
-test('get base dataset', TAP_CONF, function (t) {
+test('get base dataset', function (t) {
     client.get('/my/datasets?name=base', function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets error');
         t.equal(res.statusCode, 200, 'GET /my/datasets status');
@@ -306,7 +302,7 @@ test('filterLimits', function (t) {
 });
 
 
-test('CreateMachine', TAP_CONF, function (t) {
+test('CreateMachine', function (t) {
     var obj = {
         image: DATASET,
         'package': 'sdc_128_ok',
@@ -328,7 +324,7 @@ test('CreateMachine', TAP_CONF, function (t) {
 });
 
 
-test('Wait For Running', TAP_CONF,  function (t) {
+test('Wait For Running', function (t) {
     client.vmapi.listJobs({
         vm_uuid: machine,
         task: 'provision'
@@ -352,7 +348,7 @@ test('Wait For Running', TAP_CONF,  function (t) {
 });
 
 
-test('CreateMachine #2', TAP_CONF, function (t) {
+test('CreateMachine #2', function (t) {
     var obj = {
         image: DATASET,
         'package': 'sdc_128_ok',
@@ -374,7 +370,7 @@ test('CreateMachine #2', TAP_CONF, function (t) {
 });
 
 
-test('Wait For Running #2', TAP_CONF,  function (t) {
+test('Wait For Running #2', function (t) {
     client.vmapi.listJobs({
         vm_uuid: machine2,
         task: 'provision'
@@ -398,7 +394,7 @@ test('Wait For Running #2', TAP_CONF,  function (t) {
 });
 
 // This should fail due to limits:
-test('CreateMachine #3', TAP_CONF, function (t) {
+test('CreateMachine #3', function (t) {
     var obj = {
         image: DATASET,
         'package': 'sdc_128_ok',
@@ -421,7 +417,7 @@ test('CreateMachine #3', TAP_CONF, function (t) {
 
 
 
-test('Delete tests', TAP_CONF, function (t) {
+test('Delete tests', function (t) {
     var deleteTest = require('./machines/delete');
     deleteTest(t, client, machine, function () {
         t.end();
@@ -429,7 +425,7 @@ test('Delete tests', TAP_CONF, function (t) {
 });
 
 
-test('Delete tests', TAP_CONF, function (t) {
+test('Delete tests', function (t) {
     var deleteTest = require('./machines/delete');
     deleteTest(t, client, machine2, function () {
         t.end();
@@ -437,7 +433,7 @@ test('Delete tests', TAP_CONF, function (t) {
 });
 
 
-test('teardown', {timeout: 'Infinity '}, function (t) {
+test('teardown', function (t) {
     client.del('/my/keys/' + keyName, function (err, req, res) {
         t.ifError(err, 'delete key error');
         t.equal(res.statusCode, 204);

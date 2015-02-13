@@ -8,7 +8,7 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
-var test = require('tap').test;
+var test = require('tape').test;
 var libuuid = require('libuuid');
 function uuid() {
     return (libuuid.create());
@@ -124,7 +124,7 @@ test('Create (named) key with duplicate name', function (t) {
         t.ok(err);
         t.equal(err.statusCode, 409);
 
-        t.equivalent(body, {
+        t.deepEqual(body, {
             code: 'InvalidArgument',
             message: 'key already exists or is invalid'
         });
@@ -145,7 +145,7 @@ test('Attempt to create with invalid key', function (t) {
         t.equal(err.restCode, 'InvalidArgument');
         t.ok(err.message);
 
-        t.equivalent(body, {
+        t.deepEqual(body, {
             code: 'InvalidArgument',
             message: 'key is invalid'
         });
@@ -243,7 +243,7 @@ test('GetKey 404', function (t) {
 });
 
 
-test('teardown', { timeout: 'Infinity' }, function (t) {
+test('teardown', function (t) {
     function nuke(callback) {
         client.teardown(function (err) {
             if (err) {

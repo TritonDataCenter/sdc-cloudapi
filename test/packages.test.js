@@ -8,17 +8,13 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
-var test = require('tap').test;
+var test = require('tape').test;
 var libuuid = require('libuuid');
 function uuid() {
     return (libuuid.create());
 }
 var util = require('util');
 var common = require('./common');
-
-var TAP_CONF = {
-    timeout: 'Infinity '
-};
 
 ///--- Globals
 
@@ -163,7 +159,7 @@ function searchAndCheck(query, t, checkAttr) {
 
 ///--- Tests
 
-test('setup', TAP_CONF, function (t) {
+test('setup', function (t) {
     common.setup(function (err, _client, _server) {
         t.ifError(err);
         t.ok(_client);
@@ -214,7 +210,7 @@ test('GetPackage OK (6.5)', function (t) {
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
 
-        t.equivalent(body, {
+        t.deepEqual(body, {
             name: 'sdc_512_ownership',
             memory: 512,
             disk: 20480,
@@ -310,7 +306,7 @@ test('GetPackage by name OK (7.0)', function (t) {
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
 
-        t.equivalent(body, {
+        t.deepEqual(body, {
             name: 'sdc_512_ownership',
             memory: 512,
             disk: 20480,
@@ -339,7 +335,7 @@ test('GetPackage by id OK (7.0)', function (t) {
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
 
-        t.equivalent(body, {
+        t.deepEqual(body, {
             name: 'sdc_512_ownership',
             memory: 512,
             disk: 20480,

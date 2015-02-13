@@ -8,7 +8,7 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
-var test = require('tap').test;
+var test = require('tape').test;
 var libuuid = require('libuuid');
 function uuid() {
     return (libuuid.create());
@@ -17,9 +17,6 @@ var common = require('../common');
 var machinesCommon = require('./common');
 var checkJob = machinesCommon.checkJob;
 var waitForJob = machinesCommon.waitForJob;
-var TAP_CONF = {
-    timeout: 'Infinity '
-};
 
 module.exports = function (suite, client, machine, pkg, callback) {
     // FIXME: Restore resize tests into nightly-1 when we finally get
@@ -29,7 +26,7 @@ module.exports = function (suite, client, machine, pkg, callback) {
         return callback();
     }
 
-    suite.test('Resize Machine', TAP_CONF, function (t) {
+    suite.test('Resize Machine', function (t) {
         t.ok(pkg, 'Resize package OK');
         console.log('Resizing to package: %j', pkg);
         client.post('/my/machines/' + machine, {
@@ -42,7 +39,7 @@ module.exports = function (suite, client, machine, pkg, callback) {
     });
 
 
-    suite.test('Wait For Resized', TAP_CONF,  function (t) {
+    suite.test('Wait For Resized', function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'update'

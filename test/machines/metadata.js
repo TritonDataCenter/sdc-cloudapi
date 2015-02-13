@@ -9,7 +9,7 @@
  */
 
 var util = require('util');
-var test = require('tap').test;
+var test = require('tape').test;
 var common = require('../common');
 var machinesCommon = require('./common');
 var checkMachine = machinesCommon.checkMachine;
@@ -17,9 +17,6 @@ var checkJob = machinesCommon.checkJob;
 var waitForJob = machinesCommon.waitForJob;
 var checkWfJob = machinesCommon.checkWfJob;
 var waitForWfJob = machinesCommon.waitForWfJob;
-var TAP_CONF = {
-    timeout: 'Infinity '
-};
 
 var META_KEY = 'foo';
 var META_VAL = 'bar';
@@ -32,7 +29,7 @@ module.exports = function (suite, client, machine, callback) {
     if (!machine) {
         return callback();
     }
-    suite.test('ListMetadata', TAP_CONF, function (t) {
+    suite.test('ListMetadata', function (t) {
         var url = '/my/machines/' + machine + '/metadata';
         client.get(url, function (err, req, res, body) {
             t.ifError(err);
@@ -49,7 +46,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('AddMetadata', TAP_CONF, function (t) {
+    suite.test('AddMetadata', function (t) {
         var path = '/my/machines/' + machine + '/metadata',
         meta = {
             bar: 'baz'
@@ -65,7 +62,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('wait for add metadata job', TAP_CONF,  function (t) {
+    suite.test('wait for add metadata job',  function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'update'
@@ -81,7 +78,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('GetMetadata', TAP_CONF, function (t) {
+    suite.test('GetMetadata', function (t) {
         var path = '/my/machines/' + machine + '/metadata/' + META_KEY;
         client.get(path, function (err, req, res, body) {
             t.ifError(err);
@@ -94,7 +91,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('DeleteMetadata', TAP_CONF, function (t) {
+    suite.test('DeleteMetadata', function (t) {
         var url = '/my/machines/' + machine + '/metadata/' + META_KEY;
         client.del(url, function (err, req, res) {
             t.ifError(err);
@@ -105,7 +102,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('wait for delete metadata job', TAP_CONF,  function (t) {
+    suite.test('wait for delete metadata job', function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'update'
@@ -121,7 +118,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('DeleteMetadataCredentials', TAP_CONF, function (t) {
+    suite.test('DeleteMetadataCredentials', function (t) {
         var url = '/my/machines/' + machine + '/metadata/credentials';
         client.del(url, function (err, req, res) {
             t.ok(err);
@@ -131,7 +128,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('wait for delete credentials job', TAP_CONF,  function (t) {
+    suite.test('wait for delete credentials job', function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'update'
@@ -147,7 +144,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('DeleteAllMetadata', TAP_CONF, function (t) {
+    suite.test('DeleteAllMetadata', function (t) {
         var url = '/my/machines/' + machine + '/metadata';
         client.del(url, function (err, req, res) {
             t.ifError(err, 'Delete All Metadata Error');
@@ -158,7 +155,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('wait for delete all metadata job', TAP_CONF,  function (t) {
+    suite.test('wait for delete all metadata job', function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'update'

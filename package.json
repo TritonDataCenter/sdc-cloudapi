@@ -35,7 +35,7 @@
         "aperture-config": "git+ssh://git@github.com:joyent/aperture-config.git#master"
     },
     "devDependencies": {
-        "tap": "~0.4",
+        "tape": "3.5.0",
         "smartdc": "git+ssh://git@github.com:joyent/node-smartdc.git#adea68"
     },
     "scripts": {

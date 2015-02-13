@@ -10,7 +10,7 @@
 
 var fs = require('fs');
 var util = require('util');
-var test = require('tap').test;
+var test = require('tape').test;
 var libuuid = require('libuuid');
 function uuid() {
     return (libuuid.create());
@@ -56,10 +56,6 @@ var META_CREDS_TWO = {
     'jill': 'secret'
 };
 
-var TAP_CONF = {
-    timeout: 'Infinity '
-};
-
 
 // May or not be created by previous test run or whatever else:
 var sdc_256_inactive = {
@@ -100,7 +96,7 @@ var HEADNODE = null;
 
 // --- Tests
 
-test('setup', TAP_CONF, function (t) {
+test('setup', function (t) {
     common.setup('~7.1', function (err, _client, _server) {
         t.ifError(err, 'common setup error');
         t.ok(_client, 'common _client ok');
@@ -125,7 +121,7 @@ test('setup', TAP_CONF, function (t) {
 });
 
 
-test('Get Headnode', TAP_CONF, function (t) {
+test('Get Headnode', function (t) {
     client.cnapi.listServers(function (err, servers) {
         t.ifError(err);
         t.ok(servers);
@@ -144,7 +140,7 @@ test('Get Headnode', TAP_CONF, function (t) {
 
 var DATASET;
 
-test('get base dataset', TAP_CONF, function (t) {
+test('get base dataset', function (t) {
     client.get('/my/datasets?name=base', function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets error');
         t.equal(res.statusCode, 200, 'GET /my/datasets status');
@@ -163,7 +159,7 @@ test('get base dataset', TAP_CONF, function (t) {
 
 
 // PUBAPI-567: Verify it has been fixed as side effect of PUBAPI-566
-test('Create machine with invalid package', TAP_CONF, function (t) {
+test('Create machine with invalid package', function (t) {
     var obj = {
         dataset: DATASET,
         'package': uuid().substr(0, 7),
@@ -180,7 +176,7 @@ test('Create machine with invalid package', TAP_CONF, function (t) {
 });
 
 
-test('CreateMachine w/o dataset fails', TAP_CONF, function (t) {
+test('CreateMachine w/o dataset fails', function (t) {
     var obj = {
         'package': 'sdc_128_ok',
         name: 'a' + uuid().substr(0, 7),
@@ -200,7 +196,7 @@ test('CreateMachine w/o dataset fails', TAP_CONF, function (t) {
 });
 
 
-test('Create machine with invalid network', TAP_CONF, function (t) {
+test('Create machine with invalid network', function (t) {
     var obj = {
         dataset: DATASET,
         'package': 'sdc_128_ok',
@@ -219,7 +215,7 @@ test('Create machine with invalid network', TAP_CONF, function (t) {
 
 
 // Test using IMAGE.uuid instead of IMAGE.name due to PUBAPI-625:
-test('CreateMachine', TAP_CONF, function (t) {
+test('CreateMachine', function (t) {
     var obj = {
         image: DATASET,
         'package': 'sdc_128_ok',
@@ -248,7 +244,7 @@ test('CreateMachine', TAP_CONF, function (t) {
 });
 
 
-test('Wait For Running', TAP_CONF,  function (t) {
+test('Wait For Running', function (t) {
     client.vmapi.listJobs({
         vm_uuid: machine,
         task: 'provision'
@@ -272,7 +268,7 @@ test('Wait For Running', TAP_CONF,  function (t) {
 });
 
 
-test('Get Machine', TAP_CONF, function (t) {
+test('Get Machine', function (t) {
     if (machine) {
         client.get('/my/machines/' + machine, function (err, req, res, body) {
             t.ifError(err, 'GET /my/machines/:id error');
@@ -287,14 +283,14 @@ test('Get Machine', TAP_CONF, function (t) {
             // Double check tags are OK, due to different handling by VMAPI:
             var tags = {};
             tags[TAG_KEY] = TAG_VAL;
-            t.equivalent(body.tags, tags, 'Machine tags');
+            t.deepEqual(body.tags, tags, 'Machine tags');
             t.end();
         });
     }
 });
 
 
-test('Rename machine tests', TAP_CONF, function (t) {
+test('Rename machine tests', function (t) {
     var renameTest = require('./machines/rename');
     renameTest(t, client, machine, function () {
         t.end();
@@ -302,7 +298,7 @@ test('Rename machine tests', TAP_CONF, function (t) {
 });
 
 
-test('Firewall tests', TAP_CONF, function (t) {
+test('Firewall tests', function (t) {
     var firewallTest = require('./machines/firewall');
     firewallTest(t, client, machine, function () {
         t.end();
@@ -310,7 +306,7 @@ test('Firewall tests', TAP_CONF, function (t) {
 });
 
 
-test('Stop test', TAP_CONF, function (t) {
+test('Stop test', function (t) {
     var stopTest = require('./machines/stop');
     stopTest(t, client, machine, function () {
         t.end();
@@ -318,7 +314,7 @@ test('Stop test', TAP_CONF, function (t) {
 });
 
 
-test('Create image from machine (missing params)', TAP_CONF, function (t) {
+test('Create image from machine (missing params)', function (t) {
     if (machine) {
         // Missing name attribute:
         var obj = {
@@ -345,7 +341,7 @@ test('Create image from machine (missing params)', TAP_CONF, function (t) {
 var IMG_JOB_UUID;
 
 
-test('Create image from machine OK', TAP_CONF, function (t) {
+test('Create image from machine OK', function (t) {
     if (machine) {
         var obj = {
             machine: machine,
@@ -371,7 +367,7 @@ test('Create image from machine OK', TAP_CONF, function (t) {
 });
 
 
-test('Wait for img create job', TAP_CONF, function (t) {
+test('Wait for img create job', function (t) {
     if (machine) {
         waitForWfJob(client, IMG_JOB_UUID, function (err) {
             if (err) {
@@ -386,7 +382,7 @@ test('Wait for img create job', TAP_CONF, function (t) {
 });
 
 
-test('Update image', TAP_CONF, function (t) {
+test('Update image', function (t) {
     var obj = { name: uuid(), version: '1.1.0' };
     if (image_uuid) {
         var opts = {
@@ -403,7 +399,7 @@ test('Update image', TAP_CONF, function (t) {
 });
 
 
-test('Delete image', TAP_CONF, function (t) {
+test('Delete image', function (t) {
     if (image_uuid) {
         client.imgapi.deleteImage(image_uuid, function (err, res) {
             t.ifError(err, 'Delete Image error');
@@ -416,7 +412,7 @@ test('Delete image', TAP_CONF, function (t) {
 
 
 
-test('Delete tests', TAP_CONF, function (t) {
+test('Delete tests', function (t) {
     var deleteTest = require('./machines/delete');
     deleteTest(t, client, machine, function () {
         t.end();
@@ -424,7 +420,7 @@ test('Delete tests', TAP_CONF, function (t) {
 });
 
 
-test('teardown', {timeout: 'Infinity '}, function (t) {
+test('teardown', function (t) {
     client.del('/my/keys/' + keyName, function (err, req, res) {
         t.ifError(err, 'delete key error');
         t.equal(res.statusCode, 204);

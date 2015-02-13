@@ -10,7 +10,7 @@
 
 var fs = require('fs');
 var util = require('util');
-var test = require('tap').test;
+var test = require('tape').test;
 var restify = require('restify');
 var libuuid = require('libuuid');
 function uuid() {
@@ -57,10 +57,6 @@ var META_CREDS_TWO = {
     'root': 'secret',
     'admin': 'secret',
     'jill': 'secret'
-};
-
-var TAP_CONF = {
-    timeout: 'Infinity '
 };
 
 
@@ -115,7 +111,7 @@ var httpSignature = require('http-signature');
 
 // --- Tests
 
-test('setup', TAP_CONF, function (t) {
+test('setup', function (t) {
     common.setup('~7.2', function (err, _client, _server) {
         t.ifError(err, 'common setup error');
         t.ok(_client, 'common _client ok');
@@ -146,7 +142,7 @@ test('setup', TAP_CONF, function (t) {
 });
 
 
-test('Get Headnode', TAP_CONF, function (t) {
+test('Get Headnode', function (t) {
     client.cnapi.listServers(function (err, servers) {
         t.ifError(err);
         t.ok(servers);
@@ -163,7 +159,7 @@ test('Get Headnode', TAP_CONF, function (t) {
 });
 
 
-test('get base dataset', TAP_CONF, function (t) {
+test('get base dataset', function (t) {
     client.get('/my/datasets?name=base', function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets error');
         t.equal(res.statusCode, 200, 'GET /my/datasets status');
@@ -196,7 +192,7 @@ test('tag machines resource collection with role', function (t) {
 
 
 // Test using IMAGE.uuid instead of IMAGE.name due to PUBAPI-625:
-test('CreateMachine', TAP_CONF, function (t) {
+test('CreateMachine', function (t) {
     var obj = {
         image: DATASET,
         'package': 'sdc_128_ok',
@@ -230,7 +226,7 @@ test('CreateMachine', TAP_CONF, function (t) {
 });
 
 
-test('Wait For Running', TAP_CONF,  function (t) {
+test('Wait For Running', function (t) {
     client.vmapi.listJobs({
         vm_uuid: machine,
         task: 'provision'
@@ -254,7 +250,7 @@ test('Wait For Running', TAP_CONF,  function (t) {
 });
 
 
-test('Get Machine', TAP_CONF, function (t) {
+test('Get Machine', function (t) {
     if (machine) {
         client.get({
             path: '/my/machines/' + machine,
@@ -274,7 +270,7 @@ test('Get Machine', TAP_CONF, function (t) {
             // Double check tags are OK, due to different handling by VMAPI:
             var tags = {};
             tags[TAG_KEY] = TAG_VAL;
-            t.equivalent(body.tags, tags, 'Machine tags');
+            t.deepEqual(body.tags, tags, 'Machine tags');
             t.ok(res.headers['role-tag'], 'resource role-tag header');
             t.equal(res.headers['role-tag'], A_ROLE_NAME, 'resource role-tag');
             t.end();
@@ -283,7 +279,7 @@ test('Get Machine', TAP_CONF, function (t) {
 });
 
 
-test('sub-user tests', { timeout: 'Infinity' }, function (t) {
+test('sub-user tests', function (t) {
     function subRequestSigner(req) {
         httpSignature.sign(req, {
             key: subPrivateKey,
@@ -329,7 +325,7 @@ test('sub-user tests', { timeout: 'Infinity' }, function (t) {
         cli.vmapi = client.vmapi;
 
         // Sub user tests go here, using a different client instance
-        t.test('sub-user get machine', { timeout: 'Infinity' }, function (t1) {
+        t.test('sub-user get machine', function (t1) {
             if (machine) {
                 cli.get({
                     path: '/' + account + '/machines/' + machine,
@@ -353,7 +349,7 @@ test('sub-user tests', { timeout: 'Infinity' }, function (t) {
             }
         });
 
-        t.test('Reboot test', TAP_CONF, function (t2) {
+        t.test('Reboot test', function (t2) {
             var rebootTest = require('./machines/reboot');
             rebootTest(t2, cli, machine, function () {
                 t2.end();
@@ -361,7 +357,7 @@ test('sub-user tests', { timeout: 'Infinity' }, function (t) {
         });
 
         // The sub-user role lacks of "POST" + 'stopmachine' route:
-        t.test('Sub user cannot stop machine', TAP_CONF, function (t3) {
+        t.test('Sub user cannot stop machine', function (t3) {
             cli.post({
                 path: '/' + account + '/machines/' + machine,
                 headers: {
@@ -376,7 +372,7 @@ test('sub-user tests', { timeout: 'Infinity' }, function (t) {
             });
         });
 
-        t.test('CreateMachine', TAP_CONF, function (t4) {
+        t.test('CreateMachine', function (t4) {
             var obj = {
                 image: DATASET,
                 'package': 'sdc_128_ok',
@@ -409,7 +405,7 @@ test('sub-user tests', { timeout: 'Infinity' }, function (t) {
             });
         });
 
-        t.test('Wait For Running', TAP_CONF,  function (t5) {
+        t.test('Wait For Running', function (t5) {
             cli.vmapi.listJobs({
                 vm_uuid: submachine,
                 task: 'provision'
@@ -494,7 +490,7 @@ test('Add submachine role-tag', function (t) {
 });
 
 
-test('Delete tests', TAP_CONF, function (t) {
+test('Delete tests', function (t) {
     var deleteTest = require('./machines/delete');
     deleteTest(t, client, machine, function () {
         t.end();
@@ -502,14 +498,14 @@ test('Delete tests', TAP_CONF, function (t) {
 });
 
 
-test('Delete sub-user machine tests', TAP_CONF, function (t) {
+test('Delete sub-user machine tests', function (t) {
     var deleteTest = require('./machines/delete');
     deleteTest(t, client, submachine, function () {
         t.end();
     });
 });
 
-test('teardown', {timeout: 'Infinity '}, function (t) {
+test('teardown', function (t) {
     client.del('/my/keys/' + keyName, function (err, req, res) {
         t.ifError(err, 'delete key error');
         t.equal(res.statusCode, 204);

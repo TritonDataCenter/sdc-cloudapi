@@ -8,13 +8,9 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
-var test = require('tap').test;
+var test = require('tape').test;
 var libuuid = require('libuuid');
 var common = require('./common');
-
-var TAP_CONF = {
-    timeout: 'Infinity '
-};
 
 var client, server, instId, cloneId;
 
@@ -60,7 +56,7 @@ function checkHead(t, path) {
         t.ifError(err);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 200);
-        t.equivalent(body, {});
+        t.deepEqual(body, {});
         t.end();
     });
 }
@@ -74,9 +70,9 @@ function checkInstrumentation(t, inst, justCreated) {
         t.equal(inst.stat,   'logical_ops');
         t.equal(inst.enabled, true);
 
-        t.equivalent(inst.predicate,       { eq: [ 'optype', 'read' ] });
-        t.equivalent(inst.decomposition,   [ 'latency' ]);
-        t.equivalent(inst.transformations, {});
+        t.deepEqual(inst.predicate,       { eq: [ 'optype', 'read' ] });
+        t.deepEqual(inst.decomposition,   [ 'latency' ]);
+        t.deepEqual(inst.transformations, {});
     }
 
     var expectedTypes = {
@@ -436,7 +432,7 @@ test('CloneInstrumentation OK', function (t) {
 
 
 // PUBAPI-923
-test('Check analytics roles are preserved', TAP_CONF, function (t) {
+test('Check analytics roles are preserved', function (t) {
     var roleName = 'foobarbaz';
     var instrumentationsPath = '/my/analytics/instrumentations';
     var clonePath, rolePath;
@@ -551,12 +547,12 @@ test('DeleteInstrumentation OK', function (t) {
         t.ifError(err);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 204);
-        t.equivalent(body, {});
+        t.deepEqual(body, {});
 
         client.get(path, function (err2, req2, res2, body2) {
             t.equal(res2.statusCode, 404);
 
-            t.equivalent(err2, {
+            t.deepEqual(err2, {
                 message: 'resource not found',
                 statusCode: 404,
                 restCode: 'ResourceNotFound',
@@ -585,7 +581,7 @@ test('DeleteInstrumentation OK - clone', function (t) {
         t.ifError(err);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 204);
-        t.equivalent(body, {});
+        t.deepEqual(body, {});
         t.end();
     });
 });

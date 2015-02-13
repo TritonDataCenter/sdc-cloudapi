@@ -10,7 +10,7 @@
 
 var fs = require('fs');
 var util = require('util');
-var test = require('tap').test;
+var test = require('tape').test;
 var uuid = require('node-uuid');
 
 var common = require('./common');
@@ -47,12 +47,9 @@ var META_CREDS = [
     }
 ];
 
-var TAP_CONF = {
-    timeout: 'Infinity '
-};
-
 
 // --- Helpers
+
 
 function checkMachine(t, m) {
     t.ok(m, 'checkMachine ok');
@@ -156,7 +153,7 @@ function saveKey(t, cb) {
 // --- Tests
 
 
-test('setup', TAP_CONF, function (t) {
+test('setup', function (t) {
     common.setup(function (err, _client, _server) {
         t.ifError(err, 'common setup error');
         t.ok(_client, 'common _client ok');
@@ -175,7 +172,7 @@ test('setup', TAP_CONF, function (t) {
 });
 
 
-test('CreateMachine', TAP_CONF, function (t) {
+test('CreateMachine', function (t) {
     var obj = {
         dataset: 'smartos',
         'package': 'sdc_128',
@@ -198,7 +195,7 @@ test('CreateMachine', TAP_CONF, function (t) {
 });
 
 
-test('Wait For Running', TAP_CONF,  function (t) {
+test('Wait For Running', function (t) {
     client.vmapi.listJobs({
         vm_uuid: machine,
         task: 'provision'
@@ -210,7 +207,6 @@ test('Wait For Running', TAP_CONF,  function (t) {
             t.ifError(err2, 'Check state error');
             if (err2) {
                 console.log(util.inspect(err2, false, 8));
-                TAP_CONF.skip = true;
             }
             t.end();
         });
@@ -245,12 +241,12 @@ for (i = 0; i <= RESIZE_ATTEMPTS; i += 1) {
 
 
 
-test('The resize tests', TAP_CONF, function (t) {
+test('The resize tests', function (t) {
     var finished = 0;
     packages.forEach(function (pack) {
         var pkg_entry;
         // We may have been created this on previous test suite runs or not:
-        t.test('Prepare resize package', TAP_CONF, function (t) {
+        t.test('Prepare resize package', function (t) {
             console.log(util.inspect(pack, false, 8));
             client.papi.get(pack.uuid, function (err, pkg) {
                 if (err) {
@@ -274,7 +270,7 @@ test('The resize tests', TAP_CONF, function (t) {
         });
 
 
-        t.test('Resize Machine', TAP_CONF, function (t) {
+        t.test('Resize Machine', function (t) {
             t.ok(pkg_entry, 'Resize package OK');
             console.log('Resizing to package: %j', pkg_entry);
             client.post('/my/machines/' + machine, {
@@ -287,7 +283,7 @@ test('The resize tests', TAP_CONF, function (t) {
         });
 
 
-        t.test('Wait For Resized', TAP_CONF,  function (t) {
+        t.test('Wait For Resized', function (t) {
             console.log('Finished jobs: %d', finished);
             client.vmapi.listJobs({
                 vm_uuid: machine,
@@ -329,7 +325,7 @@ test('The resize tests', TAP_CONF, function (t) {
 
 */
 
-test('CreateMachine fails due to limit', TAP_CONF, function (t) {
+test('CreateMachine fails due to limit', function (t) {
     var obj = {
         dataset: 'smartos',
         'package': 'sdc_128',
@@ -348,7 +344,7 @@ test('CreateMachine fails due to limit', TAP_CONF, function (t) {
 });
 
 
-test('DeleteMachine', TAP_CONF, function (t) {
+test('DeleteMachine', function (t) {
     client.del('/my/machines/' + machine, function (err, req, res) {
         t.ifError(err, 'DELETE /my/machines error');
         t.equal(res.statusCode, 204, 'DELETE /my/machines status');
@@ -358,7 +354,7 @@ test('DeleteMachine', TAP_CONF, function (t) {
 });
 
 
-test('Wait For Destroyed', TAP_CONF,  function (t) {
+test('Wait For Destroyed', function (t) {
     client.vmapi.listJobs({
         vm_uuid: machine,
         task: 'destroy'
@@ -373,12 +369,7 @@ test('Wait For Destroyed', TAP_CONF,  function (t) {
     });
 });
 
-// Make sure last one runs, despite of machine creation
-if (TAP_CONF.skip) {
-    delete TAP_CONF.skip;
-}
-
-test('teardown', TAP_CONF, function (t) {
+test('teardown', function (t) {
     client.del('/my/keys/' + keyName, function (err, req, res) {
         t.ifError(err, 'delete key error');
         t.equal(res.statusCode, 204);

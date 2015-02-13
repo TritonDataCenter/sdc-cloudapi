@@ -8,15 +8,11 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
-var test = require('tap').test;
+var test = require('tape').test;
 var common = require('../common');
 var machinesCommon = require('./common');
 var checkJob = machinesCommon.checkJob;
 var waitForJob = machinesCommon.waitForJob;
-
-var TAP_CONF = {
-    timeout: 'Infinity '
-};
 
 
 function checkSnapshot(t, snap) {
@@ -32,7 +28,7 @@ module.exports = function (suite, client, machine, callback) {
 
     var snapshot;
 
-    suite.test('Take Snapshot', TAP_CONF, function (t) {
+    suite.test('Take Snapshot', function (t) {
         var url = '/my/machines/' + machine + '/snapshots';
         client.post(url, {}, function (err, req, res, body) {
             t.ifError(err);
@@ -46,7 +42,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('Wait For Snapshot', TAP_CONF,  function (t) {
+    suite.test('Wait For Snapshot', function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'snapshot'
@@ -69,7 +65,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('List Snapshots', TAP_CONF, function (t) {
+    suite.test('List Snapshots', function (t) {
         if (snapshot) {
             var url = '/my/machines/' + machine + '/snapshots';
             client.get(url, function (err, req, res, body) {
@@ -90,7 +86,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('Get Snapshot', TAP_CONF, function (t) {
+    suite.test('Get Snapshot', function (t) {
         if (snapshot) {
             t.ok(snapshot.name, 'Snapshot name OK');
             var url = '/my/machines/' + machine + '/snapshots/' + snapshot.name;
@@ -108,7 +104,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('Rollback Snapshot', TAP_CONF, function (t) {
+    suite.test('Rollback Snapshot', function (t) {
         if (snapshot) {
             t.ok(snapshot.name, 'Snapshot name OK');
             var url = '/my/machines/' + machine + '/snapshots/' + snapshot.name;
@@ -124,7 +120,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('Wait For Snapshot Rollback', TAP_CONF,  function (t) {
+    suite.test('Wait For Snapshot Rollback', function (t) {
         if (snapshot) {
             client.vmapi.listJobs({
                 vm_uuid: machine,
@@ -148,7 +144,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('Delete snapshot', TAP_CONF, function (t) {
+    suite.test('Delete snapshot', function (t) {
         if (snapshot) {
             t.ok(snapshot.name, 'Snapshot name OK');
             var url = '/my/machines/' + machine + '/snapshots/' + snapshot.name;
@@ -164,7 +160,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('Wait For Deleted Snapshot', TAP_CONF,  function (t) {
+    suite.test('Wait For Deleted Snapshot', function (t) {
         if (snapshot) {
             client.vmapi.listJobs({
                 vm_uuid: machine,

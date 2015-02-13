@@ -8,7 +8,7 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
-var test = require('tap').test;
+var test = require('tape').test;
 var libuuid = require('libuuid');
 function uuid() {
     return (libuuid.create());
@@ -17,9 +17,6 @@ var common = require('../common');
 var machinesCommon = require('./common');
 var checkJob = machinesCommon.checkJob;
 var waitForJob = machinesCommon.waitForJob;
-var TAP_CONF = {
-    timeout: 'Infinity '
-};
 
 module.exports = function (suite, client, machine, callback) {
     if (!machine) {
@@ -27,7 +24,7 @@ module.exports = function (suite, client, machine, callback) {
     }
 
 
-    suite.test('Rename Machine', TAP_CONF, function (t) {
+    suite.test('Rename Machine', function (t) {
         client.post('/my/machines/' + machine, {
             action: 'rename',
             name: 'b' + uuid().substr(0, 7)
@@ -38,7 +35,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('Wait For Renamed', TAP_CONF,  function (t) {
+    suite.test('Wait For Renamed', function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'update'

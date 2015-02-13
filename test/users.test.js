@@ -15,7 +15,7 @@
  * test common during test setup.
  */
 
-var test = require('tap').test;
+var test = require('tape').test;
 
 var libuuid = require('libuuid');
 var util = require('util');
@@ -570,7 +570,7 @@ test('add role to non-existent user resource', function (t) {
     client.put(badPath, {
         'role-tag': [role]
     }, function (err) {
-        t.equivalent(err, {
+        t.deepEqual(err, {
             message: 'd26f4257-a795-4a7e-a360-e5441b39def0 does not exist',
             statusCode: 404,
             restCode: 'ResourceNotFound',
@@ -835,7 +835,7 @@ test('delete another user', function (t) {
 });
 
 
-test('teardown', { timeout: 'Infinity' }, function (t) {
+test('teardown', function (t) {
     function nuke(callback) {
         client.teardown(function (err) {
             if (err) {

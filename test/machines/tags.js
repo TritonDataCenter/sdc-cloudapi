@@ -9,7 +9,7 @@
  */
 
 var util = require('util');
-var test = require('tap').test;
+var test = require('tape').test;
 var common = require('../common');
 var machinesCommon = require('./common');
 var checkMachine = machinesCommon.checkMachine;
@@ -17,9 +17,6 @@ var checkJob = machinesCommon.checkJob;
 var waitForJob = machinesCommon.waitForJob;
 var checkWfJob = machinesCommon.checkWfJob;
 var waitForWfJob = machinesCommon.waitForWfJob;
-var TAP_CONF = {
-    timeout: 'Infinity '
-};
 
 var TAG_KEY = 'role';
 var TAG_VAL = 'unitTest';
@@ -33,7 +30,7 @@ module.exports = function (suite, client, machine, callback) {
         return callback();
     }
 
-    suite.test('ListMachines by tag', TAP_CONF, function (t) {
+    suite.test('ListMachines by tag', function (t) {
         var url = '/my/machines?tag.' + TAG_KEY + '=' + TAG_VAL;
         client.get(url, function (err, req, res, body) {
             t.ifError(err);
@@ -51,7 +48,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('ListMachines all tagged machines', TAP_CONF, function (t) {
+    suite.test('ListMachines all tagged machines', function (t) {
         var url = '/my/machines?tags=*';
         client.get(url, function (err, req, res, body) {
             t.ifError(err);
@@ -71,8 +68,7 @@ module.exports = function (suite, client, machine, callback) {
 
     // This is to make sure we're not getting machines from a different customer
     // when searching by tags:
-    suite.test('Attempt to list other owner machines by tag', TAP_CONF,
-        function (t) {
+    suite.test('Attempt to list other owner machines by tag', function (t) {
         // Admin user will always have all of the HN zones with this tag:
         var url = '/my/machines?tag.smartdc_type=core';
         client.get(url, function (err, req, res, body) {
@@ -87,7 +83,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('ListTags', TAP_CONF, function (t) {
+    suite.test('ListTags', function (t) {
         var url = '/my/machines/' + machine + '/tags';
         client.get(url, function (err, req, res, body) {
             t.ifError(err);
@@ -101,7 +97,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('AddTag', TAP_CONF, function (t) {
+    suite.test('AddTag', function (t) {
         var path = '/my/machines/' + machine + '/tags',
         tags = {};
         tags[TAG_TWO_KEY] = TAG_TWO_VAL;
@@ -117,7 +113,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('wait for add tag job', TAP_CONF,  function (t) {
+    suite.test('wait for add tag job', function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'update'
@@ -133,7 +129,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('GetTag', TAP_CONF, function (t) {
+    suite.test('GetTag', function (t) {
         var path = '/my/machines/' + machine + '/tags/' + TAG_KEY;
         client.get(path, function (err, req, res, body) {
             t.ifError(err);
@@ -146,7 +142,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('DeleteTag', TAP_CONF, function (t) {
+    suite.test('DeleteTag', function (t) {
         var url = '/my/machines/' + machine + '/tags/' + TAG_KEY;
         client.del(url, function (err, req, res) {
             t.ifError(err);
@@ -157,7 +153,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('wait for delete tag job', TAP_CONF,  function (t) {
+    suite.test('wait for delete tag job', function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'update'
@@ -173,7 +169,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('ReplaceTags', TAP_CONF, function (t) {
+    suite.test('ReplaceTags', function (t) {
         var path = '/my/machines/' + machine + '/tags',
         tags = {};
         tags[TAG_KEY] = TAG_VAL;
@@ -191,7 +187,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('wait for replace tags job', TAP_CONF,  function (t) {
+    suite.test('wait for replace tags job', function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'update'
@@ -207,7 +203,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('DeleteAllTags', TAP_CONF, function (t) {
+    suite.test('DeleteAllTags', function (t) {
         var url = '/my/machines/' + machine + '/tags';
         client.del(url, function (err, req, res) {
             t.ifError(err);
@@ -218,7 +214,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('wait for delete all tags job', TAP_CONF,  function (t) {
+    suite.test('wait for delete all tags job', function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'update'

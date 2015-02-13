@@ -8,14 +8,11 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
-var test = require('tap').test;
+var test = require('tape').test;
 var common = require('../common');
 var machinesCommon = require('./common');
 var checkJob = machinesCommon.checkJob;
 var waitForJob = machinesCommon.waitForJob;
-var TAP_CONF = {
-    timeout: 'Infinity '
-};
 
 module.exports = function (suite, client, machine, callback) {
     if (!machine) {
@@ -23,7 +20,7 @@ module.exports = function (suite, client, machine, callback) {
     }
 
 
-    suite.test('Disable firewall', TAP_CONF, function (t) {
+    suite.test('Disable firewall', function (t) {
         client.post('/my/machines/' + machine, {
             action: 'disable_firewall'
         }, function (err) {
@@ -33,7 +30,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('Wait For Firewall Disabled', TAP_CONF,  function (t) {
+    suite.test('Wait For Firewall Disabled',  function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'update'
@@ -54,7 +51,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('Enable firewall', TAP_CONF, function (t) {
+    suite.test('Enable firewall', function (t) {
         client.post('/my/machines/' + machine, {
             action: 'enable_firewall'
         }, function (err) {
@@ -64,7 +61,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('Wait For Firewall Enabled', TAP_CONF,  function (t) {
+    suite.test('Wait For Firewall Enabled', function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'update'

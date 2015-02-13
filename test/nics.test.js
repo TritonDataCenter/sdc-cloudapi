@@ -18,7 +18,7 @@
 
 var fs = require('fs');
 var libuuid = require('libuuid');
-var test = require('tap').test;
+var test = require('tape').test;
 var util = require('util');
 var vasync = require('vasync');
 
@@ -41,10 +41,6 @@ var KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAvad19ePSDckmgmo6Unqmd8' +
 var META_CREDS = {
     'root': 'secret',
     'admin': 'secret'
-};
-
-var TAP_CONF = {
-    timeout: 'Infinity '
 };
 
 var PACKAGE = {
@@ -132,7 +128,7 @@ var client, cnapiServer, machineUuid, headnode, vmNic, serverMac, adminUser,
 
 
 
-test('setup', TAP_CONF, function (t) {
+test('setup', function (t) {
     var setup = function (_, next) {
         common.setup('~7.2', function (err, _client, _server) {
             t.ifError(err);
@@ -351,7 +347,7 @@ test('setup', TAP_CONF, function (t) {
 
 // this also checks that a VM creates with an external and internal nic by
 // default if the package doesn't list networks
-test('List NICs', TAP_CONF, function (t) {
+test('List NICs', function (t) {
     var path = '/my/machines/' + machineUuid + '/nics';
 
     client.get(path, function (err, req, res, body) {
@@ -405,20 +401,20 @@ test('List NICs', TAP_CONF, function (t) {
 
 
 
-test('Head NICs', TAP_CONF, function (t) {
+test('Head NICs', function (t) {
     var path = '/my/machines/' + machineUuid + '/nics';
 
     client.head(path, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
-        t.equivalent(body, {});
+        t.deepEqual(body, {});
         t.end();
     });
 });
 
 
 
-test('List NICs on other machine', TAP_CONF, function (t) {
+test('List NICs on other machine', function (t) {
     var path = '/my/machines/' + otherMachineUuid + '/nics';
 
     var expectedErr = {
@@ -437,7 +433,7 @@ test('List NICs on other machine', TAP_CONF, function (t) {
 
 
 
-test('List NICs on nonexistent machine', TAP_CONF, function (t) {
+test('List NICs on nonexistent machine', function (t) {
     var path = '/my/machines/fdc3cefd-1943-4050-ba59-af5680508481/nics';
 
     var expectedErr = {
@@ -456,7 +452,7 @@ test('List NICs on nonexistent machine', TAP_CONF, function (t) {
 
 
 
-test('List NICs on invalid machine', TAP_CONF, function (t) {
+test('List NICs on invalid machine', function (t) {
     var path = '/my/machines/wowzers/nics';
 
     var expectedErr = {
@@ -480,7 +476,7 @@ test('List NICs on invalid machine', TAP_CONF, function (t) {
 
 
 
-test('Get NIC', TAP_CONF, function (t) {
+test('Get NIC', function (t) {
     var mac = vmNic.mac.replace(/\:/g, '');
     var path = '/my/machines/' + machineUuid + '/nics/' + mac;
 
@@ -488,7 +484,7 @@ test('Get NIC', TAP_CONF, function (t) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
 
-        t.equivalent(vmNic, body);
+        t.deepEqual(vmNic, body);
 
         t.end();
     });
@@ -496,21 +492,21 @@ test('Get NIC', TAP_CONF, function (t) {
 
 
 
-test('Head NIC', TAP_CONF, function (t) {
+test('Head NIC', function (t) {
     var mac = vmNic.mac.replace(/\:/g, '');
     var path = '/my/machines/' + machineUuid + '/nics/' + mac;
 
     client.head(path, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
-        t.equivalent(body, {});
+        t.deepEqual(body, {});
         t.end();
     });
 });
 
 
 
-test('Get nonexistent NIC', TAP_CONF, function (t) {
+test('Get nonexistent NIC', function (t) {
     var path = '/my/machines/' + machineUuid + '/nics/baadd34db33f';
 
     // the err message must match the 'Get non-owner NIC from owner machine'
@@ -531,7 +527,7 @@ test('Get nonexistent NIC', TAP_CONF, function (t) {
 
 
 
-test('Get invalid NIC', TAP_CONF, function (t) {
+test('Get invalid NIC', function (t) {
     var path = '/my/machines/' + machineUuid + '/nics/wowzers';
 
     var expectedErr = {
@@ -550,7 +546,7 @@ test('Get invalid NIC', TAP_CONF, function (t) {
 
 
 
-test('Get NIC from invalid machine', TAP_CONF, function (t) {
+test('Get NIC from invalid machine', function (t) {
     var mac = vmNic.mac.replace(/\:/g, '');
     var path = '/my/machines/wowzers/nics/' + mac;
 
@@ -575,7 +571,7 @@ test('Get NIC from invalid machine', TAP_CONF, function (t) {
 
 
 
-test('Get owner NIC from non-owner machine', TAP_CONF, function (t) {
+test('Get owner NIC from non-owner machine', function (t) {
     var mac = vmNic.mac.replace(/\:/g, '');
     var path = '/my/machines/' + otherMachineUuid + '/nics/' + mac;
 
@@ -595,7 +591,7 @@ test('Get owner NIC from non-owner machine', TAP_CONF, function (t) {
 
 
 
-test('Get non-owner NIC from owner machine', TAP_CONF, function (t) {
+test('Get non-owner NIC from owner machine', function (t) {
     var mac = otherVmNic.mac.replace(/\:/g, '');
     var path = '/my/machines/' + machineUuid + '/nics/' + mac;
 
@@ -616,7 +612,7 @@ test('Get non-owner NIC from owner machine', TAP_CONF, function (t) {
 
 
 
-test('Get non-owner NIC from non-owner machine', TAP_CONF, function (t) {
+test('Get non-owner NIC from non-owner machine', function (t) {
     var mac = otherVmNic.mac.replace(/\:/g, '');
     var path = '/my/machines/' + otherMachineUuid + '/nics/' + mac;
 
@@ -636,7 +632,7 @@ test('Get non-owner NIC from non-owner machine', TAP_CONF, function (t) {
 
 
 
-test('Get NIC from nonexistent machine', TAP_CONF, function (t) {
+test('Get NIC from nonexistent machine', function (t) {
     var mac = vmNic.mac.replace(/\:/g, '');
     var path = '/my/machines/fa9e18e4-654a-43a8-918b-cce04bdbf461/nics/' + mac;
 
@@ -657,7 +653,7 @@ test('Get NIC from nonexistent machine', TAP_CONF, function (t) {
 
 
 // NB: changes value of vmNic global
-test('Create NIC using network', TAP_CONF, function (t) {
+test('Create NIC using network', function (t) {
     var path = '/my/machines/' + machineUuid + '/nics';
     var args = { network: NETWORKS[0].uuid };
 
@@ -690,7 +686,7 @@ test('Create NIC using network', TAP_CONF, function (t) {
             t.ifError(err2);
             t.equal(res2.statusCode, 200);
 
-            t.equivalent(nic, nic2);
+            t.deepEqual(nic, nic2);
             vmNic = nic;
 
             t.end();
@@ -700,13 +696,13 @@ test('Create NIC using network', TAP_CONF, function (t) {
 
 
 
-test('Wait til network NIC added', TAP_CONF, function (t) {
+test('Wait til network NIC added', function (t) {
     waitTilNicAdded(t, location);
 });
 
 
 
-test('Create non-owner network on owner machine', TAP_CONF, function (t) {
+test('Create non-owner network on owner machine', function (t) {
     var path = '/my/machines/' + machineUuid + '/nics';
     var args = { network: otherNetwork.uuid };
 
@@ -726,7 +722,7 @@ test('Create non-owner network on owner machine', TAP_CONF, function (t) {
 
 
 
-test('Create owner network on non-owner machine', TAP_CONF, function (t) {
+test('Create owner network on non-owner machine', function (t) {
     var path = '/my/machines/' + otherMachineUuid + '/nics';
     var args = { network: NETWORKS[0].uuid };
 
@@ -746,7 +742,7 @@ test('Create owner network on non-owner machine', TAP_CONF, function (t) {
 
 
 
-test('Create non-owner network on non-owner machine', TAP_CONF, function (t) {
+test('Create non-owner network on non-owner machine', function (t) {
     var path = '/my/machines/' + otherMachineUuid + '/nics';
     var args = { network: otherNetwork.uuid };
 
@@ -766,7 +762,7 @@ test('Create non-owner network on non-owner machine', TAP_CONF, function (t) {
 
 
 
-test('Create NIC on server missing nic tag', TAP_CONF, function (t) {
+test('Create NIC on server missing nic tag', function (t) {
     var path = '/my/machines/' + machineUuid + '/nics';
     var args = { network: NETWORKS[1].uuid };  // NB: 1, not 0
 
@@ -786,7 +782,7 @@ test('Create NIC on server missing nic tag', TAP_CONF, function (t) {
 
 
 
-test('Create NIC with pool on server missing nic tag', TAP_CONF, function (t) {
+test('Create NIC with pool on server missing nic tag', function (t) {
     var path = '/my/machines/' + machineUuid + '/nics';
     var args = { network: NETWORK_POOLS[1].uuid };
 
@@ -806,7 +802,7 @@ test('Create NIC with pool on server missing nic tag', TAP_CONF, function (t) {
 
 
 
-test('Create with invalid network', TAP_CONF, function (t) {
+test('Create with invalid network', function (t) {
     var path = '/my/machines/' + machineUuid + '/nics';
     var args = { network: 'wowzers' };
 
@@ -826,7 +822,7 @@ test('Create with invalid network', TAP_CONF, function (t) {
 
 
 
-test('Create with invalid machine', TAP_CONF, function (t) {
+test('Create with invalid machine', function (t) {
     var path = '/my/machines/wowzers/nics';
     var args = { network: NETWORKS[0].uuid };
 
@@ -851,7 +847,7 @@ test('Create with invalid machine', TAP_CONF, function (t) {
 
 
 
-test('Create with nonexistent network', TAP_CONF, function (t) {
+test('Create with nonexistent network', function (t) {
     var path = '/my/machines/' + machineUuid + '/nics';
     var args = { network: '05cab1d4-f816-41c0-b45f-a4ffeda5a6b5' };
 
@@ -871,7 +867,7 @@ test('Create with nonexistent network', TAP_CONF, function (t) {
 
 
 
-test('Create with nonexistent machine', TAP_CONF, function (t) {
+test('Create with nonexistent machine', function (t) {
     var path = '/my/machines/aa26a3ee-e3d4-4e7e-a087-678ca877a338/nics';
     var args = { network: NETWORKS[0].uuid };
 
@@ -891,7 +887,7 @@ test('Create with nonexistent machine', TAP_CONF, function (t) {
 
 
 
-test('Remove owner NIC from non-owner machine', TAP_CONF, function (t) {
+test('Remove owner NIC from non-owner machine', function (t) {
     var mac  = vmNic.mac.replace(/\:/g, '');
     var path = '/my/machines/' + otherMachineUuid + '/nics/' + mac;
 
@@ -911,7 +907,7 @@ test('Remove owner NIC from non-owner machine', TAP_CONF, function (t) {
 
 
 
-test('Remove non-owner NIC from owner machine', TAP_CONF, function (t) {
+test('Remove non-owner NIC from owner machine', function (t) {
     var mac  = otherVmNic.mac.replace(/\:/g, '');
     var path = '/my/machines/' + machineUuid + '/nics/' + mac;
 
@@ -931,7 +927,7 @@ test('Remove non-owner NIC from owner machine', TAP_CONF, function (t) {
 
 
 
-test('Remove non-owner NIC from non-owner machine', TAP_CONF, function (t) {
+test('Remove non-owner NIC from non-owner machine', function (t) {
     var mac  = otherVmNic.mac.replace(/\:/g, '');
     var path = '/my/machines/' + otherMachineUuid + '/nics/' + mac;
 
@@ -951,7 +947,7 @@ test('Remove non-owner NIC from non-owner machine', TAP_CONF, function (t) {
 
 
 
-test('Remove invalid NIC', TAP_CONF, function (t) {
+test('Remove invalid NIC', function (t) {
     var path = '/my/machines/' + machineUuid + '/nics/wowzers';
 
     var expectedErr = {
@@ -970,7 +966,7 @@ test('Remove invalid NIC', TAP_CONF, function (t) {
 
 
 
-test('Remove NIC from invalid machine', TAP_CONF, function (t) {
+test('Remove NIC from invalid machine', function (t) {
     var mac  = vmNic.mac.replace(/\:/g, '');
     var path = '/my/machines/wowzers/nics/' + mac;
 
@@ -995,7 +991,7 @@ test('Remove NIC from invalid machine', TAP_CONF, function (t) {
 
 
 
-test('Remove nonexistent NIC', TAP_CONF, function (t) {
+test('Remove nonexistent NIC', function (t) {
     var path = '/my/machines/' + machineUuid + '/nics/012345678901';
 
     var expectedErr = {
@@ -1014,18 +1010,18 @@ test('Remove nonexistent NIC', TAP_CONF, function (t) {
 
 
 
-test('Remove NIC using network', TAP_CONF, function (t) {
+test('Remove NIC using network', function (t) {
     removeNic(t, vmNic);
 });
 
 
 
-test('Wait til network NIC removed', TAP_CONF, waitTilNicDeleted);
+test('Wait til network NIC removed', waitTilNicDeleted);
 
 
 
 // NB: changes value of vmNic global
-test('Create NIC using network pool', TAP_CONF, function (t) {
+test('Create NIC using network pool', function (t) {
     var path = '/my/machines/' + machineUuid + '/nics';
     var args = { network: NETWORK_POOLS[0].uuid };
 
@@ -1053,7 +1049,7 @@ test('Create NIC using network pool', TAP_CONF, function (t) {
             t.ifError(err2);
             t.equal(res2.statusCode, 200);
 
-            t.equivalent(nic, nic2);
+            t.deepEqual(nic, nic2);
             vmNic = nic;
 
             t.end();
@@ -1063,23 +1059,23 @@ test('Create NIC using network pool', TAP_CONF, function (t) {
 
 
 
-test('Wait til network pool NIC added', TAP_CONF, function (t) {
+test('Wait til network pool NIC added', function (t) {
     waitTilNicAdded(t, location);
 });
 
 
 
-test('Remove NIC using network pool', TAP_CONF, function (t) {
+test('Remove NIC using network pool', function (t) {
     removeNic(t, vmNic);
 });
 
 
 
-test('Wait til network pool NIC removed', TAP_CONF, waitTilNicDeleted);
+test('Wait til network pool NIC removed', waitTilNicDeleted);
 
 
 
-test('teardown', TAP_CONF, function (t) {
+test('teardown', function (t) {
     var deleteMachine = function (_, next) {
         client.del('/my/machines/' + machineUuid, function (err, req, res) {
             t.ifError(err);
@@ -1295,8 +1291,8 @@ function removeTagsFromServer(t, nicTags, server, callback) {
 function getErr(t, path, expectedErr) {
     client.get(path, function (err, req, res, body) {
         t.equal(res.statusCode, expectedErr.statusCode);
-        t.equivalent(err, expectedErr);
-        t.equivalent(body, expectedErr.body);
+        t.deepEqual(err, expectedErr);
+        t.deepEqual(body, expectedErr.body);
 
         t.end();
     });
@@ -1308,8 +1304,8 @@ function postErr(t, path, args, expectedErr) {
     verifyUnchangedNics(t, function (next) {
         client.post(path, args, function (err, req, res, body) {
             t.equal(res.statusCode, expectedErr.statusCode);
-            t.equivalent(err, expectedErr);
-            t.equivalent(body, expectedErr.body);
+            t.deepEqual(err, expectedErr);
+            t.deepEqual(body, expectedErr.body);
 
             next();
         });
@@ -1322,8 +1318,8 @@ function delErr(t, path, expectedErr) {
     verifyUnchangedNics(t, function (next) {
         client.del(path, function (err, req, res, body) {
             t.equal(res.statusCode, expectedErr.statusCode);
-            t.equivalent(err, expectedErr);
-            t.equivalent(body, expectedErr.body);
+            t.deepEqual(err, expectedErr);
+            t.deepEqual(body, expectedErr.body);
 
             next();
         });
@@ -1346,7 +1342,7 @@ function verifyUnchangedNics(t, mutator) {
                 belongs_to_type: 'zone'
             }, function (err2, newNics) {
                 t.ifError(err2);
-                t.equivalent(sortNics(origNics), sortNics(newNics));
+                t.deepEqual(sortNics(origNics), sortNics(newNics));
                 t.end();
             });
         });
@@ -1396,7 +1392,7 @@ function removeNic(t, nic) {
     client.del(path, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
-        t.equivalent(body, {});
+        t.deepEqual(body, {});
 
         location = path;
         t.end();

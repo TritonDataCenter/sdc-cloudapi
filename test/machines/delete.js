@@ -8,21 +8,18 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
-var test = require('tap').test;
+var test = require('tape').test;
 var common = require('../common');
 var machinesCommon = require('./common');
 var checkJob = machinesCommon.checkJob;
 var waitForJob = machinesCommon.waitForJob;
-var TAP_CONF = {
-    timeout: 'Infinity '
-};
 
 module.exports = function (suite, client, machine, callback) {
     if (!machine) {
         return callback();
     }
 
-    suite.test('DeleteMachine', TAP_CONF, function (t) {
+    suite.test('DeleteMachine', function (t) {
         client.del('/my/machines/' + machine, function (err, req, res) {
             t.ifError(err, 'DELETE /my/machines error');
             t.equal(res.statusCode, 204, 'DELETE /my/machines status');
@@ -32,7 +29,7 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
-    suite.test('Wait For Destroyed', TAP_CONF,  function (t) {
+    suite.test('Wait For Destroyed', function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'destroy'
@@ -47,7 +44,7 @@ module.exports = function (suite, client, machine, callback) {
         });
     });
 
-    suite.test('Delete already deleted machine', TAP_CONF, function (t) {
+    suite.test('Delete already deleted machine', function (t) {
         client.del('/my/machines/' + machine, function (err, req, res) {
             t.ok(err, 'DELETE /my/machines/ error');
             t.equal(res.statusCode, 410, 'DELETE /my/machines/ statusCode');
