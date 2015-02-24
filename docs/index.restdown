@@ -1796,7 +1796,14 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command:
 
-    $ sdc-role create --name='test-role' --members='bob' --members='fred' --default-members='bob' --policies='test-policy'
+    $ sdc-role create --name='test-role' --members=bob --members=fred --default-members=bob --policies=test-policy
+
+Possible alternate formats to pass in multiple items; in `sdc-role`, CSV and
+JSON are also acceptable formats for `--members`, `--default-members` and
+`--policies`:
+
+    $ sdc-role create --name='test-role' --members=bob,fred --default-members=bob --policies=test-policy
+    $ sdc-role create --name='test-role' --members='["bob","fred"]' --default-members=bob --policies=test-policy
 
 
 ### Example Request
@@ -1867,7 +1874,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command:
 
-    $ sdc-role update 3c2ef9da-b137-6a87-f227-dad1db4219b7 --members=joe --members=bob --default-members=bob --default-members=joe
+    $ sdc-role update 3c2ef9da-b137-6a87-f227-dad1db4219b7 --members=joe,bob --default-members=bob,joe
 
 ### Example Request
 
