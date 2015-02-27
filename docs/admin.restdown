@@ -2,7 +2,7 @@
 title: Joyent CloudAPI Administrator's Guide
 mediaroot: ./media
 apisections:
-markdown2extras: wiki-tables, code-friendly
+markdown2extras: tables, code-friendly, cuddled-lists
 ---
 <!--
     This Source Code Form is subject to the terms of the Mozilla Public
@@ -35,6 +35,37 @@ log output is placed in:
 `/var/svc/log/smartdc-application-cloudapi:default.log`.
 The CloudAPI configuration file lives at
 `/opt/smartdc/cloudapi/etc/cloudapi.cfg`.
+
+
+# SAPI Configuration
+
+Some aspects of cloudapi are configured via the "metadata" on the "cloudapi"
+service (of the "sdc" application) in SAPI. This is a list of those knobs.
+
+| Metadata Key                   | Type    | Description                                      |
+| ------------------------------ | ------- | ------------------------------------------------ |
+| **CLOUDAPI_READONLY**          | Boolean | Default false. Used to put cloudapi into read-only mode for DC maintenance. |
+| **CLOUDAPI_DATACENTERS**       | String  | The response for the 'ListDatacenters' endpoint. |
+| **CLOUDAPI_SERVICES**          | String  | The response for the 'ListServices' endpoint. See discussion below. |
+| **CLOUDAPI_PLUGINS** | Array | See "Plugins" section below. |
+| **CLOUDAPI_BLEEDING_EDGE_FEATURES** | Array | See "Bleeding Edge Features" section below. |
+| **CLOUDAPI_BLEEDING_EDGE_LOGIN_WHITELIST** | Array | See "Bleeding Edge Features" section below. |
+| **CLOUDAPI_THROTTLE_WHITELIST** | Array | See "Throttles" section below. |
+
+
+For example, the 'docker' service could be added to CLOUDAPI_SERVICES as
+follows.
+
+    docker_endpoint="tcp://docker.coal.joyent.us:2736"
+    cloudapi_svc=$(sdc-sapi /services?name=cloudapi | json -H 0.uuid)
+    sapiadm get $cloudapi_svc \
+        | json -e "
+            svcs = JSON.parse(this.metadata.CLOUDAPI_SERVICES || {});
+            svcs.docker = '$docker_endpoint';
+            this.update = {metadata: {CLOUDAPI_SERVICES: JSON.stringify(svcs)}};
+            " update \
+        | sapiadm update $cloudapi_svc
+
 
 # Configuration
 
@@ -166,12 +197,13 @@ This portion of the configuration file tells CloudAPI how to start up and what
 datacenter this instance is bound to (along with what other datacenters this
 instance should redirect to).
 
-||**Field**||**Type**||**Description**||
-||port||Number||What SSL port to listen on||
-||certificate||String||Path to a PEM encoded SSL certificate; can be relative to /opt/smartdc/cloudapi||
-||key||String||Path to a PEM encoded private key for the SSL certificate; can be relative to /opt/smartdc/cloudapi||
-||read_only||Boolean||When set to true, the API will deny all the POST/PUT/DELETE requests. Provided for review right after upgrading Smart DataCenter||
-||datacenters||Object||a k/v pairing of other DC's to URL's this instance should answer with.||
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| port | Number | What SSL port to listen on |
+| certificate | String | Path to a PEM encoded SSL certificate; can be relative to /opt/smartdc/cloudapi |
+| key | String | Path to a PEM encoded private key for the SSL certificate; can be relative to /opt/smartdc/cloudapi |
+| read_only | Boolean | When set to true, the API will deny all the POST/PUT/DELETE requests. Provided for review right after upgrading Smart DataCenter |
+| datacenters | Object | a k/v pairing of other DC's to URL's this instance should answer with. |
 
 
 ## Bleeding Edge Features
@@ -210,11 +242,12 @@ set the features and whitelist.
 The `ufds` config block tells CloudAPI how to communicate with UFDS, and what
 cache settings to use.
 
-||**Field**||**Type**||**Description**||
-||url||URL||The fully-qualified URL where UFDS lives||
-||bindDN||String||The DN to bind to UFDS LDAP server with.||
-||bindPassword||String||The password to bind to UFDS LDAP server with||
-||cache||Object||Controls the UFDS client cache size and the time to expire it||
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| url | URL | The fully-qualified URL where UFDS lives |
+| bindDN | String | The DN to bind to UFDS LDAP server with. |
+| bindPassword | String | The password to bind to UFDS LDAP server with |
+| cache | Object | Controls the UFDS client cache size and the time to expire it |
 
 ## VMAPI
 
@@ -229,9 +262,10 @@ cache settings to use.
 The `vmapi` config block tells CloudAPI how to communicate with VMAPI, and what
 cache settings to use.
 
-||**Field**||**Type**||**Description**||
-||url||URL||The fully-qualified URL where VMAPI lives||
-||cache||Object||Controls the VMAPI client cache size and the time to expire it, (in seconds)||
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| url | URL | The fully-qualified URL where VMAPI lives |
+| cache | Object | Controls the VMAPI client cache size and the time to expire it, (in seconds) |
 
 ## WFAPI
 
@@ -246,9 +280,10 @@ cache settings to use.
 The `wfapi` config block tells CloudAPI how to communicate with Workflow API, and what
 cache settings to use.
 
-||**Field**||**Type**||**Description**||
-||url||URL||The fully-qualified URL where WFAPI lives||
-||cache||Object||Controls the WFAPI client cache size and the time to expire it, (in seconds)||
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| url | URL | The fully-qualified URL where WFAPI lives |
+| cache | Object | Controls the WFAPI client cache size and the time to expire it, (in seconds) |
 
 ## CNAPI
 
@@ -264,9 +299,10 @@ cache settings to use.
 The `cnapi` config block tells CloudAPI how to communicate with CNAPI, and what
 cache settings to use.
 
-||**Field**||**Type**||**Description**||
-||url||URL||The fully-qualified URL where CNAPI lives||
-||cache||Object||Controls the CNAPI client cache size and the time to expire it, (in seconds)||
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| url | URL | The fully-qualified URL where CNAPI lives |
+| cache | Object | Controls the CNAPI client cache size and the time to expire it, (in seconds) |
 
 
 ## CA
@@ -278,8 +314,9 @@ cache settings to use.
 The `ca` config block tells CloudAPI how to communicate with Cloud Analytics, and what
 cache settings to use.
 
-||**Field**||**Type**||**Description**||
-||url||URL||The fully-qualified URL where CA lives||
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| url | URL | The fully-qualified URL where CA lives |
 
 ## NAPI
 
@@ -295,9 +332,10 @@ cache settings to use.
 The `napi` config block tells CloudAPI how to communicate with NAPI, and what
 cache settings to use.
 
-||**Field**||**Type**||**Description**||
-||url||URL||The fully-qualified URL where NAPI lives||
-||cache||Object||Controls the NAPI client cache size and the time to expire it, (in seconds)||
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| url | URL | The fully-qualified URL where NAPI lives |
+| cache | Object | Controls the NAPI client cache size and the time to expire it, (in seconds) |
 
 
 ## FWAPI
@@ -314,9 +352,10 @@ cache settings to use.
 The `fwapi` config block tells CloudAPI how to communicate with FWAPI, and what
 cache settings to use.
 
-||**Field**||**Type**||**Description**||
-||url||URL||The fully-qualified URL where FWAPI lives||
-||cache||Object||Controls the FWAPI client cache size and the time to expire it, (in seconds)||
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| url | URL | The fully-qualified URL where FWAPI lives |
+| cache | Object | Controls the FWAPI client cache size and the time to expire it, (in seconds) |
 
 
 ## IMGAPI
@@ -332,9 +371,10 @@ cache settings to use.
 The `imgapi` config block tells CloudAPI how to communicate with IMGAPI, and what
 cache settings to use.
 
-||**Field**||**Type**||**Description**||
-||url||URL||The fully-qualified URL where IMGAPI lives||
-||cache||Object||Controls the IMGAPI client cache size and the time to expire it, (in seconds)||
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| url | URL | The fully-qualified URL where IMGAPI lives |
+| cache | Object | Controls the IMGAPI client cache size and the time to expire it, (in seconds) |
 
 
 
@@ -382,10 +422,11 @@ startup time.  For information on writing a plugin, see
 some example plugins to limit provisioning based into number of customer
 machines, RAM used by customer machines, ...
 
-||**Field**||**Type**||**Description**||
-||name||String||Name of the plugin. Assumption is that the .js file containing the plugin is at `/opt/smartdc/cloudapi/plugins/${name}.js`||
-||enabled||Boolean||Whether or not this plugin should be loaded||
-||config||Object||A free-form object that gets passed into your plugin at creation time||
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| name | String | Name of the plugin. Assumption is that the .js file containing the plugin is at `/opt/smartdc/cloudapi/plugins/${name}.js` |
+| enabled | Boolean | Whether or not this plugin should be loaded |
+| config | Object | A free-form object that gets passed into your plugin at creation time |
 
 ## Throttles
 
@@ -438,14 +479,15 @@ unrestricted access.
 
 The given keys that can be configured in the throttling configuration:
 
-||**Key**||**Description**||
-||account||/account specific throttling||
-||analytics||/analytics specific throttling||
-||keys||/keys specific throttling||
-||machines||/machines specific throttling||
-||datasets||/datasets specific throttling||
-||packages||/packages specific throttling||
-||datacenters||/datacenters specific throttling||
+| Key | Description |
+| --- | ----------- |
+| account | /account specific throttling |
+| analytics | /analytics specific throttling |
+| keys | /keys specific throttling |
+| machines | /machines specific throttling |
+| datasets | /datasets specific throttling |
+| packages | /packages specific throttling |
+| datacenters | /datacenters specific throttling |
 
 These configurations can live in either the `ipThrottles` or `userThrottles`
 section (or both).  Note that in `ipThrottles`, the type `ip` is literally
@@ -521,15 +563,16 @@ has what's below (this is the equivalent of the "dummy" hook).
 The real handiness comes in on the `req` object; CloudAPI will provide you with
 the following handles:
 
-||**Handle**||**Type**||**Description**||
-||ufds||Object||An UFDS client; see node\_modules/sdc-clients/lib/ufds.js for more details||
-||vmapi||Object||A VMAPI client; see node\_modules/sdc-clients/lib/vmapi.js for more details||
-||napi||Object||A NAPI client; see node\_modules/sdc-clients/lib/napi.js for more details||
-||imgapi||Object||A IMGAPI client; see node\_modules/sdc-clients/lib/imgapi.js for more details||
-||account||Object||A complete JS object of the current requested account's UFDS object||
-||dataset||Object||The current dataset that is attempted to be provisioned||
-||package||Object||The current package that is attempted to be provisioned||
-||log||Object||The restify logger that will let you write into the CloudAPI SMF log||
+| Handle | Type | Description |
+| ------ | ---- | ----------- |
+| ufds | Object | An UFDS client; see node\_modules/sdc-clients/lib/ufds.js for more details |
+| vmapi | Object | A VMAPI client; see node\_modules/sdc-clients/lib/vmapi.js for more details |
+| napi | Object | A NAPI client; see node\_modules/sdc-clients/lib/napi.js for more details |
+| imgapi | Object | A IMGAPI client; see node\_modules/sdc-clients/lib/imgapi.js for more details |
+| account | Object | A complete JS object of the current requested account's UFDS object |
+| dataset | Object | The current dataset that is attempted to be provisioned |
+| package | Object | The current package that is attempted to be provisioned |
+| log | Object | The restify logger that will let you write into the CloudAPI SMF log |
 
 
 Additionally, you can require in your plugin file any of the NPM modules
@@ -664,13 +707,14 @@ plugin:
 
 Possible values for every config member are:
 
-||**Name**||**Description**||**Possible values**||
-||datacenter||String `datacenter` name||Name of the datacenter.||
-||os||String. Value for Image `os`.||Usually, this will be one of `windows`, `linux`, `smartos`, `bsd` or `any`. See [IMGAPI os values](https://mo.joyent.com/docs/imgapi/master/#manifest-os) for the whole list||
-||image||String. Value for Image `name`.||This will be one of `windows`, the different `linux` flavors, different `smartos` based datasets or `any`. See [IMGAPI possible values for image names](https://mo.joyent.com/docs/imgapi/master/#manifest-name)||
-||check||String. Either "image" or "os"|| See explanation below||
-||by||String. The name of the value this limit will be based into. Note that "machines" means "number of machines"||"ram" | "quota" | "machines"||
-||value||Number. A value for the previous "by" member||Negative Integer|Zero|Positive Integer||
+| Name | Description | Possible values |
+| ---- | ----------- | --------------- |
+| datacenter | String `datacenter` name | Name of the datacenter. |
+| os | String. Value for Image `os`. | Usually, this will be one of `windows`, `linux`, `smartos`, `bsd` or `any`. See [IMGAPI os values](https://mo.joyent.com/docs/imgapi/master/#manifest-os) for the whole list |
+| image | String. Value for Image `name`. | This will be one of `windows`, the different `linux` flavors, different `smartos` based datasets or `any`. See [IMGAPI possible values for image names](https://mo.joyent.com/docs/imgapi/master/#manifest-name) |
+| check | String. Either "image" or "os" | See explanation below |
+| by | String. The name of the value this limit will be based into. Note that "machines" means "number of machines" | "ram", "quota", or "machines" |
+| value | Number. A value for the previous "by" member | Negative Integer, Zero, or Positive Integer |
 
 Note that the values `os` or `image` can be omitted depending on the value
 given to `check`. Only the value specified for `check` must be present for
@@ -868,4 +912,3 @@ when necessary).
 <p style="min-height: 31px; margin-top: 60px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0">
 <a rel="license" href="http://creativecommons.org/licenses/by-nd/3.0/"><img alt="Creative Commons License" style="border-width:0;float:left;margin:4px 8px 0 0;" src="https://i.creativecommons.org/l/by-nd/3.0/88x31.png" /></a> <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Text" property="dct:title" rel="dct:type">Joyent CloudAPI Administrator's Guide</span> by <a xmlns:cc="http://creativecommons.org/ns#" href="http://www.joyent.com" property="cc:attributionName" rel="cc:attributionURL">Joyent, Inc.</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nd/3.0/">Creative Commons Attribution-NoDerivs 3.0 Unported License</a>.
 </p>
-
