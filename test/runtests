@@ -72,7 +72,7 @@ start_time=$(date +%s)
 
 NODE_INSTALL=$TOP/build/node
 PATH=$TOP/build/node/bin:$TOP/node_modules/.bin:$PATH
-TAP=./node_modules/.bin/tap
+TAPE=./node_modules/.bin/tape
 
 # Options.
 opt_test_pattern=
@@ -115,7 +115,7 @@ if [[ -n "$opt_test_pattern" ]]; then
 fi
 
 if [[ -n "$test_files" ]]; then
-    PATH=$NODE_INSTALL/bin:$PATH SDC_SETUP_TESTS=1 TAP=1 TAP_TIMEOUT=480 $TAP --timeout 960 $test_files \
+    PATH=$NODE_INSTALL/bin:$PATH SDC_SETUP_TESTS=1 $TAPE $test_files \
         | tee $OUTPUT_DIR/cloudapi.tap
 fi
 
