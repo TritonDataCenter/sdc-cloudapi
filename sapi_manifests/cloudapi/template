@@ -71,6 +71,9 @@
     },
     {{/MAHI_SERVICE}}
     "datacenters": {{{CLOUDAPI_DATACENTERS}}},
+    {{#CLOUDAPI_SERVICES}}
+    "services": {{{CLOUDAPI_SERVICES}}},
+    {{/CLOUDAPI_SERVICES}}
     "ufds_admin_uuid": "{{{ufds_admin_uuid}}}",
     "plugins": {{{CLOUDAPI_PLUGINS}}},
     "userThrottles": {
