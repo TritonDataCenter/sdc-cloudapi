@@ -56,7 +56,7 @@ service (of the "sdc" application) in SAPI. This is a list of those knobs.
 For example, the 'docker' service could be added to CLOUDAPI_SERVICES as
 follows.
 
-    docker_endpoint="tcp://docker.coal.joyent.us:2736"
+    docker_endpoint="tcp://docker.coal.joyent.us:2376"
     cloudapi_svc=$(sdc-sapi /services?name=cloudapi | json -H 0.uuid)
     sapiadm get $cloudapi_svc \
         | json -e "
