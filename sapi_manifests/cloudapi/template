@@ -3,6 +3,7 @@
     "bunyan": {
         "level": "info"
     },
+    "datacenter_name": "{{{datacenter_name}}}",
     "read_only": {{{CLOUDAPI_READONLY}}},
     "ufds": {
         "url": "ldaps://{{{ufds_domain}}}",
@@ -96,6 +97,15 @@
         },
         "analytics": false
     },
+
+    {{^account_allowed_dcs}}
+    "account_allowed_dcs": false,
+    {{/account_allowed_dcs}}
+    {{#account_allowed_dcs}}
+    "account_allowed_dcs": {{{account_allowed_dcs}}},
+    {{/account_allowed_dcs}}
+    "account_allowed_dcs_msg": "{{{account_allowed_dcs_msg}}}",
+
     "bleeding_edge_features": {
         {{#CLOUDAPI_BLEEDING_EDGE_FEATURES}}
         "{{{.}}}": true,
