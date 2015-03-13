@@ -38,6 +38,9 @@
         "tape": "3.5.0",
         "smartdc": "git+ssh://git@github.com:joyent/node-smartdc.git#adea68"
     },
+    "sdcDependencies": {
+        "imgapi": ">=2.1.0"
+    },
     "scripts": {
         "start": "node ./main.js",
         "test": "./node_modules/.bin/tap ./test/*.test.js"
