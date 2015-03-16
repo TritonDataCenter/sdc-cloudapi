@@ -60,7 +60,7 @@ follows.
     cloudapi_svc=$(sdc-sapi /services?name=cloudapi | json -H 0.uuid)
     sapiadm get $cloudapi_svc \
         | json -e "
-            svcs = JSON.parse(this.metadata.CLOUDAPI_SERVICES || {});
+            svcs = JSON.parse(this.metadata.CLOUDAPI_SERVICES || '{}');
             svcs.docker = '$docker_endpoint';
             this.update = {metadata: {CLOUDAPI_SERVICES: JSON.stringify(svcs)}};
             " update \
