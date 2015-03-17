@@ -39,6 +39,9 @@ function checkDataset(t, dataset, version, path) {
     t.ok(dataset.type, 'dataset.type');
     t.ok(dataset.requirements, 'dataset.requirements');
 
+    t.notEqual(dataset.name, 'docker-layer',
+        'should be no listed docker-layer images');
+
     if (/\/images/.test(path)) {
         t.equal(typeof (dataset.urn), 'undefined', 'dataset.urn');
     } else {
