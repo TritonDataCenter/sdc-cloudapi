@@ -105,7 +105,7 @@ var sdc_128_os = {
 };
 
 
-var sdc_256_entry, sdc_256_inactive_entry, sdc_128_ok_entry, sdc_128_os_entry;
+var sdc_256_inactive_entry, sdc_128_ok_entry, sdc_128_os_entry;
 
 var HEADNODE = null;
 
@@ -851,6 +851,74 @@ test('Check CreateMachine flattens same networks', function (t) {
 
 
 test('DeleteMachine which flattened networks', deleteMachine);
+
+
+test('Check resize does not affect docker machines (setup)', function (t) {
+    var vmUuid = client.account.uuid;
+    var vmDescription = {
+        owner_uuid: vmUuid,
+        uuid: uuid(),
+        alias: 'cloudapi-fake-docker-test',
+        internal_metadata: {
+            'docker:id': vmUuid,
+            'docker:tty': true,
+            'docker:attach_stdin': true,
+            'docker:attach_stdout': true,
+            'docker:attach_stderr': true,
+            'docker:open_stdin': true,
+            'docker:noipmgmtd': true,
+            'docker:cmd': '["/bin/bash"]',
+            'docker:entrypoint': '[]'
+        },
+        autoboot: true, // false
+        docker: true,
+        brand: 'joyent-minimal',  // should be lx, but we're abusing this
+        networks: [ {
+            uuid: '', // filled in below
+            primary: true
+        } ],
+        billing_id: sdc_128_ok.uuid,
+        image_uuid: DATASET
+    };
+
+    client.napi.listNetworks({ nic_tag: 'external' }, function (err, nets) {
+        t.ifError(err);
+
+        vmDescription.networks[0].uuid = nets[0].uuid;
+
+        client.vmapi.createVm(vmDescription, function (err2, vm) {
+            t.ifError(err2);
+
+            machine = vm.vm_uuid;
+
+            t.end();
+        });
+    });
+});
+
+
+test('Check resize does not affect docker machines (waiting)', waitForRunning);
+
+
+test('Check resize does not affect docker machines (test)', function (t) {
+    client.post('/my/machines/' + machine, {
+        action: 'resize',
+        'package': sdc_128_os.uuid
+    }, function (err, req, res, body) {
+        t.ok(err, 'Prevent resize machine error');
+        t.equal(res.statusCode, 409);
+
+        t.deepEqual(body, {
+            code: 'InvalidArgument',
+            message: 'resize is not supported for docker containers'
+        });
+
+        t.end();
+    });
+});
+
+
+test('Check resize does not affect docker machines (teardown)', deleteMachine);
 
 
 test('teardown', function (t) {
