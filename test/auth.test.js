@@ -201,6 +201,7 @@ test('signature auth', function (t) {
     });
 });
 
+
 // http-signature 0.10.x test
 var httpSignature = require('http-signature');
 function requestSigner(req) {
@@ -306,7 +307,7 @@ test('token auth', function (t) {
             account: client.account,
             devkeyId: KEY_ID,
             permissions: { cloudapi: ['/admin/other_things'] },
-            expires: new Date(+new Date() + 3600).toISOString()
+            expires: new Date(+new Date() + 1000).toISOString()
         };
 
         callWithBadDetails(t2, tokenDetails);
@@ -328,7 +329,7 @@ test('token auth', function (t) {
             account: client.account,
             devkeyId: '/verybadkey@joyent.com/keys/id_rsa',
             permissions: { cloudapi: ['/admin/keys'] },
-            expires: new Date(+new Date() + 3600).toISOString()
+            expires: new Date(+new Date() + 1000).toISOString()
         };
 
         callWithBadDetails(t2, tokenDetails);
@@ -339,7 +340,7 @@ test('token auth', function (t) {
             account: client.account,
             devkeyId: KEY_ID,
             permissions: { cloudapi: ['/admin/keys'] },
-            expires: new Date(+new Date() + 10).toISOString()
+            expires: new Date(+new Date() + 1000).toISOString()
         };
 
         keyapi.token(tokenDetails, function (err, token) {
