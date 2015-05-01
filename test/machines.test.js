@@ -12,6 +12,7 @@ var fs = require('fs');
 var util = require('util');
 var test = require('tape').test;
 var libuuid = require('libuuid');
+var restify = require('restify');
 
 var sprintf = util.format;
 var common = require('./common');
@@ -461,6 +462,96 @@ test('CreateMachine using dataset without permission', function (t) {
             t.end();
         });
     });
+});
+
+
+// We need to create a new user here, because the ufds entries cached
+// inside cloudapi conflict with simple updates of the existing user. That
+// implies skipping using the existing http client.
+test('CreateMachine without approved_for_provisioning', function (t) {
+    var ufdsClient = client.ufds;
+    var passwd = 'BlahBlahBlah12345';
+    var account;
+    var key;
+
+    function createUser() {
+        var user = 'a' + uuid().substr(0, 7) + '.test@joyent.com';
+
+        var entry = {
+            login: user,
+            email: user,
+            userpassword: passwd,
+            approved_for_provisioning: false
+        };
+
+        ufdsClient.addUser(entry, function (err, _account) {
+            t.ifError(err);
+
+            account = _account;
+
+            var keyPath = __dirname + '/id_rsa.pub';
+            fs.readFile(keyPath, 'ascii', function (err2, data) {
+                t.ifError(err2);
+
+                ufdsClient.addKey(account, {
+                    openssh: data,
+                    name: 'id_rsa'
+                }, function (err3, _key) {
+                    t.ifError(err3);
+
+                    key = _key;
+
+                    attemptProvision();
+                });
+            });
+        });
+    }
+
+    function attemptProvision() {
+        var httpClient = restify.createJsonClient({
+            url: client.url.href, // grab from old client
+            retryOptions: { retry: 0 },
+            log: client.log,
+            rejectUnauthorized: false
+        });
+
+        // cheating a bit by using the old auth method to make things easier
+        httpClient.basicAuth(account.login, passwd);
+
+        var obj = {
+            image: DATASET,
+            'package': 'sdc_128_ok',
+            server_uuid: HEADNODE.uuid
+        };
+
+        httpClient.post({
+            path: '/my/machines',
+            headers: { 'accept-version': '~6.5' }
+        }, obj, function (err, req, res, body) {
+            t.ok(err);
+            t.deepEqual(body, {
+                code: 'InvalidArgument',
+                message: 'User is not currently approved for provisioning'
+            });
+
+            httpClient.close();
+
+            destroyUser();
+        });
+    }
+
+    function destroyUser() {
+        ufdsClient.deleteKey(account, key, function (err) {
+            t.ifError(err);
+
+            ufdsClient.deleteUser(account, function (err2) {
+                t.ifError(err2);
+                t.end();
+            });
+        });
+    }
+
+    createUser();
 });
 
 
