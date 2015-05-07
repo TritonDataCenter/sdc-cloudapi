@@ -469,45 +469,9 @@ test('CreateMachine using dataset without permission', function (t) {
 // inside cloudapi conflict with simple updates of the existing user. That
 // implies skipping using the existing http client.
 test('CreateMachine without approved_for_provisioning', function (t) {
-    var ufdsClient = client.ufds;
-    var passwd = 'BlahBlahBlah12345';
-    var account;
-    var key;
+    function attemptProvision(err, tmpAccount, cb) {
+        t.ifError(err);
 
-    function createUser() {
-        var user = 'a' + uuid().substr(0, 7) + '.test@joyent.com';
-
-        var entry = {
-            login: user,
-            email: user,
-            userpassword: passwd,
-            approved_for_provisioning: false
-        };
-
-        ufdsClient.addUser(entry, function (err, _account) {
-            t.ifError(err);
-
-            account = _account;
-
-            var keyPath = __dirname + '/id_rsa.pub';
-            fs.readFile(keyPath, 'ascii', function (err2, data) {
-                t.ifError(err2);
-
-                ufdsClient.addKey(account, {
-                    openssh: data,
-                    name: 'id_rsa'
-                }, function (err3, _key) {
-                    t.ifError(err3);
-
-                    key = _key;
-
-                    attemptProvision();
-                });
-            });
-        });
-    }
-
-    function attemptProvision() {
         var httpClient = restify.createJsonClient({
             url: client.url.href, // grab from old client
             retryOptions: { retry: 0 },
@@ -516,7 +480,7 @@ test('CreateMachine without approved_for_provisioning', function (t) {
         });
 
         // cheating a bit by using the old auth method to make things easier
-        httpClient.basicAuth(account.login, passwd);
+        httpClient.basicAuth(tmpAccount.login, tmpAccount.passwd);
 
         var obj = {
             image: DATASET,
@@ -527,8 +491,9 @@ test('CreateMachine without approved_for_provisioning', function (t) {
         httpClient.post({
             path: '/my/machines',
             headers: { 'accept-version': '~6.5' }
-        }, obj, function (err, req, res, body) {
-            t.ok(err);
+        }, obj, function (err2, req, res, body) {
+            t.ok(err2);
+
             t.deepEqual(body, {
                 code: 'InvalidArgument',
                 message: 'User is not currently approved for provisioning'
@@ -536,22 +501,19 @@ test('CreateMachine without approved_for_provisioning', function (t) {
 
             httpClient.close();
 
-            destroyUser();
+            cb();
         });
     }
 
-    function destroyUser() {
-        ufdsClient.deleteKey(account, key, function (err) {
-            t.ifError(err);
-
-            ufdsClient.deleteUser(account, function (err2) {
-                t.ifError(err2);
-                t.end();
-            });
-        });
+    function done() {
+        t.end();
     }
 
-    createUser();
+    var opts = {
+        approved_for_provisioning: false
+    };
+
+    common.withTemporaryUser(client.ufds, opts, attemptProvision, done);
 });
 
 

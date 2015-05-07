@@ -368,6 +368,54 @@ test('token auth', function (t) {
 });
 
 
+// We need to create a new user here, because the ufds entries cached
+// inside cloudapi conflict with simple updates of the existing user. That
+// implies skipping using the existing http client.
+test('auth of disabled account', function (t) {
+    function attemptGet(err, tmpAccount, cb) {
+        t.ifError(err);
+
+        var httpClient = restify.createJsonClient({
+            url: client.url.href, // grab from old client
+            retryOptions: { retry: 0 },
+            log: client.log,
+            rejectUnauthorized: false
+        });
+
+        // cheating a bit by using the old auth method to make things easier
+        httpClient.basicAuth(tmpAccount.login, tmpAccount.passwd);
+
+        httpClient.get({
+            path: '/my',
+            headers: {
+                'accept-version': '~6.5'
+            }
+        }, function (err2, req, res, body) {
+            t.ok(err2);
+
+            t.deepEqual(body, {
+                code: 'NotAuthorized',
+                message: 'Account or user is disabled'
+            });
+
+            httpClient.close();
+
+            cb();
+        });
+    }
+
+    function done() {
+        t.end();
+    }
+
+    var opts = {
+        disabled: true
+    };
+
+    common.withTemporaryUser(client.ufds, opts, attemptGet, done);
+});
+
+
 // Account sub-users will use only http-signature >= 0.10.x, given this
 // feature has been added after moving from 0.9.
 // Also, request version will always be >= 7.2 here.

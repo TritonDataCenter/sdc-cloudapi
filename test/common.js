@@ -430,6 +430,63 @@ function waitForMahiCache(mahiclient, apath, cb) {
 }
 
 
+// Creates a temporary user, invokes bodyCb(), destroys the user, then invokes
+// cb(). Useful for running tests in bodyCb() with a user that'll be destroyed
+// after bodyCb() completes.
+function withTemporaryUser(ufdsClient, userOpts, bodyCb, cb) {
+    var tmpUser = 'a' + uuid().substr(0, 7) + '.test@joyent.com';
+
+    var entry = {
+        login: tmpUser,
+        email: tmpUser,
+        userpassword: 'BlahBlahBlah12345',
+        approved_for_provisioning: true,
+        disabled: false
+    };
+
+    // add or override default user values with anything in userOpts
+    Object.keys(userOpts).forEach(function (key) {
+        entry[key] = userOpts[key];
+    });
+
+    ufdsClient.addUser(entry, createTmpUser);
+
+    function createTmpUser(err, tmpAccount, callback) {
+        if (err) {
+            return invokeBodyCb(err);
+        }
+
+        tmpAccount.passwd = entry.userpassword; // sometimes bodyCb needs this
+
+        var keyPath = __dirname + '/id_rsa.pub';
+        return fs.readFile(keyPath, 'ascii', function readKey(err2, data) {
+            if (err2) {
+                return invokeBodyCb(err2);
+            }
+
+            return ufdsClient.addKey(tmpAccount, {
+                openssh: data,
+                name: 'id_rsa'
+            }, function (err3, tmpKey) {
+                invokeBodyCb(err3, tmpAccount, tmpKey);
+            });
+        });
+    }
+
+    function invokeBodyCb(err, tmpAccount, tmpKey) {
+        bodyCb(err, tmpAccount, function () {
+            destroyTmpUser(null, tmpAccount, tmpKey);
+        });
+    }
+
+    function destroyTmpUser(err, tmpAccount, tmpKey) {
+        // ignore errors, and hope things work out
+        ufdsClient.deleteKey(tmpAccount, tmpKey, function (err2) {
+            ufdsClient.deleteUser(tmpAccount, cb);
+        });
+    }
+}
+
 // --- Library
 
 module.exports = {
@@ -488,5 +545,6 @@ module.exports = {
     },
 
     checkMahiCache: checkMahiCache,
-    waitForMahiCache: waitForMahiCache
+    waitForMahiCache: waitForMahiCache,
+    withTemporaryUser: withTemporaryUser
 };
