@@ -5,7 +5,7 @@
 #
 
 #
-# Copyright (c) 2014, Joyent, Inc.
+# Copyright (c) 2015, Joyent, Inc.
 #
 
 #
@@ -30,7 +30,7 @@ TAP		:= ./node_modules/.bin/tape
 #
 # Files
 #
-DOC_FILES	 = index.restdown admin.restdown 65.restdown
+DOC_FILES	 = index.restdown admin.restdown 65.restdown dev.restdown
 RESTDOWN_FLAGS   = --brand-dir=deps/restdown-brand-remora
 EXTRA_DOC_DEPS += deps/restdown-brand-remora/.git
 JS_FILES	:= $(shell ls *.js) $(shell find lib -maxdepth 1 -name '*.js') \
@@ -93,7 +93,7 @@ build: haproxy $(SMF_MANIFESTS) | $(TAP) $(REPO_DEPS)
 $(TAP): | $(NPM_EXEC)
 	$(NPM) install
 
-DOC_CLEAN_FILES = docs/{index,admin}.{html,json} build/docs
+DOC_CLEAN_FILES = docs/{index,admin,dev}.{html,json} build/docs
 .PHONY: clean-docs
 clean-docs:
 	-$(RMTREE) $(DOC_CLEAN_FILES)

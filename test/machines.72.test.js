@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2015, Joyent, Inc.
  */
 
 var fs = require('fs');
@@ -20,6 +20,7 @@ var sprintf = util.format;
 var common = require('./common'),
     checkMahiCache = common.checkMahiCache,
     waitForMahiCache = common.waitForMahiCache;
+var setup = require('./setup');
 var machinesCommon = require('./machines/common');
 var checkMachine = machinesCommon.checkMachine;
 var checkJob = machinesCommon.checkJob;
@@ -59,39 +60,7 @@ var META_CREDS_TWO = {
     'jill': 'secret'
 };
 
-
-// May or not be created by previous test run or whatever else:
-var sdc_256_inactive = {
-    uuid: '4633473b-aae9-466b-8bde-3c410e5072cc',
-    name: 'sdc_256_inactive',
-    version: '1.0.0',
-    max_physical_memory: 256,
-    quota: 10240,
-    max_swap: 512,
-    cpu_cap: 150,
-    max_lwps: 1000,
-    zfs_io_priority: 10,
-    'default': false,
-    vcpus: 1,
-    active: false
-};
-
-var sdc_128_ok = {
-    uuid: '897779dc-9ce7-4042-8879-a4adccc94353',
-    name: 'sdc_128_ok',
-    version: '1.0.0',
-    max_physical_memory: 128,
-    quota: 10240,
-    max_swap: 512,
-    cpu_cap: 150,
-    max_lwps: 1000,
-    zfs_io_priority: 10,
-    fss: 25,
-    'default': false,
-    vcpus: 1,
-    active: true
-};
-
+var PROVISIONABLE_NET;
 
 var sdc_256_entry, sdc_256_inactive_entry, sdc_128_ok_entry;
 
@@ -128,10 +97,12 @@ test('setup', function (t) {
         }
         saveKey(KEY, keyName, client, t, function () {
             // Add custom packages; "sdc_" ones will be owned by admin user:
-            addPackage(client, sdc_128_ok, function (err2, entry) {
+            addPackage(client, setup.packages.sdc_128_ok,
+                    function (err2, entry) {
                 t.ifError(err2, 'Add package error');
                 sdc_128_ok_entry = entry;
-                addPackage(client, sdc_256_inactive, function (err3, entry2) {
+                addPackage(client, setup.packages.sdc_256_inactive,
+                        function (err3, entry2) {
                     t.ifError(err3, 'Add package error');
                     sdc_256_inactive_entry = entry2;
                     t.end();
@@ -143,35 +114,16 @@ test('setup', function (t) {
 
 
 test('Get Headnode', function (t) {
-    client.cnapi.listServers(function (err, servers) {
-        t.ifError(err);
-        t.ok(servers);
-        t.ok(Array.isArray(servers));
-        t.ok(servers.length > 0);
-        servers = servers.filter(function (s) {
-            return (s.headnode);
-        });
-        t.ok(servers.length > 0);
-        HEADNODE = servers[0];
-        t.ok(HEADNODE);
+    setup.getHeadnode(t, client, function (hn) {
+        HEADNODE = hn;
         t.end();
     });
 });
 
 
 test('get base dataset', function (t) {
-    client.get('/my/datasets?name=base', function (err, req, res, body) {
-        t.ifError(err, 'GET /my/datasets error');
-        t.equal(res.statusCode, 200, 'GET /my/datasets status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/datasets body');
-        t.ok(Array.isArray(body), 'GET /my/datasets body is an array');
-        t.ok(body.length, 'GET /my/datasets body array has elements');
-        body.forEach(function (d) {
-            if (d.version && d.version === '13.4.0') {
-                DATASET = d.id;
-            }
-        });
+    setup.getBaseDataset(t, client, function (dataset) {
+        DATASET = dataset;
         t.end();
     });
 });
@@ -276,6 +228,36 @@ test('Get Machine', function (t) {
             t.end();
         });
     }
+});
+
+
+test('get provisionable network', function (t) {
+    setup.getProvisionableNetwork(t, client, function (net) {
+        PROVISIONABLE_NET = net;
+        t.end();
+    });
+});
+
+
+test('7.3 networks format should fail', function (t) {
+    var obj = {
+        image: DATASET,
+        'package': 'sdc_128_ok',
+        name: 'a' + uuid().substr(0, 7),
+        networks: [ { ipv4_uuid: PROVISIONABLE_NET.id, ipv4_count: 1 } ],
+        server_uuid: HEADNODE.uuid
+    };
+
+    client.post({
+        path: '/my/machines'
+    }, obj, function (err, req, res, body) {
+        t.ok(err, 'error expected');
+        if (err) {
+            t.equal(err.message, 'Invalid Networks', 'error message');
+        }
+
+        t.end();
+    });
 });
 
 

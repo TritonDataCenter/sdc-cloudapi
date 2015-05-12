@@ -118,6 +118,14 @@
         {{/CLOUDAPI_BLEEDING_EDGE_LOGIN_WHITELIST}}
         "": false
     },
+
+    {{^fabric_cfg}}
+    "fabrics_enabled": false,
+    {{/fabric_cfg}}
+    {{#fabric_cfg}}
+    "fabrics_enabled": true,
+    {{/fabric_cfg}}
+
     {{^CLOUDAPI_MULTIPLE_PUB_NETWORKS}}
     "allow_multiple_public_networks": false,
     {{/CLOUDAPI_MULTIPLE_PUB_NETWORKS}}

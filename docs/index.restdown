@@ -6392,9 +6392,8 @@ An array of VLAN objects that exist on the fabric. Each VLAN object has the
 following properties:
 
 ||*Field*||*Type*||*Description*||
-||uuid||String||A unique identifier that refers to this VLAN||
-||vland_id||Integer||A number from 0-4095 that indicates the VLAN's id||
-||name||String||A unique name to identify a network||
+||vlan_id||Integer||A number from 0-4095 that indicates the VLAN's id||
+||name||String||A unique name to identify the VLAN||
 ||description||String||An optional description of the VLAN||
 
 ### Errors
@@ -6421,8 +6420,8 @@ A VLAN Object.
 
 ||*Field*||*Type*||*Description*||
 ||uuid||String||A unique identifier that refers to this VLAN||
-||vland_id||Integer||A number from 0-4095 that indicates the VLAN's id||
-||name||String||A unique name to identify a network||
+||vlan_id||Integer||A number from 0-4095 that indicates the VLAN's id||
+||name||String||A unique name to identify the VLAN||
 ||description||String||An optional description of the VLAN||
 
 ### Errors
@@ -6444,8 +6443,8 @@ A VLAN Object.
 
 ||*Field*||*Type*||*Description*||
 ||uuid||String||A unique identifier that refers to this VLAN||
-||vland_id||Integer||A number from 0-4095 that indicates the VLAN's id||
-||name||String||A unique name to identify a network||
+||vlan_id||Integer||A number from 0-4095 that indicates the VLAN's id||
+||name||String||A unique name to identify the VLAN||
 ||description||String||An optional description of the VLAN||
 
 ### Errors

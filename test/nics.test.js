@@ -1193,7 +1193,7 @@ test('teardown', function (t) {
 
 function createNetwork(t, net, pool, addOwner, callback) {
     client.napi.createNicTag(net.nic_tag, function (err) {
-        t.ifError(err);
+        t.ifError(err, 'creating nic tag ' + net.nic_tag);
 
         pool.nic_tag = net.nic_tag;
 
@@ -1204,7 +1204,7 @@ function createNetwork(t, net, pool, addOwner, callback) {
         }
 
         client.napi.createNetwork(net, function (err2, _net) {
-            t.ifError(err2);
+            t.ifError(err2, 'creating network ' + net.name);
 
             // Fill in uuid entries in NETWORKS global
             net.uuid = _net.uuid;
@@ -1214,7 +1214,7 @@ function createNetwork(t, net, pool, addOwner, callback) {
 
             var name = pool.name;
             client.napi.createNetworkPool(name, pool, function (err3, _pool) {
-                t.ifError(err3);
+                t.ifError(err3, 'creating network pool ' + name);
 
                 // Fill in uuid entries in NETWORK_POOLS global
                 pool.uuid = _pool.uuid;

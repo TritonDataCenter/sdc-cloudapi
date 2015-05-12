@@ -196,6 +196,15 @@ function clientTeardown(cb) {
 }
 
 
+/**
+ * Check and log the request ID header
+ */
+function checkReqId(t, headers) {
+    var reqID = headers['x-request-id'];
+    t.ok(reqID, 'request ID: ' + reqID);
+}
+
+
 function createTestRole(callback) {
     var entry = {
         name: 'test-role',
@@ -475,6 +484,8 @@ module.exports = {
         t.equal(headers.connection, 'Keep-Alive', 'headers connection');
         t.ok(headers['x-api-version'], 'headers x-api-version OK');
     },
+
+    checkReqId: checkReqId,
 
     checkVersionHeader: function (t, version, headers) {
         assert.ok(t);

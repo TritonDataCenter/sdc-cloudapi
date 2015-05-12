@@ -23,7 +23,7 @@ set -o errexit
 set -o pipefail
 
 TOP=$(cd $(dirname $0)/../; pwd)
-NODE=$1
+NODE=root@$1
 
 if [[ -z "$CLOUDAPI_ZONE" ]]; then
     CLOUDAPI_ZONE=$(ssh $NODE "/opt/smartdc/bin/sdc-vmapi /vms" 2>/dev/null \
