@@ -42,16 +42,18 @@ The CloudAPI configuration file lives at
 Some aspects of cloudapi are configured via the "metadata" on the "cloudapi"
 service (of the "sdc" application) in SAPI. This is a list of those knobs.
 
-| Metadata Key                   | Type    | Description                                      |
-| ------------------------------ | ------- | ------------------------------------------------ |
-| **CLOUDAPI_READONLY**          | Boolean | Default false. Used to put cloudapi into read-only mode for DC maintenance. |
-| **CLOUDAPI_DATACENTERS**       | String  | The response for the 'ListDatacenters' endpoint. |
-| **CLOUDAPI_SERVICES**          | String  | The response for the 'ListServices' endpoint. See discussion below. |
-| **CLOUDAPI_PLUGINS** | Array | See "Plugins" section below. |
-| **CLOUDAPI_BLEEDING_EDGE_FEATURES** | Array | See "Bleeding Edge Features" section below. |
-| **CLOUDAPI_BLEEDING_EDGE_LOGIN_WHITELIST** | Array | See "Bleeding Edge Features" section below. |
-| **CLOUDAPI_THROTTLE_WHITELIST** | Array | See "Throttles" section below. |
-
+| Metadata Key                                  | Type    | Description                                      |
+| --------------------------------------------- | ------- | ------------------------------------------------ |
+| **CLOUDAPI_READONLY**                         | Boolean | Default false. Used to put cloudapi into read-only mode for DC maintenance. |
+| **CLOUDAPI_DATACENTERS**                      | String  | The response for the 'ListDatacenters' endpoint. |
+| **CLOUDAPI_SERVICES**                         | String  | The response for the 'ListServices' endpoint. See discussion below. |
+| **CLOUDAPI_PLUGINS**                          | Array   | See "Plugins" section below.                     |
+| **CLOUDAPI_BLEEDING_EDGE_FEATURES**           | Array   | See "Bleeding Edge Features" section below.      |
+| **CLOUDAPI_BLEEDING_EDGE_LOGIN_WHITELIST**    | Array   | See "Bleeding Edge Features" section below.      |
+| **CLOUDAPI_THROTTLE_WHITELIST**               | Array   | See "Throttles" section below.                   |
+| **CLOUDAPI_MULTIPLE_PUB_NETWORKS**            | Boolean | Default false. Whether machines can be provisioned with more than one public network. |
+| **CLOUDAPI_TEST_MODE**                        | Boolean | Default false. Disable some security checks to make testing easier. |
+| **CLOUDAPI_IGNORE_APPROVED_FOR_PROVISIONING** | Boolean | Default false. Allow provisioning for users even if they have not been given permission. |
 
 For example, the 'docker' service could be added to CLOUDAPI_SERVICES as
 follows.
