@@ -16,6 +16,7 @@ function uuid() {
     return (libuuid.create());
 }
 var sprintf = util.format;
+var setup = require('./setup');
 var common = require('./common');
 var machinesCommon = require('./machines/common');
 var checkMachine = machinesCommon.checkMachine;
@@ -93,6 +94,8 @@ var sdc_128_ok = {
 var sdc_256_entry, sdc_256_inactive_entry, sdc_128_ok_entry;
 
 var HEADNODE = null;
+var DATASET;
+
 
 // --- Tests
 
@@ -122,37 +125,16 @@ test('setup', function (t) {
 
 
 test('Get Headnode', function (t) {
-    client.cnapi.listServers(function (err, servers) {
-        t.ifError(err);
-        t.ok(servers);
-        t.ok(Array.isArray(servers));
-        t.ok(servers.length > 0);
-        servers = servers.filter(function (s) {
-            return (s.headnode);
-        });
-        t.ok(servers.length > 0);
-        HEADNODE = servers[0];
-        t.ok(HEADNODE);
+    setup.getHeadnode(t, client, function (hn) {
+        HEADNODE = hn;
         t.end();
     });
 });
 
 
-var DATASET;
-
 test('get base dataset', function (t) {
-    client.get('/my/datasets?name=base', function (err, req, res, body) {
-        t.ifError(err, 'GET /my/datasets error');
-        t.equal(res.statusCode, 200, 'GET /my/datasets status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/datasets body');
-        t.ok(Array.isArray(body), 'GET /my/datasets body is an array');
-        t.ok(body.length, 'GET /my/datasets body array has elements');
-        body.forEach(function (d) {
-            if (d.version && d.version === '13.4.0') {
-                DATASET = d.id;
-            }
-        });
+    setup.getBaseDataset(t, client, function (dataset) {
+        DATASET = dataset;
         t.end();
     });
 });

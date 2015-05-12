@@ -139,6 +139,11 @@ test('list networks', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body, 'GET /my/networks body');
         t.ok(Array.isArray(body), 'GET /my/networks body is an array');
+
+        if (!Array.isArray(body)) {
+            return t.end();
+        }
+
         t.ok(body.length, 'GET /my/networks body array has elements');
 
         body.forEach(function (n) {
@@ -157,7 +162,7 @@ test('list networks', function (t) {
 
         // This will likely be our default setup external network
         NET_UUID = body[0].id;
-        t.end();
+        return t.end();
     });
 });
 

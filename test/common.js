@@ -196,6 +196,15 @@ function clientTeardown(cb) {
 }
 
 
+/**
+ * Check and log the request ID header
+ */
+function checkReqId(t, headers) {
+    var reqID = headers['x-request-id'];
+    t.ok(reqID, 'request ID: ' + reqID);
+}
+
+
 function createTestRole(callback) {
     var entry = {
         name: 'test-role',
@@ -523,15 +532,21 @@ module.exports = {
     checkHeaders: function (t, headers) {
         assert.ok(t);
         t.ok(headers, 'headers ok');
-        t.ok(headers['access-control-allow-origin'], 'headers allow-origin');
-        t.ok(headers['access-control-allow-methods'], 'headers allow-methods');
-        t.ok(headers.date, 'headers date');
-        t.ok(headers['x-request-id'], 'headers x-request-id');
-        t.ok(headers['x-response-time'] >= 0, 'headers response time');
-        t.ok(headers.server, 'headers server');
-        t.equal(headers.connection, 'Keep-Alive', 'headers connection');
-        t.ok(headers['x-api-version'], 'headers x-api-version OK');
+        if (headers) {
+            t.ok(headers['access-control-allow-origin'],
+                    'headers allow-origin');
+            t.ok(headers['access-control-allow-methods'],
+                    'headers allow-methods');
+            t.ok(headers.date, 'headers date');
+            t.ok(headers['x-request-id'], 'headers x-request-id');
+            t.ok(headers['x-response-time'] >= 0, 'headers response time');
+            t.ok(headers.server, 'headers server');
+            t.equal(headers.connection, 'Keep-Alive', 'headers connection');
+            t.ok(headers['x-api-version'], 'headers x-api-version OK');
+        }
     },
+
+    checkReqId: checkReqId,
 
     checkVersionHeader: function (t, version, headers) {
         assert.ok(t);

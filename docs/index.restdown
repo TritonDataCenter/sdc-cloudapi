@@ -1,7 +1,7 @@
 ---
 title: Joyent CloudAPI
 mediaroot: ./media
-apisections: Account, Keys, Datacenters, Datasets, Images, Packages, Machines, Analytics, FirewallRules, Networks, Nics, Users, Roles, Policies, Services, User SSH Keys, Role Tags, Fabrics
+apisections: Account, Keys, Config, Datacenters, Datasets, Images, Packages, Machines, Analytics, FirewallRules, Networks, Nics, Users, Roles, Policies, Services, User SSH Keys, Role Tags, Fabrics
 markdown2extras: wiki-tables, code-friendly
 ---
 <!--
@@ -2363,6 +2363,100 @@ Removes a key.  See [GetKey](#GetKey).
 
     $ sdc-user delete-key dd71f8bb-f310-4746-8e36-afd7c6dd2895 '0b:56:ae:c5:d1:7b:7a:98:09:58:1a:a2:0c:22:63:9f'
 
+
+
+# Config
+
+These endpoints allow you to get and set configuration values related to your
+account.
+
+## GetConfig (GET /:login/config)
+
+Outputs configuration for your account.  The configuration values that are
+currently configurable are:
+
+* `default_network`: the network that docker containers are provisioned on.
+
+
+### Inputs
+
+* None
+
+### Returns
+
+An object with configuration values.
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+### CLI Command
+
+* `sdc-fabric network get-default`
+
+### Example Request
+
+    GET /my/config HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Api-Version: ~7.3
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Content-Length: 60
+    Server: Joyent SmartDataCenter 7.3.0
+    Api-Version: 7.3.0
+
+
+    {
+      "default_network": "7fa999c8-0d2c-453e-989c-e897716d0831"
+    }
+
+## UpdateConfig (PUT /:login/config)
+
+Updates configuration values for your account.
+
+### Inputs
+
+* None
+
+### Returns
+
+An object with the updated configuration.
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+### CLI Command
+
+* `sdc-fabric network set-default`
+
+### Example Request
+
+    PUT /my/config HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Api-Version: ~7.3
+    {
+        "default_network": "c786128e-fa80-11e4-bdad-83592a0bd906"
+    }
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Content-Length: 60
+    Server: Joyent SmartDataCenter 7.3.0
+    Api-Version: 7.3.0
+
+    {
+        "default_network": "c786128e-fa80-11e4-bdad-83592a0bd906"
+    }
 
 
 
@@ -6392,9 +6486,8 @@ An array of VLAN objects that exist on the fabric. Each VLAN object has the
 following properties:
 
 ||*Field*||*Type*||*Description*||
-||uuid||String||A unique identifier that refers to this VLAN||
-||vland_id||Integer||A number from 0-4095 that indicates the VLAN's id||
-||name||String||A unique name to identify a network||
+||vlan_id||Integer||A number from 0-4095 that indicates the VLAN's id||
+||name||String||A unique name to identify the VLAN||
 ||description||String||An optional description of the VLAN||
 
 ### Errors
@@ -6421,8 +6514,8 @@ A VLAN Object.
 
 ||*Field*||*Type*||*Description*||
 ||uuid||String||A unique identifier that refers to this VLAN||
-||vland_id||Integer||A number from 0-4095 that indicates the VLAN's id||
-||name||String||A unique name to identify a network||
+||vlan_id||Integer||A number from 0-4095 that indicates the VLAN's id||
+||name||String||A unique name to identify the VLAN||
 ||description||String||An optional description of the VLAN||
 
 ### Errors
@@ -6444,8 +6537,8 @@ A VLAN Object.
 
 ||*Field*||*Type*||*Description*||
 ||uuid||String||A unique identifier that refers to this VLAN||
-||vland_id||Integer||A number from 0-4095 that indicates the VLAN's id||
-||name||String||A unique name to identify a network||
+||vlan_id||Integer||A number from 0-4095 that indicates the VLAN's id||
+||name||String||A unique name to identify the VLAN||
 ||description||String||An optional description of the VLAN||
 
 ### Errors
@@ -7791,6 +7884,7 @@ Sample code for generating the `Authorization` header (and `Date` header):
 ||[sdc-enablefirewallrule](#EnableFirewallRule)||Enable a disabled firewall rule.||
 ||[sdc-enablemachinefirewall](#EnableMachineFirewall)||Enable the firewall on a machine.||
 ||[sdc-exportimage](#ExportImage)||Export an image to Manta.||
+||[sdc-fabric](#Fabrics)||Administer fabric networks and VLANs.||
 ||[sdc-getaccount ](#GetAccount)||Gets details about your account.||
 ||[sdc-getdataset](#GetDataset)||Gets an individual dataset by id. (deprecated)||
 ||[sdc-getfirewallrule](#GetFirewallRule)||Get details about a specific firewall rule.||
