@@ -29,6 +29,7 @@ var CREATED = {
     nets: [],
     vlans: []
 };
+var DEFAULT_NET;
 var PARAMS = {
     nets: [
         {
@@ -68,8 +69,8 @@ var TOO_LONG_STR = SIXTEEN + SIXTEEN + SIXTEEN + SIXTEEN + 'x';
 // --- Functions
 
 
-function afterFindInList(t, params, err, req, res, body) {
-    var found = false;
+function afterFindInList(t, params, callback, err, req, res, body) {
+    var found;
 
     t.ifError(err, 'GET error');
     t.equal(res.statusCode, 200, 'GET status');
@@ -79,6 +80,10 @@ function afterFindInList(t, params, err, req, res, body) {
     t.ok(body, 'GET body');
     t.ok(Array.isArray(body), 'GET body is an array');
     if (!Array.isArray(body)) {
+        if (callback) {
+            return callback(err);
+        }
+
         return t.end();
     }
 
@@ -86,7 +91,7 @@ function afterFindInList(t, params, err, req, res, body) {
 
     body.forEach(function (v) {
         if (v.name === params.name) {
-            found = true;
+            found = v;
 
             // Cover the case (like the default network) where we don't
             // know the id of the thing we're trying to compare:
@@ -99,45 +104,91 @@ function afterFindInList(t, params, err, req, res, body) {
     });
 
     t.ok(found, 'found ' + params.name);
+
+    if (callback) {
+        return callback(null, found);
+    }
+
     return t.end();
+}
+
+
+/**
+ * Change the default network
+ */
+function changeDefaultNet(t, net) {
+    var params = {
+        default_network: net.id
+    };
+
+    CLIENT.put('/my/config', params, checkConfig.bind(null, t, params));
+}
+
+
+/**
+ * Check config params - intended to be bound to an API function call
+ */
+function checkConfig(t, params, err, req, res, body) {
+    t.ifErr(err, 'getting config');
+    common.checkHeaders(t, res.headers);
+    common.checkReqId(t, res.headers);
+
+    t.ok(body, 'PUT body');
+    t.ok(typeof (body), 'object', 'PUT body is an object');
+    t.deepEqual(body, params, 'body is correct');
+
+    return t.end();
+}
+
+
+/**
+ * Check the default network matches the one in /my/config
+ */
+function checkDefaultNet(t, net) {
+    var params = {
+        default_network: net.id
+    };
+
+    CLIENT.get('/my/config', checkConfig.bind(null, t, params));
 }
 
 
 /**
  * Find a fabric network in a user's overall network list
  */
-function findNetInList(t, params) {
+function findNetInList(t, params, callback) {
     assert.object(t, 't');
     assert.object(params, 'params');
     assert.string(params.name, 'params.name');
 
-    CLIENT.get('/my/networks', afterFindInList.bind(null, t, params));
+    CLIENT.get('/my/networks', afterFindInList.bind(null, t, params, callback));
 }
 
 
 /**
  * Find a fabric network in a user's fabric network list
  */
-function findNetInFabricList(t, params) {
+function findNetInFabricList(t, params, callback) {
     assert.object(t, 't');
     assert.object(params, 'params');
     assert.number(params.vlan_id, 'params.vlan_id');
     assert.string(params.name, 'params.name');
 
     CLIENT.get(fmt('/my/fabrics/vlans/%d/networks', params.vlan_id),
-            afterFindInList.bind(null, t, params));
+            afterFindInList.bind(null, t, params, callback));
 }
 
 
 /**
  * Find a fabric VLAN in a user's list
  */
-function findVLANinList(t, params) {
+function findVLANinList(t, params, callback) {
     assert.object(t, 't');
     assert.object(params, 'params');
     assert.number(params.vlan_id, 'params.vlan_id');
 
-    CLIENT.get('/my/fabrics/vlans', afterFindInList.bind(null, t, params));
+    CLIENT.get('/my/fabrics/vlans',
+            afterFindInList.bind(null, t, params, callback));
 }
 
 
@@ -674,7 +725,69 @@ test('default fabric', function (tt) {
 
 
     tt.test('default network exists in main list', function (t) {
-        findNetInList(t, defaultNet);
+        findNetInList(t, defaultNet, function _afterListDefault(_, net) {
+            if (net) {
+                DEFAULT_NET = net;
+            }
+
+            t.end();
+        });
+    });
+
+
+    tt.test('change default network', function (t) {
+        if (!DEFAULT_NET) {
+            t.fail('default vlan not found: skipping test');
+            return t.end();
+        }
+
+        changeDefaultNet(t, CREATED.nets[0]);
+    });
+
+    tt.test('confirm default network change', function (t) {
+        if (!DEFAULT_NET) {
+            t.fail('default vlan not found: skipping test');
+            return t.end();
+        }
+
+        checkDefaultNet(t, CREATED.nets[0]);
+    });
+
+
+    // Not allowed to delete a network if it's set to be the default
+    tt.test('attempt to delete default network', function (t) {
+        if (!DEFAULT_NET) {
+            t.fail('default vlan not found: skipping test');
+            return t.end();
+        }
+
+        var net = CREATED.nets[0];
+
+        CLIENT.del(fmt('/my/fabrics/vlans/%d/networks/%s',
+                net.vlan_id, net.id), function (err, req, res, body) {
+            t.ok(err, 'delete network');
+            common.checkHeaders(t, res.headers);
+            common.checkReqId(t, res.headers);
+
+            if (err) {
+                t.equal(err.message, 'cannot delete default network',
+                        'error message');
+                t.equal(err.restCode, 'InvalidArgument', 'restCode');
+                t.equal(err.statusCode, 409, 'statusCode');
+            }
+
+            return t.end();
+        });
+    });
+
+
+    tt.test('change default network back', function (t) {
+        if (!DEFAULT_NET) {
+            t.fail('default vlan not found: skipping test');
+            return t.end();
+        }
+
+        changeDefaultNet(t, DEFAULT_NET);
     });
 
 });
