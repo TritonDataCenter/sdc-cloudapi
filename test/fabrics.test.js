@@ -174,7 +174,7 @@ function findNetInFabricList(t, params, callback) {
     assert.number(params.vlan_id, 'params.vlan_id');
     assert.string(params.name, 'params.name');
 
-    CLIENT.get(fmt('/my/fabrics/vlans/%d/networks', params.vlan_id),
+    CLIENT.get(fmt('/my/fabrics/default/vlans/%d/networks', params.vlan_id),
             afterFindInList.bind(null, t, params, callback));
 }
 
@@ -187,7 +187,7 @@ function findVLANinList(t, params, callback) {
     assert.object(params, 'params');
     assert.number(params.vlan_id, 'params.vlan_id');
 
-    CLIENT.get('/my/fabrics/vlans',
+    CLIENT.get('/my/fabrics/default/vlans',
             afterFindInList.bind(null, t, params, callback));
 }
 
@@ -233,7 +233,8 @@ function waitForDefaultVLAN(t) {
     t.pass('Waiting for default fabric VLAN to be created...');
 
     function _checkVlan() {
-        CLIENT.get('/my/fabrics/vlans/2', function (err, req, res, body) {
+        CLIENT.get('/my/fabrics/default/vlans/2',
+                function (err, req, res, body) {
             if (body && body.vlan_id) {
                 t.pass('found default vlan');
                 return t.end();
@@ -273,7 +274,7 @@ test('setup', function (t) {
 test('VLANs', function (tt) {
 
     tt.test('create fabric VLAN', function (t) {
-        CLIENT.post('/my/fabrics/vlans', PARAMS.vlan,
+        CLIENT.post('/my/fabrics/default/vlans', PARAMS.vlan,
                 function (err, req, res, body) {
             t.ifErr(err, 'create VLAN');
 
@@ -291,7 +292,7 @@ test('VLANs', function (tt) {
 
 
     tt.test('get fabric VLAN', function (t) {
-        CLIENT.get('/my/fabrics/vlans/' + PARAMS.vlan.vlan_id,
+        CLIENT.get('/my/fabrics/default/vlans/' + PARAMS.vlan.vlan_id,
                 function (err, req, res, body) {
             t.ifErr(err, 'get VLAN');
 
@@ -316,7 +317,7 @@ test('VLANs', function (tt) {
             description: 'new description'
         };
 
-        CLIENT.put('/my/fabrics/vlans/' + PARAMS.vlan.vlan_id,
+        CLIENT.put('/my/fabrics/default/vlans/' + PARAMS.vlan.vlan_id,
                 updateParams, function (err, req, res, body) {
             t.ifErr(err, 'update VLAN');
 
@@ -334,7 +335,8 @@ test('VLANs', function (tt) {
 
 
     tt.test('delete non-existent fabric VLAN', function (t) {
-        CLIENT.del('/my/fabrics/vlans/999', function (err, req, res, body) {
+        CLIENT.del('/my/fabrics/default/vlans/999',
+                function (err, req, res, body) {
             t.ok(err, 'expected error');
 
             if (err) {
@@ -368,7 +370,7 @@ test('create VLAN: invalid', function (t) {
     ];
 
     function _createInvalidVLAN(data, cb) {
-        CLIENT.post('/my/fabrics/vlans', data[0],
+        CLIENT.post('/my/fabrics/default/vlans', data[0],
                 function (err, req, res, body) {
 
             t.ok(err, 'expected error: ' + JSON.stringify(data[0]));
@@ -406,7 +408,7 @@ test('update VLAN: invalid', function (t) {
     ];
 
     function _updateInvalidVLAN(data, cb) {
-        CLIENT.put('/my/fabrics/vlans/' + PARAMS.vlan.vlan_id, data[0],
+        CLIENT.put('/my/fabrics/default/vlans/' + PARAMS.vlan.vlan_id, data[0],
                 function (err, req, res, body) {
 
             t.ok(err, 'expected error: ' + JSON.stringify(data[0]));
@@ -434,8 +436,9 @@ test('networks', function (tt) {
     var nets = [];
 
     tt.test('create fabric network 1', function (t) {
-        CLIENT.post(fmt('/my/fabrics/vlans/%d/networks', PARAMS.vlan.vlan_id),
-                PARAMS.nets[0], function (err, req, res, body) {
+        CLIENT.post(fmt('/my/fabrics/default/vlans/%d/networks',
+                PARAMS.vlan.vlan_id), PARAMS.nets[0],
+                function (err, req, res, body) {
             t.ifErr(err, 'create fabric network');
 
             t.equal(res.statusCode, 201, 'create fabric network');
@@ -468,7 +471,7 @@ test('networks', function (tt) {
             return;
         }
 
-        CLIENT.get(fmt('/my/fabrics/vlans/%d/networks/%s',
+        CLIENT.get(fmt('/my/fabrics/default/vlans/%d/networks/%s',
                 PARAMS.vlan.vlan_id, nets[0]), function (err, req, res, body) {
             t.ifErr(err, 'get fabric network');
 
@@ -483,8 +486,9 @@ test('networks', function (tt) {
 
 
     tt.test('create fabric network 1', function (t) {
-        CLIENT.post(fmt('/my/fabrics/vlans/%d/networks', PARAMS.vlan.vlan_id),
-                PARAMS.nets[1], function (err, req, res, body) {
+        CLIENT.post(fmt('/my/fabrics/default/vlans/%d/networks',
+                PARAMS.vlan.vlan_id), PARAMS.nets[1],
+                function (err, req, res, body) {
             t.ifErr(err, 'create fabric network');
 
             t.equal(res.statusCode, 201, 'create fabric network');
@@ -517,7 +521,7 @@ test('networks', function (tt) {
             return;
         }
 
-        CLIENT.get(fmt('/my/fabrics/vlans/%d/networks/%s',
+        CLIENT.get(fmt('/my/fabrics/default/vlans/%d/networks/%s',
                 PARAMS.vlan.vlan_id, nets[1]), function (err, req, res, body) {
             t.ifErr(err, 'get fabric network');
 
@@ -580,8 +584,9 @@ test('networks', function (tt) {
             subnet: '10.5.1.0/24'
         };
 
-        CLIENT.post(fmt('/my/fabrics/vlans/%d/networks', PARAMS.vlan.vlan_id),
-                params, function (err, req, res, body) {
+        CLIENT.post(fmt('/my/fabrics/default/vlans/%d/networks',
+                PARAMS.vlan.vlan_id), params,
+                function (err, req, res, body) {
             t.ok(err, 'expected error');
 
             if (err) {
@@ -668,8 +673,8 @@ test('create fabric network: invalid', function (t) {
     ];
 
     function _createInvalidNet(data, cb) {
-        CLIENT.post(fmt('/my/fabrics/vlans/%d/networks', PARAMS.vlan.vlan_id),
-                data[0], function (err, req, res, body) {
+        CLIENT.post(fmt('/my/fabrics/default/vlans/%d/networks',
+                PARAMS.vlan.vlan_id), data[0], function (err, req, res, body) {
 
             t.ok(err, 'expected error: ' + JSON.stringify(data[0]));
             if (err) {
@@ -738,7 +743,8 @@ test('default fabric', function (tt) {
     tt.test('change default network', function (t) {
         if (!DEFAULT_NET) {
             t.fail('default vlan not found: skipping test');
-            return t.end();
+            t.end();
+            return;
         }
 
         changeDefaultNet(t, CREATED.nets[0]);
@@ -747,7 +753,8 @@ test('default fabric', function (tt) {
     tt.test('confirm default network change', function (t) {
         if (!DEFAULT_NET) {
             t.fail('default vlan not found: skipping test');
-            return t.end();
+            t.end();
+            return;
         }
 
         checkDefaultNet(t, CREATED.nets[0]);
@@ -758,12 +765,13 @@ test('default fabric', function (tt) {
     tt.test('attempt to delete default network', function (t) {
         if (!DEFAULT_NET) {
             t.fail('default vlan not found: skipping test');
-            return t.end();
+            t.end();
+            return;
         }
 
         var net = CREATED.nets[0];
 
-        CLIENT.del(fmt('/my/fabrics/vlans/%d/networks/%s',
+        CLIENT.del(fmt('/my/fabrics/default/vlans/%d/networks/%s',
                 net.vlan_id, net.id), function (err, req, res, body) {
             t.ok(err, 'delete network');
             common.checkHeaders(t, res.headers);
@@ -784,7 +792,8 @@ test('default fabric', function (tt) {
     tt.test('change default network back', function (t) {
         if (!DEFAULT_NET) {
             t.fail('default vlan not found: skipping test');
-            return t.end();
+            t.end();
+            return;
         }
 
         changeDefaultNet(t, DEFAULT_NET);
@@ -802,7 +811,7 @@ test('teardown', function (tt) {
         }
 
         function _delNet(net, cb) {
-            CLIENT.del(fmt('/my/fabrics/vlans/%d/networks/%s',
+            CLIENT.del(fmt('/my/fabrics/default/vlans/%d/networks/%s',
                     net.vlan_id, net.id), function (err, req, res, body) {
                 t.ifErr(err, 'delete network');
 
@@ -831,7 +840,7 @@ test('teardown', function (tt) {
         }
 
         function _delVlan(vlan, cb) {
-            CLIENT.del(fmt('/my/fabrics/vlans/%d', vlan.vlan_id),
+            CLIENT.del(fmt('/my/fabrics/default/vlans/%d', vlan.vlan_id),
                     function (err, req, res, body) {
                 t.ifErr(err, 'delete vlan');
 

@@ -2421,7 +2421,8 @@ Updates configuration values for your account.
 
 ### Inputs
 
-* None
+||**Field**||**Type**||**Description**||
+||default_network||String||ID of the network used for provisioning docker containers||
 
 ### Returns
 
@@ -6469,12 +6470,14 @@ Will return the collection of machines affected by the firewall rule given by
 [List Machines](#ListMachines).
 
 
+
 # Fabrics
 
 CloudAPI provides a way to create and manipulate a fabric. On the fabric you can
 create VLANs and then under that create layer three networks.
 
-## GetFabricVLANs (GET /:login/fabrics/vlans)
+
+## ListFabricVLANs (GET /:login/fabrics/default/vlans)
 
 ### Inputs
 
@@ -6497,7 +6500,33 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If :login does not exist||
 
-## CreateFabricVLAN (POST /:login/fabrics/vlans)
+### CLI
+
+    $ sdc-fabric vlan list
+
+#### Example Request
+
+    GET /login/fabrics/default/vlans HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~7.3
+
+#### Example Response
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Server: Joyent SmartDataCenter 7.3.0
+    Api-Version: 7.3.0
+
+    [
+      {
+        "name": "default",
+        "vlan_id": 2
+      }
+    ]
+
+## CreateFabricVLAN (POST /:login/fabrics/default/vlans)
 
 Creates a new VLAN on the fabric.
 
@@ -6513,7 +6542,6 @@ Creates a new VLAN on the fabric.
 A VLAN Object.
 
 ||*Field*||*Type*||*Description*||
-||uuid||String||A unique identifier that refers to this VLAN||
 ||vlan_id||Integer||A number from 0-4095 that indicates the VLAN's id||
 ||name||String||A unique name to identify the VLAN||
 ||description||String||An optional description of the VLAN||
@@ -6525,7 +6553,39 @@ A VLAN Object.
 ||MissingParameter||If you didn't send a key||
 ||InvalidArgument||vlan_id or name are in use, or vlan_id is outside the valid range||
 
-## GetFabricVLAN (GET /:login/fabrics/vlans/:id)
+### CLI
+
+    $ sdc-fabric vlan create
+
+#### Example Request
+
+    POST /login/fabrics/default/vlans HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~7.3
+
+    {
+      "name": "new",
+      "description": "my description",
+      "vlan_id": 100
+    }
+
+#### Example Response
+
+    HTTP/1.1 201 OK
+    Content-Type: application/json
+    Server: Joyent SmartDataCenter 7.3.0
+    Api-Version: 7.3.0
+
+    {
+      "name": "new",
+      "description": "my description",
+      "vlan_id": 100
+    }
+
+
+## GetFabricVLAN (GET /:login/fabrics/default/vlans/:vlan_id)
 
 ### Inputs
 
@@ -6536,7 +6596,6 @@ A VLAN Object.
 A VLAN Object.
 
 ||*Field*||*Type*||*Description*||
-||uuid||String||A unique identifier that refers to this VLAN||
 ||vlan_id||Integer||A number from 0-4095 that indicates the VLAN's id||
 ||name||String||A unique name to identify the VLAN||
 ||description||String||An optional description of the VLAN||
@@ -6546,9 +6605,89 @@ A VLAN Object.
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
 ||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+||ResourceNotFound||If `:login` or `:vlan_id` does not exist||
 
-## DeleteFabricVLAN (DELETE /:login/fabrics/vlans/:id)
+### CLI
+
+    $ sdc-fabric vlan get
+
+#### Example Request
+
+    GET /login/fabrics/default/vlans/2 HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~7.3
+
+#### Example Response
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Server: Joyent SmartDataCenter 7.3.0
+    Api-Version: 7.3.0
+
+    {
+      "name": "default",
+      "vlan_id": 2
+    }
+
+## UpdateFabricVLAN (PUT /:login/fabrics/default/vlans/:vlan_id)
+
+Updates a fabric VLAN.
+
+### Inputs
+
+All inputs are optional.
+
+||*Field*||*Type*||*Description*||
+|| name || String || A unique name for this VLAN ||
+|| description || String || An optional description of the VLAN ||
+
+### Returns
+
+A VLAN Object.
+
+||*Field*||*Type*||*Description*||
+||vlan_id||Integer||A number from 0-4095 that indicates the VLAN's id||
+||name||String||A unique name to identify the VLAN||
+||description||String||An optional description of the VLAN||
+
+### Errors
+
+||**Error Code**||**Description**||
+||ResourceNotFound||If :login or :vlan_id does not exist||
+
+### CLI
+
+    $ sdc-fabric vlan update
+
+#### Example Request
+
+    POST /login/fabrics/default/vlans HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~7.3
+
+    {
+      "description": "new description"
+    }
+
+#### Example Response
+
+    HTTP/1.1 201 OK
+    Content-Type: application/json
+    Server: Joyent SmartDataCenter 7.3.0
+    Api-Version: 7.3.0
+
+    {
+      "name": "new",
+      "description": "new description",
+      "vlan_id": 100
+    }
+
+
+## DeleteFabricVLAN (DELETE /:login/fabrics/default/vlans/:vlan_id)
 
 Deletes the specified VLAN. Note there must be no networks on that VLAN in order
 for the VLAN to be deleted.
@@ -6566,12 +6705,32 @@ for the VLAN to be deleted.
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
 ||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+||ResourceNotFound||If `:login` or `:vlan_id` does not exist||
 ||InUseError||The VLAN currently has active networks on it||
 
-## ListFabricNetworks (GET /:login/fabrics/vlans/:id/networks)
+### CLI
 
-Lists all of the networks in a fabric on the VLAN specified by `:id`.
+    $ sdc-fabric vlan delete
+
+#### Example Request
+
+    DELETE /login/fabrics/default/vlans/2 HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~7.3
+
+#### Example Response
+
+    HTTP/1.1 204 OK
+    Content-Type: application/json
+    Server: Joyent SmartDataCenter 7.3.0
+    Api-Version: 7.3.0
+
+
+## ListFabricNetworks (GET /:login/fabrics/default/vlans/:vlan_id/networks)
+
+Lists all of the networks in a fabric on the VLAN specified by `:vlan_id`.
 
 ### Inputs
 
@@ -6583,16 +6742,16 @@ Returns an array of Network Objects. Each network object has the following
 information:
 
 ||**Field**||**Type**||**Description**||
-||uuid||String||Unique identifier for this network||
+||id||String||Unique identifier for this network||
 ||name||String||The network name||
 ||public||Boolean||Whether this a public or private (rfc1918) network||
-||fabric||Boolean||Whether this networks is created on a fabric||
+||fabric||Boolean||Whether this network is created on a fabric||
 ||description||String||Description of this network (optional)||
 ||subnet||String||A CIDR formatted string that describes the network||
 ||provision_start_ip||String||The first IP on the network that may be assigned||
 ||provision_end_ip||String||The last IP on the network that may be assigned||
 ||gateway||String||Optional Gateway IP address||
-||resolvers||String||Optional Resolver IP addresses||
+||resolvers||String||Resolver IP addresses||
 ||routes||Routes Object||Optional Static routes for hosts on this network||
 
 ### Errors
@@ -6600,12 +6759,64 @@ information:
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
 ||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+||ResourceNotFound||If `:login` or `:vlan_id` does not exist||
 
-## CreateFabricNetwork (POST /:login/fabrics/vlans/:id/networks)
+### CLI
+
+    $ sdc-fabric network list
+
+#### Example Request
+
+    GET /login/fabrics/default/vlans/2/networks HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~7.3
+
+#### Example Response
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Server: Joyent SmartDataCenter 7.3.0
+    Api-Version: 7.3.0
+
+    [
+      {
+        "id": "7326787b-8039-436c-a533-5038f7280f04",
+        "name": "default",
+        "public": false,
+        "fabric": true,
+        "gateway": "192.168.128.1",
+        "provision_end_ip": "192.168.131.250",
+        "provision_start_ip": "192.168.128.5",
+        "resolvers": [
+          "8.8.8.8",
+          "8.8.4.4"
+        ],
+        "subnet": "192.168.128.0/22",
+        "vlan_id": 2
+      },
+      {
+        "id": "7fa999c8-0d2c-453e-989c-e897716d0831",
+        "name": "newnet",
+        "public": false,
+        "fabric": true,
+        "provision_end_ip": "10.50.1.20",
+        "provision_start_ip": "10.50.1.2",
+        "resolvers": [
+          "8.8.8.8"
+        ],
+        "subnet": "10.50.1.0/24",
+        "vlan_id": 2
+      }
+    ]
+
+
+## CreateFabricNetwork (POST /:login/fabrics/default/vlans/:vlan_id/networks)
 
 ### Inputs
 
+||**Field**||**Type**||**Description**||
 ||name||String||The network name, it must be unique||
 ||description||String||Description of this network (optional)||
 ||subnet||String||A CIDR formatted string that describes the network||
@@ -6619,10 +6830,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 Network Object:
 
-||uuid||String||Unique identifier for this network||
+||**Field**||**Type**||**Description**||
+||id||String||Unique identifier for this network||
 ||name||String||The network name||
 ||public||Boolean||Whether this a public or private (rfc1918) network||
-||fabric||Boolean||Whether this networks is created on a fabric||
+||fabric||Boolean||Whether this network is created on a fabric||
 ||description||String||Description of this network (optional)||
 ||subnet||String||A CIDR formatted string that describes the network||
 ||provision_start_ip||String||The first IP on the network that may be assigned||
@@ -6638,7 +6850,50 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If :login does not exist||
 
-## GetFabricNetwork (GET /:login/fabrics/vlan/:id/networks/:id)
+### CLI
+
+    $ sdc-fabric network create
+
+#### Example Request
+
+    POST /login/fabrics/default/vlans/2/networks HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~7.3
+
+    {
+      "name": "newnet",
+      "provision_end_ip": "10.50.1.20",
+      "provision_start_ip": "10.50.1.2",
+      "resolvers": [
+        "8.8.8.8"
+      ],
+      "subnet": "10.50.1.0/24"
+    }
+
+#### Example Response
+
+    HTTP/1.1 201 OK
+    Content-Type: application/json
+    Server: Joyent SmartDataCenter 7.3.0
+    Api-Version: 7.3.0
+
+    {
+      "id": "7fa999c8-0d2c-453e-989c-e897716d0831",
+      "name": "newnet",
+      "public": false,
+      "fabric": true,
+      "provision_end_ip": "10.50.1.20",
+      "provision_start_ip": "10.50.1.2",
+      "resolvers": [
+        "8.8.8.8"
+      ],
+      "subnet": "10.50.1.0/24",
+      "vlan_id": 2
+    }
+
+## GetFabricNetwork (GET /:login/fabrics/default/vlan/:vlan_id/networks/:id)
 
 ### Inputs
 
@@ -6648,10 +6903,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 The details of the network object:
 
-||uuid||String||Unique identifier for this network||
+||**Field**||**Type**||**Description**||
+||id||String||Unique identifier for this network||
 ||name||String||The network name||
 ||public||Boolean||Whether this a public or private (rfc1918) network||
-||fabric||Boolean||Whether this networks is created on a fabric||
+||fabric||Boolean||Whether this network is created on a fabric||
 ||description||String||Description of this network (optional)||
 ||subnet||String||A CIDR formatted string that describes the network||
 ||provision_start_ip||String||The first IP on the network that may be assigned||
@@ -6665,9 +6921,45 @@ The details of the network object:
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
 ||**Error Code**||**Description**||
-||ResourceNotFound||If :login does not exist||
+||ResourceNotFound||If `:login`, `:vlan_id` or `id` does not exist||
 
-## DeleteFabricNetwork (DELETE /:login/fabrics/vlans/:id/networks/:id)
+
+### CLI
+
+    $ sdc-fabric network get
+
+#### Example Request
+
+    GET /login/fabrics/default/vlans/2/networks/7fa999c8-0d2c-453e-989c-e897716d0831 HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~7.3
+
+#### Example Response
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Server: Joyent SmartDataCenter 7.3.0
+    Api-Version: 7.3.0
+
+    {
+      "id": "7fa999c8-0d2c-453e-989c-e897716d0831",
+      "name": "newnet",
+      "public": false,
+      "fabric": true,
+      "provision_end_ip": "10.50.1.20",
+      "provision_start_ip": "10.50.1.2",
+      "resolvers": [
+        "8.8.8.8"
+      ],
+      "subnet": "10.50.1.0/24",
+      "vlan_id": 2
+    }
+
+
+
+## DeleteFabricNetwork (DELETE /:login/fabrics/default/vlans/:vlan_id/networks/:id)
 
 Deletes the specified Network. Note that no VMs may be provisioned on the
 Network.
@@ -6685,8 +6977,28 @@ Network.
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
 ||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+||ResourceNotFound||If `:login`, `:vlan_id` or `id` does not exist||
 ||InUseError||The VLAN currently has active networks on it||
+
+### CLI
+
+    $ sdc-fabric network delete
+
+#### Example Request
+
+    DELETE /login/fabrics/default/vlans/2/networks/7fa999c8-0d2c-453e-989c-e897716d0831 HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~7.3
+
+#### Example Response
+
+    HTTP/1.1 204 OK
+    Content-Type: application/json
+    Server: Joyent SmartDataCenter 7.3.0
+    Api-Version: 7.3.0
+
 
 # Networks
 
