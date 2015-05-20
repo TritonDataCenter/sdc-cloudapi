@@ -157,7 +157,7 @@ publish: release
 	mkdir -p $(BITS_DIR)/$(NAME)
 	cp $(ROOT)/$(RELEASE_TARBALL) $(BITS_DIR)/$(NAME)/$(RELEASE_TARBALL)
 
-.PHONY: test no_machines_test auth_test account_test analytics_test datacenters_test datasets_test keys_test networks_test nics_test machines_all_test machines_65_test machines_70_test machines_71_test machines_72_test machines_test packages_test populate_networks_test users_test
+.PHONY: test no_machines_test auth_test account_test analytics_test datacenters_test datasets_test fabrics_test keys_test networks_test nics_test machines_all_test machines_65_test machines_70_test machines_71_test machines_72_test machines_73_test machines_test packages_test populate_networks_test services_test users_test
 
 auth_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/auth.test.js
@@ -173,6 +173,9 @@ datacenters_test: $(TAP)
 
 datasets_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/datasets.test.js
+
+fabrics_test: $(TAP)
+	$(NODE_EXEC) $(TAP) test/fabrics.test.js
 
 keys_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/keys.test.js
@@ -198,7 +201,10 @@ machines_71_test:
 machines_72_test:
 	$(NODE_EXEC) $(TAP) test/machines.72.test.js
 
-machines_test: machines_all_test machines_65_test machines_70_test machines_71_test machines_72_test
+machines_73_test:
+	$(NODE_EXEC) $(TAP) test/machines.73.test.js
+
+machines_test: machines_all_test machines_65_test machines_70_test machines_71_test machines_72_test machines_73_test
 
 packages_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/packages.test.js
@@ -206,13 +212,16 @@ packages_test: $(TAP)
 populate_network_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/populate_network.test.js
 
+services_test: $(TAP)
+	$(NODE_EXEC) $(TAP) test/services.test.js
+
 users_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/users.test.js
 
 
-test: auth_test account_test analytics_test datacenters_test datasets_test keys_test networks_test packages_test populate_network_test users_test nics_test machines_test
+test: auth_test account_test analytics_test datacenters_test datasets_test fabrics_test keys_test networks_test packages_test populate_network_test services_test users_test nics_test machines_test
 
-no_machines_test: auth_test account_test analytics_test datacenters_test datasets_test keys_test networks_test packages_test populate_network_test users_test
+no_machines_test: auth_test account_test analytics_test datacenters_test datasets_test fabrics_test keys_test networks_test packages_test populate_network_test services_test users_test
 
 include ./tools/mk/Makefile.deps
 ifeq ($(shell uname -s),SunOS)
