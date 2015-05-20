@@ -92,9 +92,15 @@ echo "# Setup CloudAPI and prepare COAL DC for ."
 echo "# Allow headnode provisioning"
 sdcadm post-setup dev-headnode-prov
 
+echo "# Allow retrieval of images over public network"
+sdcadm post-setup common-external-nics
+
 echo "# Setup fabrics"
 sdcadm experimental portolan
 sdcadm experimental fabrics --coal
+
+echo "# Setup NAT and Docker"
+sdcadm experimental update-docker
 
 # TODO: how to offer alternative to hook up to remote Manta?
 hack_imgapi_to_allow_local_custom_images
