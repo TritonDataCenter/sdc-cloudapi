@@ -341,8 +341,8 @@ test('VLANs', function (tt) {
 
             if (err) {
                 t.equal(err.message, 'vlan not found', 'error message');
-                t.equal(err.restCode, 'InvalidArgument', 'restCode');
-                t.equal(err.statusCode, 409, 'statusCode');
+                t.equal(err.restCode, 'ResourceNotFound', 'restCode');
+                t.equal(err.statusCode, 404, 'statusCode');
             }
 
             t.end();
@@ -396,15 +396,15 @@ test('create VLAN: invalid', function (t) {
 test('update VLAN: invalid', function (t) {
     var invalid = [
         // name
-        [ {name: 5}, typeMsg('name', 'number', 'string')],
-        [ {name: TOO_LONG_STR}, tooLongMsg('name')],
+        [ {name: 5}, typeMsg('name', 'number', 'string'), 409 ],
+        [ {name: TOO_LONG_STR}, tooLongMsg('name'), 409 ],
 
         // description
-        [ {description: 5}, typeMsg('description', 'number', 'string')],
-        [ {description: TOO_LONG_STR}, tooLongMsg('description')],
+        [ {description: 5}, typeMsg('description', 'number', 'string'), 409 ],
+        [ {description: TOO_LONG_STR}, tooLongMsg('description'), 409 ],
 
         // vlan_id
-        [ {vlan_id: 10}, 'vlan not found']
+        [ {vlan_id: 10}, 'vlan not found', 404 ]
     ];
 
     function _updateInvalidVLAN(data, cb) {
@@ -414,8 +414,12 @@ test('update VLAN: invalid', function (t) {
             t.ok(err, 'expected error: ' + JSON.stringify(data[0]));
             if (err) {
                 t.equal(err.message, data[1], 'error message');
-                t.equal(err.restCode, 'InvalidArgument', 'restCode');
-                t.equal(err.statusCode, 409, 'statusCode');
+                t.equal(err.statusCode, data[2], 'statusCode');
+
+                var restCode = (data[2] === 404 ?
+                                'ResourceNotFound' :
+                                'InvalidArgument');
+                t.equal(err.restCode, restCode, 'restCode');
             }
 
             cb();
