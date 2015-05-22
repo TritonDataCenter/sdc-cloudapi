@@ -553,6 +553,7 @@ please refer to [Role Based Access Control][acuguide] documentation.
 
 [acuguide]: https://docs.joyent.com/jpc/rbac/
 
+
 ## Fabrics
 
 A fabric is the basis for building your own private networks that
@@ -571,7 +572,8 @@ could reach, or you could create a traditional configuration where you have a
 database network, a web network, and a load balancer network, each on their own
 VLAN.
 
-XXX We should put information on creating and destroying these networks down below.
+
+
 
 # An important note about RBAC and certain reads after writes
 
@@ -591,6 +593,8 @@ a outdated object with old object details.
 For the time being, please keep in mind that user, role and policy
 creation/updates/deletion may potentially take several seconds to settle. They
 have eventual consistency, not read-after-write.
+
+
 
 
 # API Introduction
@@ -2392,7 +2396,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-* `sdc-fabric network get-default`
+    $ sdc-fabric network get-default
 
 ### Example Request
 
@@ -2434,7 +2438,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-* `sdc-fabric network set-default`
+    $ sdc-fabric network set-default c786128e-fa80-11e4-bdad-83592a0bd906
 
 ### Example Request
 
@@ -6471,10 +6475,11 @@ Will return the collection of machines affected by the firewall rule given by
 
 
 
+
 # Fabrics
 
 CloudAPI provides a way to create and manipulate a fabric. On the fabric you can
-create VLANs and then under that create layer three networks.
+create VLANs, and then under that create layer three networks.
 
 
 ## ListFabricVLANs (GET /:login/fabrics/default/vlans)
@@ -6525,6 +6530,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
         "vlan_id": 2
       }
     ]
+
 
 ## CreateFabricVLAN (POST /:login/fabrics/default/vlans)
 
@@ -7000,6 +7006,8 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Api-Version: 7.3.0
 
 
+
+
 # Networks
 
 CloudAPI provides a way to get details on public and customer-specific networks
@@ -7009,7 +7017,7 @@ fabric.
 ||uuid||String||Unique identifier for this network||
 ||name||String||The network name||
 ||public||Boolean||Whether this a public or private (rfc1918) network||
-||fabric||Boolean||Whether this networks is created on a fabric||
+||fabric||Boolean||Whether this network is created on a fabric||
 ||description||String||Description of this network (optional)||
 ||subnet||String||A CIDR formatted string that describes the network||
 ||provision_start_ip||String||The first IP on the network that may be assigned||
@@ -7037,7 +7045,7 @@ An array of network objects.  Networks are:
 ||id||String||Unique identifier for this network||
 ||name||String||The network name||
 ||public||Boolean||Whether this a public or private (rfc1918) network||
-||fabric||Boolean||Whether this networks is created on a fabric||
+||fabric||Boolean||Whether this network is created on a fabric||
 ||description||String||Description of this network (optional)||
 
 If the network is on a fabric, the following additional fields are included:
