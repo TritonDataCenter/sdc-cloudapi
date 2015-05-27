@@ -64,7 +64,10 @@ var SERVER;
 // String limit in NAPI is 64 characters:
 var SIXTEEN = 'xxxxxxxxxxxxxxxx';
 var TOO_LONG_STR = SIXTEEN + SIXTEEN + SIXTEEN + SIXTEEN + 'x';
-
+// if fabrics aren't enabled, there's no point running these tests
+var TEST_OPTS = {
+    skip: !common.getCfg().fabrics_enabled
+};
 
 // --- Functions
 
@@ -256,7 +259,7 @@ function waitForDefaultVLAN(t) {
 // --- Tests
 
 
-test('setup', function (t) {
+test('setup', TEST_OPTS, function (t) {
     common.setup(function (err, _client, _server) {
         t.ifError(err);
         t.ok(_client);
@@ -271,7 +274,7 @@ test('setup', function (t) {
 });
 
 
-test('VLANs', function (tt) {
+test('VLANs', TEST_OPTS, function (tt) {
 
     tt.test('create fabric VLAN', function (t) {
         CLIENT.post('/my/fabrics/default/vlans', PARAMS.vlan,
@@ -352,7 +355,7 @@ test('VLANs', function (tt) {
 });
 
 
-test('create VLAN: invalid', function (t) {
+test('create VLAN: invalid', TEST_OPTS, function (t) {
     var invalid = [
         // name
         [ {vlan_id: 4}, missingMsg('name')],
@@ -393,7 +396,7 @@ test('create VLAN: invalid', function (t) {
 });
 
 
-test('update VLAN: invalid', function (t) {
+test('update VLAN: invalid', TEST_OPTS, function (t) {
     var invalid = [
         // name
         [ {name: 5}, typeMsg('name', 'number', 'string'), 409 ],
@@ -435,7 +438,7 @@ test('update VLAN: invalid', function (t) {
 });
 
 
-test('networks', function (tt) {
+test('networks', TEST_OPTS, function (tt) {
 
     var nets = [];
 
@@ -612,7 +615,7 @@ test('networks', function (tt) {
 });
 
 
-test('create fabric network: invalid', function (t) {
+test('create fabric network: invalid', TEST_OPTS, function (t) {
     var base = {
         name: 'invalid network',
         provision_start_ip: '192.168.1.1',
@@ -700,7 +703,7 @@ test('create fabric network: invalid', function (t) {
 });
 
 
-test('default fabric', function (tt) {
+test('default fabric', TEST_OPTS, function (tt) {
     var defaultNet = {
         fabric: true,
         gateway: '192.168.128.1',
@@ -806,7 +809,7 @@ test('default fabric', function (tt) {
 });
 
 
-test('teardown', function (tt) {
+test('teardown', TEST_OPTS, function (tt) {
 
     tt.test('delete networks', function (t) {
         if (CREATED.nets.length === 0) {
