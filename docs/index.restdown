@@ -3746,6 +3746,16 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       "updated": "2011-06-03T00:02:31+00:00",
     }
 
+### More Examples
+
+Create machine with multiple nics
+
+    $ sdc-createmachine --image=01b2c898-945f-11e1-a523-af1afbe22822 --package=5968a8a4-5bff-4c5e-8034-d79de962e7f6 --networks=42325ea0-eb62-44c1-8eb6-0af3e2f83abc --networks=c8cde927-6277-49ca-82a3-741e8b23b02f
+
+Create machine with tags
+
+    $ sdc-createmachine --image=01b2c898-945f-11e1-a523-af1afbe22822 --package=5968a8a4-5bff-4c5e-8034-d79de962e7f6 --networks=42325ea0-eb62-44c1-8eb6-0af3e2f83abc -t foo=bar -t group=test
+
 ### User-script
 
 The special value `metadata.user-script` can be specified to provide a custom
@@ -5983,13 +5993,13 @@ where `target` can be one of `wildcard`, `ip`, `subnet`, `tag` or `vm`, `action`
 is either `ALLOW` or `BLOCK`, `protocol` will be one of `tcp`, `udp` and `icmp`,
 and `port` is a valid port number.
 
-The following are some possibilities:
+The rule should have `tag` or `vm` in the FROM or TO target. The following are some possibilities:
 
 ### Allow incoming http traffic to a VM:
 
     {
         "enabled": true,
-        "rule": "FROM subnet 10.99.99.0/24 TO vm 0abeae82-c040-4080-ac60-b60d3e3890a7 ALLOW tcp port 80"
+        "rule": "FROM any TO vm 0abeae82-c040-4080-ac60-b60d3e3890a7 ALLOW tcp port 80"
     }
 
 ### Block outgoing SMTP traffic from a VM to a subnet:
@@ -6006,11 +6016,11 @@ The following are some possibilities:
         "rule": "FROM ip 10.99.99.7 TO (tag www OR tag testwww) ALLOW tcp (port 80 AND port 443)"
     }
 
-### Allow syslog traffic from VMs tagged www to VMs taged mon:
+### Allow syslog traffic from VMs tagged with group=web to VMs tagged with group=mon:
 
     {
         "enabled": true,
-        "rule": "FROM tag www TO tag mon ALLOW udp port 514"
+        "rule": "FROM tag group=www TO tag group=mon ALLOW udp port 514"
     }
 
 
@@ -6579,7 +6589,7 @@ A VLAN Object.
 
 #### Example Response
 
-    HTTP/1.1 201 OK
+    HTTP/1.1 201 Created
     Content-Type: application/json
     Server: Joyent SmartDataCenter 7.3.0
     Api-Version: 7.3.0
@@ -6681,7 +6691,7 @@ A VLAN Object.
 
 #### Example Response
 
-    HTTP/1.1 201 OK
+    HTTP/1.1 202 Accepted
     Content-Type: application/json
     Server: Joyent SmartDataCenter 7.3.0
     Api-Version: 7.3.0
@@ -6728,7 +6738,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 #### Example Response
 
-    HTTP/1.1 204 OK
+    HTTP/1.1 204 No Content
     Content-Type: application/json
     Server: Joyent SmartDataCenter 7.3.0
     Api-Version: 7.3.0
@@ -6880,7 +6890,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 #### Example Response
 
-    HTTP/1.1 201 OK
+    HTTP/1.1 201 Created
     Content-Type: application/json
     Server: Joyent SmartDataCenter 7.3.0
     Api-Version: 7.3.0
@@ -6899,7 +6909,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       "vlan_id": 2
     }
 
-## GetFabricNetwork (GET /:login/fabrics/default/vlan/:vlan_id/networks/:id)
+## GetFabricNetwork (GET /:login/fabrics/default/vlans/:vlan_id/networks/:id)
 
 ### Inputs
 
@@ -7000,7 +7010,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 #### Example Response
 
-    HTTP/1.1 204 OK
+    HTTP/1.1 204 No Content
     Content-Type: application/json
     Server: Joyent SmartDataCenter 7.3.0
     Api-Version: 7.3.0
@@ -7382,7 +7392,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 #### Example Response
 
-    HTTP/1.1 201 OK
+    HTTP/1.1 201 Created
     content-type: application/json
     content-length: 284
     date: Sat, 03 May 2014 13:37:36 GMT
@@ -7453,7 +7463,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 #### Example Response
 
-    HTTP/1.1 204 OK
+    HTTP/1.1 204 No Content
     content-type: application/json
     content-length: 0
     date: Sat, 03 May 2014 13:37:36 GMT
