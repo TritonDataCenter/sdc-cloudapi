@@ -33,6 +33,10 @@
         },
         "clientTimeout": 120000
     },
+    "cache": {
+        "type": "redis",
+        "host": "{{{REDIS_SERVICE}}}"
+    },
     "wfapi": {
         "url": "http://{{{workflow_domain}}}"
     },
