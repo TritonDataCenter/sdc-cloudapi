@@ -1,54 +1,54 @@
 {
-  "name": "cloudapi",
-  "description": "SmartDataCenter CloudAPI",
-  "version": "7.3.0",
-  "author": "Joyent (joyent.com)",
-  "private": true,
-  "engines": {
-    "node": ">=0.10"
-  },
-  "engineStrict": true,
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com:joyent/sdc-cloudapi.git"
-  },
-  "dependencies": {
-    "aperture": "git+ssh://git@github.com:joyent/node-aperture.git#016977",
-    "aperture-config": "git+ssh://git@github.com:joyent/aperture-config.git#master",
-    "asn1": "0.1.11",
-    "assert-plus": "0.1.5",
-    "bunyan": "0.22.1",
-    "clone": "0.1.5",
-    "crypto": "0.0.3",
-    "ctype": "0.5.2",
-    "filed": "0.0.7",
-    "http-signature": "0.10.0",
-    "joyent-schemas": "git+ssh://git@github.com:joyent/schemas.git#ea49304",
-    "jsprim": "0.6.1",
-    "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#f382a4",
-    "libuuid": "0.1.2",
-    "mahi": "git+ssh://git@github.com:joyent/node-mahi.git#7c0499",
-    "mime": "1.2.7",
-    "nodemailer": "0.3.29",
-    "nopt": "2.0.0",
-    "restify": "^3.0.3",
-    "restify-oauth2": "^4.0.3",
-    "sdc-clients": "git+ssh://git@github.com:joyent/node-sdc-clients.git#beadb69",
-    "semver": "2.2.1",
-    "ufds": "git+ssh://git@github.com:joyent/node-ufds.git#master",
-    "underscore": "^1.8.3",
-    "vasync": "1.4.3"
-  },
-  "devDependencies": {
-    "tape": "3.5.0",
-    "smartdc": "git+ssh://git@github.com:joyent/node-smartdc.git#adea68"
-  },
-  "sdcDependencies": {
-    "imgapi": ">=2.1.0"
-  },
-  "scripts": {
-    "start": "node ./main.js",
-    "test": "./node_modules/.bin/tap ./test/*.test.js"
-  },
-  "license": "MPL-2.0"
+    "name": "cloudapi",
+    "description": "SmartDataCenter CloudAPI",
+    "version": "7.3.0",
+    "author": "Joyent (joyent.com)",
+    "private": true,
+    "engines": {
+        "node": ">=0.10"
+    },
+    "engineStrict": true,
+    "repository": {
+        "type": "git",
+        "url": "git+ssh://git@github.com:joyent/sdc-cloudapi.git"
+    },
+    "dependencies": {
+        "vasync": "1.4.3",
+        "filed": "0.0.7",
+        "http-signature": "0.10.0",
+        "mime": "1.2.7",
+        "libuuid": "0.1.2",
+        "nopt": "2.0.0",
+        "restify": "git+ssh://git@github.com:mcavage/node-restify.git#0d7b4ba",
+        "bunyan": "0.22.1",
+        "sdc-clients": "git+ssh://git@github.com:joyent/node-sdc-clients.git#beadb69",
+        "ufds": "git+ssh://git@github.com:joyent/node-ufds.git#master",
+        "semver": "2.2.1",
+        "nodemailer": "0.3.29",
+        "clone": "0.1.5",
+        "assert-plus": "0.1.5",
+        "asn1": "0.1.11",
+        "ctype": "0.5.2",
+        "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#f382a4",
+        "aperture": "git+ssh://git@github.com:joyent/node-aperture.git#016977",
+        "mahi": "git+ssh://git@github.com:joyent/node-mahi.git#7c0499",
+        "aperture-config": "git+ssh://git@github.com:joyent/aperture-config.git#master",
+        "joyent-schemas": "git+ssh://git@github.com:joyent/schemas.git#ea49304",
+        "jsprim": "0.6.1",
+        "underscore": "^1.8.3",
+        "restify-oauth2": "^4.0.3",
+        "crypto": "0.0.3"
+    },
+    "devDependencies": {
+        "tape": "3.5.0",
+        "smartdc": "git+ssh://git@github.com:joyent/node-smartdc.git#adea68"
+    },
+    "sdcDependencies": {
+        "imgapi": ">=2.1.0"
+    },
+    "scripts": {
+        "start": "node ./main.js",
+        "test": "./node_modules/.bin/tap ./test/*.test.js"
+    },
+    "license": "MPL-2.0"
 }
