@@ -37,6 +37,7 @@
         "jsprim": "0.6.1",
         "underscore": "^1.8.3",
         "restify-oauth2": "^4.0.3",
+	"redis": "^0.12.1",
         "crypto": "0.0.3"
     },
     "devDependencies": {
