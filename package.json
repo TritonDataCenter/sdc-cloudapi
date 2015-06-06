@@ -37,7 +37,10 @@
         "jsprim": "0.6.1",
         "underscore": "^1.8.3",
         "restify-oauth2": "^4.0.3",
-	"redis": "^0.12.1",
+        "redis": "^0.12.1",
+        "moray": "git+ssh://git@github.com:joyent/node-moray.git#441fd44",
+        "async": "^1.2.0",
+        "sprintf": "^0.1.5",
         "crypto": "0.0.3"
     },
     "devDependencies": {
