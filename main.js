@@ -161,6 +161,23 @@ function configure(file, options, log) {
 }
 
 
+// Create a temporary server which simply returns 503 to all requests
+function createBootstrapServer(port, cb) {
+    var bootstrapServer = restify.createServer();
+
+    ['get', 'post', 'put', 'del', 'head'].forEach(function (method) {
+        /* JSSTYLED */
+        bootstrapServer[method](/.*/, function (req, res, next) {
+            next(new restify.InternalError('Failure to connect to Moray'));
+        });
+    });
+
+    bootstrapServer.listen(port, function () {
+        cb(null, bootstrapServer);
+    });
+}
+
+
 function run() {
     LOG = bunyan.createLogger({
         level: (PARSED.debug ? 'trace' : 'info'),
@@ -174,12 +191,35 @@ function run() {
     setupLogger(config);
     config.log = LOG;
 
-    return app.createServer(config, function (server) {
-        server.start(function () {
-            LOG.info('cloudapi listening at %s', server.url);
-        });
+    // We create a temporary server which will reply to all requests with 503
+    // until the proper cloudapi server can begin listening. We have the
+    // boostrap since it may not be possible for the proper server to being
+    // listening due to dependencies not being available (e.g. Moray is
+    // offline, so plugin configs cannot be loaded)
 
-        return server;
+    createBootstrapServer(config.port, function (err, bootstrapServer) {
+        if (err) {
+            throw err;
+        }
+
+        LOG.info('bootstrap listening at %s', bootstrapServer.url);
+
+        app.createServer(config, function (err2, server) {
+            if (err2) {
+                throw err2;
+            }
+
+            // close bootstrap...
+            bootstrapServer.close();
+            LOG.info('bootstrap shut down');
+
+            // and listen() on proper server
+            server.start(function () {
+                LOG.info('cloudapi listening at %s', server.url);
+            });
+
+            return server;
+        });
     });
 }
 
