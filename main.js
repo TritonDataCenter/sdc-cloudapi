@@ -161,16 +161,24 @@ function configure(file, options, log) {
 }
 
 
-// Create a temporary server which simply returns 503 to all requests
+// Create a temporary server which simply returns 500 to all requests
 function createBootstrapServer(port, cb) {
     var bootstrapServer = restify.createServer();
+    bootstrapServer.use(restify.fullResponse());
+
+    function bootstrapHandler(req, res, next) {
+        res.send(new restify.InternalError('Failure to connect to Moray'));
+
+        if (next) {
+            next();
+        }
+    }
 
     ['get', 'post', 'put', 'del', 'head'].forEach(function (method) {
-        /* JSSTYLED */
-        bootstrapServer[method](/.*/, function (req, res, next) {
-            next(new restify.InternalError('Failure to connect to Moray'));
-        });
+        bootstrapServer[method]('/.*/', bootstrapHandler);
     });
+
+    bootstrapServer.on('MethodNotAllowed', bootstrapHandler);
 
     bootstrapServer.listen(port, function () {
         cb(null, bootstrapServer);
