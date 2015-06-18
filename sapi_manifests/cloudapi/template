@@ -33,6 +33,19 @@
         },
         "clientTimeout": 120000
     },
+    "cache": {
+        "type": "redis",
+        "host": "{{{REDIS_SERVICE}}}"
+    },
+    "moray": {
+        "host": "{{{MORAY_SERVICE}}}",
+        "port": 2020,
+        "connectTimeout": 200,
+        "retry": {
+            "retries": 2,
+            "minTimeout": 500
+        }
+    },
     "wfapi": {
         "url": "http://{{{workflow_domain}}}"
     },
