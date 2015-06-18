@@ -518,7 +518,11 @@ module.exports = {
             return setupClient(version, callback);
         } else {
             config.test = true;
-            server = app.createServer(config, function (s) {
+            server = app.createServer(config, function (err, s) {
+                if (err) {
+                    throw err;
+                }
+
                 server = s;
                 server.start(function () {
                     LOG.info('CloudAPI listening at %s', server.url);
