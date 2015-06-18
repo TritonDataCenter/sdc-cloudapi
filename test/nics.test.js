@@ -120,7 +120,8 @@ var MAC_RE  = /^(?:[0-9a-f]{2}\:){5}[0-9a-f]{2}/i;
 
 
 var client, cnapiServer, machineUuid, headnode, vmNic, serverMac, adminUser,
-    otherMachineUuid, otherVmNic, otherNetwork, location, externalNetRE;
+    otherMachineUuid, otherVmNic, otherNetwork, location, externalNetRE,
+    internalNicTagExists;
 
 
 
@@ -1193,7 +1194,13 @@ test('teardown', function (t) {
 
 function createNetwork(t, net, pool, addOwner, callback) {
     client.napi.createNicTag(net.nic_tag, function (err) {
-        t.ifError(err, 'creating nic tag ' + net.nic_tag);
+        // gross hack to work around internal nic tag sometimes existing when
+        // internal network doesn't
+        if (err && net.nic_tag === 'internal') {
+            internalNicTagExists = true;
+        } else {
+            t.ifError(err, 'creating nic tag ' + net.nic_tag);
+        }
 
         pool.nic_tag = net.nic_tag;
 
@@ -1234,7 +1241,11 @@ function removeNetwork(t, net, pool, callback) {
         client.napi.deleteNetwork(net.uuid, function (err2) {
             t.ifError(err2);
 
-            client.napi.deleteNicTag(net.nic_tag, function (err3) {
+            if (net.nic_tag === 'internal' && internalNicTagExists) {
+                return callback();
+            }
+
+            return client.napi.deleteNicTag(net.nic_tag, function (err3) {
                 t.ifError(err3);
                 callback();
             });
