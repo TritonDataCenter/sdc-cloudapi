@@ -2396,7 +2396,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
+A user's default fabric network is stored on this config object. The following
+command uses this endpoint to retrieve it.
+
     $ sdc-fabric network get-default
+    7fa999c8-0d2c-453e-989c-e897716d0831
 
 ### Example Request
 
@@ -6675,7 +6679,7 @@ A VLAN Object.
 
 ### CLI
 
-    $ sdc-fabric vlan update
+    $ sdc-fabric vlan update 2 --description="new description"
 
 #### Example Request
 
