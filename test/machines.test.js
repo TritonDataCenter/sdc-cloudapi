@@ -606,6 +606,9 @@ test('ListMachines (filter by package)', function (t) {
 test('ListMachines (filter by smartmachine type)', function (t) {
     searchAndCheck('type=smartmachine', t, function (m) {
         t.equal(m.type, 'smartmachine');
+        // at the moment, only the machine created in the above tests should
+        // list here:
+        t.equal(m.id, machine);
     });
 });
 
@@ -619,10 +622,14 @@ test('ListMachines (filter by virtualmachine type)', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(Array.isArray(body));
 
-        body.forEach(function (m) {
-            checkMachine(t, m);
-            t.equal(m.type, 'virtualmachine');
-        });
+        // at the moment, only the machine created in the above tests should
+        // list, but it's not a virtualmachine, so for now:
+        t.equal(body.length, 0);
+
+        //body.forEach(function (m) {
+        //    checkMachine(t, m);
+        //    t.equal(m.type, 'virtualmachine');
+        //});
 
         t.end();
     });
