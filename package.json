@@ -33,7 +33,7 @@
         "aperture": "git+ssh://git@github.com:joyent/node-aperture.git#016977",
         "mahi": "git+ssh://git@github.com:joyent/node-mahi.git#7c0499",
         "aperture-config": "git+ssh://git@github.com:joyent/aperture-config.git#master",
-        "joyent-schemas": "git+ssh://git@github.com:joyent/schemas.git#ea49304",
+        "joyent-schemas": "git+ssh://git@github.com:joyent/schemas.git#8e19f70",
         "jsprim": "0.6.1"
     },
     "devDependencies": {
