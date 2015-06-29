@@ -32,8 +32,6 @@ var vasync = require('vasync');
 var SIGNATURE = 'Signature keyId="%s",algorithm="%s" %s';
 var client, server, account;
 var KEY_ID, SUB_KEY_ID;
-var fingerprint = '66:ca:1c:09:75:99:35:69:be:91:08:25:03:c0:17:c0';
-var sub_fp = 'f4:1a:34:3c:2c:81:69:5b:83:20:72:e2:b4:57:3e:71';
 var privateKey, publicKey;
 var subPrivateKey, subPublicKey;
 

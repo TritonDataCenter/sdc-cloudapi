@@ -12,6 +12,7 @@
  * Functions used in more than one test file + setup/teardown
  * preparation for every test suite.
  */
+
 var assert = require('assert');
 var crypto = require('crypto');
 var path = require('path');
@@ -27,11 +28,12 @@ var CNAPI = require('sdc-clients').CNAPI;
 var NAPI = require('sdc-clients').NAPI;
 var IMGAPI = require('sdc-clients').IMGAPI;
 var PAPI = require('sdc-clients').PAPI;
+var MAHI = require('mahi');
 var app = require('../lib').app;
 var util = require('util');
 var fs = require('fs');
-var mahi = require('mahi');
 var apertureConfig = require('aperture-config').config;
+
 
 // --- Globals
 
@@ -43,24 +45,16 @@ var LOG =  new Logger({
     stream: process.stderr,
     serializers: restify.bunyan.serializers
 });
+
 var config = {};
 try {
     config = JSON.parse(fs.readFileSync(DEFAULT_CFG, 'utf8'));
 } catch (e) {}
 
-
-var SDC_SETUP_TESTS = process.env.SDC_SETUP_TESTS || false;
-
-var user, ufds, client, server, account, sub_login, subuser, policy, role;
-
 var SIGNATURE = 'Signature keyId="%s",algorithm="%s" %s';
-var KEY_ID;
-var fingerprint = '66:ca:1c:09:75:99:35:69:be:91:08:25:03:c0:17:c0';
-var sub_fp = 'f4:1a:34:3c:2c:81:69:5b:83:20:72:e2:b4:57:3e:71';
-var privateKey, publicKey;
 
 
-function requestSigner(req) {
+function requestSigner(req, keyId, privateKey) {
     var d = req.getHeader('Date');
 
     if (!d) {
@@ -72,10 +66,11 @@ function requestSigner(req) {
     var signer = crypto.createSign(alg);
     signer.update(d);
     req.setHeader('Authorization', util.format(SIGNATURE,
-                                    KEY_ID,
+                                    keyId,
                                     alg.toLowerCase(),
                                     signer.sign(privateKey, 'base64')));
 }
+
 
 // Unavoidably, we need to poll some jobs
 function _wfapi() {
@@ -90,6 +85,7 @@ function _wfapi() {
     });
 }
 
+
 // We need vmapi client to check jobs on tests, given if we
 // just wait for vmachine status change, we'll be just
 // hanging forever.
@@ -100,13 +96,12 @@ function _vmapi() {
             retries: 1,
             minTimeout: 1000
         },
-        log: client.log,
+        log: LOG,
         agent: false
     });
 }
 
-// Given DAPI will never pick Headnode as a server to provision to, we need
-// to explicitly tell we want it:
+
 function _cnapi() {
     return new CNAPI({
         url: process.env.CNAPI_URL || config.cnapi.url || 'http://10.99.99.22',
@@ -114,10 +109,11 @@ function _cnapi() {
             retries: 1,
             minTimeout: 1000
         },
-        log: client.log,
+        log: LOG,
         agent: false
     });
 }
+
 
 function _napi() {
     return new NAPI({
@@ -126,10 +122,11 @@ function _napi() {
             retries: 1,
             minTimeout: 1000
         },
-        log: client.log,
+        log: LOG,
         agent: false
     });
 }
+
 
 function _imgapi() {
     return new IMGAPI({
@@ -139,27 +136,27 @@ function _imgapi() {
             retries: 1,
             minTimeout: 1000
         },
-        log: client.log,
+        log: LOG,
         agent: false
     });
 }
 
+
 function _papi() {
     return PAPI({
-        url: process.env.PAPI_URL || config.papi.url ||
-            'http://10.99.99.30',
+        url: process.env.PAPI_URL || config.papi.url || 'http://10.99.99.30',
         retry: {
             retries: 1,
             minTimeout: 1000
         },
-        log: client.log,
+        log: LOG,
         agent: false
     });
 }
 
 
 function _mahi() {
-    return mahi.createClient({
+    return MAHI.createClient({
         url: process.env.MAHI_URL || config.mahi.url ||
         'http://10.99.99.34:8080',
         typeTable: apertureConfig.typeTable,
@@ -170,22 +167,27 @@ function _mahi() {
 
 
 function clientTeardown(cb) {
-    client.mahi.close();
-    client.close();
-    var id = client.account.uuid;
-    client.ufds.deleteRole(id, client.role.uuid, function (er6) {
-        client.ufds.deletePolicy(id, client.policy.uuid, function (er7) {
-            client.ufds.deleteKey(client.testUser, 'id_rsa', function (er4) {
-                client.ufds.deleteKey(client.subuser, 'sub_id_rsa',
-                    function (er5) {
-                    client.ufds.deleteUser(client.subuser, function (err3) {
-                        client.ufds.deleteUser(client.testUser,
-                            function (err2) {
+    var self = this;
+
+    var ufds = self.ufds;
+    var id = self.account.uuid;
+
+    self.mahi.close();
+    self.close();
+
+    // we ignore errors until the end and try to clean up as much as possible
+    ufds.deleteRole(id, self.role.uuid, function (e) {
+        ufds.deletePolicy(id, self.policy.uuid, function (e2) {
+            ufds.deleteKey(self.testUser, 'id_rsa', function (e3) {
+                ufds.deleteKey(self.subuser, 'sub_id_rsa', function (e4) {
+                    ufds.deleteUser(self.subuser, function (e5) {
+                        ufds.deleteUser(self.testUser, function (e6) {
                             ufds.client.removeAllListeners('close');
                             ufds.client.removeAllListeners('timeout');
                             ufds.removeAllListeners('timeout');
+
                             ufds.close(function () {
-                                return cb(null);
+                                return cb(e || e2 || e3 || e4 || e5 || e6);
                             });
                         });
                     });
@@ -205,26 +207,27 @@ function checkReqId(t, headers) {
 }
 
 
-function createTestRole(callback) {
+function createTestRole(client, callback) {
     var entry = {
         name: 'test-role',
         uniquemember: [client.subuser.dn],
-        memberpolicy: [policy.dn],
+        memberpolicy: [client.policy.dn],
         uniquememberdefault: [client.subuser.dn],
         account: client.account.uuid
     };
 
-    client.ufds.addRole(client.account.uuid, entry, function (err, r) {
+    client.ufds.addRole(client.account.uuid, entry, function (err, role) {
         if (err) {
             return callback(err);
         }
-        client.role = role = r;
-        return callback(null, client, server);
+
+        client.role = role;
+        return callback(null, client);
     });
 }
 
 
-function createTestPolicy(callback) {
+function createTestPolicy(client, callback) {
     var entry = {
         name: 'test-policy',
         rule: [
@@ -239,74 +242,85 @@ function createTestPolicy(callback) {
         account: client.account.uuid
     };
 
-    client.ufds.addPolicy(client.account.uuid, entry, function (err, p) {
+    client.ufds.addPolicy(client.account.uuid, entry, function (err, policy) {
         if (err) {
             return callback(err);
         }
-        client.policy = policy = p;
-        return createTestRole(callback);
+
+        client.policy = policy;
+        return createTestRole(client, callback);
     });
 }
 
 
-function addSubUserKey(callback) {
+function addSubUserKey(client, callback) {
     var p = __dirname + '/sub_id_rsa';
-    return fs.readFile(p + '.pub', 'ascii', function (er1, data) {
+
+    return fs.readFile(p + '.pub', 'ascii', function (er1, publicKey) {
         if (er1) {
             return callback(er1);
         }
-        client.subPublicKey = data;
+
+        client.subPublicKey = publicKey;
         var obj = {
-            openssh: data,
+            openssh: publicKey,
             name: 'sub_id_rsa'
         };
-        return client.subuser.addKey(obj, function (er2, key) {
+
+        return client.subuser.addKey(obj, function (er2) {
             if (er2) {
                 return callback(er2);
             }
-            return fs.readFile(p, 'ascii', function (er3, d) {
+
+            return fs.readFile(p, 'ascii', function (er3, privateKey) {
                 if (er3) {
                     return callback(er3);
                 }
-                client.subPrivateKey = d;
-                return createTestPolicy(callback);
+
+                client.subPrivateKey = privateKey;
+                return createTestPolicy(client, callback);
             });
         });
     });
 }
 
 
-function addUserKey(callback) {
+function addUserKey(client, callback) {
     var p = __dirname + '/id_rsa';
-    return fs.readFile(p + '.pub', 'ascii', function (er1, data) {
+
+    return fs.readFile(p + '.pub', 'ascii', function (er1, publicKey) {
         if (er1) {
             return callback(er1);
         }
-        client.publicKey = publicKey = data;
+
+        client.publicKey = publicKey;
         var obj = {
             openssh: publicKey,
             name: 'id_rsa'
         };
-        return account.addKey(obj, function (er2, key) {
+
+        return client.account.addKey(obj, function (er2) {
             if (er2) {
                 return callback(er2);
             }
-            return fs.readFile(p, 'ascii', function (er3, d) {
+
+            return fs.readFile(p, 'ascii', function (er3, privateKey) {
                 if (er3) {
                     return callback(er3);
                 }
-                client.privateKey = privateKey = d;
-                client.ufds = ufds;
+
+                client.privateKey = privateKey;
                 client.teardown = clientTeardown;
 
-                return addSubUserKey(callback);
+                return addSubUserKey(client, callback);
             });
         });
     });
 }
 
 
-function ufdsConnectCb(callback) {
+function ufdsConnectCb(client, callback) {
+    var ufds = client.ufds;
     var entry = {
         login: client.testUser,
         email: client.testUser,
@@ -320,39 +334,44 @@ function ufdsConnectCb(callback) {
             return callback(err);
         }
 
-        client.account = account = customer;
+        client.account = customer;
+
         var sub_entry = {
             login: client.testSubUser,
             email: client.testSubUser,
             userpassword: PASSWD,
             account: customer.uuid
         };
+
         return ufds.addUser(sub_entry, function (err2, sub) {
             if (err2) {
                 return callback(err2);
             }
-            client.subuser = subuser = sub;
-            return addUserKey(callback);
+
+            client.subuser = sub;
+            return addUserKey(client, callback);
         });
     });
 }
 
 
-function setupClient(version, callback) {
+function setupClient(version, serverUrl, user, subLogin, callback) {
     if (typeof (version) === 'function') {
         callback = version;
         version = '*';
     }
 
-    client = restify.createJsonClient({
-        url: server ? server.url : 'https://127.0.0.1',
+    var client = restify.createJsonClient({
+        url: serverUrl,
         version: version,
         retryOptions: {
             retry: 0
         },
         log: LOG,
         rejectUnauthorized: false,
-        signRequest: requestSigner
+        signRequest: function (req) {
+            requestSigner(req, client.KEY_ID, client.privateKey);
+        }
     });
 
     // Create clients to all the APIs
@@ -365,16 +384,16 @@ function setupClient(version, callback) {
     client.mahi = _mahi();
 
     client.testUser = user;
-    client.KEY_ID = KEY_ID = '/' + client.testUser + '/keys/id_rsa';
-    client.testSubUser = sub_login;
-    client.SUB_ID = '/' + client.testUser + '/users/' +
-        client.testSubUser + '/keys/sub_id_rsa';
+    client.KEY_ID = '/' + client.testUser + '/keys/id_rsa';
 
-    ufds = new UFDS({
-        url: (process.env.UFDS_URL || config.ufds.url ||
-            'ldaps://10.99.99.18'),
-        bindDN: (config.ufds.bindDN || 'cn=root'),
-        bindPassword: (config.ufds.bindPassword || 'secret'),
+    client.testSubUser = subLogin;
+    client.SUB_ID = '/' + client.testUser + '/users/' + client.testSubUser +
+        '/keys/sub_id_rsa';
+
+    var ufds = new UFDS({
+        url: process.env.UFDS_URL || config.ufds.url || 'ldaps://10.99.99.18',
+        bindDN: config.ufds.bindDN || 'cn=root',
+        bindPassword: config.ufds.bindPassword || 'secret',
         log: LOG,
         tlsOptions: {
             rejectUnauthorized: false
@@ -384,9 +403,7 @@ function setupClient(version, callback) {
         }
     });
 
-    ufds.once('error', function (err) {
-        return callback(err);
-    });
+    ufds.once('error', callback);
 
     ufds.once('connect', function () {
         ufds.removeAllListeners('error');
@@ -402,7 +419,8 @@ function setupClient(version, callback) {
             LOG.info('UFDS: reconnected');
         });
 
-        ufdsConnectCb(callback);
+        client.ufds = ufds;
+        ufdsConnectCb(client, callback);
     });
 }
 
@@ -417,23 +435,26 @@ function checkMahiCache(mahiclient, apath, cb) {
                 return cb(err);
             }
         }
-        return cb(null, true, res);
 
+        return cb(null, true, res);
     });
 }
 
 
 function waitForMahiCache(mahiclient, apath, cb) {
-    client.log.info('Polling mahi for %s', apath);
+    LOG.info('Polling mahi for %s', apath);
+
     return checkMahiCache(mahiclient, apath, function (err, ready, res) {
         if (err) {
             return cb(err);
         }
+
         if (!ready) {
             return setTimeout(function () {
                 waitForMahiCache(mahiclient, apath, cb);
-            }, (process.env.POLL_INTERVAL || 1000));
+            }, process.env.POLL_INTERVAL || 1000);
         }
+
         return cb(null, res);
     });
 }
@@ -496,74 +517,83 @@ function withTemporaryUser(ufdsClient, userOpts, bodyCb, cb) {
     }
 }
 
+
+function setup(version, cb) {
+    if (typeof (version) === 'function') {
+        cb = version;
+        version = '*';
+    }
+    assert.ok(cb);
+
+    var user = 'a' + uuid().substr(0, 7) + '.test@joyent.com';
+    var subLogin = 'a' + uuid().substr(0, 7) + '.sub.test@joyent.com';
+
+    config.log = LOG;
+
+    if (process.env.SDC_SETUP_TESTS) {
+        // Already have a running server instance, no need to boot another one:
+        return setupClient(version, 'https://127.0.0.1', user, subLogin, cb);
+    }
+
+    config.test = true;
+
+    return app.createServer(config, function (err, server) {
+        if (err) {
+            throw err;
+        }
+
+        server.start(function () {
+            LOG.info('CloudAPI listening at %s', server.url);
+
+            setupClient(version, server.url, user, subLogin,
+                        function (err2, client) {
+                cb(err, client, server);
+            });
+        });
+    });
+}
+
+
+function checkHeaders(t, headers) {
+    assert.ok(t);
+    t.ok(headers, 'headers ok');
+
+    if (!headers) {
+        return;
+    }
+
+    t.ok(headers['access-control-allow-origin'], 'headers allow-origin');
+    t.ok(headers['access-control-allow-methods'], 'headers allow-methods');
+    t.ok(headers.date, 'headers date');
+    t.ok(headers['x-request-id'], 'headers x-request-id');
+    t.ok(headers['x-response-time'] >= 0, 'headers response time');
+    t.ok(headers.server, 'headers server');
+    t.equal(headers.connection, 'Keep-Alive', 'headers connection');
+    t.ok(headers['x-api-version'], 'headers x-api-version OK');
+}
+
+
+function checkVersionHeader(t, version, headers) {
+    assert.ok(t);
+    assert.ok(version);
+
+    var msg = util.format('headers x-api-version %s', version);
+    t.equal(headers['x-api-version'], version, msg);
+}
+
+
 // --- Library
 
 module.exports = {
-
-    setup: function (version, callback) {
-        if (typeof (version) === 'function') {
-            callback = version;
-            version = '*';
-        }
-        assert.ok(callback);
-
-        user = 'a' + uuid().substr(0, 7) + '.test@joyent.com';
-        sub_login = 'a' + uuid().substr(0, 7) + '.sub.test@joyent.com';
-
-        config.log = LOG;
-
-        if (SDC_SETUP_TESTS) {
-            // We already got a running server instance,
-            // no need to boot another one:
-            return setupClient(version, callback);
-        } else {
-            config.test = true;
-            server = app.createServer(config, function (err, s) {
-                if (err) {
-                    throw err;
-                }
-
-                server = s;
-                server.start(function () {
-                    LOG.info('CloudAPI listening at %s', server.url);
-                    return setupClient(version, callback);
-                });
-            });
-            return server;
-        }
-    },
-
-    checkHeaders: function (t, headers) {
-        assert.ok(t);
-        t.ok(headers, 'headers ok');
-        if (headers) {
-            t.ok(headers['access-control-allow-origin'],
-                    'headers allow-origin');
-            t.ok(headers['access-control-allow-methods'],
-                    'headers allow-methods');
-            t.ok(headers.date, 'headers date');
-            t.ok(headers['x-request-id'], 'headers x-request-id');
-            t.ok(headers['x-response-time'] >= 0, 'headers response time');
-            t.ok(headers.server, 'headers server');
-            t.equal(headers.connection, 'Keep-Alive', 'headers connection');
-            t.ok(headers['x-api-version'], 'headers x-api-version OK');
-        }
-    },
-
+    setup: setup,
+    checkHeaders: checkHeaders,
     checkReqId: checkReqId,
-
-    checkVersionHeader: function (t, version, headers) {
-        assert.ok(t);
-        assert.ok(version);
-        t.equal(headers['x-api-version'], version,
-                util.format('headers x-api-version %s', version));
-    },
+    checkVersionHeader: checkVersionHeader,
+    checkMahiCache: checkMahiCache,
+    waitForMahiCache: waitForMahiCache,
+    withTemporaryUser: withTemporaryUser,
 
     getCfg: function () {
         return config;
-    },
-
-    checkMahiCache: checkMahiCache,
-    waitForMahiCache: waitForMahiCache,
-    withTemporaryUser: withTemporaryUser
+    }
 };
