@@ -788,9 +788,17 @@ test('machine audit', function (t) {
             var job      = body[i];
             var caller   = job.caller;
 
-            t.ok(job.action.indexOf(expected) !== -1);
+            if (expected === 'replace_tags') {
+                // since we're updating tags fairly quickly in these tests,
+                // vmapi doesn't promise immediate consistency, we have to
+                // accept that sometimes the replace_tags job only adds a tag
+                t.ok(job.action === 'replace_tags' || job.action === 'set_tags',
+                    'action');
+            } else {
+                t.equal(job.action, expected, 'action');
+            }
             t.equal(caller.type, 'signature');
-            t.ok(caller.ip);
+            t.ok(caller.ip, 'ip');
             t.ok(caller.keyId.indexOf('test@joyent.com/keys/id_rsa') !== -1);
         }
 

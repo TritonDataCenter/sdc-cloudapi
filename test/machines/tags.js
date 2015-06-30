@@ -108,6 +108,8 @@ module.exports = function (suite, client, machine, callback) {
             t.ok(body, 'AddTag Body');
             t.ok(body[TAG_TWO_KEY], 'Add Tag Key');
             t.equal(body[TAG_TWO_KEY], TAG_TWO_VAL, 'Add Tag Value');
+            t.ok(body[TAG_KEY], 'Original tag key still present');
+            t.equal(body[TAG_KEY], TAG_VAL, 'Original tag value still present');
             t.end();
         });
     });
