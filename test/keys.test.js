@@ -49,11 +49,10 @@ test('setup', function (t) {
     common.setup(function (err, _client, _server) {
         t.ifError(err);
         t.ok(_client);
+
         client = _client;
-        if (!process.env.SDC_SETUP_TESTS) {
-            t.ok(_server);
-            server = _server;
-        }
+        server = _server;
+
         t.end();
     });
 });
@@ -258,7 +257,7 @@ test('teardown', function (t) {
 
     return nuke(function (err) {
         t.ifError(err);
-        if (!process.env.SDC_SETUP_TESTS) {
+        if (server) {
             server._clients.ufds.client.removeAllListeners('close');
             if (!server._clients.is_ufds_master) {
                 server._clients.ufds_master.client.removeAllListeners('close');

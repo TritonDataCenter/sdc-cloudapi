@@ -107,12 +107,8 @@ test('setup', function (t) {
         t.ifError(err);
         t.ok(_client);
 
-        if (!process.env.SDC_SETUP_TESTS) {
-            t.ok(_server);
-            server = _server;
-        }
-
         client = _client;
+        server = _server;
 
         t.end();
     });
@@ -592,7 +588,7 @@ test('teardown', function (t) {
     client.teardown(function (err) {
         t.ifError(err, 'client teardown error');
 
-        if (process.env.SDC_SETUP_TESTS) {
+        if (server) {
             return t.end();
         }
 

@@ -118,12 +118,8 @@ test('setup', function (t) {
         t.ifError(err, 'common setup error');
         t.ok(_client, 'common _client ok');
 
-        if (!process.env.SDC_SETUP_TESTS) {
-            t.ok(_server);
-            server = _server;
-        }
-
         client = _client;
+        server = _server;
 
         saveKey(KEY, keyName, client, t, function () {
             // Add custom packages; "sdc_" ones will be owned by admin user:
@@ -997,7 +993,7 @@ test('teardown', function (t) {
         client.teardown(function (err2) {
             // Ignore err2 here, just means we have not been able to remove
             // something from ufds.
-            if (!process.env.SDC_SETUP_TESTS) {
+            if (server) {
                 Object.keys(server._clients).forEach(function (c) {
                     if (typeof (server._clients[c].client) !== 'undefined' &&
                         typeof (server._clients[c].client.close) ===

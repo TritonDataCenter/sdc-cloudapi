@@ -163,11 +163,10 @@ test('setup', function (t) {
     common.setup(function (err, _client, _server) {
         t.ifError(err);
         t.ok(_client);
+
         client = _client;
-        if (!process.env.SDC_SETUP_TESTS) {
-            t.ok(_server);
-            server = _server;
-        }
+        server = _server;
+
         add128Ok(t, function () {
             add512Ownership(t, client.account.uuid, function () {
                 t.end();
@@ -373,7 +372,7 @@ test('teardown', function (t) {
             client.teardown(function (err3) {
                 t.ifError(err3, 'client teardown error');
 
-                if (process.env.SDC_SETUP_TESTS) {
+                if (!server) {
                     return t.end();
                 }
 

@@ -84,27 +84,29 @@ test('setup', function (t) {
     common.setup('~7.2', function (err, _client, _server) {
         t.ifError(err, 'common setup error');
         t.ok(_client, 'common _client ok');
+
         client = _client;
+        server = _server;
+
         account = client.account.login;
         A_ROLE_NAME = client.role.name;
         A_ROLE_UUID = client.role.id;
         A_POLICY_NAME = client.policy.name;
         subPrivateKey = client.subPrivateKey;
         SUB_KEY_ID = client.SUB_ID;
-        if (!process.env.SDC_SETUP_TESTS) {
-            t.ok(_server);
-            server = _server;
-        }
+
         saveKey(KEY, keyName, client, t, function () {
             // Add custom packages; "sdc_" ones will be owned by admin user:
             addPackage(client, setup.packages.sdc_128_ok,
                     function (err2, entry) {
                 t.ifError(err2, 'Add package error');
                 sdc_128_ok_entry = entry;
+
                 addPackage(client, setup.packages.sdc_256_inactive,
                         function (err3, entry2) {
                     t.ifError(err3, 'Add package error');
                     sdc_256_inactive_entry = entry2;
+
                     t.end();
                 });
             });
@@ -495,7 +497,7 @@ test('teardown', function (t) {
         client.teardown(function (err2) {
             // Ignore err2 here, just means we have not been able to remove
             // something from ufds.
-            if (!process.env.SDC_SETUP_TESTS) {
+            if (server) {
                 Object.keys(server._clients).forEach(function (c) {
                     if (typeof (server._clients[c].client) !== 'undefined' &&
                         typeof (server._clients[c].client.close) ===

@@ -157,10 +157,8 @@ test('setup', function (t) {
     common.setup(function (err, _client, _server) {
         t.ifError(err, 'common setup error');
         t.ok(_client, 'common _client ok');
+
         client = _client;
-        if (!process.env.SDC_SETUP_TESTS) {
-            t.ok(_server);
-        }
         server = _server;
 
         saveKey(t, function () {
@@ -377,7 +375,7 @@ test('teardown', function (t) {
         client.teardown(function (err2) {
             // Ignore err2 here, just means we have not been able to remove
             // something from ufds.
-            if (!process.env.SDC_SETUP_TESTS) {
+            if (server) {
                 server.close(function () {
                     t.end();
                 });

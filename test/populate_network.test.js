@@ -36,10 +36,7 @@ test('setup', function (t) {
         t.ifError(err);
 
         client = _client;
-        if (!process.env.SDC_SETUP_TESTS) {
-            t.ok(_server);
-            server = _server;
-        }
+        server = _server;
 
         client.ufds.getUser('admin', function (err2, _account) {
             t.ifError(err2);
@@ -152,7 +149,7 @@ test('teardown', function (t) {
             // Ignore err2 here, just means we have not been able to remove
             // something from ufds.
 
-            if (process.env.SDC_SETUP_TESTS) {
+            if (!server) {
                 return t.end();
             }
 

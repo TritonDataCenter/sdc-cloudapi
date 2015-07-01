@@ -48,10 +48,8 @@ test('setup', function (t) {
         t.ifError(err);
         t.ok(_client);
         client = _client;
-        if (!process.env.SDC_SETUP_TESTS) {
-            t.ok(_server);
-            server = _server;
-        }
+        server = _server;
+
         t.end();
     });
 });
@@ -127,7 +125,8 @@ test('PostAccount', function (t) {
 test('teardown', function (t) {
     client.teardown(function (err) {
         t.ifError(err);
-        if (!process.env.SDC_SETUP_TESTS) {
+
+        if (server) {
             server._clients.ufds.client.removeAllListeners('close');
             server.close(function () {
                 t.end();

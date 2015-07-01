@@ -97,11 +97,9 @@ test('setup', function (t) {
     common.setup(function (err, _client, _server) {
         t.ifError(err);
         t.ok(_client);
-        if (!process.env.SDC_SETUP_TESTS) {
-            t.ok(_server);
-            server = _server;
-        }
+
         client = _client;
+        server = _server;
 
         vasync.pipeline({ funcs: [
             function createTag(_, next) {
@@ -207,7 +205,7 @@ test('teardown', function (t) {
         client.teardown(function (err2) {
             t.ifError(err2, 'client teardown error');
 
-            if (!process.env.SDC_SETUP_TESTS) {
+            if (server) {
                 var cli = server._clients;
                 Object.keys(cli).forEach(function (c) {
                     if (cli[c].client && cli[c].client.close) {

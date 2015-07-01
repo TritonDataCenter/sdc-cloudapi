@@ -47,7 +47,10 @@ test('setup', function (t) {
     common.setup(function (err, _client, _server) {
         t.ifError(err);
         t.ok(_client);
+
         client = _client;
+        server = _server;
+
         privateKey = client.privateKey;
         publicKey = client.publicKey;
         subPublicKey = client.subPublicKey;
@@ -57,10 +60,7 @@ test('setup', function (t) {
         SUB_KEY_ID = client.SUB_ID;
         A_ROLE_NAME = client.role.name;
         A_POLICY_NAME = client.policy.name;
-        if (!process.env.SDC_SETUP_TESTS) {
-            t.ok(_server);
-            server = _server;
-        }
+
         t.end();
     });
 });
@@ -806,7 +806,7 @@ test('teardown', function (t) {
     return nuke(function (er2) {
         t.ifError(er2, 'nuke tests error');
 
-        if (!process.env.SDC_SETUP_TESTS) {
+        if (server) {
             server._clients.ufds.client.removeAllListeners('close');
             server.close(function () {
                 t.end();

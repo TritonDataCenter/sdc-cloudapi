@@ -29,11 +29,10 @@ test('setup', function (t) {
     common.setup(function (err, _client, _server) {
         t.ifError(err);
         t.ok(_client);
+
         client = _client;
-        if (!process.env.SDC_SETUP_TESTS) {
-            t.ok(_server);
-            server = _server;
-        }
+        server = _server;
+
         t.end();
     });
 });
@@ -78,7 +77,8 @@ test('GetDatacenter 404', function (t) {
 test('teardown', function (t) {
     client.teardown(function (err) {
         t.ifError(err, 'client teardown error');
-        if (!process.env.SDC_SETUP_TESTS) {
+
+        if (server) {
             server._clients.ufds.client.removeAllListeners('close');
             server.close(function () {
                 t.end();

@@ -263,11 +263,9 @@ test('setup', TEST_OPTS, function (t) {
     common.setup(function (err, _client, _server) {
         t.ifError(err);
         t.ok(_client);
-        if (!process.env.SDC_SETUP_TESTS) {
-            t.ok(_server);
-            SERVER = _server;
-        }
+
         CLIENT = _client;
+        SERVER = _server;
 
         t.end();
     });
@@ -872,7 +870,7 @@ test('teardown', TEST_OPTS, function (tt) {
         CLIENT.teardown(function (err2) {
             t.ifError(err2, 'client teardown error');
 
-            if (!process.env.SDC_SETUP_TESTS) {
+            if (SERVER) {
                 var cli = SERVER._clients;
                 Object.keys(cli).forEach(function (c) {
                     if (cli[c].client && cli[c].client.close) {
@@ -886,7 +884,6 @@ test('teardown', TEST_OPTS, function (tt) {
                 });
             } else {
                 t.end();
-                return;
             }
         });
     });

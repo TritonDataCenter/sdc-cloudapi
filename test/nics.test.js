@@ -136,8 +136,6 @@ test('setup', function (t) {
 
             t.ok(_client);
             client = _client;
-
-            t.ok(_server || process.env.SDC_SETUP_TESTS);
             cnapiServer = _server;
 
             next();
@@ -1153,7 +1151,7 @@ test('teardown', function (t) {
             // Ignore err here, just means we have not been able to remove
             // something from ufds.
 
-            if (process.env.SDC_SETUP_TESTS) {
+            if (!cnapiServer) {
                 return next();
             }
 
