@@ -585,23 +585,7 @@ test('DeleteInstrumentation OK - clone', function (t) {
 
 
 test('teardown', function (t) {
-    client.teardown(function (err) {
-        t.ifError(err, 'client teardown error');
-
-        if (server) {
-            return t.end();
-        }
-
-        Object.keys(server._clients).forEach(function (c) {
-            var serverClient = server._clients[c].client;
-
-            if (serverClient && serverClient.close) {
-                serverClient.close();
-            }
-        });
-
-        return server.close(function () {
-            t.end();
-        });
+    common.teardown(client, server, function () {
+        t.end();
     });
 });

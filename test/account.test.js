@@ -123,16 +123,7 @@ test('PostAccount', function (t) {
 
 
 test('teardown', function (t) {
-    client.teardown(function (err) {
-        t.ifError(err);
-
-        if (server) {
-            server._clients.ufds.client.removeAllListeners('close');
-            server.close(function () {
-                t.end();
-            });
-        } else {
-            t.end();
-        }
+    common.teardown(client, server, function () {
+        t.end();
     });
 });

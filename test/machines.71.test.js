@@ -407,25 +407,9 @@ test('teardown', function (t) {
     client.del('/my/keys/' + keyName, function (err, req, res) {
         t.ifError(err, 'delete key error');
         t.equal(res.statusCode, 204);
-        common.checkHeaders(t, res.headers);
-        client.teardown(function (err2) {
-            // Ignore err2 here, just means we have not been able to remove
-            // something from ufds.
-            if (server) {
-                Object.keys(server._clients).forEach(function (c) {
-                    if (typeof (server._clients[c].client) !== 'undefined' &&
-                        typeof (server._clients[c].client.close) ===
-                            'function') {
-                        server._clients[c].client.close();
-                        }
-                });
-                server._clients.ufds.client.removeAllListeners('close');
-                server.close(function () {
-                    t.end();
-                });
-            } else {
-                t.end();
-            }
+
+        common.teardown(client, server, function () {
+            t.end();
         });
     });
 });

@@ -1147,28 +1147,7 @@ test('teardown', function (t) {
     };
 
     var teardown = function (_, next) {
-        client.teardown(function (err) {
-            // Ignore err here, just means we have not been able to remove
-            // something from ufds.
-
-            if (!cnapiServer) {
-                return next();
-            }
-
-            Object.keys(cnapiServer._clients).forEach(function (c) {
-                var cli = cnapiServer._clients[c].client;
-
-                if (cli && cli.close) {
-                    cli.close();
-                }
-            });
-
-            cnapiServer._clients.ufds.client.removeAllListeners('close');
-
-            cnapiServer.close(next);
-
-            return null; // keep lint happy
-        });
+        common.teardown(client, cnapiServer, next);
     };
 
 

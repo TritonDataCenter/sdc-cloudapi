@@ -228,21 +228,7 @@ test('GetDataset 404', function (t) {
 
 
 test('teardown', function (t) {
-    client.teardown(function (err) {
-        t.ifError(err, 'client teardown error');
-        if (server) {
-            Object.keys(server._clients).forEach(function (c) {
-                if (typeof (server._clients[c].client) !== 'undefined' &&
-                    typeof (server._clients[c].client.close) === 'function') {
-                    server._clients[c].client.close();
-                    }
-            });
-            server._clients.ufds.client.removeAllListeners('close');
-            server.close(function () {
-                t.end();
-            });
-        } else {
-            t.end();
-        }
+    common.teardown(client, server, function () {
+        t.end();
     });
 });

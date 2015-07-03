@@ -369,29 +369,8 @@ test('teardown', function (t) {
         client.papi.del(sdc_128_ok.uuid, { force: true }, function (err2) {
             t.ifError(err2);
 
-            client.teardown(function (err3) {
-                t.ifError(err3, 'client teardown error');
-
-                if (!server) {
-                    return t.end();
-                }
-
-                Object.keys(server._clients).forEach(function (c) {
-                    var sdcClient = server._clients[c].client;
-
-                    if (sdcClient !== undefined &&
-                        typeof (sdcClient.close) === 'function') {
-                        sdcClient.close();
-                    }
-                });
-
-                server._clients.ufds.client.removeAllListeners('close');
-
-                server.close(function () {
-                    t.end();
-                });
-
-                return null; // keep jslint happy
+            common.teardown(client, server, function () {
+                t.end();
             });
         });
     });

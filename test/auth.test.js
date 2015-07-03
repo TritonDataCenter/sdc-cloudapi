@@ -791,28 +791,7 @@ test('cleanup sdcAccountResources', function (t) {
 
 
 test('teardown', function (t) {
-    function nuke(callback) {
-        client.teardown(function (err) {
-            if (err) {
-                return setTimeout(function () {
-                    return nuke(callback);
-                }, 500);
-            }
-
-            return callback(null);
-        });
-    }
-
-    return nuke(function (er2) {
-        t.ifError(er2, 'nuke tests error');
-
-        if (server) {
-            server._clients.ufds.client.removeAllListeners('close');
-            server.close(function () {
-                t.end();
-            });
-        } else {
-            t.end();
-        }
+    common.teardown(client, server, function () {
+        t.end();
     });
 });

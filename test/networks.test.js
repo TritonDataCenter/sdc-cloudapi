@@ -202,24 +202,8 @@ test('teardown', function (t) {
     ] }, function (err) {
         t.ifError(err);
 
-        client.teardown(function (err2) {
-            t.ifError(err2, 'client teardown error');
-
-            if (server) {
-                var cli = server._clients;
-                Object.keys(cli).forEach(function (c) {
-                    if (cli[c].client && cli[c].client.close) {
-                        cli[c].client.close();
-                    }
-                });
-                cli.ufds.client.removeAllListeners('close');
-
-                server.close(function () {
-                    t.end();
-                });
-            } else {
-                t.end();
-            }
+        common.teardown(client, server, function () {
+            t.end();
         });
     });
 });

@@ -145,27 +145,8 @@ test('teardown', function (t) {
     account.deleteKey(key, function (err) {
         t.ifError(err);
 
-        client.teardown(function () {
-            // Ignore err2 here, just means we have not been able to remove
-            // something from ufds.
-
-            if (!server) {
-                return t.end();
-            }
-
-            Object.keys(server._clients).forEach(function (n) {
-                var c = server._clients[n].client;
-
-                if (c && c.close) {
-                    c.close();
-                }
-            });
-
-            server._clients.ufds.client.removeAllListeners('close');
-
-            return server.close(function () {
-                t.end();
-            });
+        common.teardown(client, server, function () {
+            t.end();
         });
     });
 });

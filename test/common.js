@@ -554,6 +554,19 @@ function setup(version, cb) {
 }
 
 
+function teardown(client, server, cb) {
+    client.teardown(function () {
+        if (server) {
+            server.close(function () {
+                    cb();
+            });
+        } else {
+                cb();
+        }
+    });
+}
+
+
 function checkHeaders(t, headers) {
     assert.ok(t);
     t.ok(headers, 'headers ok');
@@ -586,6 +599,7 @@ function checkVersionHeader(t, version, headers) {
 
 module.exports = {
     setup: setup,
+    teardown: teardown,
     checkHeaders: checkHeaders,
     checkReqId: checkReqId,
     checkVersionHeader: checkVersionHeader,

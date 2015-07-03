@@ -836,30 +836,7 @@ test('delete another user', function (t) {
 
 
 test('teardown', function (t) {
-    function nuke(callback) {
-        client.teardown(function (err) {
-            if (err) {
-                return setTimeout(function () {
-                    return nuke(callback);
-                }, 500);
-            }
-
-            return callback(null);
-        });
-    }
-
-    return nuke(function (err) {
-        t.ifError(err);
-        if (server) {
-            server._clients.ufds.client.removeAllListeners('close');
-            if (!server._clients.is_ufds_master) {
-                server._clients.ufds_master.client.removeAllListeners('close');
-            }
-            server.close(function () {
-                t.end();
-            });
-        } else {
-            t.end();
-        }
+    common.teardown(client, server, function () {
+        t.end();
     });
 });
