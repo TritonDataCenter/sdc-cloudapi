@@ -70,7 +70,7 @@ test('basic auth (accept-version: ~6.5)', function (t) {
     var user = client.testUser;
     var pwd = 'secret123';
     var cli = restify.createJsonClient({
-        url: server ? server.url : 'https://127.0.0.1',
+        url: server.url,
         version: '*',
         retryOptions: {
             retry: 0
@@ -101,7 +101,7 @@ test('basic auth (x-api-version: ~6.5)', function (t) {
     var user = client.testUser;
     var pwd = 'secret123';
     var cli = restify.createJsonClient({
-        url: server ? server.url : 'https://127.0.0.1',
+        url: server.url,
         retryOptions: {
             retry: 0
         },
@@ -131,7 +131,7 @@ test('basic auth (accept-version: ~7.0)', function (t) {
     var user = client.testUser;
     var pwd = 'secret123';
     var cli = restify.createJsonClient({
-        url: server ? server.url : 'https://127.0.0.1',
+        url: server.url,
         retryOptions: {
             retry: 0
         },
@@ -160,7 +160,7 @@ test('admin basic auth (x-api-version: ~6.5)', function (t) {
     var user = 'admin';
     var pwd = 'joypass123';
     var cli = restify.createJsonClient({
-        url: server ? server.url : 'https://127.0.0.1',
+        url: server.url,
         retryOptions: {
             retry: 0
         },
@@ -211,7 +211,7 @@ function requestSigner(req) {
 
 test('signature auth (http-signature 0.10.x)', function (t) {
     var cli = restify.createJsonClient({
-        url: server ? server.url : 'https://127.0.0.1',
+        url: server.url,
         retryOptions: {
             retry: 0
         },
@@ -254,7 +254,7 @@ test('token auth', function (t) {
                                     signer.sign(privateKey, 'base64'));
 
     var sigClient = restify.createJsonClient({
-        url: server ? server.url : 'https://127.0.0.1',
+        url: server.url,
         version: '*',
         retryOptions: {
             retry: 0
@@ -546,7 +546,7 @@ test('sub-user signature auth (0.10)', function (t) {
 
     waitMahiReplicator(function () {
         var cli = restify.createJsonClient({
-            url: server ? server.url : 'https://127.0.0.1',
+            url: server.url,
             retryOptions: {
                 retry: 0
             },

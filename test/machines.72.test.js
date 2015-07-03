@@ -296,7 +296,7 @@ test('sub-user tests', function (t) {
 
     waitMahiReplicator(function () {
         var cli = restify.createJsonClient({
-            url: server ? server.url : 'https://127.0.0.1',
+            url: server.url,
             retryOptions: {
                 retry: 0
             },

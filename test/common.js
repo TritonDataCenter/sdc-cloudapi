@@ -531,8 +531,13 @@ function setup(version, cb) {
     config.log = LOG;
 
     if (process.env.SDC_SETUP_TESTS) {
+        var serverUrl = 'https://127.0.0.1';
         // Already have a running server instance, no need to boot another one:
-        return setupClient(version, 'https://127.0.0.1', user, subLogin, cb);
+        return setupClient(version, serverUrl, user, subLogin,
+                            function (err, client) {
+            var server = { url: serverUrl }; // stub server obj
+            cb(err, client, server);
+        });
     }
 
     config.test = true;
@@ -556,7 +561,7 @@ function setup(version, cb) {
 
 function teardown(client, server, cb) {
     client.teardown(function () {
-        if (server) {
+        if (server.close) {
             server.close(function () {
                     cb();
             });
