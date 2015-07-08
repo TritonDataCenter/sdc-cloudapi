@@ -531,7 +531,7 @@ function setup(version, cb) {
     config.log = LOG;
 
     if (process.env.SDC_SETUP_TESTS) {
-        var serverUrl = 'https://127.0.0.1';
+        var serverUrl = process.env.SDC_SETUP_URL || 'https://127.0.0.1';
         // Already have a running server instance, no need to boot another one:
         return setupClient(version, serverUrl, user, subLogin,
                             function (err, client) {

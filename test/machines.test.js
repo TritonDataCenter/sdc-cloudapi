@@ -73,6 +73,21 @@ var sdc_256_inactive = {
     active: false
 };
 
+var sdc_256_ok = {
+    uuid: '455fc2ef-b72e-4360-8d8e-09c589e06470',
+    name: 'sdc_256',
+    version: '1.0.0',
+    max_physical_memory: 256,
+    quota: 10240,
+    max_swap: 512,
+    cpu_cap: 150,
+    max_lwps: 1000,
+    zfs_io_priority: 10,
+    'default': false,
+    vcpus: 1,
+    active: true
+};
+
 var sdc_128_ok = {
     uuid: '897779dc-9ce7-4042-8879-a4adccc94353',
     name: 'sdc_128_ok',
@@ -106,7 +121,10 @@ var sdc_128_os = {
 };
 
 
-var sdc_256_inactive_entry, sdc_128_ok_entry, sdc_128_os_entry;
+var sdc_256_inactive_entry;
+var sdc_256_ok_entry;
+var sdc_128_ok_entry;
+var sdc_128_os_entry;
 
 var HEADNODE = null;
 
@@ -121,25 +139,44 @@ test('setup', function (t) {
         client = _client;
         server = _server;
 
-        saveKey(KEY, keyName, client, t, function () {
-            // Add custom packages; "sdc_" ones will be owned by admin user:
+        saveKey(KEY, keyName, client, t, addPackage1);
+
+        // Add custom packages; "sdc_" ones will be owned by admin user:
+        function addPackage1() {
             addPackage(client, sdc_128_ok, function (err2, entry) {
                 t.ifError(err2, 'Add package error');
                 sdc_128_ok_entry = entry;
 
-                addPackage(client, sdc_256_inactive, function (err3, entry2) {
-                    t.ifError(err3, 'Add package error');
-                    sdc_256_inactive_entry = entry2;
-
-                    addPackage(client, sdc_128_os, function (err4, entry3) {
-                        t.ifError(err4, 'Add package error');
-                        sdc_128_os_entry = entry3;
-
-                        t.end();
-                    });
-                });
+                addPackage2();
             });
-        });
+        }
+
+        function addPackage2() {
+            addPackage(client, sdc_256_inactive, function (err2, entry) {
+                t.ifError(err2, 'Add package error');
+                sdc_256_inactive_entry = entry;
+
+                addPackage3();
+            });
+        }
+
+        function addPackage3() {
+            addPackage(client, sdc_128_os, function (err2, entry) {
+                t.ifError(err2, 'Add package error');
+                sdc_128_os_entry = entry;
+
+                addPackage4();
+            });
+        }
+
+        function addPackage4() {
+            addPackage(client, sdc_256_ok, function (err2, entry) {
+                t.ifError(err2, 'Add package error');
+                sdc_256_ok_entry = entry;
+
+                t.end();
+            });
+        }
     });
 });
 
@@ -260,7 +297,7 @@ test('Create machine with too many public networks', function (t) {
     function createMachine(networkUuids, next) {
         var obj = {
             image: DATASET,
-            'package': 'sdc_128_ok',
+            'package': sdc_128_ok_entry.name,
             name: 'a' + uuid().substr(0, 7),
             server_uuid: HEADNODE.uuid,
             firewall_enabled: true,
@@ -318,7 +355,7 @@ test('Create machine with too many public networks', function (t) {
 test('CreateMachine using invalid networks', function (t) {
     var obj = {
         image: DATASET,
-        'package': 'sdc_128_ok',
+        'package': sdc_128_ok_entry.name,
         server_uuid: HEADNODE.uuid,
         networks: ['8180ef72-40fa-4b86-915b-803bcf96b442'] // invalid
     };
@@ -349,7 +386,7 @@ test('CreateMachine using network without permissions', function (t) {
 
     var vmDetails = {
         image: DATASET,
-        'package': 'sdc_128_ok',
+        'package': sdc_128_ok_entry.name,
         server_uuid: HEADNODE.uuid
     };
 
@@ -379,7 +416,7 @@ test('CreateMachine using network without permissions', function (t) {
 test('Create machine with invalid parameters', function (t) {
     var obj = {
         image: DATASET,
-        'package': 'sdc_128_ok',
+        'package': sdc_128_ok_entry.name,
         // Underscore will make name invalid:
         name: '_a' + uuid().substr(0, 7),
         // Obviously, not a valid UUID, but we don't want to notify customers
@@ -404,7 +441,7 @@ test('Create machine with invalid parameters', function (t) {
 test('Create machine with invalid locality', function (t) {
     var obj = {
         image: DATASET,
-        'package': 'sdc_128_ok',
+        'package': sdc_128_ok_entry.name,
         name: 'a' + uuid().substr(0, 7),
         server_uuid: HEADNODE.uuid,
         locality: { near: 'asdasd' }
@@ -442,7 +479,7 @@ test('CreateMachine using dataset without permission', function (t) {
 
         var obj = {
             image: inaccessibleImage.uuid,
-            'package': 'sdc_128_ok',
+            'package': sdc_128_ok_entry.name,
             server_uuid: HEADNODE.uuid
         };
 
@@ -480,7 +517,7 @@ test('CreateMachine without approved_for_provisioning', function (t) {
 
         var obj = {
             image: DATASET,
-            'package': 'sdc_128_ok',
+            'package': sdc_128_ok_entry.name,
             server_uuid: HEADNODE.uuid
         };
 
@@ -517,7 +554,7 @@ test('CreateMachine without approved_for_provisioning', function (t) {
 test('CreateMachine', function (t) {
     var obj = {
         image: DATASET,
-        'package': 'sdc_128_ok',
+        'package': sdc_128_ok_entry.name,
         name: 'a' + uuid().substr(0, 7),
         locality: { far: 'af4167f0-beda-4af9-9ae4-99d544499c14' }, // fake UUID
         server_uuid: HEADNODE.uuid,
@@ -593,8 +630,10 @@ test('ListMachines (filter by memory)', function (t) {
 
 
 test('ListMachines (filter by package)', function (t) {
-    searchAndCheck('package=sdc_128_ok', t, function (m) {
-        t.equal(m['package'], 'sdc_128_ok');
+    var pkgName = sdc_128_ok_entry.name;
+
+    searchAndCheck('package=' + pkgName, t, function (m) {
+        t.equal(m['package'], pkgName);
     });
 });
 
@@ -708,7 +747,8 @@ test('Resize machine to inactive package', function (t) {
 
 test('Resize machine tests', function (t) {
     var resizeTest = require('./machines/resize');
-    resizeTest(t, client, machine, sdc_128_ok_entry, function () {
+    resizeTest(t, client, machine, sdc_128_ok_entry, sdc_256_ok_entry,
+        function () {
         t.end();
     });
 });
@@ -776,7 +816,7 @@ test('machine audit', function (t) {
             'destroy', 'delete_snapshot', 'rollback_snapshot',
             'create_snapshot', 'replace_metadata', 'remove_metadata',
             'set_metadata', 'remove_tags', 'replace_tags', 'remove_tags',
-            'set_tags', 'reboot', 'start', 'stop', 'provision'
+            'set_tags', 'resize', 'reboot', 'start', 'stop', 'provision'
         ];
 
         for (var i = 0; i !== expectedJobs.length; i++) {
@@ -852,7 +892,7 @@ test('ListMachines destroyed', function (t) {
 
 test('CreateMachine using query args', function (t) {
     var query = '/my/machines?image=' + DATASET +
-                '&package=sdc_128_ok' +
+                '&package=' + sdc_128_ok_entry.name +
                 '&server_uuid=' + HEADNODE.uuid;
 
     client.post(query, {}, function (err, req, res, body) {
@@ -886,7 +926,7 @@ test('CreateMachine using multiple same networks', function (t) {
 
         var obj = {
             image: DATASET,
-            'package': 'sdc_128_ok',
+            'package': sdc_128_ok_entry.name,
             server_uuid: HEADNODE.uuid,
             networks: [networkUuid, networkUuid, networkUuid]
         };
@@ -941,7 +981,7 @@ test('Check resize does not affect docker machines (setup)', function (t) {
             uuid: '', // filled in below
             primary: true
         } ],
-        billing_id: sdc_128_ok.uuid,
+        billing_id: sdc_128_ok_entry.uuid,
         image_uuid: DATASET
     };
 

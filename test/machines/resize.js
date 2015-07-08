@@ -18,20 +18,49 @@ var machinesCommon = require('./common');
 var checkJob = machinesCommon.checkJob;
 var waitForJob = machinesCommon.waitForJob;
 
-module.exports = function (suite, client, machine, pkg, callback) {
-    // FIXME: Restore resize tests into nightly-1 when we finally get
-    // some room for them
-    var cfg = common.getCfg();
-    if (!machine || cfg.datacenters['nightly-1'] || cfg.datacenters.coal) {
-        return callback();
+module.exports = function (suite, client, machine, pkgSame, pkgUp, cb) {
+    if (!machine) {
+        return cb();
     }
 
+    suite.test('Resize Machine up on coal', function (t) {
+        t.ok(pkgSame, 'Resize same package OK');
+
+        if (!common.getCfg().datacenters.coal) {
+            return t.end();
+        }
+
+        return client.post('/my/machines/' + machine, {
+            action: 'resize',
+            'package': pkgUp.name
+        }, function (err) {
+            t.ok(err);
+
+            var body = err.body;
+            t.ok(body);
+
+            if (err.body) {
+                t.equal(body.code, 'ValidationFailed');
+                t.equal(body.message, 'Invalid VM update parameters');
+
+                t.equal(body.errors.length, 1);
+                var error = body.errors[0];
+
+                t.equal(error.field, 'ram');
+                t.equal(error.code, 'InsufficientCapacity');
+            }
+
+            t.end();
+        });
+    });
+
+
     suite.test('Resize Machine', function (t) {
-        t.ok(pkg, 'Resize package OK');
-        console.log('Resizing to package: %j', pkg);
+        t.ok(pkgUp, 'Resize up package OK');
+        console.log('Resizing to package: %j', pkgSame);
         client.post('/my/machines/' + machine, {
             action: 'resize',
-            'package': pkg.name
+            'package': pkgSame.name
         }, function (err) {
             t.ifError(err, 'Resize machine error');
             t.end();
@@ -58,5 +87,5 @@ module.exports = function (suite, client, machine, pkg, callback) {
         });
     });
 
-    return callback();
+    return cb();
 };
