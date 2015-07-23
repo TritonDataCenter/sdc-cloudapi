@@ -8,21 +8,21 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
-var util = require('util');
-var test = require('tape').test;
 var common = require('../common');
-var machinesCommon = require('./common');
-var checkMachine = machinesCommon.checkMachine;
-var checkJob = machinesCommon.checkJob;
-var waitForJob = machinesCommon.waitForJob;
-var checkWfJob = machinesCommon.checkWfJob;
-var waitForWfJob = machinesCommon.waitForWfJob;
+var waitForJob = require('./common').waitForJob;
+
+
+// --- Globals
+
 
 var META_KEY = 'foo';
 var META_VAL = 'bar';
 
 var META_64_KEY = 'sixtyfour';
 var META_64_VAL = new Buffer('Hello World').toString('base64');
+
+
+// --- Tests
 
 
 module.exports = function (suite, client, machine, callback) {

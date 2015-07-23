@@ -8,17 +8,16 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
-var test = require('tape').test;
-var common = require('../common');
-var machinesCommon = require('./common');
-var checkJob = machinesCommon.checkJob;
-var waitForJob = machinesCommon.waitForJob;
+var waitForJob = require('./common').waitForJob;
+
+
+// --- Tests
+
 
 module.exports = function (suite, client, machine, callback) {
     if (!machine) {
         return callback();
     }
-
 
     suite.test('Disable firewall', function (t) {
         client.post('/my/machines/' + machine, {

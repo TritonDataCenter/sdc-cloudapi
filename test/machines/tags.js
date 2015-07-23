@@ -8,15 +8,14 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
-var util = require('util');
-var test = require('tape').test;
 var common = require('../common');
 var machinesCommon = require('./common');
 var checkMachine = machinesCommon.checkMachine;
-var checkJob = machinesCommon.checkJob;
 var waitForJob = machinesCommon.waitForJob;
-var checkWfJob = machinesCommon.checkWfJob;
-var waitForWfJob = machinesCommon.waitForWfJob;
+
+
+// --- Globals
+
 
 var TAG_KEY = 'role';
 var TAG_VAL = 'unitTest';
@@ -24,8 +23,11 @@ var TAG_VAL = 'unitTest';
 var TAG_TWO_KEY = 'smartdc_type';
 var TAG_TWO_VAL = 'none';
 
-module.exports = function (suite, client, machine, callback) {
 
+// --- Tests
+
+
+module.exports = function (suite, client, machine, callback) {
     if (!machine) {
         return callback();
     }

@@ -19,9 +19,10 @@ var path = require('path');
 var Logger = require('bunyan');
 var restify = require('restify');
 var libuuid = require('libuuid');
-function uuid() {
-    return (libuuid.create());
-}
+var util = require('util');
+var fs = require('fs');
+var vasync = require('vasync');
+
 var UFDS = require('sdc-clients').UFDS;
 var VMAPI = require('sdc-clients').VMAPI;
 var CNAPI = require('sdc-clients').CNAPI;
@@ -29,29 +30,54 @@ var NAPI = require('sdc-clients').NAPI;
 var IMGAPI = require('sdc-clients').IMGAPI;
 var PAPI = require('sdc-clients').PAPI;
 var MAHI = require('mahi');
+
 var app = require('../lib').app;
-var util = require('util');
-var fs = require('fs');
 var apertureConfig = require('aperture-config').config;
 
 
 // --- Globals
 
+
+var SDC_128_PACKAGE = {
+    uuid: '897779dc-9ce7-4042-8879-a4adccc94353',
+    name: 'sdc_128_ok',
+    version: '1.0.0',
+    max_physical_memory: 128,
+    quota: 10240,
+    max_swap: 512,
+    cpu_cap: 150,
+    max_lwps: 1000,
+    zfs_io_priority: 10,
+    fss: 25,
+    'default': false,
+    vcpus: 1,
+    active: true
+};
+
 var PASSWD = 'secret123';
 var DEFAULT_CFG = path.join(__dirname, '..', '/etc/cloudapi.cfg');
-var LOG =  new Logger({
+
+var LOG = new Logger({
     level: process.env.LOG_LEVEL || 'info',
     name: 'cloudapi_unit_test',
     stream: process.stderr,
     serializers: restify.bunyan.serializers
 });
 
-var config = {};
+var CONFIG = {};
 try {
-    config = JSON.parse(fs.readFileSync(DEFAULT_CFG, 'utf8'));
+    CONFIG = JSON.parse(fs.readFileSync(DEFAULT_CFG, 'utf8'));
 } catch (e) {}
 
-var SIGNATURE = 'Signature keyId="%s",algorithm="%s" %s';
+var SIGNATURE_FMT = 'Signature keyId="%s",algorithm="%s" %s';
+
+
+// --- Functions
+
+
+function uuid() {
+    return libuuid.create();
+}
 
 
 function requestSigner(req, keyId, privateKey) {
@@ -63,19 +89,20 @@ function requestSigner(req, keyId, privateKey) {
     }
 
     var alg = 'RSA-SHA256';
+
     var signer = crypto.createSign(alg);
     signer.update(d);
-    req.setHeader('Authorization', util.format(SIGNATURE,
-                                    keyId,
-                                    alg.toLowerCase(),
-                                    signer.sign(privateKey, 'base64')));
+    var sig = signer.sign(privateKey, 'base64');
+
+    var authHeader = util.format(SIGNATURE_FMT, keyId, alg.toLowerCase(), sig);
+    req.setHeader('Authorization', authHeader);
 }
 
 
 // Unavoidably, we need to poll some jobs
 function _wfapi() {
     return restify.createJsonClient({
-        url: process.env.WFAPI_URL || config.wfapi.url || 'http://10.99.99.19',
+        url: process.env.WFAPI_URL || CONFIG.wfapi.url || 'http://10.99.99.19',
         version: '*',
         retryOptions: {
             retry: 0
@@ -91,7 +118,7 @@ function _wfapi() {
 // hanging forever.
 function _vmapi() {
     return new VMAPI({
-        url: process.env.VMAPI_URL || config.vmapi.url || 'http://10.99.99.28',
+        url: process.env.VMAPI_URL || CONFIG.vmapi.url || 'http://10.99.99.28',
         retry: {
             retries: 1,
             minTimeout: 1000
@@ -104,7 +131,7 @@ function _vmapi() {
 
 function _cnapi() {
     return new CNAPI({
-        url: process.env.CNAPI_URL || config.cnapi.url || 'http://10.99.99.22',
+        url: process.env.CNAPI_URL || CONFIG.cnapi.url || 'http://10.99.99.22',
         retry: {
             retries: 1,
             minTimeout: 1000
@@ -117,7 +144,7 @@ function _cnapi() {
 
 function _napi() {
     return new NAPI({
-        url: process.env.NAPI_URL || config.napi.url || 'http://10.99.99.10',
+        url: process.env.NAPI_URL || CONFIG.napi.url || 'http://10.99.99.10',
         retry: {
             retries: 1,
             minTimeout: 1000
@@ -130,7 +157,7 @@ function _napi() {
 
 function _imgapi() {
     return new IMGAPI({
-        url: process.env.IMGAPI_URL || config.imgapi.url ||
+        url: process.env.IMGAPI_URL || CONFIG.imgapi.url ||
             'http://10.99.99.21',
         retry: {
             retries: 1,
@@ -144,7 +171,7 @@ function _imgapi() {
 
 function _papi() {
     return PAPI({
-        url: process.env.PAPI_URL || config.papi.url || 'http://10.99.99.30',
+        url: process.env.PAPI_URL || CONFIG.papi.url || 'http://10.99.99.30',
         retry: {
             retries: 1,
             minTimeout: 1000
@@ -157,7 +184,7 @@ function _papi() {
 
 function _mahi() {
     return MAHI.createClient({
-        url: process.env.MAHI_URL || config.mahi.url ||
+        url: process.env.MAHI_URL || CONFIG.mahi.url ||
         'http://10.99.99.34:8080',
         typeTable: apertureConfig.typeTable,
         maxAuthCacheSize: 1,
@@ -166,32 +193,37 @@ function _mahi() {
 }
 
 
-function clientTeardown(cb) {
-    var self = this;
+function _ufds() {
+    return new UFDS({
+        url: process.env.UFDS_URL || CONFIG.ufds.url || 'ldaps://10.99.99.18',
+        bindDN: CONFIG.ufds.bindDN || 'cn=root',
+        bindPassword: CONFIG.ufds.bindPassword || 'secret',
+        log: LOG,
+        tlsOptions: {
+            rejectUnauthorized: false
+        },
+        retry: {
+            initialDelay: 100
+        }
+    });
+}
 
-    var ufds = self.ufds;
-    var id = self.account.uuid;
 
-    self.mahi.close();
-    self.close();
+function clientTeardown(client, cb) {
+    client.close();
+    client.mahi.close();
+
+    var ufds = client.ufds;
 
     // we ignore errors until the end and try to clean up as much as possible
-    ufds.deleteRole(id, self.role.uuid, function (e) {
-        ufds.deletePolicy(id, self.policy.uuid, function (e2) {
-            ufds.deleteKey(self.testUser, 'id_rsa', function (e3) {
-                ufds.deleteKey(self.subuser, 'sub_id_rsa', function (e4) {
-                    ufds.deleteUser(self.subuser, function (e5) {
-                        ufds.deleteUser(self.testUser, function (e6) {
-                            ufds.client.removeAllListeners('close');
-                            ufds.client.removeAllListeners('timeout');
-                            ufds.removeAllListeners('timeout');
+    ufds.deleteKey(client.login, 'id_rsa', function (err) {
+        ufds.deleteUser(client.login, function (err2) {
+            ufds.client.removeAllListeners('close');
+            ufds.client.removeAllListeners('timeout');
+            ufds.removeAllListeners('timeout');
 
-                            ufds.close(function () {
-                                return cb(e || e2 || e3 || e4 || e5 || e6);
-                            });
-                        });
-                    });
-                });
+            ufds.close(function () {
+                return cb(err || err2);
             });
         });
     });
@@ -207,27 +239,28 @@ function checkReqId(t, headers) {
 }
 
 
-function createTestRole(client, callback) {
+function createTestRole(client, subUserAccount, cb) {
     var entry = {
         name: 'test-role',
-        uniquemember: [client.subuser.dn],
+        uniquemember: [subUserAccount.dn],
         memberpolicy: [client.policy.dn],
-        uniquememberdefault: [client.subuser.dn],
+        uniquememberdefault: [subUserAccount.dn],
         account: client.account.uuid
     };
 
     client.ufds.addRole(client.account.uuid, entry, function (err, role) {
         if (err) {
-            return callback(err);
+            return cb(err);
         }
 
         client.role = role;
-        return callback(null, client);
+
+        return cb();
     });
 }
 
 
-function createTestPolicy(client, callback) {
+function createTestPolicy(client, cb) {
     var entry = {
         name: 'test-policy',
         rule: [
@@ -244,120 +277,65 @@ function createTestPolicy(client, callback) {
 
     client.ufds.addPolicy(client.account.uuid, entry, function (err, policy) {
         if (err) {
-            return callback(err);
+            return cb(err);
         }
 
         client.policy = policy;
-        return createTestRole(client, callback);
+
+        return cb();
     });
 }
 
 
-function addSubUserKey(client, callback) {
-    var p = __dirname + '/sub_id_rsa';
+function addUserKey(client, keyPath, cb) {
+    var publicKey  = fs.readFileSync(keyPath + '.pub', 'ascii');
+    var privateKey = fs.readFileSync(keyPath, 'ascii');
 
-    return fs.readFile(p + '.pub', 'ascii', function (er1, publicKey) {
-        if (er1) {
-            return callback(er1);
-        }
+    client.publicKey = publicKey;
+    client.privateKey = privateKey;
 
-        client.subPublicKey = publicKey;
-        var obj = {
-            openssh: publicKey,
-            name: 'sub_id_rsa'
-        };
+    var obj = {
+        openssh: publicKey,
+        name: 'id_rsa'
+    };
 
-        return client.subuser.addKey(obj, function (er2) {
-            if (er2) {
-                return callback(er2);
-            }
-
-            return fs.readFile(p, 'ascii', function (er3, privateKey) {
-                if (er3) {
-                    return callback(er3);
-                }
-
-                client.subPrivateKey = privateKey;
-                return createTestPolicy(client, callback);
-            });
-        });
-    });
+    return client.account.addKey(obj, cb);
 }
 
 
-function addUserKey(client, callback) {
-    var p = __dirname + '/id_rsa';
-
-    return fs.readFile(p + '.pub', 'ascii', function (er1, publicKey) {
-        if (er1) {
-            return callback(er1);
-        }
-
-        client.publicKey = publicKey;
-        var obj = {
-            openssh: publicKey,
-            name: 'id_rsa'
-        };
-
-        return client.account.addKey(obj, function (er2) {
-            if (er2) {
-                return callback(er2);
-            }
-
-            return fs.readFile(p, 'ascii', function (er3, privateKey) {
-                if (er3) {
-                    return callback(er3);
-                }
-
-                client.privateKey = privateKey;
-                client.teardown = clientTeardown;
-
-                return addSubUserKey(client, callback);
-            });
-        });
-    });
-}
-
-
-function ufdsConnectCb(client, callback) {
+function addUser(client, keyPath, parentAccount, cb) {
     var ufds = client.ufds;
+
     var entry = {
-        login: client.testUser,
-        email: client.testUser,
-        userpassword: PASSWD,
+        login: client.login,
+        email: client.login,
+        userpassword: client.passwd,
         registered_developer: true,
         approved_for_provisioning: true
     };
 
+    if (parentAccount) {
+        entry.account = parentAccount.uuid;
+    } else {
+        entry.registered_developer = true;
+        entry.approved_for_provisioning = true;
+    }
+
     return ufds.addUser(entry, function (err, customer) {
         if (err) {
-            return callback(err);
+            return cb(err);
         }
 
         client.account = customer;
 
-        var sub_entry = {
-            login: client.testSubUser,
-            email: client.testSubUser,
-            userpassword: PASSWD,
-            account: customer.uuid
-        };
-
-        return ufds.addUser(sub_entry, function (err2, sub) {
-            if (err2) {
-                return callback(err2);
-            }
-
-            client.subuser = sub;
-            return addUserKey(client, callback);
-        });
+        return addUserKey(client, keyPath, cb);
     });
 }
 
 
-function setupClient(version, serverUrl, user, subLogin, callback) {
+function setupClient(version, serverUrl, user, keyId, keyPath, parentAcc, cb) {
     if (typeof (version) === 'function') {
-        callback = version;
+        cb = version;
         version = '*';
     }
 
@@ -370,43 +348,31 @@ function setupClient(version, serverUrl, user, subLogin, callback) {
         log: LOG,
         rejectUnauthorized: false,
         signRequest: function (req) {
-            requestSigner(req, client.KEY_ID, client.privateKey);
+            requestSigner(req, client.keyId, client.privateKey);
         }
     });
+
+    client.login = user;
+    client.passwd = PASSWD;
+    client.keyId = keyId;
 
     // Create clients to all the APIs
-    client.wfapi = _wfapi();
-    client.vmapi = _vmapi();
-    client.cnapi = _cnapi();
-    client.napi = _napi();
+    client.wfapi  = _wfapi();
+    client.vmapi  = _vmapi();
+    client.cnapi  = _cnapi();
+    client.napi   = _napi();
     client.imgapi = _imgapi();
-    client.papi = _papi();
-    client.mahi = _mahi();
+    client.papi   = _papi();
+    client.mahi   = _mahi();
+    client.ufds   = _ufds();
 
-    client.testUser = user;
-    client.KEY_ID = '/' + client.testUser + '/keys/id_rsa';
+    var ufds = client.ufds;
 
-    client.testSubUser = subLogin;
-    client.SUB_ID = '/' + client.testUser + '/users/' + client.testSubUser +
-        '/keys/sub_id_rsa';
-
-    var ufds = new UFDS({
-        url: process.env.UFDS_URL || config.ufds.url || 'ldaps://10.99.99.18',
-        bindDN: config.ufds.bindDN || 'cn=root',
-        bindPassword: config.ufds.bindPassword || 'secret',
-        log: LOG,
-        tlsOptions: {
-            rejectUnauthorized: false
-        },
-        retry: {
-            initialDelay: 100
-        }
-    });
-
-    ufds.once('error', callback);
+    ufds.once('error', cb);
 
     ufds.once('connect', function () {
         ufds.removeAllListeners('error');
+
         ufds.on('error', function (err) {
             LOG.warn(err, 'UFDS: unexpected error occurred');
         });
@@ -419,8 +385,33 @@ function setupClient(version, serverUrl, user, subLogin, callback) {
             LOG.info('UFDS: reconnected');
         });
 
-        client.ufds = ufds;
-        ufdsConnectCb(client, callback);
+        addUser(client, keyPath, parentAcc, function (err) {
+            cb(err, client);
+        });
+    });
+}
+
+
+function loadServer(cb) {
+    if (process.env.SDC_SETUP_TESTS) {
+        var serverObj = {
+            url: process.env.SDC_SETUP_URL || 'https://127.0.0.1'
+        };
+
+        return cb(null, serverObj);
+    }
+
+    CONFIG.test = true;
+
+    return app.createServer(CONFIG, function (err, server) {
+        if (err) {
+            return cb(err);
+        }
+
+        return server.start(function () {
+            LOG.info('CloudAPI listening at %s', server.url);
+            cb(null, server);
+        });
     });
 }
 
@@ -488,7 +479,7 @@ function withTemporaryUser(ufdsClient, userOpts, bodyCb, cb) {
 
         tmpAccount.passwd = entry.userpassword; // sometimes bodyCb needs this
 
-        var keyPath = __dirname + '/id_rsa.pub';
+        var keyPath = __dirname + '/testkeys/id_rsa.pub';
         return fs.readFile(keyPath, 'ascii', function readKey(err2, data) {
             if (err2) {
                 return invokeBodyCb(err2);
@@ -526,48 +517,112 @@ function setup(version, cb) {
     assert.ok(cb);
 
     var user = 'a' + uuid().substr(0, 7) + '.test@joyent.com';
-    var subLogin = 'a' + uuid().substr(0, 7) + '.sub.test@joyent.com';
+    var userKeyPath = __dirname + '/testkeys/id_rsa';
+    var userKeyId = '/' + user + '/keys/id_rsa';
 
-    config.log = LOG;
+    var subUser = 'a' + uuid().substr(0, 7) + '.sub.test@joyent.com';
+    var subUserKeyPath = __dirname + '/testkeys/sub_id_rsa';
+    var subUserKeyId = '/' + user + '/users/' + subUser + '/keys/id_rsa';
 
-    if (process.env.SDC_SETUP_TESTS) {
-        var serverUrl = process.env.SDC_SETUP_URL || 'https://127.0.0.1';
-        // Already have a running server instance, no need to boot another one:
-        return setupClient(version, serverUrl, user, subLogin,
-                            function (err, client) {
-            var server = { url: serverUrl }; // stub server obj
-            cb(err, client, server);
-        });
-    }
+    var otherUser = 'a' + uuid().substr(0, 7) + '.other.test@joyent.com';
+    var otherUserKeyPath = __dirname + '/testkeys/other_id_rsa';
+    var otherUserKeyId = '/' + otherUser + '/keys/other_id_rsa';
 
-    config.test = true;
+    CONFIG.log = LOG;
 
-    return app.createServer(config, function (err, server) {
+    var userClient;
+    var subUserClient;
+    var otherUserClient;
+    var server;
+
+    vasync.pipeline({ funcs: [
+        function setupServer(_, next) {
+            loadServer(function (err, _server) {
+                server = _server;
+                next(err);
+            });
+        },
+        function setupUserClient(_, next) {
+            setupClient(version, server.url, user, userKeyId, userKeyPath,
+                        null, function (err, client) {
+                userClient = client;
+                next(err);
+            });
+        },
+        function setupSubUserClient(_, next) {
+            setupClient(version, server.url, subUser, subUserKeyId,
+                        subUserKeyPath, userClient.account,
+                        function (err, client) {
+                subUserClient = client;
+                next(err);
+            });
+        },
+        function setupOtherClient(_, next) {
+            setupClient(version, server.url, otherUser, otherUserKeyId,
+                        otherUserKeyPath, null, function (err, client) {
+                otherUserClient = client;
+                next(err);
+            });
+        },
+        function setupPolicy(_, next) {
+            createTestPolicy(userClient, next);
+        },
+        function setupRole(_, next) {
+            createTestRole(userClient, subUserClient.account, next);
+        },
+        function setupPackage(_, next) {
+            addPackage(userClient, SDC_128_PACKAGE, next);
+        }
+    ] }, function (err) {
         if (err) {
             throw err;
         }
 
-        server.start(function () {
-            LOG.info('CloudAPI listening at %s', server.url);
+        assert(userClient);
+        assert(subUserClient);
+        assert(otherUserClient);
+        assert(server);
 
-            setupClient(version, server.url, user, subLogin,
-                        function (err2, client) {
-                cb(err, client, server);
-            });
-        });
+        var clients = {
+            user: userClient,
+            subuser: subUserClient,
+            other: otherUserClient
+        };
+
+        cb(null, clients, server);
     });
 }
 
 
-function teardown(client, server, cb) {
-    client.teardown(function () {
-        if (server.close) {
-            server.close(function () {
-                    cb();
+function teardown(clients, server, cb) {
+    assert(clients);
+    assert(server);
+    assert(cb);
+
+    var userClient      = clients.user;
+    var subUserClient   = clients.subuser;
+    var otherUserClient = clients.other;
+
+    var ufds    = userClient.ufds;
+    var accUuid = userClient.account.uuid;
+
+    // ignore all errors; try to clean up as much as possible
+    ufds.deleteRole(accUuid, userClient.role.uuid, function () {
+        ufds.deletePolicy(accUuid, userClient.policy.uuid, function () {
+            deletePackage(userClient, SDC_128_PACKAGE, function () {
+                clientTeardown(subUserClient, function () {
+                    clientTeardown(userClient, function () {
+                        clientTeardown(otherUserClient, function () {
+                            if (server.close) {
+                                server.close(cb);
+                            } else {
+                                cb();
+                            }
+                        });
+                    });
+                });
             });
-        } else {
-                cb();
-        }
+        });
     });
 }
 
@@ -600,7 +655,58 @@ function checkVersionHeader(t, version, headers) {
 }
 
 
+function addPackage(client, pkg, cb) {
+    client.papi.get(pkg.uuid, {}, function (err, p) {
+        if (!err) {
+            return cb(null, p);
+        }
+
+        if (err.restCode === 'ResourceNotFound') {
+            return client.papi.add(pkg, cb);
+        } else {
+            return cb(err);
+        }
+    });
+}
+
+
+function deletePackage(client, pkg, cb) {
+    client.papi.del(pkg.uuid, { force: true }, cb);
+}
+
+
+function getHeadnode(client, cb) {
+    client.cnapi.listServers({ extras: 'sysinfo' }, function (err, servers) {
+        if (err) {
+            return err;
+        }
+
+        var headnode = servers.filter(function (s) {
+            return s.headnode;
+        })[0];
+
+        return cb(null, headnode);
+    });
+}
+
+
+function getBaseDataset(client, cb) {
+    client.get('/my/datasets?name=base', function (err, req, res, body) {
+        if (err) {
+            return err;
+        }
+
+        var dataset = body.filter(function (d) {
+            return d.version && d.version === '13.4.0';
+        })[0];
+
+        return cb(null, dataset);
+    });
+}
+
+
 // --- Library
+
 
 module.exports = {
     setup: setup,
@@ -611,8 +717,15 @@ module.exports = {
     checkMahiCache: checkMahiCache,
     waitForMahiCache: waitForMahiCache,
     withTemporaryUser: withTemporaryUser,
+    uuid: uuid,
+    addPackage: addPackage,
+    deletePackage: deletePackage,
+    getHeadnode: getHeadnode,
+    getBaseDataset: getBaseDataset,
+
+    sdc_128_package: SDC_128_PACKAGE,
 
     getCfg: function () {
-        return config;
+        return CONFIG;
     }
 };

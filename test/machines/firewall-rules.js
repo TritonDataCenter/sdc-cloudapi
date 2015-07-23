@@ -10,17 +10,20 @@
 
 var util = require('util');
 var sprintf = util.format;
-var test = require('tape').test;
 var libuuid = require('libuuid');
 
 var common = require('../common');
-var machinesCommon = require('./common');
-var checkMachine = machinesCommon.checkMachine;
+var checkMachine = require('./common').checkMachine;
+
+
+// --- Tests
+
 
 module.exports = function (suite, client, machine, callback) {
     if (!machine) {
         return callback();
     }
+
     // FireWall Rules:
     var RULE_UUID;
     var RULES_URL = '/my/fwrules';

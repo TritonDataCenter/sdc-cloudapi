@@ -9,14 +9,21 @@
  */
 
 var test = require('tape').test;
-var libuuid = require('libuuid');
 var common = require('./common');
 
-var client, server, instId, cloneId;
 
-function uuid() {
-    return libuuid.create();
-}
+// --- Globals
+
+
+var CLIENTS;
+var CLIENT;
+var SERVER;
+
+var INST_ID;
+var CLONE_ID;
+
+
+// --- Helpers
 
 
 // since typeof() is kinda terrible, something more useful
@@ -52,7 +59,7 @@ function checkTypes(t, types, obj) {
 
 
 function checkHead(t, path) {
-    client.head(path, function (err, req, res, body) {
+    CLIENT.head(path, function (err, req, res, body) {
         t.ifError(err);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 200);
@@ -99,16 +106,14 @@ function checkInstrumentation(t, inst, justCreated) {
 }
 
 
-
 // --- Tests
 
-test('setup', function (t) {
-    common.setup(function (err, _client, _server) {
-        t.ifError(err);
-        t.ok(_client);
 
-        client = _client;
-        server = _server;
+test('setup', function (t) {
+    common.setup(function (_, clients, server) {
+        CLIENTS = clients;
+        CLIENT  = clients.user;
+        SERVER  = server;
 
         t.end();
     });
@@ -116,7 +121,7 @@ test('setup', function (t) {
 
 
 test('DescribeAnalytics OK', function (t) {
-    client.get('/my/analytics', function (err, req, res, body) {
+    CLIENT.get('/my/analytics', function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -227,7 +232,7 @@ test('CreateInstrumentation OK', function (t) {
         predicate: '{"eq": ["optype","read"]}'
     };
 
-    client.post('/my/analytics/instrumentations', args,
+    CLIENT.post('/my/analytics/instrumentations', args,
                 function (err, req, res, body) {
         t.ifError(err);
         common.checkHeaders(t, res.headers);
@@ -238,7 +243,7 @@ test('CreateInstrumentation OK', function (t) {
 
         checkInstrumentation(t, body, true);
 
-        instId = body.id;
+        INST_ID = body.id;
 
         t.end();
     });
@@ -247,9 +252,9 @@ test('CreateInstrumentation OK', function (t) {
 
 
 test('GetInstrumentation OK', function (t) {
-    var path = '/my/analytics/instrumentations/' + instId;
+    var path = '/my/analytics/instrumentations/' + INST_ID;
 
-    client.get(path, function (err, req, res, body) {
+    CLIENT.get(path, function (err, req, res, body) {
         t.ifError(err);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 200);
@@ -263,7 +268,7 @@ test('GetInstrumentation OK', function (t) {
 
 
 test('HeadInstrumentation OK', function (t) {
-    var path = '/my/analytics/instrumentations/' + instId;
+    var path = '/my/analytics/instrumentations/' + INST_ID;
 
     checkHead(t, path);
 });
@@ -271,9 +276,9 @@ test('HeadInstrumentation OK', function (t) {
 
 
 test('GetInstrumentationValue OK', function (t) {
-    var path = '/my/analytics/instrumentations/' + instId + '/value/raw';
+    var path = '/my/analytics/instrumentations/' + INST_ID + '/value/raw';
 
-    client.get(path, function (err, req, res, body) {
+    CLIENT.get(path, function (err, req, res, body) {
         t.ifError(err);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 200);
@@ -300,7 +305,7 @@ test('GetInstrumentationValue OK', function (t) {
 
 
 test('HeadInstrumentationValue OK', function (t) {
-    var path = '/my/analytics/instrumentations/' + instId + '/value/raw';
+    var path = '/my/analytics/instrumentations/' + INST_ID + '/value/raw';
 
     checkHead(t, path);
 });
@@ -308,10 +313,10 @@ test('HeadInstrumentationValue OK', function (t) {
 
 
 test('GetInstrumentationHeatmap OK', function (t) {
-    var path = '/my/analytics/instrumentations/' + instId +
+    var path = '/my/analytics/instrumentations/' + INST_ID +
                 '/value/heatmap/image';
 
-    client.get(path, function (err, req, res, body) {
+    CLIENT.get(path, function (err, req, res, body) {
         t.ifError(err);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 200);
@@ -344,7 +349,7 @@ test('GetInstrumentationHeatmap OK', function (t) {
 
 
 test('HeadInstrumentationHeatmap OK', function (t) {
-    var path = '/my/analytics/instrumentations/' + instId +
+    var path = '/my/analytics/instrumentations/' + INST_ID +
                 '/value/heatmap/image';
 
     checkHead(t, path);
@@ -353,10 +358,10 @@ test('HeadInstrumentationHeatmap OK', function (t) {
 
 
 test('GetInstrumentationHeatmapDetails OK', function (t) {
-    var path = '/my/analytics/instrumentations/' + instId +
+    var path = '/my/analytics/instrumentations/' + INST_ID +
                 '/value/heatmap/details';
 
-    client.get(path, function (err, req, res, body) {
+    CLIENT.get(path, function (err, req, res, body) {
         // XX erring out, probably needs a VM started up for this first
 
         t.end();
@@ -368,7 +373,7 @@ test('GetInstrumentationHeatmapDetails OK', function (t) {
 test('HeadInstrumentationHeatmapDetails OK', function (t) {
     // XX erring out, probably needs a VM started up for this first
     //
-    // var path = '/my/analytics/instrumentations/' + instId +
+    // var path = '/my/analytics/instrumentations/' + INST_ID +
     //            '/value/heatmap/detail';
     //
     // checkHead(t, path);
@@ -380,7 +385,7 @@ test('HeadInstrumentationHeatmapDetails OK', function (t) {
 test('ListInstrumentations OK', function (t) {
     var path = '/my/analytics/instrumentations';
 
-    client.get(path, function (err, req, res, body) {
+    CLIENT.get(path, function (err, req, res, body) {
         t.ifError(err);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 200);
@@ -406,9 +411,9 @@ test('HeadInstrumentations OK', function (t) {
 
 
 test('CloneInstrumentation OK', function (t) {
-    var path = '/my/analytics/instrumentations/' + instId;
+    var path = '/my/analytics/instrumentations/' + INST_ID;
 
-    client.post(path, { action: 'clone' }, function (err, req, res, body) {
+    CLIENT.post(path, { action: 'clone' }, function (err, req, res, body) {
         t.ifError(err);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 200);
@@ -418,8 +423,8 @@ test('CloneInstrumentation OK', function (t) {
 
         checkInstrumentation(t, body, true);
 
-        cloneId = body.id;
-        t.ok(cloneId !== instId);
+        CLONE_ID = body.id;
+        t.ok(CLONE_ID !== INST_ID);
 
         t.end();
     });
@@ -437,7 +442,7 @@ test('Check analytics roles are preserved', function (t) {
     function createRole(next) {
         var args = { name: roleName };
 
-        client.post('/my/roles', args, function (err, req, res, body) {
+        CLIENT.post('/my/roles', args, function (err, req, res, body) {
             t.ifError(err);
             t.equal(res.statusCode, 201);
             rolePath = res.headers.location;
@@ -447,9 +452,9 @@ test('Check analytics roles are preserved', function (t) {
     }
 
     function createClone(next) {
-        var path = instrumentationsPath + '/' + instId;
+        var path = instrumentationsPath + '/' + INST_ID;
 
-        client.post(path, { action: 'clone' }, function (err, req, res, body) {
+        CLIENT.post(path, { action: 'clone' }, function (err, req, res, body) {
             t.ifError(err);
             t.equal(res.statusCode, 200);
             clonePath = res.headers.location;
@@ -461,7 +466,7 @@ test('Check analytics roles are preserved', function (t) {
     function addRole(next) {
         var args = { 'role-tag': [ roleName ] };
 
-        client.put(instrumentationsPath, args, function (err, req, res, body) {
+        CLIENT.put(instrumentationsPath, args, function (err, req, res, body) {
             t.ifError(err);
             t.equal(res.statusCode, 200);
             next();
@@ -469,7 +474,7 @@ test('Check analytics roles are preserved', function (t) {
     }
 
     function deleteClone(next) {
-        client.del(clonePath, function (err, req, res, body) {
+        CLIENT.del(clonePath, function (err, req, res, body) {
             t.ifError(err);
             t.equal(res.statusCode, 204);
             next();
@@ -477,7 +482,7 @@ test('Check analytics roles are preserved', function (t) {
     }
 
     function checkRole(next) {
-        client.head(instrumentationsPath, function (err, req, res, body) {
+        CLIENT.head(instrumentationsPath, function (err, req, res, body) {
             t.ifError(err);
             t.equal(res.statusCode, 200);
             t.equal(res.headers['role-tag'], roleName);
@@ -488,7 +493,7 @@ test('Check analytics roles are preserved', function (t) {
     function removeRole(next) {
         var args = { 'role-tag': [] };
 
-        client.put(instrumentationsPath, args, function (err, req, res, body) {
+        CLIENT.put(instrumentationsPath, args, function (err, req, res, body) {
             t.ifError(err);
             t.equal(res.statusCode, 200);
             next();
@@ -496,7 +501,7 @@ test('Check analytics roles are preserved', function (t) {
     }
 
     function deleteRole(next) {
-        client.del(rolePath, function (err, req, res, body) {
+        CLIENT.del(rolePath, function (err, req, res, body) {
             t.ifError(err);
             t.equal(res.statusCode, 204);
             next();
@@ -507,13 +512,13 @@ test('Check analytics roles are preserved', function (t) {
     // want to remove the test user after this test, we cannot have a child
     // object on the user in LDAP
     function deleteResourceObject(next) {
-        var account = client.account;
+        var account = CLIENT.account;
         var name = '/' + account.login + '/analytics/instrumentations';
 
-        client.ufds.getResource(account.uuid, name, function (err, resource) {
+        CLIENT.ufds.getResource(account.uuid, name, function (err, resource) {
             t.ifError(err);
 
-            client.ufds.deleteResource(account.uuid, resource.uuid, next);
+            CLIENT.ufds.deleteResource(account.uuid, resource.uuid, next);
         });
     }
 
@@ -537,15 +542,15 @@ test('Check analytics roles are preserved', function (t) {
 
 
 test('DeleteInstrumentation OK', function (t) {
-    var path = '/my/analytics/instrumentations/' + instId;
+    var path = '/my/analytics/instrumentations/' + INST_ID;
 
-    client.del(path, function (err, req, res, body) {
+    CLIENT.del(path, function (err, req, res, body) {
         t.ifError(err);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 204);
         t.deepEqual(body, {});
 
-        client.get(path, function (err2, req2, res2, body2) {
+        CLIENT.get(path, function (err2, req2, res2, body2) {
             t.equal(res2.statusCode, 404);
 
             t.deepEqual(err2, {
@@ -567,13 +572,13 @@ test('DeleteInstrumentation OK', function (t) {
 
 
 test('DeleteInstrumentation OK - clone', function (t) {
-    if (!cloneId) {
+    if (!CLONE_ID) {
         return t.end();
     }
 
-    var path = '/my/analytics/instrumentations/' + cloneId;
+    var path = '/my/analytics/instrumentations/' + CLONE_ID;
 
-    return client.del(path, function (err, req, res, body) {
+    return CLIENT.del(path, function (err, req, res, body) {
         t.ifError(err);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 204);
@@ -585,7 +590,7 @@ test('DeleteInstrumentation OK - clone', function (t) {
 
 
 test('teardown', function (t) {
-    common.teardown(client, server, function () {
+    common.teardown(CLIENTS, SERVER, function () {
         t.end();
     });
 });

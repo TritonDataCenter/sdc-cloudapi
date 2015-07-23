@@ -9,37 +9,37 @@
  */
 
 var test = require('tape').test;
-var libuuid = require('libuuid');
-function uuid() {
-    return (libuuid.create());
-}
 var util = require('util');
 var common = require('./common');
 var vasync = require('vasync');
 
-///--- Globals
 
-var client, server, NET_UUID, NIC_TAG_NAME, NIC_TAG, NETWORK1, NETWORK2, POOL;
+// --- Globals
 
-// -- Network helpers
+
+var CLIENTS;
+var CLIENT;
+var SERVER;
+
+var NET_UUID;
+var NIC_TAG;
+var NETWORK1;
+var NETWORK2;
+var POOL;
+
+
+// --- Helpers
+
 
 function createTestNicTag(cb) {
-    NIC_TAG_NAME =  'nictag_test_' +  process.pid;
-    client.napi.createNicTag(NIC_TAG_NAME, function (err, res) {
-        if (err) {
-            return cb(err);
-        } else {
-            NIC_TAG = res;
-            return cb(null, res);
-        }
-    });
+    NIC_TAG =  'nictag_test_' +  process.pid;
+
+    CLIENT.napi.createNicTag(NIC_TAG, cb);
 }
 
 
 function deleteTestNicTag(cb) {
-    client.napi.deleteNicTag(NIC_TAG_NAME, function (err) {
-        return cb(err);
-    });
+    CLIENT.napi.deleteNicTag(NIC_TAG, cb);
 }
 
 
@@ -50,15 +50,15 @@ function createTestNetwork(id, octet, cb) {
         subnet: '10.99.' + octet + '.0/24',
         provision_start_ip: '10.99.' + octet + '.5',
         provision_end_ip: '10.99.' + octet + '.250',
-        nic_tag: NIC_TAG_NAME
+        nic_tag: NIC_TAG
     };
 
-    client.napi.createNetwork(params, cb);
+    CLIENT.napi.createNetwork(params, cb);
 }
 
 
 function deleteTestNetwork(net, cb) {
-    client.napi.deleteNetwork(net.uuid, { force: true }, cb);
+    CLIENT.napi.deleteNetwork(net.uuid, { force: true }, cb);
 }
 
 
@@ -68,7 +68,7 @@ function createTestPool(cb) {
         networks: [ NETWORK1.uuid ]
     };
 
-    client.napi.createNetworkPool(params.name, params, function (err, res) {
+    CLIENT.napi.createNetworkPool(params.name, params, function (err, res) {
         if (err) {
             return cb(err);
         } else {
@@ -79,12 +79,11 @@ function createTestPool(cb) {
 }
 
 function deleteTestPool(cb) {
-    client.napi.deleteNetworkPool(POOL.uuid, function (err) {
+    CLIENT.napi.deleteNetworkPool(POOL.uuid, function (err) {
         return cb(err);
     });
 }
 
-// --- Test helper:
 
 function checkNetwork(t, net) {
     t.ok(net, 'Network OK');
@@ -93,13 +92,15 @@ function checkNetwork(t, net) {
     t.ok(net['public'] !== undefined, 'Network public');
 }
 
-test('setup', function (t) {
-    common.setup(function (err, _client, _server) {
-        t.ifError(err);
-        t.ok(_client);
 
-        client = _client;
-        server = _server;
+// --- Tests
+
+
+test('setup', function (t) {
+    common.setup(function (err, clients, server) {
+        CLIENTS = clients;
+        CLIENT  = clients.user;
+        SERVER  = server;
 
         vasync.pipeline({ funcs: [
             function createTag(_, next) {
@@ -131,7 +132,7 @@ test('list networks', function (t) {
     var poolFound = false;
     var netFound  = false;
 
-    client.get('/my/networks', function (err, req, res, body) {
+    CLIENT.get('/my/networks', function (err, req, res, body) {
         t.ifError(err, 'GET /my/networks error');
         t.equal(res.statusCode, 200, 'GET /my/networks status');
         common.checkHeaders(t, res.headers);
@@ -165,7 +166,7 @@ test('list networks', function (t) {
 });
 
 test('get network', function (t) {
-    client.get('/my/networks/' + NET_UUID, function (err, req, res, body) {
+    CLIENT.get('/my/networks/' + NET_UUID, function (err, req, res, body) {
         t.ifError(err, 'GET /my/networks/' + NET_UUID + ' error');
         t.equal(res.statusCode, 200, 'GET /my/networks/smartos status');
         common.checkHeaders(t, res.headers);
@@ -176,7 +177,7 @@ test('get network', function (t) {
 });
 
 test('get network (404)', function (t) {
-    client.get('/my/networks/' + uuid(), function (err) {
+    CLIENT.get('/my/networks/' + common.uuid(), function (err) {
         t.ok(err, 'GET /my/networks/ error');
         t.equal(err.statusCode, 404, 'GET /my/networks/ status');
         t.equal(err.restCode, 'ResourceNotFound', 'GET /my/networks/ restCode');
@@ -202,7 +203,7 @@ test('teardown', function (t) {
     ] }, function (err) {
         t.ifError(err);
 
-        common.teardown(client, server, function () {
+        common.teardown(CLIENTS, SERVER, function () {
             t.end();
         });
     });

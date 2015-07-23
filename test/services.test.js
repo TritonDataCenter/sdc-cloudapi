@@ -14,19 +14,20 @@ var common = require('./common');
 
 // --- Globals
 
-var client;
-var server;
+
+var CLIENTS;
+var CLIENT;
+var SERVER;
 
 
 // --- Tests
 
-test('setup', function (t) {
-    common.setup(function (err, _client, _server) {
-        t.ifError(err);
-        t.ok(_client);
 
-        client = _client;
-        server = _server;
+test('setup', function (t) {
+    common.setup(function (_, clients, server) {
+        CLIENTS = clients;
+        CLIENT  = clients.user;
+        SERVER  = server;
 
         t.end();
     });
@@ -34,7 +35,7 @@ test('setup', function (t) {
 
 
 test('ListDatacenters OK', function (t) {
-    client.get('/my/services', function (err, req, res, body) {
+    CLIENT.get('/my/services', function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         t.equal(typeof (body), 'object');
@@ -46,7 +47,7 @@ test('ListDatacenters OK', function (t) {
 
 
 test('teardown', function (t) {
-    common.teardown(client, server, function () {
+    common.teardown(CLIENTS, SERVER, function () {
         t.end();
     });
 });

@@ -9,29 +9,27 @@
  */
 
 var test = require('tape').test;
-var libuuid = require('libuuid');
-function uuid() {
-    return (libuuid.create());
-}
-
 var common = require('./common');
-
 
 
 // --- Globals
 
-var client, server, cfg = common.getCfg();
 
-var DC_NAME = Object.keys(cfg.datacenters)[0];
+var DC_NAME = Object.keys(common.getCfg().datacenters)[0];
+
+var CLIENTS;
+var CLIENT;
+var SERVER;
+
+
 // --- Tests
 
-test('setup', function (t) {
-    common.setup(function (err, _client, _server) {
-        t.ifError(err);
-        t.ok(_client);
 
-        client = _client;
-        server = _server;
+test('setup', function (t) {
+    common.setup(function (_, clients, server) {
+        CLIENTS = clients;
+        CLIENT  = clients.user;
+        SERVER  = server;
 
         t.end();
     });
@@ -39,7 +37,7 @@ test('setup', function (t) {
 
 
 test('ListDatacenters OK', function (t) {
-    client.get('/my/datacenters', function (err, req, res, body) {
+    CLIENT.get('/my/datacenters', function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         common.checkHeaders(t, res.headers);
@@ -52,7 +50,7 @@ test('ListDatacenters OK', function (t) {
 
 test('GetDatacenter OK', function (t) {
     var dc = process.env.DATACENTER || DC_NAME;
-    client.get('/my/datacenters/' + dc, function (err, req, res, body) {
+    CLIENT.get('/my/datacenters/' + dc, function (err, req, res, body) {
         t.ifError(err);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 302);
@@ -64,7 +62,7 @@ test('GetDatacenter OK', function (t) {
 
 
 test('GetDatacenter 404', function (t) {
-    client.get('/my/datacenters/' + uuid(), function (err) {
+    CLIENT.get('/my/datacenters/' + common.uuid(), function (err) {
         t.ok(err);
         t.equal(err.statusCode, 404);
         t.equal(err.restCode, 'ResourceNotFound');
@@ -75,7 +73,7 @@ test('GetDatacenter 404', function (t) {
 
 
 test('teardown', function (t) {
-    common.teardown(client, server, function () {
+    common.teardown(CLIENTS, SERVER, function () {
         t.end();
     });
 });

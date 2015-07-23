@@ -9,15 +9,37 @@
  */
 
 var assert = require('assert');
-var util = require('util');
-var sprintf = util.format;
+var sprintf = require('util').format;
+var common = require('../common');
+
+
+// --- Globals
+
+
+var TAG_KEY = 'role';
+var TAG_VAL = 'unitTest';
+
+var META_KEY = 'foo';
+var META_VAL = 'bar';
+
+var META_64_KEY = 'sixtyfour';
+var META_64_VAL = new Buffer('Hello World').toString('base64');
+
+var META_CREDS = {
+    root: 'secret',
+    admin: 'secret'
+};
+
+
+// -- Helpers
+
 
 // We cannot test vms provisioning neither status changes without querying
 // jobs execution directly. Former approach of checking vms status changes
 // assumes that jobs which may cause machine status changes will always
 // succeed, which is not the case.
 function checkJob(client, id, callback) {
-    return client.vmapi.getJob(id, function (err, job) {
+    client.vmapi.getJob(id, function (err, job) {
         if (err) {
             return callback(err);
         }
@@ -34,7 +56,7 @@ function checkJob(client, id, callback) {
 function waitForJob(client, id, callback) {
     assert.ok(client);
     // console.log('waiting for job with uuid: %s', uuid);
-    return checkJob(client, id, function (err, ready) {
+    checkJob(client, id, function (err, ready) {
         if (err) {
             return callback(err);
         }
@@ -46,6 +68,7 @@ function waitForJob(client, id, callback) {
         return callback(null);
     });
 }
+
 
 function checkMachine(t, m) {
     t.ok(m, 'checkMachine ok');
@@ -78,8 +101,7 @@ function checkMachine(t, m) {
 
 
 function checkWfJob(client, id, callback) {
-    return client.wfapi.get(sprintf('/jobs/%s', id),
-                            function (err, req, res, job) {
+    client.wfapi.get(sprintf('/jobs/%s', id), function (err, req, res, job) {
         if (err) {
             return callback(err);
         }
@@ -95,10 +117,11 @@ function checkWfJob(client, id, callback) {
 
 function waitForWfJob(client, id, callback) {
     // console.log('waiting for job with uuid: %s', id);
-    return checkWfJob(client, id, function (err, ready) {
+    checkWfJob(client, id, function (err, ready) {
         if (err) {
             return callback(err);
         }
+
         if (!ready) {
             return setTimeout(function () {
                 waitForWfJob(client, id, callback);
@@ -109,39 +132,100 @@ function waitForWfJob(client, id, callback) {
 }
 
 
-function saveKey(key, keyName, client, t, cb) {
-    return client.post('/my/keys', {
-        key: key,
-        name: keyName
-    }, function (err2, req, res, body) {
-        t.ifError(err2, 'POST /my/keys error');
-        return cb();
-    });
-}
-
-
-function addPackage(client, pkg, cb) {
-    return client.papi.get(pkg.uuid, {}, function (err, p) {
+function waitForRunningMachine(client, machineUuid, cb) {
+    client.vmapi.listJobs({
+        vm_uuid: machineUuid,
+        task: 'provision'
+    }, function (err, jobs) {
         if (err) {
-            if (err.restCode === 'ResourceNotFound') {
-                return client.papi.add(pkg, function (err2, entry) {
-                    return cb(err2, entry);
-                });
-            } else {
-                return cb(err);
-            }
-        } else {
-            return cb(null, p);
+            return cb(err);
         }
+
+        var job = jobs[0];
+
+        if (!job) {
+            return cb(new Error('no provision job found'));
+        }
+
+        return waitForJob(client, job.uuid, cb);
     });
 }
+
+
+function getProvisionableNetwork(client, cb) {
+    client.get('/my/networks', function (err, req, res, body) {
+        if (err) {
+            return err;
+        }
+
+        var net = body[0];
+
+        return cb(null, net);
+    });
+}
+
+
+function createMachine(t, client, obj, cb) {
+    obj['metadata.' + META_KEY] = META_VAL;
+    obj['metadata.' + META_64_KEY] = META_64_VAL;
+    obj['metadata.credentials'] = META_CREDS;
+    obj['tag.' + TAG_KEY] = TAG_VAL;
+
+    client.post('/my/machines', obj, function (err, req, res, body) {
+        t.ifError(err, 'POST /my/machines error');
+        t.equal(res.statusCode, 201, 'POST /my/machines status');
+        t.equal(res.headers.location,
+            sprintf('/%s/machines/%s', client.login, body.id));
+        t.ok(body, 'POST /my/machines body');
+
+        common.checkHeaders(t, res.headers);
+        checkMachine(t, body);
+
+        // Handy to output this to stdout in order to poke around COAL:
+        console.log('Requested provision of machine: %s', body.id);
+
+        cb(null, body.id);
+    });
+}
+
+
+function getMachine(t, client, machineUuid, cb) {
+    if (!machineUuid) {
+        return cb();
+    }
+
+    var path = '/my/machines/' + machineUuid;
+
+    return client.get(path, function (err, req, res, body) {
+        t.ifError(err, 'GET /my/machines/:id error');
+        t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
+        t.ok(body, 'GET /my/machines/:id body');
+        t.ok(body.compute_node, 'machine compute_node');
+        t.ok(body.firewall_enabled, 'machine firewall enabled');
+        t.ok(Array.isArray(body.networks), 'machine networks array');
+        t.equal(typeof (body.metadata.credentials), 'undefined');
+
+        common.checkHeaders(t, res.headers);
+        common.checkReqId(t, res.headers);
+        checkMachine(t, body);
+
+        cb(null, body);
+    });
+}
+
 
 module.exports = {
     checkJob: checkJob,
-    waitForJob: waitForJob,
     checkMachine: checkMachine,
-    saveKey: saveKey,
     checkWfJob: checkWfJob,
+    createMachine: createMachine,
+    getMachine: getMachine,
+    getProvisionableNetwork: getProvisionableNetwork,
+    waitForJob: waitForJob,
     waitForWfJob: waitForWfJob,
-    addPackage: addPackage
+    waitForRunningMachine: waitForRunningMachine,
+
+    TAG_KEY: TAG_KEY,
+    TAG_VAL: TAG_VAL,
+    META_CREDS: META_CREDS
 };

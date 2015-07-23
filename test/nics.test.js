@@ -14,50 +14,19 @@
  * XXX: add tests without auth
  */
 
-
-
-var fs = require('fs');
-var libuuid = require('libuuid');
 var test = require('tape').test;
 var util = require('util');
 var vasync = require('vasync');
 
 var common = require('./common');
 var machinesCommon = require('./machines/common');
-
+var waitForJob = machinesCommon.waitForJob;
 
 
 // --- Globals
 
 
-
-var KEY_NAME = '818da7ae-b4f4-46a5-a51d-c1cea0bb24ed';
-
-var KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAvad19ePSDckmgmo6Unqmd8' +
-    'n2G7o1794VN3FazVhV09yooXIuUhA+7OmT7ChiHueayxSubgL2MrO/HvvF/GGVUs/t3e0u4' +
-    '5YwRC51EVhyDuqthVJWjKrYxgDMbHru8fc1oV51l0bKdmvmJWbA/VyeJvstoX+eiSGT3Jge' +
-    'egSMVtc= mark@foo.local';
-
-var META_CREDS = {
-    'root': 'secret',
-    'admin': 'secret'
-};
-
-var PACKAGE = {
-    uuid: '897779dc-9ce7-4042-8879-a4adccc94353',
-    name: 'sdc_128_ok',
-    version: '1.0.0',
-    max_physical_memory: 128,
-    quota: 10240,
-    max_swap: 512,
-    cpu_cap: 150,
-    max_lwps: 1000,
-    zfs_io_priority: 10,
-    fss: 25,
-    'default': false,
-    vcpus: 1,
-    active: true
-};
+var SDC_128 = common.sdc_128_package;
 
 var NETWORKS = [ {
     // uuid filled by createNetwork() during setup
@@ -117,39 +86,35 @@ var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 var IP_RE   = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
 var MAC_RE  = /^(?:[0-9a-f]{2}\:){5}[0-9a-f]{2}/i;
 
+var CLIENTS;
+var CLIENT;
+var CLOUDAPI_SERVER;
 
+var MACHINE_UUID;
+var OTHER_MACHINE_UUID;
 
-var client, cnapiServer, machineUuid, headnode, vmNic, serverMac, adminUser,
-    otherMachineUuid, otherVmNic, otherNetwork, location, externalNetRE,
-    internalNicTagExists;
+var VM_NIC;
+var OTHER_VM_NIC;
 
+var OTHER_NETWORK;
+
+var HEADNODE;
+var SERVER_MAC;
+var EXTERNAL_NET_RE;
+var INTERNAL_NIC_TAG_EXISTS;
+var LOCATION;
 
 
 // --- Tests
 
 
-
 test('setup', function (t) {
-    var setup = function (_, next) {
-        common.setup('~7.2', function (err, _client, _server) {
-            t.ifError(err);
+    var initClients = function (_, next) {
+        common.setup('~7.2', function (err, clients, server) {
+            CLIENTS = clients;
+            CLIENT  = clients.user;
+            CLOUDAPI_SERVER = server;
 
-            t.ok(_client);
-            client = _client;
-            cnapiServer = _server;
-
-            next();
-        });
-    };
-
-    var addKey = function (_, next) {
-        // callee does its own assertions
-        machinesCommon.saveKey(KEY, KEY_NAME, client, t, next);
-    };
-
-    var addPackage = function (_, next) {
-        machinesCommon.addPackage(client, PACKAGE, function (err, entry) {
-            t.ifError(err);
             next();
         });
     };
@@ -163,7 +128,7 @@ test('setup', function (t) {
     };
 
     var addInternalNetwork = function (_, next) {
-        client.napi.listNetworks({ nic_tag: 'internal' }, function (err, nets) {
+        CLIENT.napi.listNetworks({ nic_tag: 'internal' }, function (err, nets) {
             t.ifError(err);
 
             if (nets.length > 0) {
@@ -175,10 +140,10 @@ test('setup', function (t) {
     };
 
     var getExternalNetworkIp = function (_, next) {
-        client.napi.listNetworks({ nic_tag: 'external' }, function (err, nets) {
+        CLIENT.napi.listNetworks({ nic_tag: 'external' }, function (err, nets) {
             t.ifError(err);
 
-            externalNetRE = new RegExp('^' + nets[0].subnet.split('.').
+            EXTERNAL_NET_RE = new RegExp('^' + nets[0].subnet.split('.').
                                         slice(0, 2).join('.'));
 
             next();
@@ -186,17 +151,9 @@ test('setup', function (t) {
     };
 
     var findHeadnode = function (_, next) {
-        var args = { extras: 'sysinfo' };
-
-        client.cnapi.listServers(args, function (err, servers) {
+        common.getHeadnode(CLIENT, function (err, headnode) {
             t.ifError(err);
-            t.ok(Array.isArray(servers));
-
-            servers = servers.filter(function (s) { return s.headnode; });
-
-            headnode = servers[0];
-            t.ok(headnode);
-
+            HEADNODE = headnode;
             next();
         });
     };
@@ -210,10 +167,10 @@ test('setup', function (t) {
             tags.push(internal.nic_tag);
         }
 
-        addTagsToServer(t, tags, headnode, function (err, job) {
+        addTagsToServer(t, tags, HEADNODE, function (err, job) {
             t.ifError(err);
 
-            machinesCommon.waitForJob(client, job.job_uuid, function (err2) {
+            waitForJob(CLIENT, job.job_uuid, function (err2) {
                 t.ifError(err2);
                 next();
             });
@@ -222,7 +179,7 @@ test('setup', function (t) {
 
     var dataset;
     var findDataset = function (_, next) {
-        client.get('/my/datasets?name=base', function (err, req, res, body) {
+        CLIENT.get('/my/datasets?name=base', function (err, req, res, body) {
             t.ifError(err);
             t.equal(res.statusCode, 200);
             t.ok(Array.isArray(body));
@@ -242,45 +199,29 @@ test('setup', function (t) {
     var createMachine = function (_, next) {
         var obj = {
             image: dataset.id,
-            package: PACKAGE.name,
-            name: 'test-' + libuuid.create(),
-            server_uuid: headnode.uuid,
-            firewall_enabled: true,
-            'tag.role': 'unitTest',
-            'metadata.credentials': META_CREDS
+            package: SDC_128.name,
+            name: 'test-' + common.uuid(),
+            server_uuid: HEADNODE.uuid,
+            firewall_enabled: true
         };
 
-        client.post('/my/machines', obj, function (err, req, res, body) {
-            t.ifError(err);
-            t.equal(res.statusCode, 201);
-
-            machineUuid = body.id;
-            t.ok(machineUuid);
-
+        machinesCommon.createMachine(t, CLIENT, obj, function (e, machineUuid) {
+            MACHINE_UUID = machineUuid;
             next();
         });
     };
 
     var waitTilMachineCreated = function (_, next) {
-        client.vmapi.listJobs({
-            vm_uuid: machineUuid,
-            task: 'provision'
-        }, function (err, jobs) {
+        machinesCommon.waitForRunningMachine(CLIENT, MACHINE_UUID,
+                                            function (err) {
             t.ifError(err);
-            t.ok(Array.isArray(jobs));
-
-            var job = jobs[0];
-            t.ok(job);
-
-            machinesCommon.waitForJob(client, job.uuid, function (err2) {
-                t.ifError(err2);
-                next();
-            });
+            next();
         });
     };
 
+    var adminUser;
     var getAdmin = function (_, next) {
-        client.ufds.getUser('admin', function (err, user) {
+        CLIENT.ufds.getUser('admin', function (err, user) {
             t.ifError(err);
 
             adminUser = user;
@@ -293,37 +234,37 @@ test('setup', function (t) {
     var getOtherMachine = function (_, next) {
         var args = { owner_uuid: adminUser.uuid };
 
-        client.vmapi.listVms(args, function (err, vms) {
+        CLIENT.vmapi.listVms(args, function (err, vms) {
             t.ifError(err);
 
             t.ok(vms[0]);
-            otherMachineUuid = vms[0].uuid;
+            OTHER_MACHINE_UUID = vms[0].uuid;
 
             next();
         });
     };
 
     var getOtherNic = function (_, next) {
-        client.napi.listNics({
-            belongs_to_uuid: otherMachineUuid,
+        CLIENT.napi.listNics({
+            belongs_to_uuid: OTHER_MACHINE_UUID,
             belongs_to_type: 'zone'
         }, function (err, nics) {
             t.ifError(err);
 
-            otherVmNic = nics[0];
-            t.ok(otherVmNic);
+            OTHER_VM_NIC = nics[0];
+            t.ok(OTHER_VM_NIC);
 
             next();
         });
     };
 
     var getOtherNetwork = function (_, next) {
-        client.napi.listNetworks({ name: 'admin' }, function (err, networks) {
+        CLIENT.napi.listNetworks({ name: 'admin' }, function (err, networks) {
             t.ifError(err);
             t.ok(Array.isArray(networks));
 
-            otherNetwork = networks[0];
-            t.ok(otherNetwork);
+            OTHER_NETWORK = networks[0];
+            t.ok(OTHER_NETWORK);
 
             next();
         });
@@ -331,10 +272,10 @@ test('setup', function (t) {
 
     vasync.pipeline({
         'funcs': [
-            setup, addKey, addPackage, addNetwork_0, addNetwork_1,
-            getExternalNetworkIp, addInternalNetwork, findHeadnode,
-            addServerTags, findDataset, createMachine, waitTilMachineCreated,
-            getAdmin, getOtherMachine, getOtherNic, getOtherNetwork
+            initClients, addNetwork_0, addNetwork_1, getExternalNetworkIp,
+            addInternalNetwork, findHeadnode, addServerTags, findDataset,
+            createMachine, waitTilMachineCreated, getAdmin, getOtherMachine,
+            getOtherNic, getOtherNetwork
         ]
     }, function (err) {
         t.ifError(err);
@@ -343,13 +284,12 @@ test('setup', function (t) {
 });
 
 
-
 // this also checks that a VM creates with an external and internal nic by
 // default if the package doesn't list networks
 test('List NICs', function (t) {
-    var path = '/my/machines/' + machineUuid + '/nics';
+    var path = '/my/machines/' + MACHINE_UUID + '/nics';
 
-    client.get(path, function (err, req, res, body) {
+    CLIENT.get(path, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
 
@@ -361,10 +301,10 @@ test('List NICs', function (t) {
         var externalNic;
         var internalNic;
 
-        if (nics[0].ip.match(externalNetRE)) {
+        if (nics[0].ip.match(EXTERNAL_NET_RE)) {
             externalNic = nics[0];
             internalNic = nics[1];
-        } else if (nics[1].ip.match(externalNetRE)) {
+        } else if (nics[1].ip.match(EXTERNAL_NET_RE)) {
             externalNic = nics[1];
             internalNic = nics[0];
         } else {
@@ -392,18 +332,17 @@ test('List NICs', function (t) {
             t.ifError(nic.belongs_to_uuid);
         });
 
-        vmNic = externalNic;
+        VM_NIC = externalNic;
 
         t.end();
     });
 });
 
 
-
 test('Head NICs', function (t) {
-    var path = '/my/machines/' + machineUuid + '/nics';
+    var path = '/my/machines/' + MACHINE_UUID + '/nics';
 
-    client.head(path, function (err, req, res, body) {
+    CLIENT.head(path, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         t.deepEqual(body, {});
@@ -412,9 +351,8 @@ test('Head NICs', function (t) {
 });
 
 
-
 test('List NICs on other machine', function (t) {
-    var path = '/my/machines/' + otherMachineUuid + '/nics';
+    var path = '/my/machines/' + OTHER_MACHINE_UUID + '/nics';
 
     var expectedErr = {
         message: 'VM not found',
@@ -429,7 +367,6 @@ test('List NICs on other machine', function (t) {
 
     getErr(t, path, expectedErr);
 });
-
 
 
 test('List NICs on nonexistent machine', function (t) {
@@ -448,7 +385,6 @@ test('List NICs on nonexistent machine', function (t) {
 
     getErr(t, path, expectedErr);
 });
-
 
 
 test('List NICs on invalid machine', function (t) {
@@ -474,28 +410,26 @@ test('List NICs on invalid machine', function (t) {
 });
 
 
-
 test('Get NIC', function (t) {
-    var mac = vmNic.mac.replace(/\:/g, '');
-    var path = '/my/machines/' + machineUuid + '/nics/' + mac;
+    var mac = VM_NIC.mac.replace(/\:/g, '');
+    var path = '/my/machines/' + MACHINE_UUID + '/nics/' + mac;
 
-    client.get(path, function (err, req, res, body) {
+    CLIENT.get(path, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
 
-        t.deepEqual(vmNic, body);
+        t.deepEqual(VM_NIC, body);
 
         t.end();
     });
 });
 
 
-
 test('Head NIC', function (t) {
-    var mac = vmNic.mac.replace(/\:/g, '');
-    var path = '/my/machines/' + machineUuid + '/nics/' + mac;
+    var mac = VM_NIC.mac.replace(/\:/g, '');
+    var path = '/my/machines/' + MACHINE_UUID + '/nics/' + mac;
 
-    client.head(path, function (err, req, res, body) {
+    CLIENT.head(path, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         t.deepEqual(body, {});
@@ -504,9 +438,8 @@ test('Head NIC', function (t) {
 });
 
 
-
 test('Get nonexistent NIC', function (t) {
-    var path = '/my/machines/' + machineUuid + '/nics/baadd34db33f';
+    var path = '/my/machines/' + MACHINE_UUID + '/nics/baadd34db33f';
 
     // the err message must match the 'Get non-owner NIC from owner machine'
     // test below
@@ -525,9 +458,8 @@ test('Get nonexistent NIC', function (t) {
 });
 
 
-
 test('Get invalid NIC', function (t) {
-    var path = '/my/machines/' + machineUuid + '/nics/wowzers';
+    var path = '/my/machines/' + MACHINE_UUID + '/nics/wowzers';
 
     var expectedErr = {
         message: 'mac has invalid format',
@@ -544,9 +476,8 @@ test('Get invalid NIC', function (t) {
 });
 
 
-
 test('Get NIC from invalid machine', function (t) {
-    var mac = vmNic.mac.replace(/\:/g, '');
+    var mac = VM_NIC.mac.replace(/\:/g, '');
     var path = '/my/machines/wowzers/nics/' + mac;
 
     var expectedErr = {
@@ -569,10 +500,9 @@ test('Get NIC from invalid machine', function (t) {
 });
 
 
-
 test('Get owner NIC from non-owner machine', function (t) {
-    var mac = vmNic.mac.replace(/\:/g, '');
-    var path = '/my/machines/' + otherMachineUuid + '/nics/' + mac;
+    var mac = VM_NIC.mac.replace(/\:/g, '');
+    var path = '/my/machines/' + OTHER_MACHINE_UUID + '/nics/' + mac;
 
     var expectedErr = {
         message: 'VM not found',
@@ -589,10 +519,9 @@ test('Get owner NIC from non-owner machine', function (t) {
 });
 
 
-
 test('Get non-owner NIC from owner machine', function (t) {
-    var mac = otherVmNic.mac.replace(/\:/g, '');
-    var path = '/my/machines/' + machineUuid + '/nics/' + mac;
+    var mac = OTHER_VM_NIC.mac.replace(/\:/g, '');
+    var path = '/my/machines/' + MACHINE_UUID + '/nics/' + mac;
 
     // the err message must match the 'Get nonexistent NIC' test above
     var expectedErr = {
@@ -610,10 +539,9 @@ test('Get non-owner NIC from owner machine', function (t) {
 });
 
 
-
 test('Get non-owner NIC from non-owner machine', function (t) {
-    var mac = otherVmNic.mac.replace(/\:/g, '');
-    var path = '/my/machines/' + otherMachineUuid + '/nics/' + mac;
+    var mac = OTHER_VM_NIC.mac.replace(/\:/g, '');
+    var path = '/my/machines/' + OTHER_MACHINE_UUID + '/nics/' + mac;
 
     var expectedErr = {
         message: 'VM not found',
@@ -630,9 +558,8 @@ test('Get non-owner NIC from non-owner machine', function (t) {
 });
 
 
-
 test('Get NIC from nonexistent machine', function (t) {
-    var mac = vmNic.mac.replace(/\:/g, '');
+    var mac = VM_NIC.mac.replace(/\:/g, '');
     var path = '/my/machines/fa9e18e4-654a-43a8-918b-cce04bdbf461/nics/' + mac;
 
     var expectedErr = {
@@ -650,13 +577,12 @@ test('Get NIC from nonexistent machine', function (t) {
 });
 
 
-
-// NB: changes value of vmNic global
+// NB: changes value of VM_NIC global
 test('Create NIC using network', function (t) {
-    var path = '/my/machines/' + machineUuid + '/nics';
+    var path = '/my/machines/' + MACHINE_UUID + '/nics';
     var args = { network: NETWORKS[0].uuid };
 
-    client.post(path, args, function (err, req, res, nic) {
+    CLIENT.post(path, args, function (err, req, res, nic) {
         t.ifError(err);
         t.equal(res.statusCode, 201);
 
@@ -678,15 +604,15 @@ test('Create NIC using network', function (t) {
         t.ifError(nic.belongs_to_uuid);
 
 
-        location = res.headers.location;
-        t.ok(location);
+        LOCATION = res.headers.location;
+        t.ok(LOCATION);
 
-        client.get(location, function (err2, req2, res2, nic2) {
+        CLIENT.get(LOCATION, function (err2, req2, res2, nic2) {
             t.ifError(err2);
             t.equal(res2.statusCode, 200);
 
             t.deepEqual(nic, nic2);
-            vmNic = nic;
+            VM_NIC = nic;
 
             t.end();
         });
@@ -694,16 +620,14 @@ test('Create NIC using network', function (t) {
 });
 
 
-
 test('Wait til network NIC added', function (t) {
-    waitTilNicAdded(t, location);
+    waitTilNicAdded(t, LOCATION);
 });
 
 
-
 test('Create non-owner network on owner machine', function (t) {
-    var path = '/my/machines/' + machineUuid + '/nics';
-    var args = { network: otherNetwork.uuid };
+    var path = '/my/machines/' + MACHINE_UUID + '/nics';
+    var args = { network: OTHER_NETWORK.uuid };
 
     var expectedErr = {
         message: 'owner cannot provision on network',
@@ -720,9 +644,8 @@ test('Create non-owner network on owner machine', function (t) {
 });
 
 
-
 test('Create owner network on non-owner machine', function (t) {
-    var path = '/my/machines/' + otherMachineUuid + '/nics';
+    var path = '/my/machines/' + OTHER_MACHINE_UUID + '/nics';
     var args = { network: NETWORKS[0].uuid };
 
     var expectedErr = {
@@ -740,10 +663,9 @@ test('Create owner network on non-owner machine', function (t) {
 });
 
 
-
 test('Create non-owner network on non-owner machine', function (t) {
-    var path = '/my/machines/' + otherMachineUuid + '/nics';
-    var args = { network: otherNetwork.uuid };
+    var path = '/my/machines/' + OTHER_MACHINE_UUID + '/nics';
+    var args = { network: OTHER_NETWORK.uuid };
 
     var expectedErr = {
         message: 'VM not found',
@@ -760,9 +682,8 @@ test('Create non-owner network on non-owner machine', function (t) {
 });
 
 
-
 test('Create NIC on server missing nic tag', function (t) {
-    var path = '/my/machines/' + machineUuid + '/nics';
+    var path = '/my/machines/' + MACHINE_UUID + '/nics';
     var args = { network: NETWORKS[1].uuid };  // NB: 1, not 0
 
     var expectedErr = {
@@ -780,9 +701,8 @@ test('Create NIC on server missing nic tag', function (t) {
 });
 
 
-
 test('Create NIC with pool on server missing nic tag', function (t) {
-    var path = '/my/machines/' + machineUuid + '/nics';
+    var path = '/my/machines/' + MACHINE_UUID + '/nics';
     var args = { network: NETWORK_POOLS[1].uuid };
 
     var expectedErr = {
@@ -800,9 +720,8 @@ test('Create NIC with pool on server missing nic tag', function (t) {
 });
 
 
-
 test('Create with invalid network', function (t) {
-    var path = '/my/machines/' + machineUuid + '/nics';
+    var path = '/my/machines/' + MACHINE_UUID + '/nics';
     var args = { network: 'wowzers' };
 
     var expectedErr = {
@@ -818,7 +737,6 @@ test('Create with invalid network', function (t) {
 
     postErr(t, path, args, expectedErr);
 });
-
 
 
 test('Create with invalid machine', function (t) {
@@ -845,9 +763,8 @@ test('Create with invalid machine', function (t) {
 });
 
 
-
 test('Create with nonexistent network', function (t) {
-    var path = '/my/machines/' + machineUuid + '/nics';
+    var path = '/my/machines/' + MACHINE_UUID + '/nics';
     var args = { network: '05cab1d4-f816-41c0-b45f-a4ffeda5a6b5' };
 
     var expectedErr = {
@@ -863,7 +780,6 @@ test('Create with nonexistent network', function (t) {
 
     postErr(t, path, args, expectedErr);
 });
-
 
 
 test('Create with nonexistent machine', function (t) {
@@ -885,10 +801,9 @@ test('Create with nonexistent machine', function (t) {
 });
 
 
-
 test('Remove owner NIC from non-owner machine', function (t) {
-    var mac  = vmNic.mac.replace(/\:/g, '');
-    var path = '/my/machines/' + otherMachineUuid + '/nics/' + mac;
+    var mac  = VM_NIC.mac.replace(/\:/g, '');
+    var path = '/my/machines/' + OTHER_MACHINE_UUID + '/nics/' + mac;
 
     var expectedErr = {
         message: 'VM not found',
@@ -905,10 +820,9 @@ test('Remove owner NIC from non-owner machine', function (t) {
 });
 
 
-
 test('Remove non-owner NIC from owner machine', function (t) {
-    var mac  = otherVmNic.mac.replace(/\:/g, '');
-    var path = '/my/machines/' + machineUuid + '/nics/' + mac;
+    var mac  = OTHER_VM_NIC.mac.replace(/\:/g, '');
+    var path = '/my/machines/' + MACHINE_UUID + '/nics/' + mac;
 
     var expectedErr = {
         message: 'nic not found',
@@ -925,10 +839,9 @@ test('Remove non-owner NIC from owner machine', function (t) {
 });
 
 
-
 test('Remove non-owner NIC from non-owner machine', function (t) {
-    var mac  = otherVmNic.mac.replace(/\:/g, '');
-    var path = '/my/machines/' + otherMachineUuid + '/nics/' + mac;
+    var mac  = OTHER_VM_NIC.mac.replace(/\:/g, '');
+    var path = '/my/machines/' + OTHER_MACHINE_UUID + '/nics/' + mac;
 
     var expectedErr = {
         message: 'VM not found',
@@ -947,7 +860,7 @@ test('Remove non-owner NIC from non-owner machine', function (t) {
 
 
 test('Remove invalid NIC', function (t) {
-    var path = '/my/machines/' + machineUuid + '/nics/wowzers';
+    var path = '/my/machines/' + MACHINE_UUID + '/nics/wowzers';
 
     var expectedErr = {
         message: 'mac has invalid format',
@@ -966,7 +879,7 @@ test('Remove invalid NIC', function (t) {
 
 
 test('Remove NIC from invalid machine', function (t) {
-    var mac  = vmNic.mac.replace(/\:/g, '');
+    var mac  = VM_NIC.mac.replace(/\:/g, '');
     var path = '/my/machines/wowzers/nics/' + mac;
 
     var expectedErr = {
@@ -991,7 +904,7 @@ test('Remove NIC from invalid machine', function (t) {
 
 
 test('Remove nonexistent NIC', function (t) {
-    var path = '/my/machines/' + machineUuid + '/nics/012345678901';
+    var path = '/my/machines/' + MACHINE_UUID + '/nics/012345678901';
 
     var expectedErr = {
         message: 'nic not found',
@@ -1010,7 +923,7 @@ test('Remove nonexistent NIC', function (t) {
 
 
 test('Remove NIC using network', function (t) {
-    removeNic(t, vmNic);
+    removeNic(t, VM_NIC);
 });
 
 
@@ -1019,12 +932,12 @@ test('Wait til network NIC removed', waitTilNicDeleted);
 
 
 
-// NB: changes value of vmNic global
+// NB: changes value of VM_NIC global
 test('Create NIC using network pool', function (t) {
-    var path = '/my/machines/' + machineUuid + '/nics';
+    var path = '/my/machines/' + MACHINE_UUID + '/nics';
     var args = { network: NETWORK_POOLS[0].uuid };
 
-    client.post(path, args, function (err, req, res, nic) {
+    CLIENT.post(path, args, function (err, req, res, nic) {
         t.ifError(err);
         t.equal(res.statusCode, 201);
 
@@ -1041,15 +954,15 @@ test('Create NIC using network pool', function (t) {
         t.ifError(nic.belongs_to_type);
         t.ifError(nic.belongs_to_uuid);
 
-        location = res.headers.location;
-        t.ok(location);
+        LOCATION = res.headers.location;
+        t.ok(LOCATION);
 
-        client.get(location, function (err2, req2, res2, nic2) {
+        CLIENT.get(LOCATION, function (err2, req2, res2, nic2) {
             t.ifError(err2);
             t.equal(res2.statusCode, 200);
 
             t.deepEqual(nic, nic2);
-            vmNic = nic;
+            VM_NIC = nic;
 
             t.end();
         });
@@ -1059,13 +972,13 @@ test('Create NIC using network pool', function (t) {
 
 
 test('Wait til network pool NIC added', function (t) {
-    waitTilNicAdded(t, location);
+    waitTilNicAdded(t, LOCATION);
 });
 
 
 
 test('Remove NIC using network pool', function (t) {
-    removeNic(t, vmNic);
+    removeNic(t, VM_NIC);
 });
 
 
@@ -1076,7 +989,7 @@ test('Wait til network pool NIC removed', waitTilNicDeleted);
 
 test('teardown', function (t) {
     var deleteMachine = function (_, next) {
-        client.del('/my/machines/' + machineUuid, function (err, req, res) {
+        CLIENT.del('/my/machines/' + MACHINE_UUID, function (err, req, res) {
             t.ifError(err);
             t.equal(res.statusCode, 204);
             next();
@@ -1084,8 +997,8 @@ test('teardown', function (t) {
     };
 
     var waitTilMachineDeleted = function (_, next) {
-        client.vmapi.listJobs({
-            vm_uuid: machineUuid,
+        CLIENT.vmapi.listJobs({
+            vm_uuid: MACHINE_UUID,
             task: 'destroy'
         }, function (err, jobs) {
             t.ifError(err);
@@ -1094,7 +1007,7 @@ test('teardown', function (t) {
             var job = jobs[0];
             t.ok(job);
 
-            machinesCommon.waitForJob(client, job.uuid, function (err2) {
+            waitForJob(CLIENT, job.uuid, function (err2) {
                 t.ifError(err2);
                 next();
             });
@@ -1110,10 +1023,10 @@ test('teardown', function (t) {
             tags.push(NETWORKS[2].nic_tag);
         }
 
-        removeTagsFromServer(t, tags, headnode, function (err, job) {
+        removeTagsFromServer(t, tags, HEADNODE, function (err, job) {
             t.ifError(err);
 
-            machinesCommon.waitForJob(client, job.job_uuid, function (err2) {
+            waitForJob(CLIENT, job.job_uuid, function (err2) {
                 t.ifError(err2);
                 next();
             });
@@ -1138,23 +1051,15 @@ test('teardown', function (t) {
         }
     };
 
-    var removeKey = function (_, next) {
-        client.del('/my/keys/' + KEY_NAME, function (err, req, res) {
-            t.ifError(err);
-            t.equal(res.statusCode, 204);
-            next();
-        });
-    };
-
     var teardown = function (_, next) {
-        common.teardown(client, cnapiServer, next);
+        common.teardown(CLIENTS, CLOUDAPI_SERVER, next);
     };
 
 
     vasync.pipeline({
         'funcs': [
             deleteMachine, waitTilMachineDeleted, removeServerTags,
-            removeNetwork_0, removeNetwork_1, removeInternalNetwork, removeKey,
+            removeNetwork_0, removeNetwork_1, removeInternalNetwork,
             teardown
         ]
     }, function (err) {
@@ -1164,17 +1069,15 @@ test('teardown', function (t) {
 });
 
 
-
-// --- Helpers:
-
+// --- Helpers
 
 
 function createNetwork(t, net, pool, addOwner, callback) {
-    client.napi.createNicTag(net.nic_tag, function (err) {
+    CLIENT.napi.createNicTag(net.nic_tag, function (err) {
         // gross hack to work around internal nic tag sometimes existing when
         // internal network doesn't
         if (err && net.nic_tag === 'internal') {
-            internalNicTagExists = true;
+            INTERNAL_NIC_TAG_EXISTS = true;
         } else {
             t.ifError(err, 'creating nic tag ' + net.nic_tag);
         }
@@ -1183,11 +1086,11 @@ function createNetwork(t, net, pool, addOwner, callback) {
 
         if (addOwner) {
             // Fill in owner_uuids entries in NETWORKS and NETWORK_POOLS globals
-            net.owner_uuids.push(client.account.uuid);
+            net.owner_uuids.push(CLIENT.account.uuid);
             pool.owner_uuids = net.owner_uuids;
         }
 
-        client.napi.createNetwork(net, function (err2, _net) {
+        CLIENT.napi.createNetwork(net, function (err2, _net) {
             t.ifError(err2, 'creating network ' + net.name);
 
             // Fill in uuid entries in NETWORKS global
@@ -1197,7 +1100,7 @@ function createNetwork(t, net, pool, addOwner, callback) {
             pool.networks = [net.uuid];
 
             var name = pool.name;
-            client.napi.createNetworkPool(name, pool, function (err3, _pool) {
+            CLIENT.napi.createNetworkPool(name, pool, function (err3, _pool) {
                 t.ifError(err3, 'creating network pool ' + name);
 
                 // Fill in uuid entries in NETWORK_POOLS global
@@ -1210,26 +1113,24 @@ function createNetwork(t, net, pool, addOwner, callback) {
 }
 
 
-
 function removeNetwork(t, net, pool, callback) {
-    client.napi.deleteNetworkPool(pool.uuid, function (err) {
+    CLIENT.napi.deleteNetworkPool(pool.uuid, function (err) {
         t.ifError(err);
 
-        client.napi.deleteNetwork(net.uuid, function (err2) {
+        CLIENT.napi.deleteNetwork(net.uuid, function (err2) {
             t.ifError(err2);
 
-            if (net.nic_tag === 'internal' && internalNicTagExists) {
+            if (net.nic_tag === 'internal' && INTERNAL_NIC_TAG_EXISTS) {
                 return callback();
             }
 
-            return client.napi.deleteNicTag(net.nic_tag, function (err3) {
+            return CLIENT.napi.deleteNicTag(net.nic_tag, function (err3) {
                 t.ifError(err3);
                 callback();
             });
         });
     });
 }
-
 
 
 function addTagsToServer(t, nicTags, server, callback) {
@@ -1241,43 +1142,41 @@ function addTagsToServer(t, nicTags, server, callback) {
         return iface['NIC Names'].indexOf('external') !== -1;
     })[0];
 
-    serverMac = nic['MAC Address'];
+    SERVER_MAC = nic['MAC Address'];
 
     var args = {
         action: 'update',
         nics: [ {
-            mac: serverMac,
+            mac: SERVER_MAC,
             nic_tags_provided: nicTags
         } ]
     };
 
-    client.cnapi.updateNics(server.uuid, args, function (err, res) {
+    CLIENT.cnapi.updateNics(server.uuid, args, function (err, res) {
         t.ifError(err);
         callback(null, res);
     });
 }
-
 
 
 function removeTagsFromServer(t, nicTags, server, callback) {
     var args = {
         action: 'delete',
         nics: [ {
-            mac: serverMac,
+            mac: SERVER_MAC,
             nic_tags_provided: nicTags
         } ]
     };
 
-    client.cnapi.updateNics(server.uuid, args, function (err, res) {
+    CLIENT.cnapi.updateNics(server.uuid, args, function (err, res) {
         t.ifError(err);
         callback(null, res);
     });
 }
 
 
-
 function getErr(t, path, expectedErr) {
-    client.get(path, function (err, req, res, body) {
+    CLIENT.get(path, function (err, req, res, body) {
         t.equal(res.statusCode, expectedErr.statusCode);
         t.deepEqual(err, expectedErr);
         t.deepEqual(body, expectedErr.body);
@@ -1287,10 +1186,9 @@ function getErr(t, path, expectedErr) {
 }
 
 
-
 function postErr(t, path, args, expectedErr) {
     verifyUnchangedNics(t, function (next) {
-        client.post(path, args, function (err, req, res, body) {
+        CLIENT.post(path, args, function (err, req, res, body) {
             t.equal(res.statusCode, expectedErr.statusCode);
             t.deepEqual(err, expectedErr);
             t.deepEqual(body, expectedErr.body);
@@ -1299,12 +1197,11 @@ function postErr(t, path, args, expectedErr) {
         });
     });
 }
-
 
 
 function delErr(t, path, expectedErr) {
     verifyUnchangedNics(t, function (next) {
-        client.del(path, function (err, req, res, body) {
+        CLIENT.del(path, function (err, req, res, body) {
             t.equal(res.statusCode, expectedErr.statusCode);
             t.deepEqual(err, expectedErr);
             t.deepEqual(body, expectedErr.body);
@@ -1315,9 +1212,8 @@ function delErr(t, path, expectedErr) {
 }
 
 
-
 function verifyUnchangedNics(t, mutator) {
-    client.napi.listNics({
+    CLIENT.napi.listNics({
         belongs_to_type: 'zone'
     }, function (err, origNics) {
         t.ifError(err);
@@ -1326,7 +1222,7 @@ function verifyUnchangedNics(t, mutator) {
 
         mutator(function () {
             // check nics didn't change
-            client.napi.listNics({
+            CLIENT.napi.listNics({
                 belongs_to_type: 'zone'
             }, function (err2, newNics) {
                 t.ifError(err2);
@@ -1338,13 +1234,11 @@ function verifyUnchangedNics(t, mutator) {
 }
 
 
-
 function sortNics(nics) {
     return nics.sort(function (a, b) {
         return (a.mac > b.mac) ? 1 : -1;
     });
 }
-
 
 
 function waitTilNicAdded(t, path) {
@@ -1357,7 +1251,7 @@ function waitTilNicAdded(t, path) {
             return t.end();
         }
 
-        return client.get(path, function (err, req, res, nic) {
+        return CLIENT.get(path, function (err, req, res, nic) {
             t.ifError(err);
 
             if (nic.state === 'running') {
@@ -1372,24 +1266,22 @@ function waitTilNicAdded(t, path) {
 }
 
 
-
 function removeNic(t, nic) {
     var mac  = nic.mac.replace(/\:/g, '');
-    var path = '/my/machines/' + machineUuid + '/nics/' + mac;
+    var path = '/my/machines/' + MACHINE_UUID + '/nics/' + mac;
 
-    client.del(path, function (err, req, res, body) {
+    CLIENT.del(path, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
         t.deepEqual(body, {});
 
-        location = path;
+        LOCATION = path;
         t.end();
     });
 }
 
 
-
-// depends on 'location' global set by removeNic() above
+// depends on LOCATION global set by removeNic() above
 function waitTilNicDeleted(t) {
     var count = 30;
 
@@ -1400,7 +1292,7 @@ function waitTilNicDeleted(t) {
             return t.end();
         }
 
-        return client.get(location, function (err, req, res, nic) {
+        return CLIENT.get(LOCATION, function (err, req, res, nic) {
             if (err) {
                 t.equal(err.statusCode, 404);
                 return t.end();

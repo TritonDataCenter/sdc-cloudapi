@@ -9,21 +9,20 @@
  */
 
 var test = require('tape').test;
-var libuuid = require('libuuid');
-function uuid() {
-    return (libuuid.create());
-}
 var util = require('util');
 var common = require('./common');
 
 
-
 // --- Globals
 
-var client, server;
+
+var CLIENTS;
+var CLIENT;
+var SERVER;
 
 
 // --- Helpers
+
 
 function checkOk(t, err, req, res, body) {
     t.ifError(err);
@@ -31,8 +30,8 @@ function checkOk(t, err, req, res, body) {
     t.ok(res);
     common.checkHeaders(t, res.headers);
     t.ok(body);
-    t.equal(body.login, client.testUser);
-    t.equal(body.email, client.testUser);
+    t.equal(body.login, CLIENT.login);
+    t.equal(body.email, CLIENT.login);
     t.ok(body.id);
     t.ok(body.created);
     t.ok(body.updated);
@@ -40,15 +39,14 @@ function checkOk(t, err, req, res, body) {
 }
 
 
-
 // --- Tests
 
+
 test('setup', function (t) {
-    common.setup(function (err, _client, _server) {
-        t.ifError(err);
-        t.ok(_client);
-        client = _client;
-        server = _server;
+    common.setup(function (_, clients, server) {
+        CLIENTS = clients;
+        CLIENT  = clients.user;
+        SERVER  = server;
 
         t.end();
     });
@@ -56,7 +54,7 @@ test('setup', function (t) {
 
 
 test('GetAccount(my) OK', function (t) {
-    client.get('/my', function (err, req, res, obj) {
+    CLIENT.get('/my', function (err, req, res, obj) {
         checkOk(t, err, req, res, obj);
         t.end();
     });
@@ -64,8 +62,8 @@ test('GetAccount(my) OK', function (t) {
 
 
 test('GetAccount(:login) OK', function (t) {
-    var path = '/' + encodeURIComponent(client.testUser);
-    client.get(path, function (err, req, res, obj) {
+    var path = '/' + encodeURIComponent(CLIENT.login);
+    CLIENT.get(path, function (err, req, res, obj) {
         checkOk(t, err, req, res, obj);
         t.end();
     });
@@ -73,7 +71,7 @@ test('GetAccount(:login) OK', function (t) {
 
 
 test('GetAccount 403', function (t) {
-    client.get('/admin', function (err) {
+    CLIENT.get('/admin', function (err) {
         t.ok(err);
         t.equal(err.statusCode, 403);
         t.equal(err.restCode, 'NotAuthorized');
@@ -84,7 +82,7 @@ test('GetAccount 403', function (t) {
 
 
 test('GetAccount 404', function (t) {
-    client.get('/' + uuid(), function (err) {
+    CLIENT.get('/' + common.uuid(), function (err) {
         t.ok(err);
         t.equal(err.statusCode, 404);
         t.equal(err.restCode, 'ResourceNotFound');
@@ -94,8 +92,9 @@ test('GetAccount 404', function (t) {
 
 
 test('PostAccount', function (t) {
-    var path = '/' + encodeURIComponent(client.testUser);
-    client.post(path, {
+    var path = '/' + encodeURIComponent(CLIENT.login);
+
+    CLIENT.post(path, {
         givenName: 'James',
         sn: 'Bond',
         cn: 'James Bond',
@@ -123,7 +122,7 @@ test('PostAccount', function (t) {
 
 
 test('teardown', function (t) {
-    common.teardown(client, server, function () {
+    common.teardown(CLIENTS, SERVER, function () {
         t.end();
     });
 });

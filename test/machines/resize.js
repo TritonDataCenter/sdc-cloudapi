@@ -8,15 +8,13 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
-var test = require('tape').test;
-var libuuid = require('libuuid');
-function uuid() {
-    return (libuuid.create());
-}
 var common = require('../common');
-var machinesCommon = require('./common');
-var checkJob = machinesCommon.checkJob;
-var waitForJob = machinesCommon.waitForJob;
+var uuid = common.uuid;
+var waitForJob = require('./common').waitForJob;
+
+
+// --- Tests
+
 
 module.exports = function (suite, client, machine, pkgSame, pkgUp, cb) {
     if (!machine) {

@@ -11,15 +11,15 @@
 var fs = require('fs');
 var util = require('util');
 var test = require('tape').test;
-var uuid = require('node-uuid');
 
 var common = require('./common');
+var uuid = common.uuid;
 
 
 
 // --- Globals
 
-var client, server;
+var clients, client, server;
 var keyName = uuid();
 var machine;
 var KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAvad19ePSDckmgmo6Unqmd8' +
@@ -119,7 +119,7 @@ var DC_NAME = Object.keys(cfg.datacenters)[0];
 
 
 function createLimit(t, cb) {
-    return client.ufds.getUser(client.testUser, function (err, user) {
+    return client.ufds.getUser(client.login, function (err, user) {
         t.ifError(err, 'client.getUser error');
 
         var limit = {
@@ -154,12 +154,11 @@ function saveKey(t, cb) {
 
 
 test('setup', function (t) {
-    common.setup(function (err, _client, _server) {
-        t.ifError(err, 'common setup error');
-        t.ok(_client, 'common _client ok');
+    common.setup(function (_, _clients, _server) {
+        clients = _clients;
+        server  = _server;
 
-        client = _client;
-        server = _server;
+        client = clients.user;
 
         saveKey(t, function () {
             createLimit(t, function () {
@@ -372,7 +371,7 @@ test('teardown', function (t) {
         t.ifError(err, 'delete key error');
         t.equal(res.statusCode, 204);
 
-        common.teardown(client, server, function () {
+        common.teardown(clients, server, function () {
             t.end();
         });
     });

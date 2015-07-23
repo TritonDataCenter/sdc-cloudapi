@@ -16,7 +16,6 @@
  */
 
 var test = require('tape').test;
-
 var libuuid = require('libuuid');
 var util = require('util');
 var common = require('./common');
@@ -24,25 +23,22 @@ var common = require('./common');
 
 // --- Globals
 
+
 var USER_FMT = 'uuid=%s, ou=users, o=smartdc';
 var SUB_FMT = 'uuid=%s, ' + USER_FMT;
-var POLICY_FMT = 'policy-uuid=%s, ' + USER_FMT;
-var ROLE_FMT = 'role-uuid=%s, ' + USER_FMT;
 var ADMIN_ROLE_NAME = 'administrator';
 
-var client, server, account;
 var SUB_ID = libuuid.create();
 var SUB_LOGIN = 'a' + SUB_ID.substr(0, 7);
 var SUB_EMAIL = SUB_LOGIN + '_test@joyent.com';
 var SUB_UUID;
-var SUB_DN;
+
 var PWD = 'joypass123';
 
-var SUB_ID_TWO = libuuid.create();
-var SUB_LOGIN_TWO = 'a' + SUB_ID_TWO.substr(0, 7);
-var SUB_EMAIL_TWO = SUB_LOGIN_TWO + '_test@joyent.com';
-var SUB_UUID_TWO;
-var SUB_DN_TWO;
+var SUB_ID_2 = libuuid.create();
+var SUB_LOGIN_2 = 'a' + SUB_ID_2.substr(0, 7);
+var SUB_EMAIL_2 = SUB_LOGIN_2 + '_test@joyent.com';
+var SUB_UUID_2;
 
 var POLICY_DOC = [
     'Fred can read *.js when foo::string = bar and ' +
@@ -54,26 +50,37 @@ var POLICY_DOC = [
     'John, Jack and Jane can ops_* *'
 ];
 
-var POLICY_UUID, POLICY_DN, POLICY_NAME;
-
-var ROLE_UUID, ROLE_DN, ROLE_NAME, SECOND_ROLE_UUID;
-
 var KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAvad19ePSDckmgmo6Unqmd8' +
     'n2G7o1794VN3FazVhV09yooXIuUhA+7OmT7ChiHueayxSubgL2MrO/HvvF/GGVUs/t3e0u4' +
     '5YwRC51EVhyDuqthVJWjKrYxgDMbHru8fc1oV51l0bKdmvmJWbA/VyeJvstoX+eiSGT3Jge' +
     'egSMVtc= mark@foo.local';
 
-var SSH_KEY_TWO = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDY2qV5e2q8qb+kYtn' +
-'pvRxC5PM6aqPPgWcaXn2gm4jtefGAPuJX9fIkz/KTRRLxdG27IMt6hBXRXvL0Gzw0H0mSUPHAbq' +
-'g4TAyG3/xEHp8iLH/QIf/RwVgjoGB0MLZn7q+L4ThMDo9rIrc5CpfOm/AN9vC4w0Zzu/XpJbzjd' +
-'pTXOh+vmOKkiWCzN+BJ9DvX3iei5NFiSL3rpru0j4CUjBKchUg6X7mdv42g/ZdRT9rilmEP154F' +
-'X/bVsFHitmyyYgba+X90uIR8KGLFZ4eWJNPprJFnCWXrpY5bSOgcS9aWVgCoH8sqHatNKUiQpZ4' +
-'Lsqr+Z4fAf4enldx/KMW91iKn whatever@wherever.local';
+var KEY_2 = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDY2qV5e2q8qb+kYtn' +
+    'pvRxC5PM6aqPPgWcaXn2gm4jtefGAPuJX9fIkz/KTRRLxdG27IMt6hBXRXvL0Gzw0H0mSUP' +
+    'HAbqg4TAyG3/xEHp8iLH/QIf/RwVgjoGB0MLZn7q+L4ThMDo9rIrc5CpfOm/AN9vC4w0Zzu' +
+    '/XpJbzjdpTXOh+vmOKkiWCzN+BJ9DvX3iei5NFiSL3rpru0j4CUjBKchUg6X7mdv42g/ZdR' +
+    'T9rilmEP154FX/bVsFHitmyyYgba+X90uIR8KGLFZ4eWJNPprJFnCWXrpY5bSOgcS9aWVgC' +
+    'oH8sqHatNKUiQpZ4Lsqr+Z4fAf4enldx/KMW91iKn whatever@wherever.local';
 
-var FP_ONE, FP_TWO;
+var FINGERPRINT;
+
 var ADMIN_ROLE_ID;
 
+var POLICY_UUID;
+var POLICY_NAME;
+
+var ROLE_UUID;
+var ROLE_NAME;
+var ROLE_UUID_2;
+
+var CLIENTS;
+var CLIENT;
+var SERVER;
+
+
 // --- Helpers
+
+
 function checkUser(t, user) {
     t.ok(user, 'checkUser user OK');
     t.ok(user.id, 'checkUser user.id OK');
@@ -81,12 +88,14 @@ function checkUser(t, user) {
     t.ok(user.email, 'checkUser user.email OK');
 }
 
+
 function checkPolicy(t, policy) {
     t.ok(policy, 'checkPolicy policy OK');
     t.ok(policy.id, 'checkPolicy policy.id OK');
     t.ok(policy.name, 'checkPolicy policy.name OK');
     t.ok(policy.rules, 'checkPolicy policy.rules OK');
 }
+
 
 function checkRole(t, role) {
     t.ok(role, 'checkRole role OK');
@@ -100,23 +109,22 @@ function checkRole(t, role) {
     }
 }
 
+
 function checkKey(t, key) {
     t.ok(key);
     t.ok(key.name);
     t.ok(key.key);
 }
 
+
 // --- Tests
 
+
 test('setup', function (t) {
-    common.setup(function (err, _client, _server) {
-        t.ifError(err);
-        t.ok(_client);
-
-        client = _client;
-        server = _server;
-
-        account = client.account;
+    common.setup(function (_, clients, server) {
+        CLIENTS = clients;
+        CLIENT  = clients.user;
+        SERVER  = server;
 
         t.end();
     });
@@ -129,7 +137,8 @@ test('create user with invalid login', function (t) {
         email: SUB_EMAIL,
         password: PWD
     };
-    client.post('/my/users', user, function (err, req, res, body) {
+
+    CLIENT.post('/my/users', user, function (err, req, res, body) {
         t.ok(err);
         t.ok(/login/.test(err.message));
         t.equal(err.name, 'InvalidArgumentError');
@@ -145,7 +154,8 @@ test('create user with invalid email', function (t) {
         email: 'foo+bar.com',
         password: PWD
     };
-    client.post('/my/users', user, function (err, req, res, body) {
+
+    CLIENT.post('/my/users', user, function (err, req, res, body) {
         t.ok(err);
         t.ok(/email/.test(err.message));
         t.equal(err.name, 'InvalidArgumentError');
@@ -154,12 +164,14 @@ test('create user with invalid email', function (t) {
     });
 });
 
+
 test('create user without password', function (t) {
     var user = {
         login: SUB_LOGIN,
         email: SUB_EMAIL
     };
-    client.post('/my/users', user, function (err, req, res, body) {
+
+    CLIENT.post('/my/users', user, function (err, req, res, body) {
         t.ok(err);
         t.ok(/password/.test(err.message));
         t.equal(err.name, 'MissingParameterError');
@@ -176,21 +188,22 @@ test('create user', function (t) {
         password: PWD
     };
 
-    client.post('/my/users', user, function (err, req, res, body) {
+    CLIENT.post('/my/users', user, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         t.equal(res.statusCode, 201);
         common.checkHeaders(t, res.headers);
         checkUser(t, body);
+
         SUB_UUID = body.id;
-        SUB_DN = util.format(SUB_FMT, SUB_UUID, account.uuid);
+
         t.end();
     });
 });
 
 
 test('update user', function (t) {
-    client.post('/my/users/' + SUB_UUID, {
+    CLIENT.post('/my/users/' + SUB_UUID, {
         phone: '+34 626 626 626'
     }, function (err, req, res, body) {
         t.ifError(err);
@@ -205,7 +218,7 @@ test('update user', function (t) {
 
 
 test('change password (missing params)', function (t) {
-    client.post('/my/users/' + SUB_UUID + '/change_password', {
+    CLIENT.post('/my/users/' + SUB_UUID + '/change_password', {
         password: 'whatever'
     }, function (err, req, res, body) {
         t.ok(err);
@@ -218,7 +231,7 @@ test('change password (missing params)', function (t) {
 
 
 test('change password (confirmation missmatch)', function (t) {
-    client.post('/my/users/' + SUB_UUID + '/change_password', {
+    CLIENT.post('/my/users/' + SUB_UUID + '/change_password', {
         password: 'whatever',
         password_confirmation: 'somethingelse'
     }, function (err, req, res, body) {
@@ -232,7 +245,7 @@ test('change password (confirmation missmatch)', function (t) {
 
 
 test('change password (OK)', function (t) {
-    client.post('/my/users/' + SUB_UUID + '/change_password', {
+    CLIENT.post('/my/users/' + SUB_UUID + '/change_password', {
         password: 'whatever123',
         password_confirmation: 'whatever123'
     }, function (err, req, res, body) {
@@ -247,7 +260,7 @@ test('change password (OK)', function (t) {
 
 
 test('get user by UUID', function (t) {
-    client.get('/my/users/' + SUB_UUID, function (err, req, res, body) {
+    CLIENT.get('/my/users/' + SUB_UUID, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -259,7 +272,7 @@ test('get user by UUID', function (t) {
 
 
 test('list users OK', function (t) {
-    client.get('/my/users', function (err, req, res, body) {
+    CLIENT.get('/my/users', function (err, req, res, body) {
         t.ifError(err, 'list users err');
         t.equal(res.statusCode, 200, 'list users status');
         common.checkHeaders(t, res.headers);
@@ -273,19 +286,20 @@ test('list users OK', function (t) {
 
 test('create another user', function (t) {
     var user = {
-        login: SUB_LOGIN_TWO,
-        email: SUB_EMAIL_TWO,
+        login: SUB_LOGIN_2,
+        email: SUB_EMAIL_2,
         password: PWD
     };
 
-    client.post('/my/users', user, function (err, req, res, body) {
+    CLIENT.post('/my/users', user, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         t.equal(res.statusCode, 201);
         common.checkHeaders(t, res.headers);
         checkUser(t, body);
-        SUB_UUID_TWO = body.id;
-        SUB_DN_TWO = util.format(SUB_FMT, SUB_UUID_TWO, account.uuid);
+
+        SUB_UUID_2 = body.id;
+
         t.end();
     });
 });
@@ -301,22 +315,23 @@ test('create policy', function (t) {
         description: 'This is completely optional'
     };
 
-    client.post('/my/policies', entry, function (err, req, res, body) {
+    CLIENT.post('/my/policies', entry, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         t.equal(res.statusCode, 201);
         common.checkHeaders(t, res.headers);
         checkPolicy(t, body);
+
         POLICY_UUID = body.id;
         POLICY_NAME = body.name;
-        POLICY_DN = util.format(POLICY_FMT, POLICY_UUID, account.uuid);
+
         t.end();
     });
 });
 
 
 test('get policy by UUID', function (t) {
-    client.get('/my/policies/' + POLICY_UUID, function (err, req, res, body) {
+    CLIENT.get('/my/policies/' + POLICY_UUID, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -328,7 +343,7 @@ test('get policy by UUID', function (t) {
 
 
 test('list policies (OK)', function (t) {
-    client.get('/my/policies', function (err, req, res, body) {
+    CLIENT.get('/my/policies', function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -343,7 +358,8 @@ test('list policies (OK)', function (t) {
 test('update policy', function (t) {
     var str = 'Pedro can delete *';
     POLICY_DOC.push(str);
-    client.post('/my/policies/' + POLICY_UUID, {
+
+    CLIENT.post('/my/policies/' + POLICY_UUID, {
         rules: POLICY_DOC,
         name: 'policy-name-can-be-modified'
     }, function (err, req, res, body) {
@@ -363,7 +379,8 @@ test('update policy', function (t) {
 test('update policy with wrong rule', function (t) {
     var str = 'Pedro can delete * when baz = bar';
     POLICY_DOC.push(str);
-    client.post('/my/policies/' + POLICY_UUID, {
+
+    CLIENT.post('/my/policies/' + POLICY_UUID, {
         rules: POLICY_DOC,
         name: 'policy-name-can-be-modified'
     }, function (err, req, res, body) {
@@ -383,26 +400,27 @@ test('create role', function (t) {
 
     var entry = {
         name: name,
-        members: SUB_LOGIN_TWO,
-        default_members: SUB_LOGIN_TWO
+        members: SUB_LOGIN_2,
+        default_members: SUB_LOGIN_2
     };
 
-    client.post('/my/roles', entry, function (err, req, res, body) {
+    CLIENT.post('/my/roles', entry, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         t.equal(res.statusCode, 201);
         common.checkHeaders(t, res.headers);
         checkRole(t, body);
+
         ROLE_UUID = body.id;
         ROLE_NAME = body.name;
-        ROLE_DN = util.format(ROLE_FMT, ROLE_UUID, account.uuid);
+
         t.end();
     });
 });
 
 
 test('get role (by UUID)', function (t) {
-    client.get('/my/roles/' + ROLE_UUID, function (err, req, res, body) {
+    CLIENT.get('/my/roles/' + ROLE_UUID, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -414,8 +432,9 @@ test('get role (by UUID)', function (t) {
 
 
 test('update role', function (t) {
-    var members = [SUB_LOGIN_TWO, SUB_LOGIN];
-    client.post('/my/roles/' + ROLE_UUID, {
+    var members = [SUB_LOGIN_2, SUB_LOGIN];
+
+    CLIENT.post('/my/roles/' + ROLE_UUID, {
         members: members,
         default_members: [SUB_LOGIN],
         name: 'role-name-can-be-modified'
@@ -435,8 +454,8 @@ test('update role', function (t) {
 
 
 test('enable member role', function (t) {
-    client.post('/my/roles/' + ROLE_UUID, {
-        default_members: [SUB_LOGIN, SUB_LOGIN_TWO]
+    CLIENT.post('/my/roles/' + ROLE_UUID, {
+        default_members: [SUB_LOGIN, SUB_LOGIN_2]
     }, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
@@ -445,15 +464,15 @@ test('enable member role', function (t) {
         checkRole(t, body);
         t.ok(body.members.indexOf(SUB_LOGIN) !== -1);
         t.ok(body.default_members.indexOf(SUB_LOGIN) !== -1);
-        t.ok(body.members.indexOf(SUB_LOGIN_TWO) !== -1);
-        t.ok(body.default_members.indexOf(SUB_LOGIN_TWO) !== -1);
+        t.ok(body.members.indexOf(SUB_LOGIN_2) !== -1);
+        t.ok(body.default_members.indexOf(SUB_LOGIN_2) !== -1);
         t.end();
     });
 });
 
 
 test('add existing policy to role', function (t) {
-    client.post('/my/roles/' + ROLE_UUID, {
+    CLIENT.post('/my/roles/' + ROLE_UUID, {
         policies: [POLICY_NAME]
     }, function (err, req, res, body) {
         t.ifError(err);
@@ -468,9 +487,10 @@ test('add existing policy to role', function (t) {
 
 
 test('add unexisting policy to role', function (t) {
-    var FAKE_POLICY = libuuid.create();
-    client.post('/my/roles/' + ROLE_UUID, {
-        policies: [POLICY_NAME, FAKE_POLICY]
+    var fakePolicy = libuuid.create();
+
+    CLIENT.post('/my/roles/' + ROLE_UUID, {
+        policies: [POLICY_NAME, fakePolicy]
     }, function (err, req, res, body) {
         t.ok(err);
         t.equal(res.statusCode, 409);
@@ -485,24 +505,26 @@ test('create another role', function (t) {
 
     var entry = {
         name: name,
-        members: [SUB_LOGIN, SUB_LOGIN_TWO],
+        members: [SUB_LOGIN, SUB_LOGIN_2],
         policies: [POLICY_NAME]
     };
 
-    client.post('/my/roles', entry, function (err, req, res, body) {
+    CLIENT.post('/my/roles', entry, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         t.equal(res.statusCode, 201);
         common.checkHeaders(t, res.headers);
         checkRole(t, body);
-        SECOND_ROLE_UUID = body.id;
+
+        ROLE_UUID_2 = body.id;
+
         t.end();
     });
 });
 
 
 test('list roles (OK)', function (t) {
-    client.get('/my/roles', function (err, req, res, body) {
+    CLIENT.get('/my/roles', function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -517,7 +539,7 @@ test('list roles (OK)', function (t) {
 
 
 test('get user by UUID', function (t) {
-    client.get('/my/users/' + SUB_UUID, function (err, req, res, body) {
+    CLIENT.get('/my/users/' + SUB_UUID, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -529,7 +551,7 @@ test('get user by UUID', function (t) {
 
 
 test('get user with roles', function (t) {
-    client.get('/my/users/' + SUB_UUID + '?membership=true',
+    CLIENT.get('/my/users/' + SUB_UUID + '?membership=true',
         function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
@@ -547,14 +569,14 @@ test('get user with roles', function (t) {
 
 test('add role to user resource', function (t) {
     var path = '/my/users/' + SUB_UUID;
-    var role = client.role.name;
+    var role = CLIENT.role.name;
 
-    client.put(path, {
+    CLIENT.put(path, {
         'role-tag': [role]
     }, function (err) {
         t.ifError(err);
 
-        client.get(path, function (err2, req, res, body) {
+        CLIENT.get(path, function (err2, req, res, body) {
             t.ifError(err2);
             t.equal(res.headers['role-tag'], role);
             t.end();
@@ -565,9 +587,9 @@ test('add role to user resource', function (t) {
 
 test('add role to non-existent user resource', function (t) {
     var badPath = '/my/users/d26f4257-a795-4a7e-a360-e5441b39def0';
-    var role = client.role.name;
+    var role = CLIENT.role.name;
 
-    client.put(badPath, {
+    CLIENT.put(badPath, {
         'role-tag': [role]
     }, function (err) {
         t.deepEqual(err, {
@@ -589,11 +611,11 @@ test('add role to non-existent user resource', function (t) {
 test('Attempt to create administrator role with policies fails', function (t) {
     var entry = {
         name: ADMIN_ROLE_NAME,
-        members: [SUB_LOGIN, SUB_LOGIN_TWO],
+        members: [SUB_LOGIN, SUB_LOGIN_2],
         policies: [POLICY_NAME]
     };
 
-    client.post('/my/roles', entry, function (err, req, res, body) {
+    CLIENT.post('/my/roles', entry, function (err, req, res, body) {
         t.ok(err);
         t.equal(res.statusCode, 409);
         t.ok(/administrator/i.test(body.message));
@@ -605,16 +627,18 @@ test('Attempt to create administrator role with policies fails', function (t) {
 test('Create administrator role', function (t) {
     var entry = {
         name: ADMIN_ROLE_NAME,
-        members: [SUB_LOGIN, SUB_LOGIN_TWO]
+        members: [SUB_LOGIN, SUB_LOGIN_2]
     };
 
-    client.post('/my/roles', entry, function (err, req, res, body) {
+    CLIENT.post('/my/roles', entry, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         t.equal(res.statusCode, 201);
         common.checkHeaders(t, res.headers);
         checkRole(t, body);
+
         ADMIN_ROLE_ID = body.id;
+
         t.end();
     });
 });
@@ -623,11 +647,11 @@ test('Create administrator role', function (t) {
 test('Update administrator role with policies fails', function (t) {
     var entry = {
         name: ADMIN_ROLE_NAME,
-        members: [SUB_LOGIN, SUB_LOGIN_TWO],
+        members: [SUB_LOGIN, SUB_LOGIN_2],
         policies: [POLICY_NAME]
     };
 
-    client.post('/my/roles/' + ADMIN_ROLE_ID, entry,
+    CLIENT.post('/my/roles/' + ADMIN_ROLE_ID, entry,
         function (err, req, res, body) {
         t.ok(err);
         t.equal(res.statusCode, 409);
@@ -639,7 +663,8 @@ test('Update administrator role with policies fails', function (t) {
 
 test('delete administrator role', function (t) {
     var url = '/my/roles/' + ADMIN_ROLE_ID;
-    client.del(url, function (err, req, res) {
+
+    CLIENT.del(url, function (err, req, res) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
         common.checkHeaders(t, res.headers);
@@ -650,7 +675,8 @@ test('delete administrator role', function (t) {
 
 test('ListKeys (empty) OK', function (t) {
     var p = util.format('/my/users/%s/keys', SUB_UUID);
-    client.get(p, function (err, req, res, body) {
+
+    CLIENT.get(p, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -664,7 +690,8 @@ test('ListKeys (empty) OK', function (t) {
 
 test('CreateKey (missing key)', function (t) {
     var p = util.format('/my/users/%s/keys', SUB_UUID);
-    client.post(p, {}, function (err) {
+
+    CLIENT.post(p, {}, function (err) {
         t.ok(err);
         t.equal(err.statusCode, 409);
         t.equal(err.restCode, 'MissingParameter');
@@ -680,15 +707,18 @@ test('CreateKey (named) OK', function (t) {
         name: 'id_rsa 1'
     };
     var p = util.format('/my/users/%s/keys', SUB_UUID);
-    client.post(p, key, function (err, req, res, body) {
+
+    CLIENT.post(p, key, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         t.equal(res.statusCode, 201);
         common.checkHeaders(t, res.headers);
         checkKey(t, body, 'CreateKey body');
         t.equal(body.name, key.name, 'CreateKey name');
-        FP_ONE = body.fingerprint;
-        client.get(p, function (err2, req2, res2, body2) {
+
+        FINGERPRINT = body.fingerprint;
+
+        CLIENT.get(p, function (err2, req2, res2, body2) {
             t.ifError(err2);
             t.equal(res2.statusCode, 200);
             common.checkHeaders(t, res2.headers);
@@ -710,11 +740,13 @@ test('CreateKey (named) OK', function (t) {
 
 test('Create (named) key with duplicate name', function (t) {
     var key = {
-        key: SSH_KEY_TWO,
+        key: KEY_2,
         name: 'id_rsa 1'
     };
+
     var p = util.format('/my/users/%s/keys', SUB_UUID);
-    client.post(p, key, function (err, req, res, body) {
+
+    CLIENT.post(p, key, function (err, req, res, body) {
         t.ok(err);
         t.equal(err.statusCode, 409);
         t.end();
@@ -727,8 +759,10 @@ test('Attempt to create with invalid key', function (t) {
         key: 'asdf',
         name: 'Not so valid'
     };
+
     var p = util.format('/my/users/%s/keys', SUB_UUID);
-    client.post(p, key, function (err, req, res, body) {
+
+    CLIENT.post(p, key, function (err, req, res, body) {
         t.ok(err);
         t.equal(err.statusCode, 409);
         t.equal(err.restCode, 'InvalidArgument');
@@ -740,7 +774,8 @@ test('Attempt to create with invalid key', function (t) {
 
 test('ListKeys OK', function (t) {
     var p = util.format('/my/users/%s/keys', SUB_UUID);
-    client.get(p, function (err, req, res, body) {
+
+    CLIENT.get(p, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -756,8 +791,9 @@ test('ListKeys OK', function (t) {
 
 test('GetKey OK', function (t) {
     var p = util.format('/my/users/%s/keys/', SUB_UUID);
-    var url = p + encodeURIComponent(FP_ONE);
-    client.get(url, function (err, req, res, body) {
+    var url = p + encodeURIComponent(FINGERPRINT);
+
+    CLIENT.get(url, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -770,8 +806,9 @@ test('GetKey OK', function (t) {
 
 test('DeleteKey OK', function (t) {
     var p = util.format('/my/users/%s/keys/', SUB_UUID);
-    var url = p + encodeURIComponent(FP_ONE);
-    client.del(url, function (err, req, res) {
+    var url = p + encodeURIComponent(FINGERPRINT);
+
+    CLIENT.del(url, function (err, req, res) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
         common.checkHeaders(t, res.headers);
@@ -782,7 +819,8 @@ test('DeleteKey OK', function (t) {
 
 test('delete role', function (t) {
     var url = '/my/roles/' + ROLE_UUID;
-    client.del(url, function (err, req, res) {
+
+    CLIENT.del(url, function (err, req, res) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
         common.checkHeaders(t, res.headers);
@@ -792,8 +830,9 @@ test('delete role', function (t) {
 
 
 test('delete second role', function (t) {
-    var url = '/my/roles/' + SECOND_ROLE_UUID;
-    client.del(url, function (err, req, res) {
+    var url = '/my/roles/' + ROLE_UUID_2;
+
+    CLIENT.del(url, function (err, req, res) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
         common.checkHeaders(t, res.headers);
@@ -804,7 +843,8 @@ test('delete second role', function (t) {
 
 test('delete policy', function (t) {
     var url = '/my/policies/' + POLICY_UUID;
-    client.del(url, function (err, req, res) {
+
+    CLIENT.del(url, function (err, req, res) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
         common.checkHeaders(t, res.headers);
@@ -815,7 +855,8 @@ test('delete policy', function (t) {
 
 test('delete user', function (t) {
     var url = '/my/users/' + SUB_UUID;
-    client.del(url, function (err, req, res) {
+
+    CLIENT.del(url, function (err, req, res) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
         common.checkHeaders(t, res.headers);
@@ -825,8 +866,9 @@ test('delete user', function (t) {
 
 
 test('delete another user', function (t) {
-    var url = '/my/users/' + SUB_UUID_TWO;
-    client.del(url, function (err, req, res) {
+    var url = '/my/users/' + SUB_UUID_2;
+
+    CLIENT.del(url, function (err, req, res) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
         common.checkHeaders(t, res.headers);
@@ -836,7 +878,7 @@ test('delete another user', function (t) {
 
 
 test('teardown', function (t) {
-    common.teardown(client, server, function () {
+    common.teardown(CLIENTS, SERVER, function () {
         t.end();
     });
 });

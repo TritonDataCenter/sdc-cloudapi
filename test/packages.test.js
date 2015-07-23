@@ -9,19 +9,15 @@
  */
 
 var test = require('tape').test;
-var libuuid = require('libuuid');
-function uuid() {
-    return (libuuid.create());
-}
 var util = require('util');
 var common = require('./common');
 
-///--- Globals
 
-var client, server, THE_PACKAGE;
+// --- Globals
+
 
 // May or not be created by previous test run or whatever else:
-var sdc_512_ownership = {
+var SDC_512 = {
     uuid: '4667d1b8-0bc7-466c-bf62-aae98ba5efa9',
     name: 'sdc_512_ownership',
     version: '1.0.0',
@@ -37,73 +33,13 @@ var sdc_512_ownership = {
     owner_uuids: ['b99598ca-d56c-4374-8fdd-32e60f4d1592']
 };
 
-var sdc_128_ok = {
-    uuid: 'df27bb35-8569-48fb-8dd7-ffd61a118aff',
-    name: 'sdc_128_ok',
-    version: '1.0.0',
-    max_physical_memory: 128,
-    quota: 10240,
-    max_swap: 512,
-    cpu_cap: 150,
-    max_lwps: 1000,
-    zfs_io_priority: 10,
-    'default': false,
-    vcpus: 1,
-    active: true,
-    owner_uuids: ['f1ea132f-e460-4061-ad62-727c2a25a5b0']
-};
-
-var sdc_512_ownership_entry, sdc_128_ok_entry;
-
-// Add custom packages, given "sdc_" default ones will be owner by admin user.
-function add128Ok(t, cb) {
-    return client.papi.get(sdc_128_ok.uuid, {}, function (err, pkg) {
-        if (err) {
-            if (err.restCode === 'ResourceNotFound') {
-                return client.papi.add(sdc_128_ok, function (err2, pkg2) {
-                    t.ifError(err2, 'Error creating package');
-                    t.ok(pkg2, 'Package created OK');
-                    sdc_128_ok_entry = pkg2;
-                    return cb();
-                });
-            } else {
-                t.ifError(err, 'Error fetching package');
-                return cb();
-            }
-        } else {
-            sdc_128_ok_entry = pkg;
-            return cb();
-        }
-    });
-}
+var CLIENTS;
+var CLIENT;
+var SERVER;
 
 
-function add512Ownership(t, owner_uuid, cb) {
-    sdc_512_ownership.owner_uuids.push(owner_uuid);
+// --- Helpers
 
-    return client.papi.get(sdc_512_ownership.uuid, {}, function (err, pkg) {
-        if (err) {
-            if (err.restCode === 'ResourceNotFound') {
-                return client.papi.add(sdc_512_ownership,
-                    function (err2, pkg2) {
-                    t.ifError(err2, 'Error creating package');
-                    t.ok(pkg2, 'Package created OK');
-                    sdc_512_ownership_entry = pkg2;
-                    return cb();
-                });
-            } else {
-                t.ifError(err, 'Error fetching package');
-                return cb();
-            }
-        } else {
-            sdc_512_ownership_entry = pkg;
-            return cb();
-        }
-    });
-}
-
-
-///--- Helpers
 
 function checkPackage_6_5(t, pkg) {
     t.ok(pkg, 'Package OK');
@@ -133,7 +69,7 @@ function checkPackage_7(t, pkg) {
 
 
 function searchAndCheck(query, t, checkAttr) {
-    client.get({
+    CLIENT.get({
         path: '/my/packages?' + query,
         headers: {
             'accept-version': '~7.0'
@@ -157,28 +93,30 @@ function searchAndCheck(query, t, checkAttr) {
 }
 
 
-///--- Tests
+// --- Tests
+
 
 test('setup', function (t) {
-    common.setup(function (err, _client, _server) {
-        t.ifError(err);
-        t.ok(_client);
+    common.setup(function (_, clients, server) {
+        CLIENTS = clients;
+        CLIENT  = clients.user;
+        SERVER  = server;
 
-        client = _client;
-        server = _server;
+        SDC_512.owner_uuids.push(CLIENT.account.uuid);
 
-        add128Ok(t, function () {
-            add512Ownership(t, client.account.uuid, function () {
-                t.end();
-            });
+        common.addPackage(CLIENT, SDC_512, function (err) {
+            if (err) {
+                throw err;
+            }
+
+            t.end();
         });
-
     });
 });
 
 
 test('ListPackages OK (6.5)', function (t) {
-    client.get({
+    CLIENT.get({
         path: '/my/packages',
         headers: {
             'accept-version': '~6.5'
@@ -199,8 +137,8 @@ test('ListPackages OK (6.5)', function (t) {
 
 
 test('GetPackage OK (6.5)', function (t) {
-    client.get({
-        path: '/my/packages/sdc_512_ownership',
+    CLIENT.get({
+        path: '/my/packages/' + SDC_512.name,
         headers: {
             'accept-version': '~6.5'
         }
@@ -210,13 +148,13 @@ test('GetPackage OK (6.5)', function (t) {
         common.checkHeaders(t, res.headers);
 
         t.deepEqual(body, {
-            name: 'sdc_512_ownership',
-            memory: 512,
-            disk: 20480,
-            swap: 1024,
-            vcpus: 2,
-            lwps: 2000,
-            default: false
+            name:    SDC_512.name,
+            memory:  SDC_512.max_physical_memory,
+            disk:    SDC_512.quota,
+            swap:    SDC_512.max_swap,
+            vcpus:   SDC_512.vcpus,
+            lwps:    SDC_512.max_lwps,
+            default: SDC_512.default
         });
 
         t.end();
@@ -225,7 +163,7 @@ test('GetPackage OK (6.5)', function (t) {
 
 
 test('ListPackages OK (7.0)', function (t) {
-    client.get({
+    CLIENT.get({
         path: '/my/packages',
         headers: {
             'accept-version': '~7.0'
@@ -246,8 +184,8 @@ test('ListPackages OK (7.0)', function (t) {
 
 
 test('search packages by name (7.0)', function (t) {
-    searchAndCheck('name=sdc_512_ownership', t, function (pkg) {
-        t.equal(pkg.name, 'sdc_512_ownership');
+    searchAndCheck('name=' + SDC_512.name, t, function (pkg) {
+        t.equal(pkg.name, SDC_512.name);
     });
 });
 
@@ -295,8 +233,8 @@ test('search packages by version (7.0)', function (t) {
 
 
 test('GetPackage by name OK (7.0)', function (t) {
-    client.get({
-        path: '/my/packages/sdc_512_ownership',
+    CLIENT.get({
+        path: '/my/packages/' + SDC_512.name,
         headers: {
             'accept-version': '~7.0'
         }
@@ -306,26 +244,25 @@ test('GetPackage by name OK (7.0)', function (t) {
         common.checkHeaders(t, res.headers);
 
         t.deepEqual(body, {
-            name: 'sdc_512_ownership',
-            memory: 512,
-            disk: 20480,
-            swap: 1024,
-            vcpus: 2,
-            lwps: 2000,
-            default: false,
-            id: '4667d1b8-0bc7-466c-bf62-aae98ba5efa9',
-            version: '1.0.0'
+            name:    SDC_512.name,
+            memory:  SDC_512.max_physical_memory,
+            disk:    SDC_512.quota,
+            swap:    SDC_512.max_swap,
+            vcpus:   SDC_512.vcpus,
+            lwps:    SDC_512.max_lwps,
+            default: SDC_512.default,
+            id:      SDC_512.uuid,
+            version: SDC_512.version
         });
 
-        THE_PACKAGE = body;
         t.end();
     });
 });
 
 
 test('GetPackage by id OK (7.0)', function (t) {
-    client.get({
-        path: '/my/packages/' + THE_PACKAGE.id,
+    CLIENT.get({
+        path: '/my/packages/' + SDC_512.uuid,
         headers: {
             'accept-version': '~7.0'
         }
@@ -335,15 +272,15 @@ test('GetPackage by id OK (7.0)', function (t) {
         common.checkHeaders(t, res.headers);
 
         t.deepEqual(body, {
-            name: 'sdc_512_ownership',
-            memory: 512,
-            disk: 20480,
-            swap: 1024,
-            vcpus: 2,
-            lwps: 2000,
-            default: false,
-            id: '4667d1b8-0bc7-466c-bf62-aae98ba5efa9',
-            version: '1.0.0'
+            name:    SDC_512.name,
+            memory:  SDC_512.max_physical_memory,
+            disk:    SDC_512.quota,
+            swap:    SDC_512.max_swap,
+            vcpus:   SDC_512.vcpus,
+            lwps:    SDC_512.max_lwps,
+            default: SDC_512.default,
+            id:      SDC_512.uuid,
+            version: SDC_512.version
         });
 
         t.end();
@@ -352,7 +289,7 @@ test('GetPackage by id OK (7.0)', function (t) {
 
 
 test('GetPackage 404', function (t) {
-    client.get('/my/packages/' + uuid(), function (err) {
+    CLIENT.get('/my/packages/' + common.uuid(), function (err) {
         t.ok(err);
         t.equal(err.statusCode, 404);
         t.equal(err.restCode, 'ResourceNotFound');
@@ -363,15 +300,11 @@ test('GetPackage 404', function (t) {
 
 
 test('teardown', function (t) {
-    client.papi.del(sdc_512_ownership.uuid, { force: true }, function (err) {
+    common.deletePackage(CLIENT, SDC_512, function (err) {
         t.ifError(err);
 
-        client.papi.del(sdc_128_ok.uuid, { force: true }, function (err2) {
-            t.ifError(err2);
-
-            common.teardown(client, server, function () {
-                t.end();
-            });
+        common.teardown(CLIENTS, SERVER, function () {
+            t.end();
         });
     });
 });

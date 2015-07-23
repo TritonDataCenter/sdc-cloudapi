@@ -8,57 +8,22 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
-var fs = require('fs');
 var util = require('util');
 var test = require('tape').test;
-var libuuid = require('libuuid');
 var restify = require('restify');
-
-var sprintf = util.format;
 var common = require('./common');
+var uuid = common.uuid;
+var addPackage = common.addPackage;
 var machinesCommon = require('./machines/common');
 var checkMachine = machinesCommon.checkMachine;
-var checkJob = machinesCommon.checkJob;
-var waitForJob = machinesCommon.waitForJob;
-var checkWfJob = machinesCommon.checkWfJob;
-var waitForWfJob = machinesCommon.waitForWfJob;
-var saveKey = machinesCommon.saveKey;
-var addPackage = machinesCommon.addPackage;
+
 
 // --- Globals
 
-var client, server, snapshot;
-var keyName = uuid();
-var machine;
-var image_uuid;
-var KEY = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAvad19ePSDckmgmo6Unqmd8' +
-    'n2G7o1794VN3FazVhV09yooXIuUhA+7OmT7ChiHueayxSubgL2MrO/HvvF/GGVUs/t3e0u4' +
-    '5YwRC51EVhyDuqthVJWjKrYxgDMbHru8fc1oV51l0bKdmvmJWbA/VyeJvstoX+eiSGT3Jge' +
-    'egSMVtc= mark@foo.local';
 
-var TAG_KEY = 'role';
-var TAG_VAL = 'unitTest';
+var SDC_128 = common.sdc_128_package; // already loaded in PAPI
 
-var META_KEY = 'foo';
-var META_VAL = 'bar';
-
-var META_64_KEY = 'sixtyfour';
-var META_64_VAL = new Buffer('Hello World').toString('base64');
-
-var META_CREDS = {
-    'root': 'secret',
-    'admin': 'secret'
-};
-
-var META_CREDS_TWO = {
-    'root': 'secret',
-    'admin': 'secret',
-    'jill': 'secret'
-};
-
-
-// May or not be created by previous test run or whatever else:
-var sdc_256_inactive = {
+var SDC_256_INACTIVE =  {
     uuid: '4633473b-aae9-466b-8bde-3c410e5072cc',
     name: 'sdc_256_inactive',
     version: '1.0.0',
@@ -73,7 +38,7 @@ var sdc_256_inactive = {
     active: false
 };
 
-var sdc_256_ok = {
+var SDC_256 = {
     uuid: '455fc2ef-b72e-4360-8d8e-09c589e06470',
     name: 'sdc_256',
     version: '1.0.0',
@@ -88,23 +53,7 @@ var sdc_256_ok = {
     active: true
 };
 
-var sdc_128_ok = {
-    uuid: '897779dc-9ce7-4042-8879-a4adccc94353',
-    name: 'sdc_128_ok',
-    version: '1.0.0',
-    max_physical_memory: 128,
-    quota: 10240,
-    max_swap: 512,
-    cpu_cap: 150,
-    max_lwps: 1000,
-    zfs_io_priority: 10,
-    fss: 25,
-    'default': false,
-    vcpus: 1,
-    active: true
-};
-
-var sdc_128_os = {
+var SDC_128_LINUX = {
     uuid: '0f06a3b8-4c54-4408-bb17-ffb34290867e',
     name: 'sdc_128_os',
     version: '1.0.0',
@@ -120,60 +69,46 @@ var sdc_128_os = {
     active: true
 };
 
+var HEADNODE_UUID;
+var IMAGE_UUID;
+var MACHINE_UUID;
 
-var sdc_256_inactive_entry;
-var sdc_256_ok_entry;
-var sdc_128_ok_entry;
-var sdc_128_os_entry;
-
-var HEADNODE = null;
+var CLIENTS;
+var CLIENT;
+var SERVER;
 
 
 // --- Tests
 
+
 test('setup', function (t) {
-    common.setup(function (err, _client, _server) {
-        t.ifError(err, 'common setup error');
-        t.ok(_client, 'common _client ok');
+    common.setup(function (_, clients, server) {
+        CLIENTS = clients;
+        CLIENT  = clients.user;
+        SERVER  = server;
 
-        client = _client;
-        server = _server;
-
-        saveKey(KEY, keyName, client, t, addPackage1);
+        addPackage1();
 
         // Add custom packages; "sdc_" ones will be owned by admin user:
         function addPackage1() {
-            addPackage(client, sdc_128_ok, function (err2, entry) {
-                t.ifError(err2, 'Add package error');
-                sdc_128_ok_entry = entry;
+            addPackage(CLIENT, SDC_256_INACTIVE, function (err) {
+                t.ifError(err, 'Add package error');
 
                 addPackage2();
             });
         }
 
         function addPackage2() {
-            addPackage(client, sdc_256_inactive, function (err2, entry) {
-                t.ifError(err2, 'Add package error');
-                sdc_256_inactive_entry = entry;
+            addPackage(CLIENT, SDC_128_LINUX, function (err) {
+                t.ifError(err, 'Add package error');
 
                 addPackage3();
             });
         }
 
         function addPackage3() {
-            addPackage(client, sdc_128_os, function (err2, entry) {
-                t.ifError(err2, 'Add package error');
-                sdc_128_os_entry = entry;
-
-                addPackage4();
-            });
-        }
-
-        function addPackage4() {
-            addPackage(client, sdc_256_ok, function (err2, entry) {
-                t.ifError(err2, 'Add package error');
-                sdc_256_ok_entry = entry;
-
+            addPackage(CLIENT, SDC_256, function (err) {
+                t.ifError(err, 'Add package error');
                 t.end();
             });
         }
@@ -181,8 +116,26 @@ test('setup', function (t) {
 });
 
 
+test('Get Headnode', function (t) {
+    common.getHeadnode(CLIENT, function (err, headnode) {
+        t.ifError(err);
+        HEADNODE_UUID = headnode.uuid;
+        t.end();
+    });
+});
+
+
+test('Get base dataset', function (t) {
+    common.getBaseDataset(CLIENT, function (err, img) {
+        t.ifError(err);
+        IMAGE_UUID = img.id;
+        t.end();
+    });
+});
+
+
 test('ListMachines (empty)', function (t) {
-    client.get('/my/machines', function (err, req, res, body) {
+    CLIENT.get('/my/machines', function (err, req, res, body) {
         t.ifError(err, 'GET /my/machines error');
         t.equal(res.statusCode, 200, 'GET /my/machines Status');
         common.checkHeaders(t, res.headers);
@@ -194,37 +147,15 @@ test('ListMachines (empty)', function (t) {
 });
 
 
-test('Get Headnode', function (t) {
-    client.cnapi.listServers(function (err, servers) {
-        t.ifError(err);
-        t.ok(servers);
-        t.ok(Array.isArray(servers));
-        t.ok(servers.length > 0);
-        servers = servers.filter(function (s) {
-            return (s.headnode);
-        });
-        t.ok(servers.length > 0);
-        HEADNODE = servers[0];
-        t.ok(HEADNODE);
-        t.end();
-    });
-});
-
-
 test('Create machine with inactive package', function (t) {
     var obj = {
-        dataset: 'smartos',
-        'package': sdc_256_inactive_entry.name,
+        image: IMAGE_UUID,
+        package: SDC_256_INACTIVE.name,
         name: 'a' + uuid().substr(0, 7),
-        server_uuid: HEADNODE.uuid
+        server_uuid: HEADNODE_UUID
     };
 
-    client.post({
-        path: '/my/machines',
-        headers: {
-            'accept-version': '~6.5'
-        }
-    }, obj, function (err, req, res, body) {
+    CLIENT.post('/my/machines', obj, function (err, req, res, body) {
         t.ok(err, 'POST /my/machines with inactive package error');
         var cfg = common.getCfg();
         var capi_limits = cfg.plugins.filter(function (p) {
@@ -240,36 +171,16 @@ test('Create machine with inactive package', function (t) {
 });
 
 
-var DATASET;
-
-test('get smartos dataset', function (t) {
-    client.get('/my/datasets?name=smartos', function (err, req, res, body) {
-        t.ifError(err, 'GET /my/datasets error');
-        t.equal(res.statusCode, 200, 'GET /my/datasets status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/datasets body');
-        t.ok(Array.isArray(body), 'GET /my/datasets body is an array');
-        t.ok(body.length, 'GET /my/datasets body array has elements');
-        body.forEach(function (d) {
-            if (d.version && d.version === '1.6.3') {
-                DATASET = d.id;
-            }
-        });
-        t.end();
-    });
-});
-
-
 test('Create machine with os mismatch', function (t) {
     var obj = {
-        image: DATASET,
-        'package': 'sdc_128_os',
+        image: IMAGE_UUID,
+        package: SDC_128_LINUX.name,
         name: 'a' + uuid().substr(0, 7),
-        server_uuid: HEADNODE.uuid,
+        server_uuid: HEADNODE_UUID,
         firewall_enabled: true
     };
 
-    client.post('/my/machines', obj, function (err, req, res, body) {
+    CLIENT.post('/my/machines', obj, function (err, req, res, body) {
         t.ok(err);
         t.equal(err.statusCode, 409);
         t.equal(body.code, 'InvalidArgument');
@@ -296,15 +207,15 @@ test('Create machine with too many public networks', function (t) {
 
     function createMachine(networkUuids, next) {
         var obj = {
-            image: DATASET,
-            'package': sdc_128_ok_entry.name,
+            image: IMAGE_UUID,
+            package: SDC_128.name,
             name: 'a' + uuid().substr(0, 7),
-            server_uuid: HEADNODE.uuid,
+            server_uuid: HEADNODE_UUID,
             firewall_enabled: true,
             networks: networkUuids
         };
 
-        client.post('/my/machines', obj, function (err, req, res, body) {
+        CLIENT.post('/my/machines', obj, function (err, req, res, body) {
             t.ok(err);
             t.equal(err.statusCode, 409);
             t.equal(body.code, 'InvalidArgument');
@@ -314,17 +225,17 @@ test('Create machine with too many public networks', function (t) {
     }
 
     function addNetwork(networkDesc, next) {
-        client.napi.createNetwork(networkDesc, function (err, network) {
+        CLIENT.napi.createNetwork(networkDesc, function (err, network) {
             t.ifError(err);
             next(null, network.uuid);
         });
     }
 
     function removeNetwork(networkUuid, next) {
-        client.napi.deleteNetwork(networkUuid, next);
+        CLIENT.napi.deleteNetwork(networkUuid, next);
     }
 
-    client.napi.listNetworks({ nic_tag: 'external' }, function (err, nets) {
+    CLIENT.napi.listNetworks({ nic_tag: 'external' }, function (err, nets) {
         t.ifError(err);
 
         var networkUuids = nets.map(function (net) { return net.uuid; });
@@ -354,13 +265,13 @@ test('Create machine with too many public networks', function (t) {
 
 test('CreateMachine using invalid networks', function (t) {
     var obj = {
-        image: DATASET,
-        'package': sdc_128_ok_entry.name,
-        server_uuid: HEADNODE.uuid,
+        image: IMAGE_UUID,
+        package: SDC_128.name,
+        server_uuid: HEADNODE_UUID,
         networks: ['8180ef72-40fa-4b86-915b-803bcf96b442'] // invalid
     };
 
-    client.post('/my/machines', obj, function (err, req, res, body) {
+    CLIENT.post('/my/machines', obj, function (err, req, res, body) {
         t.ok(err);
         t.equal(err.statusCode, 409);
         t.deepEqual(body, {
@@ -385,17 +296,17 @@ test('CreateMachine using network without permissions', function (t) {
     };
 
     var vmDetails = {
-        image: DATASET,
-        'package': sdc_128_ok_entry.name,
-        server_uuid: HEADNODE.uuid
+        image: IMAGE_UUID,
+        package: SDC_128.name,
+        server_uuid: HEADNODE_UUID
     };
 
-    client.napi.createNetwork(netDetails, function (err, net) {
+    CLIENT.napi.createNetwork(netDetails, function (err, net) {
         t.ifError(err);
 
         vmDetails.networks = [net.uuid];
 
-        client.post('/my/machines', vmDetails, function (err2, req, res, body) {
+        CLIENT.post('/my/machines', vmDetails, function (err2, req, res, body) {
             t.ok(err2);
             t.equal(err2.statusCode, 409);
             t.deepEqual(body, {
@@ -403,7 +314,7 @@ test('CreateMachine using network without permissions', function (t) {
                 message: 'Invalid Networks'
             });
 
-            client.napi.deleteNetwork(net.uuid, {}, function (err3) {
+            CLIENT.napi.deleteNetwork(net.uuid, {}, function (err3) {
                 t.ifError(err3);
                 t.end();
             });
@@ -415,8 +326,8 @@ test('CreateMachine using network without permissions', function (t) {
 
 test('Create machine with invalid parameters', function (t) {
     var obj = {
-        image: DATASET,
-        'package': sdc_128_ok_entry.name,
+        image: IMAGE_UUID,
+        package: SDC_128.name,
         // Underscore will make name invalid:
         name: '_a' + uuid().substr(0, 7),
         // Obviously, not a valid UUID, but we don't want to notify customers
@@ -424,7 +335,7 @@ test('Create machine with invalid parameters', function (t) {
         server_uuid: '123456'
     };
 
-    client.post({
+    CLIENT.post({
         path: '/my/machines',
         headers: {
             'accept-version': '~6.5'
@@ -440,14 +351,14 @@ test('Create machine with invalid parameters', function (t) {
 
 test('Create machine with invalid locality', function (t) {
     var obj = {
-        image: DATASET,
-        'package': sdc_128_ok_entry.name,
+        image: IMAGE_UUID,
+        package: SDC_128.name,
         name: 'a' + uuid().substr(0, 7),
-        server_uuid: HEADNODE.uuid,
+        server_uuid: HEADNODE_UUID,
         locality: { near: 'asdasd' }
     };
 
-    client.post('/my/machines', obj, function (err, req, res, body) {
+    CLIENT.post('/my/machines', obj, function (err, req, res, body) {
         t.equal(err.statusCode, 409);
         t.deepEqual(body, {
             code: 'ValidationFailed',
@@ -464,10 +375,10 @@ test('Create machine with invalid locality', function (t) {
 
 
 test('CreateMachine using dataset without permission', function (t) {
-    client.imgapi.listImages(function (err, images) {
+    CLIENT.imgapi.listImages(function (err, images) {
         t.ifError(err);
 
-        var accountUuid = client.account.uuid;
+        var accountUuid = CLIENT.account.uuid;
         var inaccessibleImage = images.filter(function (img) {
             return img.owner !== accountUuid && !img.public;
         })[0];
@@ -479,11 +390,11 @@ test('CreateMachine using dataset without permission', function (t) {
 
         var obj = {
             image: inaccessibleImage.uuid,
-            'package': sdc_128_ok_entry.name,
-            server_uuid: HEADNODE.uuid
+            package: SDC_128.name,
+            server_uuid: HEADNODE_UUID
         };
 
-        return client.post('/my/machines', obj, function (er2, req, res, body) {
+        return CLIENT.post('/my/machines', obj, function (er2, req, res, body) {
             t.ok(er2);
             t.equal(er2.statusCode, 404);
 
@@ -506,9 +417,9 @@ test('CreateMachine without approved_for_provisioning', function (t) {
         t.ifError(err);
 
         var httpClient = restify.createJsonClient({
-            url: client.url.href, // grab from old client
+            url: CLIENT.url.href, // grab from old client
             retryOptions: { retry: 0 },
-            log: client.log,
+            log: CLIENT.log,
             rejectUnauthorized: false
         });
 
@@ -516,9 +427,9 @@ test('CreateMachine without approved_for_provisioning', function (t) {
         httpClient.basicAuth(tmpAccount.login, tmpAccount.passwd);
 
         var obj = {
-            image: DATASET,
-            'package': sdc_128_ok_entry.name,
-            server_uuid: HEADNODE.uuid
+            image: IMAGE_UUID,
+            package: SDC_128.name,
+            server_uuid: HEADNODE_UUID
         };
 
         httpClient.post({
@@ -546,37 +457,23 @@ test('CreateMachine without approved_for_provisioning', function (t) {
         approved_for_provisioning: false
     };
 
-    common.withTemporaryUser(client.ufds, opts, attemptProvision, done);
+    common.withTemporaryUser(CLIENT.ufds, opts, attemptProvision, done);
 });
 
 
 // Test using IMAGE.uuid instead of IMAGE.name due to PUBAPI-625:
 test('CreateMachine', function (t) {
     var obj = {
-        image: DATASET,
-        'package': sdc_128_ok_entry.name,
+        image: IMAGE_UUID,
+        package: SDC_128.name,
         name: 'a' + uuid().substr(0, 7),
         locality: { far: 'af4167f0-beda-4af9-9ae4-99d544499c14' }, // fake UUID
-        server_uuid: HEADNODE.uuid,
+        server_uuid: HEADNODE_UUID,
         firewall_enabled: true
     };
-    obj['metadata.' + META_KEY] = META_VAL;
-    obj['metadata.' + META_64_KEY] = META_64_VAL;
-    obj['tag.' + TAG_KEY] = TAG_VAL;
 
-    obj['metadata.credentials'] = META_CREDS;
-
-    client.post('/my/machines', obj, function (err, req, res, body) {
-        t.ifError(err, 'POST /my/machines error');
-        t.equal(res.statusCode, 201, 'POST /my/machines status');
-        common.checkHeaders(t, res.headers);
-        t.equal(res.headers.location,
-            util.format('/%s/machines/%s', client.testUser, body.id));
-        t.ok(body, 'POST /my/machines body');
-        checkMachine(t, body);
-        machine = body.id;
-        // Handy to output this to stdout in order to poke around COAL:
-        console.log('Requested provision of machine: %s', machine);
+    machinesCommon.createMachine(t, CLIENT, obj, function (_, machineUuid) {
+        MACHINE_UUID = machineUuid;
         t.end();
     });
 });
@@ -586,7 +483,7 @@ test('Wait For Running Machine 1', waitForRunning);
 
 
 test('ListMachines all', function (t) {
-    client.get('/my/machines', function (err, req, res, body) {
+    CLIENT.get('/my/machines', function (err, req, res, body) {
         t.ifError(err, 'GET /my/machines error');
         t.equal(res.statusCode, 200, 'GET /my/machines status');
         common.checkHeaders(t, res.headers);
@@ -609,8 +506,8 @@ test('ListMachines all', function (t) {
 
 // Fixed by PUBAPI-774, again!
 test('ListMachines (filter by dataset)', function (t) {
-    searchAndCheck('image=' + DATASET, t, function (m) {
-        t.equal(m.image, DATASET);
+    searchAndCheck('image=' + IMAGE_UUID, t, function (m) {
+        t.equal(m.image, IMAGE_UUID);
     });
 });
 
@@ -630,7 +527,7 @@ test('ListMachines (filter by memory)', function (t) {
 
 
 test('ListMachines (filter by package)', function (t) {
-    var pkgName = sdc_128_ok_entry.name;
+    var pkgName = SDC_128.name;
 
     searchAndCheck('package=' + pkgName, t, function (m) {
         t.equal(m['package'], pkgName);
@@ -643,7 +540,7 @@ test('ListMachines (filter by smartmachine type)', function (t) {
         t.equal(m.type, 'smartmachine');
         // at the moment, only the machine created in the above tests should
         // list here:
-        t.equal(m.id, machine);
+        t.equal(m.id, MACHINE_UUID);
     });
 });
 
@@ -651,7 +548,7 @@ test('ListMachines (filter by smartmachine type)', function (t) {
 test('ListMachines (filter by virtualmachine type)', function (t) {
     var path = '/my/machines?type=virtualmachine';
 
-    return client.get(path, function (err, req, res, body) {
+    return CLIENT.get(path, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -674,7 +571,7 @@ test('ListMachines (filter by virtualmachine type)', function (t) {
 test('ListMachines (filter by bad type)', function (t) {
     var path = '/my/machines?type=0xdeadbeef';
 
-    return client.get(path, function (err, req, res, body) {
+    return CLIENT.get(path, function (err, req, res, body) {
         t.ok(err);
         t.equal(res.statusCode, 409);
         common.checkHeaders(t, res.headers);
@@ -689,10 +586,22 @@ test('ListMachines (filter by bad type)', function (t) {
 });
 
 
-test('Get Machine Include Credentials', function (t) {
-    var url = '/my/machines/' + machine + '?credentials=true';
+test('Get Machine', function (t) {
+    machinesCommon.getMachine(t, CLIENT, MACHINE_UUID, function (_, machine) {
+        // Double check tags are OK, due to different handling by VMAPI:
+        var tags = {};
+        tags[machinesCommon.TAG_KEY] = machinesCommon.TAG_VAL;
+        t.deepEqual(machine.tags, tags, 'Machine tags');
 
-    client.get(url, function (err, req, res, body) {
+        t.end();
+    });
+});
+
+
+test('Get Machine, including credentials', function (t) {
+    var url = '/my/machines/' + MACHINE_UUID + '?credentials=true';
+
+    CLIENT.get(url, function (err, req, res, body) {
         t.ifError(err, 'GET /my/machines/:id error');
         t.equal(res.statusCode, 200, 'GET /my/machines/:id status');
         common.checkHeaders(t, res.headers);
@@ -700,8 +609,8 @@ test('Get Machine Include Credentials', function (t) {
         checkMachine(t, body);
 
         t.equal(typeof (body.metadata.credentials), 'object');
-        Object.keys(META_CREDS).forEach(function (k) {
-            t.equal(body.metadata.credentials[k], META_CREDS[k]);
+        Object.keys(machinesCommon.META_CREDS).forEach(function (k) {
+            t.equal(body.metadata.credentials[k], machinesCommon.META_CREDS[k]);
         });
 
         t.end();
@@ -711,7 +620,7 @@ test('Get Machine Include Credentials', function (t) {
 
 test('Stop test', function (t) {
     var stopTest = require('./machines/stop');
-    stopTest(t, client, machine, function () {
+    stopTest(t, CLIENT, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -719,7 +628,7 @@ test('Stop test', function (t) {
 
 test('Start test', function (t) {
     var startTest = require('./machines/start');
-    startTest(t, client, machine, function () {
+    startTest(t, CLIENT, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -727,16 +636,16 @@ test('Start test', function (t) {
 
 test('Reboot test', function (t) {
     var rebootTest = require('./machines/reboot');
-    rebootTest(t, client, machine, function () {
+    rebootTest(t, CLIENT, MACHINE_UUID, function () {
         t.end();
     });
 });
 
 
 test('Resize machine to inactive package', function (t) {
-    client.post('/my/machines/' + machine, {
+    CLIENT.post('/my/machines/' + MACHINE_UUID, {
         action: 'resize',
-        'package': sdc_256_inactive_entry.name
+        package: SDC_256_INACTIVE.name
     }, function (err, req, res, body) {
         t.ok(err, 'Resize to inactive package error');
         t.equal(res.statusCode, 409, 'Resize to inactive pkg status');
@@ -747,7 +656,7 @@ test('Resize machine to inactive package', function (t) {
 
 test('Resize machine tests', function (t) {
     var resizeTest = require('./machines/resize');
-    resizeTest(t, client, machine, sdc_128_ok_entry, sdc_256_ok_entry,
+    resizeTest(t, CLIENT, MACHINE_UUID, SDC_128, SDC_256,
         function () {
         t.end();
     });
@@ -756,7 +665,7 @@ test('Resize machine tests', function (t) {
 
 test('Tags tests', function (t) {
     var testTags = require('./machines/tags');
-    testTags(t, client, machine, function () {
+    testTags(t, CLIENT, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -764,7 +673,7 @@ test('Tags tests', function (t) {
 
 test('Metadata tests', function (t) {
     var testMetadata = require('./machines/metadata');
-    testMetadata(t, client, machine, function () {
+    testMetadata(t, CLIENT, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -772,7 +681,7 @@ test('Metadata tests', function (t) {
 
 test('Snapshots tests', function (t) {
     var testSnapshots = require('./machines/snapshots');
-    testSnapshots(t, client, machine, function () {
+    testSnapshots(t, CLIENT, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -780,7 +689,7 @@ test('Snapshots tests', function (t) {
 
 test('Firewall Rules tests', function (t) {
     var testFirewallRules = require('./machines/firewall-rules');
-    testFirewallRules(t, client, machine, function () {
+    testFirewallRules(t, CLIENT, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -789,15 +698,16 @@ test('Firewall Rules tests', function (t) {
 
 test('Delete tests', function (t) {
     var deleteTest = require('./machines/delete');
-    deleteTest(t, client, machine, function () {
+    deleteTest(t, CLIENT, MACHINE_UUID, function () {
         t.end();
     });
 });
 
 
 test('machine audit', function (t) {
-    var p = '/my/machines/' + machine + '/audit';
-    client.get(p, function (err, req, res, body) {
+    var p = '/my/machines/' + MACHINE_UUID + '/audit';
+
+    CLIENT.get(p, function (err, req, res, body) {
         t.ifError(err);
         t.ok(Array.isArray(body));
         t.ok(body.length);
@@ -844,7 +754,7 @@ test('machine audit', function (t) {
 
 
 test('ListMachines tombstone', function (t) {
-    client.get('/my/machines?tombstone=20', function (err, req, res, body) {
+    CLIENT.get('/my/machines?tombstone=20', function (err, req, res, body) {
         t.ifError(err, 'GET /my/machines error');
         t.equal(res.statusCode, 200, 'GET /my/machines status');
         common.checkHeaders(t, res.headers);
@@ -852,7 +762,7 @@ test('ListMachines tombstone', function (t) {
         t.ok(Array.isArray(body), 'GET /my/machines body is array');
         t.ok(body.length, 'GET /my/machines list is not empty');
         t.ok(body.some(function (m) {
-            return (m.id === machine);
+            return (m.id === MACHINE_UUID);
         }));
         t.end();
     });
@@ -860,14 +770,14 @@ test('ListMachines tombstone', function (t) {
 
 
 test('ListMachines exclude tombstone', function (t) {
-    client.get('/my/machines', function (err, req, res, body) {
+    CLIENT.get('/my/machines', function (err, req, res, body) {
         t.ifError(err, 'GET /my/machines error');
         t.equal(res.statusCode, 200, 'GET /my/machines status');
         common.checkHeaders(t, res.headers);
         t.ok(body, 'GET /my/machines body');
         t.ok(Array.isArray(body), 'GET /my/machines body is array');
         t.notOk(body.some(function (m) {
-            return (m.id === machine);
+            return (m.id === MACHINE_UUID);
         }));
         t.end();
     });
@@ -875,7 +785,7 @@ test('ListMachines exclude tombstone', function (t) {
 
 
 test('ListMachines destroyed', function (t) {
-    client.get('/my/machines?state=destroyed', function (err, req, res, body) {
+    CLIENT.get('/my/machines?state=destroyed', function (err, req, res, body) {
         t.ifError(err, 'GET /my/machines error');
         t.equal(res.statusCode, 200, 'GET /my/machines status');
         common.checkHeaders(t, res.headers);
@@ -883,7 +793,7 @@ test('ListMachines destroyed', function (t) {
         t.ok(Array.isArray(body), 'GET /my/machines body is array');
         t.ok(body.length, 'GET /my/machines list is not empty');
         t.ok(body.some(function (m) {
-            return (m.id === machine);
+            return (m.id === MACHINE_UUID);
         }));
         t.end();
     });
@@ -891,21 +801,23 @@ test('ListMachines destroyed', function (t) {
 
 
 test('CreateMachine using query args', function (t) {
-    var query = '/my/machines?image=' + DATASET +
-                '&package=' + sdc_128_ok_entry.name +
-                '&server_uuid=' + HEADNODE.uuid;
+    var query = '/my/machines?image=' + IMAGE_UUID +
+                '&package=' + SDC_128.name +
+                '&server_uuid=' + HEADNODE_UUID;
 
-    client.post(query, {}, function (err, req, res, body) {
+    CLIENT.post(query, {}, function (err, req, res, body) {
         t.ifError(err, 'POST /my/machines error');
         t.equal(res.statusCode, 201, 'POST /my/machines status');
         common.checkHeaders(t, res.headers);
         t.equal(res.headers.location,
-            util.format('/%s/machines/%s', client.testUser, body.id));
+            util.format('/%s/machines/%s', CLIENT.login, body.id));
         t.ok(body, 'POST /my/machines body');
         checkMachine(t, body);
-        machine = body.id;
+
+        MACHINE_UUID = body.id;
+
         // Handy to output this to stdout in order to poke around COAL:
-        console.log('Requested provision of machine: %s', machine);
+        console.log('Requested provision of machine: %s', MACHINE_UUID);
         t.end();
     });
 });
@@ -919,26 +831,24 @@ test('DeleteMachine which used query args', deleteMachine);
 
 // passing in multiple same networks should flatten to single network added
 test('CreateMachine using multiple same networks', function (t) {
-    client.napi.listNetworks({ nic_tag: 'external' }, function (err, nets) {
+    CLIENT.napi.listNetworks({ nic_tag: 'external' }, function (err, nets) {
         t.ifError(err);
 
         var networkUuid = nets[0].uuid;
 
         var obj = {
-            image: DATASET,
-            'package': sdc_128_ok_entry.name,
-            server_uuid: HEADNODE.uuid,
+            image: IMAGE_UUID,
+            package: SDC_128.name,
+            server_uuid: HEADNODE_UUID,
             networks: [networkUuid, networkUuid, networkUuid]
         };
 
-        client.post('/my/machines', obj, function (err2, req, res, body) {
-            t.ifError(err2);
-            machine = body.id;
+        machinesCommon.createMachine(t, CLIENT, obj, function (_, machineUuid) {
+            MACHINE_UUID = machineUuid;
             // see next couple following tests for asserts
             t.end();
         });
     });
-
 });
 
 
@@ -946,7 +856,7 @@ test('Wait For Running Machine 3', waitForRunning);
 
 
 test('Check CreateMachine flattens same networks', function (t) {
-    client.vmapi.getVm({ uuid: machine }, function (err, vm) {
+    CLIENT.vmapi.getVm({ uuid: MACHINE_UUID }, function (err, vm) {
         t.ifError(err);
         t.equal(vm.nics.length, 1);
         t.end();
@@ -958,7 +868,7 @@ test('DeleteMachine which flattened networks', deleteMachine);
 
 
 test('Check resize does not affect docker machines (setup)', function (t) {
-    var vmUuid = client.account.uuid;
+    var vmUuid = CLIENT.account.uuid;
     var vmDescription = {
         owner_uuid: vmUuid,
         uuid: uuid(),
@@ -981,19 +891,19 @@ test('Check resize does not affect docker machines (setup)', function (t) {
             uuid: '', // filled in below
             primary: true
         } ],
-        billing_id: sdc_128_ok_entry.uuid,
-        image_uuid: DATASET
+        billing_id: SDC_128.uuid,
+        image_uuid: IMAGE_UUID
     };
 
-    client.napi.listNetworks({ nic_tag: 'external' }, function (err, nets) {
+    CLIENT.napi.listNetworks({ nic_tag: 'external' }, function (err, nets) {
         t.ifError(err);
 
         vmDescription.networks[0].uuid = nets[0].uuid;
 
-        client.vmapi.createVm(vmDescription, function (err2, vm) {
+        CLIENT.vmapi.createVm(vmDescription, function (err2, vm) {
             t.ifError(err2);
 
-            machine = vm.vm_uuid;
+            MACHINE_UUID = vm.vm_uuid;
 
             t.end();
         });
@@ -1005,9 +915,9 @@ test('Check resize does not affect docker machines (waiting)', waitForRunning);
 
 
 test('Check resize does not affect docker machines (test)', function (t) {
-    client.post('/my/machines/' + machine, {
+    CLIENT.post('/my/machines/' + MACHINE_UUID, {
         action: 'resize',
-        'package': sdc_128_os.uuid
+        package: SDC_128_LINUX.name
     }, function (err, req, res, body) {
         t.ok(err, 'Prevent resize machine error');
         t.equal(res.statusCode, 409);
@@ -1026,51 +936,37 @@ test('Check resize does not affect docker machines (teardown)', deleteMachine);
 
 
 test('teardown', function (t) {
-    client.del('/my/keys/' + keyName, function (err, req, res) {
-        t.ifError(err, 'delete key error');
-        t.equal(res.statusCode, 204);
-
-        common.teardown(client, server, function () {
-            t.end();
+    common.deletePackage(CLIENT, SDC_256, function () {
+        common.deletePackage(CLIENT, SDC_256_INACTIVE, function () {
+            common.deletePackage(CLIENT, SDC_128_LINUX, function () {
+                common.teardown(CLIENTS, SERVER, function () {
+                    t.end();
+                });
+            });
         });
     });
 });
 
 
-// helpers
-
-
-function uuid() {
-    return (libuuid.create());
-}
+// --- Helpers
 
 
 function waitForRunning(t) {
-    client.vmapi.listJobs({
-        vm_uuid: machine,
-        task: 'provision'
-    }, function (err, jobs) {
+    machinesCommon.waitForRunningMachine(CLIENT, MACHINE_UUID, function (err) {
+        t.ifError(err);
+
         if (err) {
             // Skip machine tests when machine creation fails
-            machine = null;
+            MACHINE_UUID = false;
         }
-        t.ifError(err, 'list jobs error');
-        t.ok(jobs, 'list jobs ok');
-        t.ok(jobs.length, 'list jobs is an array');
-        waitForJob(client, jobs[0].uuid, function (err2) {
-            if (err2) {
-                // Skip machine tests when machine creation fails
-                machine = null;
-            }
-            t.ifError(err2, 'Check state error');
-            t.end();
-        });
+
+        t.end();
     });
 }
 
 
 function deleteMachine(t) {
-    client.del('/my/machines/' + machine, function (err, req, res) {
+    CLIENT.del('/my/machines/' + MACHINE_UUID, function (err, req, res) {
         t.ifError(err, 'DELETE /my/machines error');
         t.equal(res.statusCode, 204, 'DELETE /my/machines status');
         t.end();
@@ -1079,9 +975,7 @@ function deleteMachine(t) {
 
 
 function searchAndCheck(query, t, checkAttr) {
-    var path = '/my/machines?' + query;
-
-    return client.get(path, function (err, req, res, body) {
+    return CLIENT.get('/my/machines?' + query, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);

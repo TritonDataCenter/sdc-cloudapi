@@ -9,10 +9,6 @@
  */
 
 var test = require('tape').test;
-var libuuid = require('libuuid');
-function uuid() {
-    return (libuuid.create());
-}
 var util = require('util');
 var common = require('./common');
 
@@ -20,11 +16,16 @@ var common = require('./common');
 
 // --- Globals
 
-var client, server;
-var DATASET_UUID = null;
-var DATASET = null;
+
+var CLIENTS;
+var CLIENT;
+var SERVER;
+
+var DATASET;
+
 
 // --- Helpers
+
 
 function checkDataset(t, dataset, version, path) {
     if (typeof (path) === 'undefined') {
@@ -56,16 +57,14 @@ function checkDataset(t, dataset, version, path) {
 }
 
 
-
 // --- Tests
 
-test('setup', function (t) {
-    common.setup(function (err, _client, _server) {
-        t.ifError(err);
-        t.ok(_client);
 
-        client = _client;
-        server = _server;
+test('setup', function (t) {
+    common.setup(function (_, clients, server) {
+        CLIENTS = clients;
+        CLIENT  = clients.user;
+        SERVER  = server;
 
         t.end();
     });
@@ -73,7 +72,7 @@ test('setup', function (t) {
 
 
 test('ListDatasets OK (6.5)', function (t) {
-    client.get({
+    CLIENT.get({
         path: '/my/datasets',
         headers: {
             'accept-version': '~6.5'
@@ -92,7 +91,6 @@ test('ListDatasets OK (6.5)', function (t) {
         // before running the tests:
         if (body[0]) {
             DATASET = body[0];
-            DATASET_UUID = body[0].id;
         }
         t.end();
     });
@@ -100,7 +98,7 @@ test('ListDatasets OK (6.5)', function (t) {
 
 
 test('GetDataset by name OK (6.5)', function (t) {
-    client.get({
+    CLIENT.get({
         path: '/my/datasets/smartos',
         headers: {
             'accept-version': '~6.5'
@@ -117,7 +115,7 @@ test('GetDataset by name OK (6.5)', function (t) {
 
 
 test('ListDatasets OK', function (t) {
-    client.get('/my/datasets', function (err, req, res, body) {
+    CLIENT.get('/my/datasets', function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets error');
         t.equal(res.statusCode, 200, 'GET /my/datasets status');
         common.checkHeaders(t, res.headers);
@@ -133,7 +131,7 @@ test('ListDatasets OK', function (t) {
 
 // PUBAPI-549
 test('ListImages OK', function (t) {
-    client.get('/my/images', function (err, req, res, body) {
+    CLIENT.get('/my/images', function (err, req, res, body) {
         t.ifError(err, 'GET /my/images error');
         t.equal(res.statusCode, 200, 'GET /my/images status');
         common.checkHeaders(t, res.headers);
@@ -149,7 +147,7 @@ test('ListImages OK', function (t) {
 
 
 test('Search datasets (7.0)', function (t) {
-    client.get('/my/datasets?os=plan9', function (err, req, res, body) {
+    CLIENT.get('/my/datasets?os=plan9', function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets error');
         t.equal(res.statusCode, 200, 'GET /my/datasets status');
         common.checkHeaders(t, res.headers);
@@ -162,8 +160,8 @@ test('Search datasets (7.0)', function (t) {
 
 
 test('GetDataset OK', function (t) {
-    client.get('/my/datasets/' + DATASET_UUID, function (err, req, res, body) {
-        t.ifError(err, 'GET /my/datasets/' + DATASET_UUID + ' error');
+    CLIENT.get('/my/datasets/' + DATASET.id, function (err, req, res, body) {
+        t.ifError(err, 'GET /my/datasets/' + DATASET.id + ' error');
         t.equal(res.statusCode, 200, 'GET /my/datasets/smartos status');
         common.checkHeaders(t, res.headers);
         t.ok(body, 'GET /my/datasets/smartos body');
@@ -174,10 +172,10 @@ test('GetDataset OK', function (t) {
 
 
 test('GetDataset should not return non-permission datasets', function (t) {
-    client.imgapi.listImages(function (err, images) {
+    CLIENT.imgapi.listImages(function (err, images) {
         t.ifError(err);
 
-        var accountUuid = client.account.uuid;
+        var accountUuid = CLIENT.account.uuid;
         var inaccessibleImage = images.filter(function (img) {
             return img.owner !== accountUuid && !img.public;
         })[0];
@@ -188,7 +186,7 @@ test('GetDataset should not return non-permission datasets', function (t) {
         }
 
         var path = '/my/datasets/' + inaccessibleImage.uuid;
-        return client.get(path, function (err2, req, res, body) {
+        return CLIENT.get(path, function (err2, req, res, body) {
             t.ok(err2);
 
             t.deepEqual(body, {
@@ -203,7 +201,7 @@ test('GetDataset should not return non-permission datasets', function (t) {
 
 
 test('Get Image By URN OK', function (t) {
-    client.get('/my/images/' + encodeURIComponent(DATASET.urn),
+    CLIENT.get('/my/images/' + encodeURIComponent(DATASET.urn),
         function (err, req, res, body) {
             t.ifError(err, 'GET /my/images/' + DATASET.urn + ' error');
             t.equal(res.statusCode, 200, 'GET /my/images/' + DATASET.urn +
@@ -217,7 +215,7 @@ test('Get Image By URN OK', function (t) {
 
 
 test('GetDataset 404', function (t) {
-    client.get('/my/datasets/' + uuid(), function (err) {
+    CLIENT.get('/my/datasets/' + common.uuid(), function (err) {
         t.ok(err, 'GET /my/datasets/ error');
         t.equal(err.statusCode, 404, 'GET /my/datasets/ status');
         t.equal(err.restCode, 'ResourceNotFound', 'GET /my/datasets/ restCode');
@@ -228,7 +226,7 @@ test('GetDataset 404', function (t) {
 
 
 test('teardown', function (t) {
-    common.teardown(client, server, function () {
+    common.teardown(CLIENTS, SERVER, function () {
         t.end();
     });
 });
