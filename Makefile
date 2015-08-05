@@ -36,7 +36,7 @@ EXTRA_DOC_DEPS += deps/restdown-brand-remora/.git
 JS_FILES	:= $(shell ls *.js) $(shell find lib -maxdepth 1 -name '*.js') \
 	$(shell find test -name '*.js') $(shell find bench -name '*.js') \
 	$(shell find plugins -name '*.js') \
-	$(shell find test -name 'provision*.javascript')
+	$(shell find test -name '*.javascript')
 JSL_CONF_NODE	 = tools/jsl.node.conf
 JSL_FILES_NODE   = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
@@ -157,7 +157,7 @@ publish: release
 	mkdir -p $(BITS_DIR)/$(NAME)
 	cp $(ROOT)/$(RELEASE_TARBALL) $(BITS_DIR)/$(NAME)/$(RELEASE_TARBALL)
 
-.PHONY: test no_machines_test auth_test account_test analytics_test datacenters_test datasets_test fabrics_test keys_test networks_test nics_test machines_all_test machines_65_test machines_70_test machines_71_test machines_72_test machines_73_test machines_test packages_test populate_networks_test services_test users_test
+.PHONY: test no_machines_test auth_test account_test analytics_test datacenters_test datasets_test fabrics_test keys_test networks_test nics_test machines_all_test machines_65_test machines_70_test machines_71_test machines_72_test machines_73_test machines_test packages_test populate_networks_test services_test users_test provision_limits_plugin_test resize_plugin_test plugins_test
 
 auth_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/auth.test.js
@@ -218,10 +218,17 @@ services_test: $(TAP)
 users_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/users.test.js
 
-
 test: auth_test account_test analytics_test datacenters_test datasets_test fabrics_test keys_test networks_test packages_test populate_network_test services_test users_test nics_test machines_test
 
 no_machines_test: auth_test account_test analytics_test datacenters_test datasets_test fabrics_test keys_test networks_test packages_test populate_network_test services_test users_test
+
+provision_limits_plugin_test:
+	$(NODE_EXEC) $(TAP) test/provision_limits.test.javascript
+
+resize_plugin_test:
+	$(NODE_EXEC) $(TAP) test/resize.test.javascript
+
+plugins_test: provision_limits_plugin_test resize_plugin_test
 
 include ./tools/mk/Makefile.deps
 ifeq ($(shell uname -s),SunOS)
