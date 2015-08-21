@@ -44,7 +44,7 @@ var SDC_128_PACKAGE = {
     version: '1.0.0',
     max_physical_memory: 128,
     quota: 10240,
-    max_swap: 512,
+    max_swap: 256,
     cpu_cap: 150,
     max_lwps: 1000,
     zfs_io_priority: 10,

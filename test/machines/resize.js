@@ -16,13 +16,14 @@ var waitForJob = require('./common').waitForJob;
 // --- Tests
 
 
-module.exports = function (suite, client, machine, pkgSame, pkgUp, cb) {
+module.exports =
+function (suite, client, machine, pkgDown, pkgSame, pkgUp, cb) {
     if (!machine) {
         return cb();
     }
 
     suite.test('Resize Machine up on coal', function (t) {
-        t.ok(pkgSame, 'Resize same package OK');
+        t.ok(pkgUp, 'Resize up package OK');
 
         if (!common.getCfg().datacenters.coal) {
             return t.end();
@@ -37,7 +38,7 @@ module.exports = function (suite, client, machine, pkgSame, pkgUp, cb) {
             var body = err.body;
             t.ok(body);
 
-            if (err.body) {
+            if (body) {
                 t.equal(body.code, 'ValidationFailed');
                 t.equal(body.message, 'Invalid VM update parameters');
 
@@ -53,9 +54,10 @@ module.exports = function (suite, client, machine, pkgSame, pkgUp, cb) {
     });
 
 
-    suite.test('Resize Machine', function (t) {
-        t.ok(pkgUp, 'Resize up package OK');
-        console.log('Resizing to package: %j', pkgSame);
+    suite.test('Resize Machine to same package', function (t) {
+        t.ok(pkgSame, 'Resize same package OK');
+
+        console.log('Resizing to package: %s', pkgSame.name);
         client.post('/my/machines/' + machine, {
             action: 'resize',
             'package': pkgSame.name
@@ -66,24 +68,49 @@ module.exports = function (suite, client, machine, pkgSame, pkgUp, cb) {
     });
 
 
-    suite.test('Wait For Resized', function (t) {
+    suite.test('Wait For Resized to same', function (t) {
+        waitAndCheckResize(t, pkgSame);
+    });
+
+    suite.test('Resize Machine down', function (t) {
+        t.ok(pkgDown, 'Resize down package OK');
+
+        console.log('Resizing to package: %s', pkgDown.name);
+        client.post('/my/machines/' + machine, {
+            action: 'resize',
+            'package': pkgDown.name
+        }, function (err) {
+            t.ifError(err, 'Resize machine error');
+            t.end();
+        });
+    });
+    suite.test('Wait For Resized to down', function (t) {
+        waitAndCheckResize(t, pkgDown);
+    });
+
+    function waitAndCheckResize(t, pkg) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'update'
         }, function (err, jobs) {
             t.ifError(err, 'list jobs error');
-            t.ok(jobs, 'list jobs OK');
-            t.ok(jobs.length, 'update jobs is array');
+
             var resize_jobs = jobs.filter(function (job) {
                 return (job.params.subtask === 'resize');
             });
-            t.ok(resize_jobs.length, 'resize jobs is an array');
+
             waitForJob(client, resize_jobs[0].uuid, function (err2) {
                 t.ifError(err2, 'Check state error');
-                t.end();
+
+                client.get('/my/machines/' + machine,
+                            function (err3, req, res, body) {
+                    t.ifError(err3, 'Get machines error');
+                    t.equal(body.package, pkg.name, 'correct package name');
+                    t.end();
+                });
             });
         });
-    });
+    }
 
     return cb();
 };

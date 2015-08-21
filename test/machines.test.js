@@ -69,6 +69,21 @@ var SDC_128_LINUX = {
     active: true
 };
 
+var SDC_512 = {
+    uuid: '58d1a02c-177e-4992-ac79-63a15230f57f',
+    name: 'sdc_512',
+    version: '1.0.0',
+    max_physical_memory: 512,
+    quota: 10240,
+    max_swap: 1024,
+    cpu_cap: 150,
+    max_lwps: 2000,
+    zfs_io_priority: 10,
+    'default': false,
+    vcpus: 1,
+    active: true
+};
+
 var HEADNODE_UUID;
 var IMAGE_UUID;
 var MACHINE_UUID;
@@ -108,6 +123,13 @@ test('setup', function (t) {
 
         function addPackage3() {
             addPackage(CLIENT, SDC_256, function (err) {
+                t.ifError(err, 'Add package error');
+                addPackage4();
+            });
+        }
+
+        function addPackage4() {
+            addPackage(CLIENT, SDC_512, function (err) {
                 t.ifError(err, 'Add package error');
                 t.end();
             });
@@ -208,7 +230,7 @@ test('Create machine with too many public networks', function (t) {
     function createMachine(networkUuids, next) {
         var obj = {
             image: IMAGE_UUID,
-            package: SDC_128.name,
+            package: SDC_256.name,
             name: 'a' + uuid().substr(0, 7),
             server_uuid: HEADNODE_UUID,
             firewall_enabled: true,
@@ -266,7 +288,7 @@ test('Create machine with too many public networks', function (t) {
 test('CreateMachine using invalid networks', function (t) {
     var obj = {
         image: IMAGE_UUID,
-        package: SDC_128.name,
+        package: SDC_256.name,
         server_uuid: HEADNODE_UUID,
         networks: ['8180ef72-40fa-4b86-915b-803bcf96b442'] // invalid
     };
@@ -297,7 +319,7 @@ test('CreateMachine using network without permissions', function (t) {
 
     var vmDetails = {
         image: IMAGE_UUID,
-        package: SDC_128.name,
+        package: SDC_256.name,
         server_uuid: HEADNODE_UUID
     };
 
@@ -327,7 +349,7 @@ test('CreateMachine using network without permissions', function (t) {
 test('Create machine with invalid parameters', function (t) {
     var obj = {
         image: IMAGE_UUID,
-        package: SDC_128.name,
+        package: SDC_256.name,
         // Underscore will make name invalid:
         name: '_a' + uuid().substr(0, 7),
         // Obviously, not a valid UUID, but we don't want to notify customers
@@ -352,7 +374,7 @@ test('Create machine with invalid parameters', function (t) {
 test('Create machine with invalid locality', function (t) {
     var obj = {
         image: IMAGE_UUID,
-        package: SDC_128.name,
+        package: SDC_256.name,
         name: 'a' + uuid().substr(0, 7),
         server_uuid: HEADNODE_UUID,
         locality: { near: 'asdasd' }
@@ -390,7 +412,7 @@ test('CreateMachine using dataset without permission', function (t) {
 
         var obj = {
             image: inaccessibleImage.uuid,
-            package: SDC_128.name,
+            package: SDC_256.name,
             server_uuid: HEADNODE_UUID
         };
 
@@ -428,7 +450,7 @@ test('CreateMachine without approved_for_provisioning', function (t) {
 
         var obj = {
             image: IMAGE_UUID,
-            package: SDC_128.name,
+            package: SDC_256.name,
             server_uuid: HEADNODE_UUID
         };
 
@@ -465,7 +487,7 @@ test('CreateMachine without approved_for_provisioning', function (t) {
 test('CreateMachine', function (t) {
     var obj = {
         image: IMAGE_UUID,
-        package: SDC_128.name,
+        package: SDC_256.name,
         name: 'a' + uuid().substr(0, 7),
         locality: { far: 'af4167f0-beda-4af9-9ae4-99d544499c14' }, // fake UUID
         server_uuid: HEADNODE_UUID,
@@ -520,14 +542,14 @@ test('ListMachines (filter by state)', function (t) {
 
 
 test('ListMachines (filter by memory)', function (t) {
-    searchAndCheck('memory=128', t, function (m) {
-        t.equal(m.memory, 128);
+    searchAndCheck('memory=256', t, function (m) {
+        t.equal(m.memory, 256);
     });
 });
 
 
 test('ListMachines (filter by package)', function (t) {
-    var pkgName = SDC_128.name;
+    var pkgName = SDC_256.name;
 
     searchAndCheck('package=' + pkgName, t, function (m) {
         t.equal(m['package'], pkgName);
@@ -656,8 +678,7 @@ test('Resize machine to inactive package', function (t) {
 
 test('Resize machine tests', function (t) {
     var resizeTest = require('./machines/resize');
-    resizeTest(t, CLIENT, MACHINE_UUID, SDC_128, SDC_256,
-        function () {
+    resizeTest(t, CLIENT, MACHINE_UUID, SDC_128, SDC_256, SDC_512, function () {
         t.end();
     });
 });
@@ -726,7 +747,8 @@ test('machine audit', function (t) {
             'destroy', 'delete_snapshot', 'rollback_snapshot',
             'create_snapshot', 'replace_metadata', 'remove_metadata',
             'set_metadata', 'remove_tags', 'replace_tags', 'remove_tags',
-            'set_tags', 'resize', 'reboot', 'start', 'stop', 'provision'
+            'set_tags', 'resize', 'resize', 'reboot', 'start', 'stop',
+            'provision'
         ];
 
         for (var i = 0; i !== expectedJobs.length; i++) {
@@ -939,8 +961,10 @@ test('teardown', function (t) {
     common.deletePackage(CLIENT, SDC_256, function () {
         common.deletePackage(CLIENT, SDC_256_INACTIVE, function () {
             common.deletePackage(CLIENT, SDC_128_LINUX, function () {
-                common.teardown(CLIENTS, SERVER, function () {
-                    t.end();
+                common.deletePackage(CLIENT, SDC_512, function () {
+                    common.teardown(CLIENTS, SERVER, function () {
+                        t.end();
+                    });
                 });
             });
         });
