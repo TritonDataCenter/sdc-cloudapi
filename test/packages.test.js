@@ -205,8 +205,8 @@ test('search packages by disk (7.0)', function (t) {
 
 
 test('search packages by swap (7.0)', function (t) {
-    searchAndCheck('swap=512', t, function (pkg) {
-        t.equal(pkg.swap, 512);
+    searchAndCheck('swap=256', t, function (pkg) {
+        t.equal(pkg.swap, 256);
     });
 });
 
