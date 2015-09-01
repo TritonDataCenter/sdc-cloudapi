@@ -221,7 +221,12 @@ test('Create image from machine OK', function (t) {
                 'accept-version': '~7.1'
             }
         }, obj, function (err, req, res, body) {
-            t.ifError(err);
+            if (err && err.name === 'NotAvailableError') {
+                return t.end();
+            } else {
+                t.ifError(err);
+            }
+
             t.ok(body);
 
             IMAGE_UUID = body.id;
@@ -230,7 +235,7 @@ test('Create image from machine OK', function (t) {
 
             IMAGE_JOB_UUID = res.headers['x-joyent-jobid'];
 
-            t.end();
+            return t.end();
         });
     } else {
         t.end();
@@ -239,7 +244,7 @@ test('Create image from machine OK', function (t) {
 
 
 test('Wait for img create job', function (t) {
-    if (MACHINE_UUID) {
+    if (IMAGE_JOB_UUID) {
         machinesCommon.waitForWfJob(CLIENT, IMAGE_JOB_UUID, function (err) {
             if (err) {
                 IMAGE_UUID = null;
@@ -256,7 +261,7 @@ test('Wait for img create job', function (t) {
 
 test('Update image', function (t) {
     var obj = { name: uuid(), version: '1.1.0' };
-    if (IMAGE_UUID) {
+    if (IMAGE_JOB_UUID) {
         var opts = {
             path: '/my/images/' + IMAGE_UUID,
             query: { action: 'update' }
@@ -273,7 +278,7 @@ test('Update image', function (t) {
 
 
 test('Delete image', function (t) {
-    if (IMAGE_UUID) {
+    if (IMAGE_JOB_UUID) {
         CLIENT.imgapi.deleteImage(IMAGE_UUID, function (err, res) {
             t.ifError(err, 'Delete Image error');
             t.end();
