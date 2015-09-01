@@ -46,13 +46,36 @@ module.exports = function (suite, client, machine, callback) {
     });
 
     suite.test('Delete already deleted machine', function (t) {
-        client.del('/my/machines/' + machine, function (err, req, res) {
-            t.ok(err, 'DELETE /my/machines/ error');
-            t.equal(res.statusCode, 410, 'DELETE /my/machines/ statusCode');
-            common.checkHeaders(t, res.headers);
-            t.end();
-        });
+        var tries = 10;
+
+        function checkDelete() {
+            tries -= 1;
+            if (tries === 0) {
+                t.ok(false, 'machine did not delete in time');
+                t.end();
+            }
+
+            setTimeout(function () {
+                client.del('/my/machines/' + machine, function (err, req, res) {
+                    t.ok(err, 'DELETE /my/machines/ error');
+
+                    if (res.statusCode === 204) {
+                        checkDelete();
+                    }
+
+                    t.equal(res.statusCode, 410, 'DELETE /my/machines/ status');
+                    common.checkHeaders(t, res.headers);
+
+                    t.end();
+                });
+            }, 1000);
+        }
+
+        checkDelete();
     });
+
+
+
 
     return callback();
 };
