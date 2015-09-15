@@ -100,7 +100,7 @@ sdcadm experimental portolan
 sdcadm experimental fabrics --coal
 
 echo "# Setup NAT and Docker"
-sdcadm experimental update-docker
+sdcadm experimental update-docker --servers=cns,headnode
 
 # TODO: how to offer alternative to hook up to remote Manta?
 hack_imgapi_to_allow_local_custom_images
