@@ -33,7 +33,7 @@ var DEFAULT_NET;
 var PARAMS = {
     nets: [
         {
-            name: 'network 0',
+            name: 'network_0',
             provision_start_ip: '10.4.1.0',
             provision_end_ip: '10.4.255.254',
             resolvers: ['8.8.8.8'],
@@ -42,7 +42,7 @@ var PARAMS = {
 
         // "Fully loaded" network - all properties present
         {
-            name: 'network 1',
+            name: 'network_1',
             description: 'the number one network',
             gateway: '10.5.1.1',
             provision_start_ip: '10.5.1.0',
@@ -55,7 +55,7 @@ var PARAMS = {
         }
     ],
     vlan: {
-        name: 'my vlan',
+        name: 'my_vlan',
         description: 'some description',
         vlan_id: 4000
     }
@@ -257,6 +257,13 @@ function waitForDefaultVLAN(t) {
 }
 
 
+function addNetOutputAttr(net) {
+    net = clone(net);
+    net.internet_nat = true;
+    return net;
+}
+
+
 // --- Tests
 
 
@@ -314,7 +321,7 @@ test('VLANs', TEST_OPTS, function (tt) {
 
     tt.test('update fabric VLAN', function (t) {
         var updateParams = {
-            name: 'new vlan name',
+            name: 'new_vlan_name',
             description: 'new description'
         };
 
@@ -440,7 +447,7 @@ test('networks', TEST_OPTS, function (tt) {
 
     var nets = [];
 
-    tt.test('create fabric network 1', function (t) {
+    tt.test('create fabric network 0', function (t) {
         CLIENT.post(fmt('/my/fabrics/default/vlans/%d/networks',
                 PARAMS.vlan.vlan_id), PARAMS.nets[0],
                 function (err, req, res, body) {
@@ -458,7 +465,7 @@ test('networks', TEST_OPTS, function (tt) {
             PARAMS.nets[0].public = false;
             PARAMS.nets[0].vlan_id = PARAMS.vlan.vlan_id;
 
-            t.deepEqual(body, PARAMS.nets[0], 'response');
+            t.deepEqual(body, addNetOutputAttr(PARAMS.nets[0]), 'response');
 
             if (body && body.id) {
                 CREATED.nets.push(body);
@@ -470,7 +477,7 @@ test('networks', TEST_OPTS, function (tt) {
     });
 
 
-    tt.test('get fabric network 1', function (t) {
+    tt.test('get fabric network 0', function (t) {
         if (!nets[0]) {
             t.end();
             return;
@@ -483,7 +490,8 @@ test('networks', TEST_OPTS, function (tt) {
             t.equal(res.statusCode, 200, 'get fabric network');
             common.checkHeaders(t, res.headers);
             common.checkReqId(t, res.headers);
-            t.deepEqual(body, PARAMS.nets[0], 'response');
+
+            t.deepEqual(body, addNetOutputAttr(PARAMS.nets[0]), 'response');
 
             return t.end();
         });
@@ -508,7 +516,7 @@ test('networks', TEST_OPTS, function (tt) {
             PARAMS.nets[1].public = false;
             PARAMS.nets[1].vlan_id = PARAMS.vlan.vlan_id;
 
-            t.deepEqual(body, PARAMS.nets[1], 'response');
+            t.deepEqual(body, addNetOutputAttr(PARAMS.nets[1]), 'response');
 
             if (body && body.id) {
                 CREATED.nets.push(body);
@@ -533,7 +541,8 @@ test('networks', TEST_OPTS, function (tt) {
             t.equal(res.statusCode, 200, 'get fabric network');
             common.checkHeaders(t, res.headers);
             common.checkReqId(t, res.headers);
-            t.deepEqual(body, PARAMS.nets[1], 'response');
+
+            t.deepEqual(body, addNetOutputAttr(PARAMS.nets[1]), 'response');
 
             return t.end();
         });
@@ -541,12 +550,12 @@ test('networks', TEST_OPTS, function (tt) {
 
 
     tt.test('fabric network 0 exists in main list', function (t) {
-        findNetInList(t, PARAMS.nets[0]);
+        findNetInList(t, addNetOutputAttr(PARAMS.nets[0]));
     });
 
 
     tt.test('fabric network 1 exists in main list', function (t) {
-        findNetInList(t, PARAMS.nets[1]);
+        findNetInList(t, addNetOutputAttr(PARAMS.nets[1]));
     });
 
 
@@ -582,7 +591,7 @@ test('networks', TEST_OPTS, function (tt) {
 
     tt.test('create fabric network: overlapping', function (t) {
         var params = {
-            name: 'overlap network',
+            name: 'overlap_network',
             provision_start_ip: '10.5.1.0',
             provision_end_ip: '10.5.1.250',
             resolvers: ['8.8.8.8'],
@@ -615,7 +624,7 @@ test('networks', TEST_OPTS, function (tt) {
 
 test('create fabric network: invalid', TEST_OPTS, function (t) {
     var base = {
-        name: 'invalid network',
+        name: 'invalid_network',
         provision_start_ip: '192.168.1.1',
         provision_end_ip: '192.168.1.250',
         resolvers: ['8.8.8.8'],
@@ -705,16 +714,17 @@ test('default fabric', TEST_OPTS, function (tt) {
     var defaultNet = {
         fabric: true,
         gateway: '192.168.128.1',
-        name: 'default',
+        name: 'My-Fabric-Network',
         provision_end_ip: '192.168.131.250',
         provision_start_ip: '192.168.128.5',
         public: false,
+        internet_nat: true,
         resolvers: ['8.8.8.8', '8.8.4.4'],
         subnet: '192.168.128.0/22',
         vlan_id: 2
     };
     var defaultVLAN = {
-        name: 'default',
+        name: 'My-Fabric-VLAN',
         vlan_id: 2
     };
 
