@@ -15,8 +15,10 @@ var test = require('tape').test;
 var restify = require('restify');
 var vasync = require('vasync');
 
-var common = require('./common'),
-    waitForMahiCache = common.waitForMahiCache;
+var common = require('./common');
+var checkNotFound = common.checkNotFound;
+var checkNotAuthorized = common.checkNotAuthorized;
+var waitForMahiCache = common.waitForMahiCache;
 
 
 
@@ -24,17 +26,16 @@ var common = require('./common'),
 
 
 var SIGNATURE_FMT = 'Signature keyId="%s",algorithm="%s" %s';
-var USER_FMT = 'uuid=%s, ou=users, o=smartdc';
-var POLICY_FMT = 'policy-uuid=%s, ' + USER_FMT;
-var ROLE_FMT = 'role-uuid=%s, ' + USER_FMT;
 
 var CLIENTS;
 var CLIENT;
 var SUB_CLIENT;
+var OTHER;
 var SERVER;
 
 var POLICY_NAME;
 var ROLE_NAME;
+var ROLE_UUID;
 
 
 // --- Tests
@@ -47,6 +48,7 @@ test('setup', function (t) {
 
         CLIENT      = clients.user;
         SUB_CLIENT  = clients.subuser;
+        OTHER       = clients.other;
 
         ROLE_NAME   = CLIENT.role.name;
         POLICY_NAME = CLIENT.policy.name;
@@ -478,6 +480,16 @@ test('tag individual resource with role', function (t) {
 });
 
 
+test('tag individual resource with role - other', function (t) {
+    OTHER.put('/my/users/' + SUB_CLIENT.login, {
+        'role-tag': [ROLE_NAME]
+    }, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
 test('tag individual resource with non-existent role', function (t) {
     CLIENT.put('/my/users/' + SUB_CLIENT.login, {
         'role-tag': ['asdasdasdasd']
@@ -497,16 +509,31 @@ test('tag individual resource with non-existent role', function (t) {
 });
 
 
-test('get individual resource role-tag', function (t) {
-    var p = '/my/users/' + SUB_CLIENT.login;
-    CLIENT.get({
-        path: p
+test('tag individual resource with non-existent role - other', function (t) {
+    OTHER.put('/my/users/' + SUB_CLIENT.login, {
+        'role-tag': ['asdasdasdasd']
     }, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
+test('get individual resource role-tag', function (t) {
+    CLIENT.get('/my/users/' + SUB_CLIENT.login, function (err, req, res, body) {
         t.ifError(err, 'resource role err');
         t.ok(body, 'resource role body');
         t.ok(body.login, 'resource is a user');
         t.ok(res.headers['role-tag'], 'resource role-tag header');
         t.equal(res.headers['role-tag'], ROLE_NAME, 'resource role-tag');
+        t.end();
+    });
+});
+
+
+test('get individual resource role-tag - other', function (t) {
+    OTHER.get('/my/users/' + SUB_CLIENT.login, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
         t.end();
     });
 });
@@ -682,9 +709,6 @@ test('sub-user signature auth (0.10)', function (t) {
 });
 
 
-// Adding role-tag at creation time:
-var B_ROLE_UUID, B_ROLE_DN, B_ROLE_NAME;
-
 test('create role with role-tag', function (t) {
     var roleUuid = common.uuid();
     var name = 'a' + roleUuid.substr(0, 7);
@@ -706,24 +730,21 @@ test('create role with role-tag', function (t) {
         t.ok(body);
         t.equal(res.statusCode, 201);
         common.checkHeaders(t, res.headers);
-        B_ROLE_UUID = body.id;
-        B_ROLE_NAME = body.name;
-        B_ROLE_DN = util.format(ROLE_FMT, B_ROLE_UUID, CLIENT.account.uuid);
+        ROLE_UUID = body.id;
         t.end();
     });
 });
 
 
 test('update role with role-tag', function (t) {
-    var p = '/my/roles/' + B_ROLE_UUID;
-    B_ROLE_NAME = 'Something-different';
+    var p = '/my/roles/' + ROLE_UUID;
     CLIENT.post({
         path: p,
         headers: {
             'role-tag': [ROLE_NAME]
         }
     }, {
-        name: B_ROLE_NAME
+        name: 'Something-different'
     }, function (err, req, res, body) {
         t.ifError(err, 'resource role err');
         t.ok(body, 'resource role body');
@@ -732,9 +753,32 @@ test('update role with role-tag', function (t) {
 });
 
 
+test('update role with role-tag - other', function (t) {
+    var p = '/my/roles/' + ROLE_UUID;
+    OTHER.post({
+        path: p,
+        headers: {
+            'role-tag': [ROLE_NAME]
+        }
+    }, {
+        name: 'Something-different'
+    }, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
+test('delete role with role-tag - other', function (t) {
+    OTHER.del('/my/roles/' + ROLE_UUID, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
 test('delete role with role-tag', function (t) {
-    var url = '/my/roles/' + B_ROLE_UUID;
-    CLIENT.del(url, function (err, req, res) {
+    CLIENT.del('/my/roles/' + ROLE_UUID, function (err, req, res) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
         common.checkHeaders(t, res.headers);
@@ -757,16 +801,31 @@ test('tag /:account with role', function (t) {
 });
 
 
-test('get /:account role-tag', function (t) {
-    var p = '/' + CLIENT.login;
-    CLIENT.get({
-        path: p
+test('tag /:account with role - other', function (t) {
+    OTHER.put('/' + CLIENT.login, {
+        'role-tag': [ROLE_NAME]
     }, function (err, req, res, body) {
+        checkNotAuthorized(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
+test('get /:account role-tag', function (t) {
+    CLIENT.get('/' + CLIENT.login, function (err, req, res, body) {
         t.ifError(err, 'resource role err');
         t.ok(body, 'resource role body');
         t.ok(body.login, 'resource is a user');
         t.ok(res.headers['role-tag'], 'resource role-tag header');
         t.equal(res.headers['role-tag'], ROLE_NAME, 'resource role-tag');
+        t.end();
+    });
+});
+
+
+test('get /:account role-tag - other', function (t) {
+    OTHER.get('/' + CLIENT.login, function (err, req, res, body) {
+        checkNotAuthorized(t, err, req, res, body);
         t.end();
     });
 });

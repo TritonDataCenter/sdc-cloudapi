@@ -12,6 +12,8 @@ var test = require('tape').test;
 var util = require('util');
 var common = require('./common');
 
+var checkNotFound = common.checkNotFound;
+
 
 // --- Globals
 
@@ -19,7 +21,25 @@ var common = require('./common');
 // May or not be created by previous test run or whatever else:
 var SDC_512 = {
     uuid: '4667d1b8-0bc7-466c-bf62-aae98ba5efa9',
-    name: 'sdc_512_ownership',
+    name: 'sdc_512_no_ownership',
+    version: '1.0.0',
+    max_physical_memory: 512,
+    quota: 20480,
+    max_swap: 1024,
+    cpu_cap: 150,
+    max_lwps: 2000,
+    zfs_io_priority: 10,
+    'default': false,
+    vcpus: 2,
+    active: true,
+    owner_uuids: ['b99598ca-d56c-4374-8fdd-32e60f4d1592']
+};
+
+// this differs from SDC_512 because the CLIENT's uuid is never added to
+// owner_uuids in setup
+var SDC_512_NO_PERMISSION = {
+    uuid: '495971fd-3488-46da-b10f-61a088f03e39',
+    name: 'sdc_512_no_permission',
     version: '1.0.0',
     max_physical_memory: 512,
     quota: 20480,
@@ -37,6 +57,9 @@ var CLIENTS;
 var CLIENT;
 var SERVER;
 
+var VIEWABLE_PACKAGE_NAMES;
+var VIEWABLE_PACKAGE_UUIDS;
+
 
 // --- Helpers
 
@@ -51,6 +74,8 @@ function checkPackage_6_5(t, pkg) {
     t.notOk(pkg.version, 'Package has not version');
     t.ok(pkg.swap, 'Package swap');
     t.ok(pkg['default'] !== undefined, 'Package default');
+
+    t.notEqual(VIEWABLE_PACKAGE_NAMES.indexOf(pkg.name), -1, 'can view pkg');
 }
 
 
@@ -65,6 +90,8 @@ function checkPackage_7(t, pkg) {
     t.ok(pkg.swap, 'Package swap');
     t.ok(pkg.lwps, 'Package lwps');
     t.ok(pkg['default'] !== undefined, 'Package default');
+
+    t.notEqual(VIEWABLE_PACKAGE_UUIDS.indexOf(pkg.id), -1, 'can view pkg');
 }
 
 
@@ -105,11 +132,29 @@ test('setup', function (t) {
         SDC_512.owner_uuids.push(CLIENT.account.uuid);
 
         common.addPackage(CLIENT, SDC_512, function (err) {
-            if (err) {
-                throw err;
-            }
+            common.addPackage(CLIENT, SDC_512_NO_PERMISSION, function (err2) {
+                CLIENT.papi.list({}, {}, function (err3, pkgs) {
+                    if (err || err2 || err3) {
+                        throw err || err2 || err3;
+                    }
 
-            t.end();
+                    var accUuid = CLIENT.account.uuid;
+                    var viewablePkgs = pkgs.filter(function (pkg) {
+                        var owners = pkg.owner_uuids;
+                        return !owners || owners.indexOf(accUuid) !== -1;
+                    });
+
+                    VIEWABLE_PACKAGE_UUIDS = viewablePkgs.map(function (pkg) {
+                        return pkg.uuid;
+                    });
+
+                    VIEWABLE_PACKAGE_NAMES = viewablePkgs.map(function (pkg) {
+                        return pkg.name;
+                    });
+
+                    t.end();
+                });
+            });
         });
     });
 });
@@ -157,6 +202,19 @@ test('GetPackage OK (6.5)', function (t) {
             default: SDC_512.default
         });
 
+        t.end();
+    });
+});
+
+
+test('GetPackage not OK (6.5) - no permission', function (t) {
+    CLIENT.get({
+        path: '/my/packages/' + SDC_512_NO_PERMISSION.name,
+        headers: {
+            'accept-version': '~6.5'
+        }
+    }, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
         t.end();
     });
 });
@@ -260,6 +318,19 @@ test('GetPackage by name OK (7.0)', function (t) {
 });
 
 
+test('GetPackage by name not OK (7.0) - no permission', function (t) {
+    CLIENT.get({
+        path: '/my/packages/' + SDC_512_NO_PERMISSION.name,
+        headers: {
+            'accept-version': '~7.0'
+        }
+    }, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
 test('GetPackage by id OK (7.0)', function (t) {
     CLIENT.get({
         path: '/my/packages/' + SDC_512.uuid,
@@ -288,6 +359,19 @@ test('GetPackage by id OK (7.0)', function (t) {
 });
 
 
+test('GetPackage by id not OK (7.0) - no permission', function (t) {
+    CLIENT.get({
+        path: '/my/packages/' + SDC_512_NO_PERMISSION.uuid,
+        headers: {
+            'accept-version': '~7.0'
+        }
+    }, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
 test('GetPackage 404', function (t) {
     CLIENT.get('/my/packages/' + common.uuid(), function (err) {
         t.ok(err);
@@ -303,8 +387,12 @@ test('teardown', function (t) {
     common.deletePackage(CLIENT, SDC_512, function (err) {
         t.ifError(err);
 
-        common.teardown(CLIENTS, SERVER, function () {
-            t.end();
+        common.deletePackage(CLIENT, SDC_512_NO_PERMISSION, function (err2) {
+            t.ifError(err2);
+
+            common.teardown(CLIENTS, SERVER, function () {
+                t.end();
+            });
         });
     });
 });

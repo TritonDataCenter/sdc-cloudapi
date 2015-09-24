@@ -526,7 +526,7 @@ function setup(version, cb) {
 
     var otherUser = 'a' + uuid().substr(0, 7) + '.other.test@joyent.com';
     var otherUserKeyPath = __dirname + '/testkeys/other_id_rsa';
-    var otherUserKeyId = '/' + otherUser + '/keys/other_id_rsa';
+    var otherUserKeyId = '/' + otherUser + '/keys/id_rsa';
 
     CONFIG.log = LOG;
 
@@ -705,6 +705,48 @@ function getBaseDataset(client, cb) {
 }
 
 
+function checkNotFound(t, err, req, res, body) {
+    t.ok(err);
+    t.ok(body);
+
+    t.equal(err.restCode, 'ResourceNotFound');
+    t.ok(err.message);
+
+    t.equal(body.code, 'ResourceNotFound');
+    t.ok(body.message);
+
+    t.equal(res.statusCode, 404);
+}
+
+
+function checkNotAuthorized(t, err, req, res, body) {
+    t.ok(err);
+    t.ok(body);
+
+    t.equal(err.restCode, 'NotAuthorized');
+    t.ok(err.message);
+
+    t.equal(body.code, 'NotAuthorized');
+    t.ok(body.message);
+
+    t.equal(res.statusCode, 403);
+}
+
+
+function checkInvalidArgument(t, err, req, res, body) {
+        t.ok(err);
+        t.ok(body);
+
+        t.equal(err.restCode, 'InvalidArgument');
+        t.ok(err.message);
+
+        t.equal(body.code, 'InvalidArgument');
+        t.ok(body.message);
+
+        t.equal(res.statusCode, 409);
+}
+
+
 // --- Library
 
 
@@ -715,6 +757,9 @@ module.exports = {
     checkReqId: checkReqId,
     checkVersionHeader: checkVersionHeader,
     checkMahiCache: checkMahiCache,
+    checkNotAuthorized: checkNotAuthorized,
+    checkNotFound: checkNotFound,
+    checkInvalidArgument: checkInvalidArgument,
     waitForMahiCache: waitForMahiCache,
     withTemporaryUser: withTemporaryUser,
     uuid: uuid,

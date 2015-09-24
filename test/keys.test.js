@@ -30,6 +30,7 @@ var KEY_2 = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDY2qV5e2q8qb+kYtn' +
 
 var CLIENTS;
 var CLIENT;
+var OTHER;
 var SERVER;
 
 var KEY_NAME;
@@ -53,6 +54,7 @@ test('setup', function (t) {
     common.setup(function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
+        OTHER   = clients.other;
         SERVER  = server;
 
         t.end();
@@ -175,6 +177,19 @@ test('ListKeys OK', function (t) {
 });
 
 
+// OTHER should only be able to see the key it was created with by setup
+test('ListKeys OK - other', function (t) {
+    OTHER.get('/my/keys', function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(body.length, 1);
+        t.equal(body[0].name, 'id_rsa');
+        t.equal(body[0].fingerprint, '33:06:df:67:4e:fc:b5:e3:da:3b:df:97:' +
+                '83:8e:fc:9a');
+        t.end();
+    });
+});
+
+
 test('GetKey OK', function (t) {
     var url = '/my/keys/' + encodeURIComponent('id_rsa 1');
 
@@ -184,6 +199,48 @@ test('GetKey OK', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body);
         checkKey(t, body);
+        t.end();
+    });
+});
+
+
+test('GetKey OK - other', function (t) {
+    var url = '/my/keys/' + encodeURIComponent('id_rsa 1');
+
+    OTHER.get(url, function (err, req, res, body) {
+        t.ok(err);
+        t.ok(body);
+
+        t.equal(err.restCode, 'ResourceNotFound');
+        t.ok(err.message);
+
+        t.equal(body.code, 'ResourceNotFound');
+        t.ok(body.message);
+
+        t.equal(res.statusCode, 404);
+
+        t.end();
+    });
+});
+
+
+test('DeleteKey OK - other', function (t) {
+    var url = '/my/keys/' + encodeURIComponent('id_rsa 1');
+
+    OTHER.del(url, function (err, req, res) {
+        t.ok(err);
+
+        t.deepEqual(err, {
+            body: {
+                code: 'ResourceNotFound',
+                message: 'id_rsa 1 does not exist'
+            },
+            message: 'id_rsa 1 does not exist',
+            name: 'ResourceNotFoundError',
+            restCode: 'ResourceNotFound',
+            statusCode: 404
+        });
+
         t.end();
     });
 });

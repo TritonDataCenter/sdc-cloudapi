@@ -15,7 +15,8 @@ var common = require('./common');
 // --- Globals
 
 
-var DC_NAME = Object.keys(common.getCfg().datacenters)[0];
+var DC_NAME = process.env.DATACENTER ||
+            Object.keys(common.getCfg().datacenters)[0];
 
 var CLIENTS;
 var CLIENT;
@@ -42,15 +43,14 @@ test('ListDatacenters OK', function (t) {
         t.ok(body);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 200);
-        t.ok(body[process.env.DATACENTER || DC_NAME]);
+        t.ok(body[DC_NAME]);
         t.end();
     });
 });
 
 
 test('GetDatacenter OK', function (t) {
-    var dc = process.env.DATACENTER || DC_NAME;
-    CLIENT.get('/my/datacenters/' + dc, function (err, req, res, body) {
+    CLIENT.get('/my/datacenters/' + DC_NAME, function (err, req, res, body) {
         t.ifError(err);
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 302);

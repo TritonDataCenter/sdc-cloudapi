@@ -17,6 +17,7 @@ var common = require('./common');
 
 var CLIENTS;
 var CLIENT;
+var OTHER;
 var SERVER;
 
 var INST_ID;
@@ -69,6 +70,24 @@ function checkHead(t, path) {
 }
 
 
+function checkGetNotFound(t, path) {
+    OTHER.get(path, function (err, req, res, body) {
+        common.checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+}
+
+
+function checkHeadNotFound(t, path) {
+    OTHER.head(path, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(res.statusCode, 404);
+        t.deepEqual(body, {});
+        t.end();
+    });
+}
+
+
 function checkInstrumentation(t, inst, justCreated) {
     t.equal(type(inst),  'object');
 
@@ -113,6 +132,7 @@ test('setup', function (t) {
     common.setup(function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
+        OTHER   = clients.other;
         SERVER  = server;
 
         t.end();
@@ -267,10 +287,26 @@ test('GetInstrumentation OK', function (t) {
 
 
 
+test('GetInstrumentation other', function (t) {
+    var path = '/my/analytics/instrumentations/' + INST_ID;
+
+    checkGetNotFound(t, path);
+});
+
+
+
 test('HeadInstrumentation OK', function (t) {
     var path = '/my/analytics/instrumentations/' + INST_ID;
 
     checkHead(t, path);
+});
+
+
+
+test('HeadInstrumentation other', function (t) {
+    var path = '/my/analytics/instrumentations/' + INST_ID;
+
+    checkHeadNotFound(t, path);
 });
 
 
@@ -304,10 +340,26 @@ test('GetInstrumentationValue OK', function (t) {
 
 
 
+test('GetInstrumentationValue other', function (t) {
+    var path = '/my/analytics/instrumentations/' + INST_ID + '/value/raw';
+
+    checkGetNotFound(t, path);
+});
+
+
+
 test('HeadInstrumentationValue OK', function (t) {
     var path = '/my/analytics/instrumentations/' + INST_ID + '/value/raw';
 
     checkHead(t, path);
+});
+
+
+
+test('HeadInstrumentationValue other', function (t) {
+    var path = '/my/analytics/instrumentations/' + INST_ID + '/value/raw';
+
+    checkHeadNotFound(t, path);
 });
 
 
@@ -348,11 +400,29 @@ test('GetInstrumentationHeatmap OK', function (t) {
 
 
 
+test('GetInstrumentationHeatmap other', function (t) {
+    var path = '/my/analytics/instrumentations/' + INST_ID +
+                '/value/heatmap/image';
+
+    checkGetNotFound(t, path);
+});
+
+
+
 test('HeadInstrumentationHeatmap OK', function (t) {
     var path = '/my/analytics/instrumentations/' + INST_ID +
                 '/value/heatmap/image';
 
     checkHead(t, path);
+});
+
+
+
+test('HeadInstrumentationHeatmap other', function (t) {
+    var path = '/my/analytics/instrumentations/' + INST_ID +
+                '/value/heatmap/image';
+
+    checkHeadNotFound(t, path);
 });
 
 
@@ -370,6 +440,15 @@ test('GetInstrumentationHeatmapDetails OK', function (t) {
 
 
 
+test('GetInstrumentationHeatmapDetails other', function (t) {
+    var path = '/my/analytics/instrumentations/' + INST_ID +
+                '/value/heatmap/details';
+
+    checkGetNotFound(t, path);
+});
+
+
+
 test('HeadInstrumentationHeatmapDetails OK', function (t) {
     // XX erring out, probably needs a VM started up for this first
     //
@@ -378,6 +457,15 @@ test('HeadInstrumentationHeatmapDetails OK', function (t) {
     //
     // checkHead(t, path);
     t.end();
+});
+
+
+
+test('HeadInstrumentationHeatmapDetails other', function (t) {
+    var path = '/my/analytics/instrumentations/' + INST_ID +
+                '/value/heatmap/detail';
+
+    checkHeadNotFound(t, path);
 });
 
 
@@ -395,6 +483,11 @@ test('ListInstrumentations OK', function (t) {
         body.forEach(function (instrumentation) {
             checkInstrumentation(t, instrumentation);
         });
+
+        // this will probably be a bit brittle in some testing environments,
+        // but for security reasons we still want to check that there aren't
+        // any unexpected instrumentations active (e.g. leaking between users)
+        t.equal(body.length, 1);
 
         t.end();
     });
@@ -430,6 +523,26 @@ test('CloneInstrumentation OK', function (t) {
     });
 });
 
+
+
+test('CloneInstrumentation other', function (t) {
+    var path = '/my/analytics/instrumentations/' + INST_ID;
+
+    OTHER.post(path, { action: 'clone' }, function (err, req, res, body) {
+        t.ok(err);
+        t.ok(body);
+
+        t.equal(err.restCode, 'ResourceNotFound');
+        t.ok(err.message);
+
+        t.equal(body.code, 'ResourceNotFound');
+        t.ok(body.message);
+
+        t.equal(res.statusCode, 404);
+
+        t.end();
+    });
+});
 
 
 // PUBAPI-923
@@ -540,6 +653,29 @@ test('Check analytics roles are preserved', function (t) {
 });
 
 
+test('DeleteInstrumentation other', function (t) {
+    var path = '/my/analytics/instrumentations/' + INST_ID;
+
+    OTHER.del(path, function (err, req, res, body) {
+        t.ok(err);
+        t.ok(body);
+
+        t.equal(err.restCode, 'ResourceNotFound');
+        t.ok(err.message);
+
+        t.equal(body.code, 'ResourceNotFound');
+        t.ok(body.message);
+
+        t.equal(res.statusCode, 404);
+
+        CLIENT.get(path, function (err2, req2, res2, body2) {
+            t.equal(res2.statusCode, 200);
+            t.end();
+        });
+    });
+});
+
+
 
 test('DeleteInstrumentation OK', function (t) {
     var path = '/my/analytics/instrumentations/' + INST_ID;
@@ -566,6 +702,31 @@ test('DeleteInstrumentation OK', function (t) {
 
             t.end();
         });
+    });
+});
+
+
+
+test('DeleteInstrumentation other - clone', function (t) {
+    if (!CLONE_ID) {
+        return t.end();
+    }
+
+    var path = '/my/analytics/instrumentations/' + CLONE_ID;
+
+    return OTHER.del(path, function (err, req, res, body) {
+        t.ok(err);
+        t.ok(body);
+
+        t.equal(err.restCode, 'ResourceNotFound');
+        t.ok(err.message);
+
+        t.equal(body.code, 'ResourceNotFound');
+        t.ok(body.message);
+
+        t.equal(res.statusCode, 404);
+
+        t.end();
     });
 });
 

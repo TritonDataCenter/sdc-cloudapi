@@ -12,12 +12,28 @@ var test = require('tape').test;
 var util = require('util');
 var common = require('./common');
 
+var checkNotAuthorized = common.checkNotAuthorized;
+
 
 // --- Globals
 
 
+var USER_DETAILS = {
+    givenName: 'James',
+    sn: 'Bond',
+    cn: 'James Bond',
+    company: 'liltingly, Inc.',
+    address: '6165 pyrophyllite Street',
+    city: 'benzoylation concoctive',
+    state: 'SP',
+    postalCode: '4967',
+    country: 'BAT',
+    phone: '+1 891 657 5818'
+};
+
 var CLIENTS;
 var CLIENT;
+var OTHER;
 var SERVER;
 
 
@@ -46,6 +62,7 @@ test('setup', function (t) {
     common.setup(function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
+        OTHER   = clients.other;
         SERVER  = server;
 
         t.end();
@@ -70,12 +87,17 @@ test('GetAccount(:login) OK', function (t) {
 });
 
 
+test('GetAccount(:login) other', function (t) {
+    var path = '/' + encodeURIComponent(CLIENT.login);
+    OTHER.get(path, function (err, req, res, obj) {
+        checkNotAuthorized(t, err, req, res, obj);
+        t.end();
+    });
+});
+
 test('GetAccount 403', function (t) {
-    CLIENT.get('/admin', function (err) {
-        t.ok(err);
-        t.equal(err.statusCode, 403);
-        t.equal(err.restCode, 'NotAuthorized');
-        t.ok(err.message);
+    CLIENT.get('/admin', function (err, req, res, obj) {
+        checkNotAuthorized(t, err, req, res, obj);
         t.end();
     });
 });
@@ -91,21 +113,10 @@ test('GetAccount 404', function (t) {
 });
 
 
-test('PostAccount', function (t) {
+test('PostAccount OK', function (t) {
     var path = '/' + encodeURIComponent(CLIENT.login);
 
-    CLIENT.post(path, {
-        givenName: 'James',
-        sn: 'Bond',
-        cn: 'James Bond',
-        company: 'liltingly, Inc.',
-        address: '6165 pyrophyllite Street',
-        city: 'benzoylation concoctive',
-        state: 'SP',
-        postalCode: '4967',
-        country: 'BAT',
-        phone: '+1 891 657 5818'
-    }, function (err, req, res, obj) {
+    CLIENT.post(path, USER_DETAILS, function (err, req, res, obj) {
         t.ifError(err);
         checkOk(t, err, req, res, obj);
         t.ok(obj.companyName);
@@ -116,6 +127,16 @@ test('PostAccount', function (t) {
         t.ok(obj.state);
         t.ok(obj.country);
         t.ok(obj.phone);
+        t.end();
+    });
+});
+
+
+test('PostAccount other', function (t) {
+    var path = '/' + encodeURIComponent(CLIENT.login);
+
+    OTHER.post(path, USER_DETAILS, function (err, req, res, obj) {
+        checkNotAuthorized(t, err, req, res, obj);
         t.end();
     });
 });

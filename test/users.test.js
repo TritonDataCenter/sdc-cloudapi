@@ -20,6 +20,9 @@ var libuuid = require('libuuid');
 var util = require('util');
 var common = require('./common');
 
+var checkNotFound = common.checkNotFound;
+var checkInvalidArgument = common.checkInvalidArgument;
+
 
 // --- Globals
 
@@ -31,14 +34,14 @@ var ADMIN_ROLE_NAME = 'administrator';
 var SUB_ID = libuuid.create();
 var SUB_LOGIN = 'a' + SUB_ID.substr(0, 7);
 var SUB_EMAIL = SUB_LOGIN + '_test@joyent.com';
-var SUB_UUID;
+var SUB_USER;
 
 var PWD = 'joypass123';
 
 var SUB_ID_2 = libuuid.create();
 var SUB_LOGIN_2 = 'a' + SUB_ID_2.substr(0, 7);
 var SUB_EMAIL_2 = SUB_LOGIN_2 + '_test@joyent.com';
-var SUB_UUID_2;
+var SUB_USER_2;
 
 var POLICY_DOC = [
     'Fred can read *.js when foo::string = bar and ' +
@@ -75,17 +78,28 @@ var ROLE_UUID_2;
 
 var CLIENTS;
 var CLIENT;
+var SUB_CLIENT;
+var OTHER;
 var SERVER;
 
 
 // --- Helpers
 
 
-function checkUser(t, user) {
-    t.ok(user, 'checkUser user OK');
-    t.ok(user.id, 'checkUser user.id OK');
-    t.ok(user.login, 'checkUser user.login OK');
-    t.ok(user.email, 'checkUser user.email OK');
+function checkUser(t, givenUser, expectedUser) {
+    t.ok(givenUser, 'checkUser user OK');
+    t.ok(givenUser.id, 'checkUser user.id OK');
+    t.ok(givenUser.login, 'checkUser user.login OK');
+    t.ok(givenUser.email, 'checkUser user.email OK');
+
+    if (expectedUser) {
+        t.equal(givenUser.login, expectedUser.login);
+        t.equal(givenUser.email, expectedUser.email);
+
+        if (expectedUser.id) {
+            t.equal(givenUser.id, expectedUser.id);
+        }
+    }
 }
 
 
@@ -124,6 +138,8 @@ test('setup', function (t) {
     common.setup(function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
+        SUB_CLIENT = clients.subuser;
+        OTHER   = clients.other;
         SERVER  = server;
 
         t.end();
@@ -193,9 +209,9 @@ test('create user', function (t) {
         t.ok(body);
         t.equal(res.statusCode, 201);
         common.checkHeaders(t, res.headers);
-        checkUser(t, body);
+        checkUser(t, body, user);
 
-        SUB_UUID = body.id;
+        SUB_USER = body;
 
         t.end();
     });
@@ -203,22 +219,34 @@ test('create user', function (t) {
 
 
 test('update user', function (t) {
-    CLIENT.post('/my/users/' + SUB_UUID, {
-        phone: '+34 626 626 626'
+    var phoneNum = '+34 626 626 626';
+    CLIENT.post('/my/users/' + SUB_USER.id, {
+        phone: phoneNum
     }, function (err, req, res, body) {
         t.ifError(err);
         t.ok(body);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
-        checkUser(t, body);
-        t.ok(body.phone);
+        checkUser(t, body, SUB_USER);
+        t.equal(body.phone, phoneNum);
+        t.end();
+    });
+});
+
+
+test('update user - other', function (t) {
+    var phoneNum = '+34 626 626 626';
+    OTHER.post('/my/users/' + SUB_USER.id, {
+        phone: phoneNum
+    }, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
         t.end();
     });
 });
 
 
 test('change password (missing params)', function (t) {
-    CLIENT.post('/my/users/' + SUB_UUID + '/change_password', {
+    CLIENT.post('/my/users/' + SUB_USER.id + '/change_password', {
         password: 'whatever'
     }, function (err, req, res, body) {
         t.ok(err);
@@ -231,7 +259,7 @@ test('change password (missing params)', function (t) {
 
 
 test('change password (confirmation missmatch)', function (t) {
-    CLIENT.post('/my/users/' + SUB_UUID + '/change_password', {
+    CLIENT.post('/my/users/' + SUB_USER.id + '/change_password', {
         password: 'whatever',
         password_confirmation: 'somethingelse'
     }, function (err, req, res, body) {
@@ -245,7 +273,7 @@ test('change password (confirmation missmatch)', function (t) {
 
 
 test('change password (OK)', function (t) {
-    CLIENT.post('/my/users/' + SUB_UUID + '/change_password', {
+    CLIENT.post('/my/users/' + SUB_USER.id + '/change_password', {
         password: 'whatever123',
         password_confirmation: 'whatever123'
     }, function (err, req, res, body) {
@@ -259,13 +287,49 @@ test('change password (OK)', function (t) {
 });
 
 
+test('change password - other', function (t) {
+    OTHER.post('/my/users/' + SUB_USER.id + '/change_password', {
+        password: 'whatever123',
+        password_confirmation: 'whatever123'
+    }, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
 test('get user by UUID', function (t) {
-    CLIENT.get('/my/users/' + SUB_UUID, function (err, req, res, body) {
+    CLIENT.get('/my/users/' + SUB_USER.id, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.equal(body.login, SUB_LOGIN);
+        t.end();
+    });
+});
+
+
+test('get user by UUID - other', function (t) {
+    OTHER.get('/my/users/' + SUB_USER.id, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
+test('get user with roles', function (t) {
+    CLIENT.get('/my/users/' + SUB_USER.id + '?membership=true',
+        function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.equal(body.id, SUB_USER.id);
+        t.ok(body.roles);
+        t.ok(body.default_roles);
+        t.ok(Array.isArray(body.roles));
+        t.ok(Array.isArray(body.default_roles));
         t.end();
     });
 });
@@ -279,6 +343,11 @@ test('list users OK', function (t) {
         t.ok(body, 'list users body');
         t.ok(Array.isArray(body), 'list users returns array');
         t.equal(body.length, 2, 'list users array length');
+
+        var expectedUuids = [SUB_USER.id, SUB_CLIENT.account.uuid];
+        t.notEqual(expectedUuids, body[0].id);
+        t.notEqual(expectedUuids, body[1].id);
+
         t.end();
     });
 });
@@ -298,7 +367,7 @@ test('create another user', function (t) {
         common.checkHeaders(t, res.headers);
         checkUser(t, body);
 
-        SUB_UUID_2 = body.id;
+        SUB_USER_2 = body;
 
         t.end();
     });
@@ -342,6 +411,14 @@ test('get policy by UUID', function (t) {
 });
 
 
+test('get policy by UUID - other', function (t) {
+    OTHER.get('/my/policies/' + POLICY_UUID, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
 test('list policies (OK)', function (t) {
     CLIENT.get('/my/policies', function (err, req, res, body) {
         t.ifError(err);
@@ -350,6 +427,20 @@ test('list policies (OK)', function (t) {
         t.ok(body);
         t.ok(Array.isArray(body));
         t.equal(body.length, 2);
+
+        var expectedUuids = [POLICY_UUID, CLIENT.policy.uuid];
+        t.notEqual(expectedUuids, body[0].id);
+        t.notEqual(expectedUuids, body[1].id);
+
+        t.end();
+    });
+});
+
+
+test('list policies - other', function (t) {
+    OTHER.get('/my/policies', function (err, req, res, body) {
+        t.ifError(err);
+        t.deepEqual(body, []);
         t.end();
     });
 });
@@ -371,6 +462,30 @@ test('update policy', function (t) {
         t.equal(body.name, 'policy-name-can-be-modified');
         POLICY_NAME = body.name;
         t.ok(body.rules.indexOf(str) !== -1);
+        t.end();
+    });
+});
+
+
+test('update policy - other', function (t) {
+    OTHER.post('/my/policies/' + POLICY_UUID, {
+        rules: POLICY_DOC,
+        name: 'this-update-should-fail'
+    }, function (err, req, res, body) {
+        // XXX should be not found
+        //checkNotFound(t, err, req, res, body);
+
+        t.ok(err);
+        t.ok(body);
+
+        t.equal(err.restCode, 'MissingParameter');
+        t.ok(err.message);
+
+        t.equal(body.code, 'MissingParameter');
+        t.ok(body.message);
+
+        t.equal(res.statusCode, 409);
+
         t.end();
     });
 });
@@ -419,6 +534,23 @@ test('create role', function (t) {
 });
 
 
+test('create role - other', function (t) {
+    var role_uuid = libuuid.create();
+    var name = 'a' + role_uuid.substr(0, 7);
+
+    var entry = {
+        name: name,
+        members: SUB_LOGIN_2,
+        default_members: SUB_LOGIN_2
+    };
+
+    OTHER.post('/my/roles', entry, function (err, req, res, body) {
+        checkInvalidArgument(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
 test('get role (by UUID)', function (t) {
     CLIENT.get('/my/roles/' + ROLE_UUID, function (err, req, res, body) {
         t.ifError(err);
@@ -426,6 +558,14 @@ test('get role (by UUID)', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.equal(body.id, ROLE_UUID);
+        t.end();
+    });
+});
+
+
+test('get role (by UUID) - other', function (t) {
+    OTHER.get('/my/roles/' + ROLE_UUID, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
         t.end();
     });
 });
@@ -448,6 +588,20 @@ test('update role', function (t) {
         ROLE_NAME = body.name;
         t.ok(body.members.indexOf(SUB_LOGIN) !== -1);
         t.ok(body.default_members.indexOf(SUB_LOGIN) !== -1);
+        t.end();
+    });
+});
+
+
+test('update role - other', function (t) {
+    var members = [SUB_LOGIN_2, SUB_LOGIN];
+
+    OTHER.post('/my/roles/' + ROLE_UUID, {
+        members: members,
+        default_members: [SUB_LOGIN],
+        name: 'should-not-update'
+    }, function (err, req, res, body) {
+        checkInvalidArgument(t, err, req, res, body);
         t.end();
     });
 });
@@ -481,6 +635,16 @@ test('add existing policy to role', function (t) {
         common.checkHeaders(t, res.headers);
         checkRole(t, body);
         t.ok(body.policies.indexOf(POLICY_NAME) !== -1);
+        t.end();
+    });
+});
+
+
+test('add existing policy to role - other', function (t) {
+    OTHER.post('/my/roles/' + ROLE_UUID, {
+        policies: [POLICY_NAME]
+    }, function (err, req, res, body) {
+        checkInvalidArgument(t, err, req, res, body);
         t.end();
     });
 });
@@ -538,37 +702,8 @@ test('list roles (OK)', function (t) {
 });
 
 
-test('get user by UUID', function (t) {
-    CLIENT.get('/my/users/' + SUB_UUID, function (err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
-        common.checkHeaders(t, res.headers);
-        t.ok(body);
-        t.equal(body.login, SUB_LOGIN);
-        t.end();
-    });
-});
-
-
-test('get user with roles', function (t) {
-    CLIENT.get('/my/users/' + SUB_UUID + '?membership=true',
-        function (err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
-        common.checkHeaders(t, res.headers);
-        t.ok(body);
-        t.equal(body.id, SUB_UUID);
-        t.ok(body.roles);
-        t.ok(body.default_roles);
-        t.ok(Array.isArray(body.roles));
-        t.ok(Array.isArray(body.default_roles));
-        t.end();
-    });
-});
-
-
 test('add role to user resource', function (t) {
-    var path = '/my/users/' + SUB_UUID;
+    var path = '/my/users/' + SUB_USER.id;
     var role = CLIENT.role.name;
 
     CLIENT.put(path, {
@@ -585,24 +720,40 @@ test('add role to user resource', function (t) {
 });
 
 
+test('add role to user resource - other', function (t) {
+    var path = '/my/users/' + SUB_USER.id;
+    var role = CLIENT.role.name;
+
+    OTHER.put(path, {
+        'role-tag': [role]
+    }, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
+test('add role to resource - other', function (t) {
+    var path = '/my/users';
+    var role = CLIENT.role.name;
+
+    OTHER.put(path, {
+        'role-tag': [role]
+    }, function (err, req, res, body) {
+        checkInvalidArgument(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
 test('add role to non-existent user resource', function (t) {
     var badPath = '/my/users/d26f4257-a795-4a7e-a360-e5441b39def0';
     var role = CLIENT.role.name;
 
     CLIENT.put(badPath, {
         'role-tag': [role]
-    }, function (err) {
-        t.deepEqual(err, {
-            message: 'd26f4257-a795-4a7e-a360-e5441b39def0 does not exist',
-            statusCode: 404,
-            restCode: 'ResourceNotFound',
-            name: 'ResourceNotFoundError',
-            body: {
-                code: 'ResourceNotFound',
-                message: 'd26f4257-a795-4a7e-a360-e5441b39def0 does not exist'
-            }
-        });
-
+    }, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
         t.end();
     });
 });
@@ -651,8 +802,9 @@ test('Update administrator role with policies fails', function (t) {
         policies: [POLICY_NAME]
     };
 
-    CLIENT.post('/my/roles/' + ADMIN_ROLE_ID, entry,
-        function (err, req, res, body) {
+    var path = '/my/roles/' + ADMIN_ROLE_ID;
+
+    CLIENT.post(path, entry, function (err, req, res, body) {
         t.ok(err);
         t.equal(res.statusCode, 409);
         t.ok(/administrator/i.test(body.message));
@@ -660,6 +812,25 @@ test('Update administrator role with policies fails', function (t) {
     });
 });
 
+
+test('Update administrator role with policies fails - other', function (t) {
+    var path = '/my/roles/' + ADMIN_ROLE_ID;
+
+    OTHER.post(path, {}, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
+test('delete administrator role - other', function (t) {
+    var url = '/my/roles/' + ADMIN_ROLE_ID;
+
+    OTHER.del(url, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
 
 test('delete administrator role', function (t) {
     var url = '/my/roles/' + ADMIN_ROLE_ID;
@@ -674,7 +845,7 @@ test('delete administrator role', function (t) {
 
 
 test('ListKeys (empty) OK', function (t) {
-    var p = util.format('/my/users/%s/keys', SUB_UUID);
+    var p = util.format('/my/users/%s/keys', SUB_USER.id);
 
     CLIENT.get(p, function (err, req, res, body) {
         t.ifError(err);
@@ -688,8 +859,18 @@ test('ListKeys (empty) OK', function (t) {
 });
 
 
+test('ListKeys (empty) - other', function (t) {
+    var p = util.format('/my/users/%s/keys', SUB_USER.id);
+
+    OTHER.get(p, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
 test('CreateKey (missing key)', function (t) {
-    var p = util.format('/my/users/%s/keys', SUB_UUID);
+    var p = util.format('/my/users/%s/keys', SUB_USER.id);
 
     CLIENT.post(p, {}, function (err) {
         t.ok(err);
@@ -706,7 +887,7 @@ test('CreateKey (named) OK', function (t) {
         key: KEY,
         name: 'id_rsa 1'
     };
-    var p = util.format('/my/users/%s/keys', SUB_UUID);
+    var p = util.format('/my/users/%s/keys', SUB_USER.id);
 
     CLIENT.post(p, key, function (err, req, res, body) {
         t.ifError(err);
@@ -738,13 +919,27 @@ test('CreateKey (named) OK', function (t) {
 });
 
 
+test('CreateKey (named) - other', function (t) {
+    var key = {
+        key: KEY,
+        name: 'id_rsa 1'
+    };
+    var p = util.format('/my/users/%s/keys', SUB_USER.id);
+
+    OTHER.post(p, key, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
 test('Create (named) key with duplicate name', function (t) {
     var key = {
         key: KEY_2,
         name: 'id_rsa 1'
     };
 
-    var p = util.format('/my/users/%s/keys', SUB_UUID);
+    var p = util.format('/my/users/%s/keys', SUB_USER.id);
 
     CLIENT.post(p, key, function (err, req, res, body) {
         t.ok(err);
@@ -760,7 +955,7 @@ test('Attempt to create with invalid key', function (t) {
         name: 'Not so valid'
     };
 
-    var p = util.format('/my/users/%s/keys', SUB_UUID);
+    var p = util.format('/my/users/%s/keys', SUB_USER.id);
 
     CLIENT.post(p, key, function (err, req, res, body) {
         t.ok(err);
@@ -773,24 +968,25 @@ test('Attempt to create with invalid key', function (t) {
 
 
 test('ListKeys OK', function (t) {
-    var p = util.format('/my/users/%s/keys', SUB_UUID);
+    var p = util.format('/my/users/%s/keys', SUB_USER.id);
 
     CLIENT.get(p, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
         t.ok(body);
-        t.ok(body.length);
-        body.forEach(function (k) {
-            checkKey(t, k);
-        });
+        t.equal(body.length, 1);
+
+        checkKey(t, body[0]);
+        t.equal(body[0].fingerprint, FINGERPRINT);
+
         t.end();
     });
 });
 
 
 test('GetKey OK', function (t) {
-    var p = util.format('/my/users/%s/keys/', SUB_UUID);
+    var p = util.format('/my/users/%s/keys/', SUB_USER.id);
     var url = p + encodeURIComponent(FINGERPRINT);
 
     CLIENT.get(url, function (err, req, res, body) {
@@ -804,14 +1000,46 @@ test('GetKey OK', function (t) {
 });
 
 
+test('GetKey - other', function (t) {
+    var p = util.format('/my/users/%s/keys/', SUB_USER.id);
+    var url = p + encodeURIComponent(FINGERPRINT);
+
+    OTHER.get(url, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
+test('DeleteKey - other', function (t) {
+    var p = util.format('/my/users/%s/keys/', SUB_USER.id);
+    var url = p + encodeURIComponent(FINGERPRINT);
+
+    OTHER.del(url, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
 test('DeleteKey OK', function (t) {
-    var p = util.format('/my/users/%s/keys/', SUB_UUID);
+    var p = util.format('/my/users/%s/keys/', SUB_USER.id);
     var url = p + encodeURIComponent(FINGERPRINT);
 
     CLIENT.del(url, function (err, req, res) {
         t.ifError(err);
         t.equal(res.statusCode, 204);
         common.checkHeaders(t, res.headers);
+        t.end();
+    });
+});
+
+
+test('delete role - other', function (t) {
+    var url = '/my/roles/' + ROLE_UUID;
+
+    OTHER.del(url, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
         t.end();
     });
 });
@@ -841,6 +1069,16 @@ test('delete second role', function (t) {
 });
 
 
+test('delete policy - other', function (t) {
+    var url = '/my/policies/' + POLICY_UUID;
+
+    OTHER.del(url, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
 test('delete policy', function (t) {
     var url = '/my/policies/' + POLICY_UUID;
 
@@ -853,8 +1091,18 @@ test('delete policy', function (t) {
 });
 
 
+test('delete user - other', function (t) {
+    var url = '/my/users/' + SUB_USER.id;
+
+    OTHER.del(url, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
 test('delete user', function (t) {
-    var url = '/my/users/' + SUB_UUID;
+    var url = '/my/users/' + SUB_USER.id;
 
     CLIENT.del(url, function (err, req, res) {
         t.ifError(err);
@@ -866,7 +1114,7 @@ test('delete user', function (t) {
 
 
 test('delete another user', function (t) {
-    var url = '/my/users/' + SUB_UUID_2;
+    var url = '/my/users/' + SUB_USER_2.id;
 
     CLIENT.del(url, function (err, req, res) {
         t.ifError(err);

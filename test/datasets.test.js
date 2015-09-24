@@ -21,6 +21,7 @@ var CLIENTS;
 var CLIENT;
 var SERVER;
 
+var RAW_DATASETS = {};
 var DATASET;
 
 
@@ -57,6 +58,39 @@ function checkDataset(t, dataset, version, path) {
 }
 
 
+function checkDatasetViewable(t, img, client) {
+    t.ok(img);
+    t.ok(client);
+
+    var ownerUuid = client.account.uuid;
+    var rawImg = RAW_DATASETS[img.id];
+
+    t.ok(rawImg);
+    t.equal(rawImg.state, 'active');
+    t.ok(rawImg.public || rawImg.owner === ownerUuid);
+}
+
+
+function getInaccessibleDataset(client) {
+    var accountUuid = client.account.uuid;
+
+    var inaccessibleImages = Object.keys(RAW_DATASETS).map(function (imgUuid) {
+        return RAW_DATASETS[imgUuid];
+    });
+
+    // some tests require a urn, so prefer that if available
+    inaccessibleImages = inaccessibleImages.filter(function (img) {
+        return img.urn;
+    }).concat(inaccessibleImages);
+
+    inaccessibleImages = inaccessibleImages.filter(function (img) {
+        return img.owner !== accountUuid && !img.public;
+    });
+
+    return inaccessibleImages[0];
+}
+
+
 // --- Tests
 
 
@@ -66,7 +100,15 @@ test('setup', function (t) {
         CLIENT  = clients.user;
         SERVER  = server;
 
-        t.end();
+        CLIENT.imgapi.listImages(function (err, imgs) {
+            t.ifError(err);
+
+            imgs.forEach(function (img) {
+                RAW_DATASETS[img.uuid] = img;
+            });
+
+            t.end();
+        });
     });
 });
 
@@ -84,14 +126,18 @@ test('ListDatasets OK (6.5)', function (t) {
         t.ok(body, 'GET /my/datasets body');
         t.ok(Array.isArray(body), 'GET /my/datasets body is an array');
         t.ok(body.length, 'GET /my/datasets body array has elements');
+
         body.forEach(function (d) {
             checkDataset(t, d, '6.5.0');
+            checkDatasetViewable(t, d, CLIENT);
         });
+
         // PUBAPI-838: Prevent exceptions when images haven't been imported
         // before running the tests:
         if (body[0]) {
             DATASET = body[0];
         }
+
         t.end();
     });
 });
@@ -122,12 +168,16 @@ test('ListDatasets OK', function (t) {
         t.ok(body, 'GET /my/datasets body');
         t.ok(Array.isArray(body), 'GET /my/datasets body is an array');
         t.ok(body.length, 'GET /my/datasets body array has elements');
+
         body.forEach(function (d) {
             checkDataset(t, d, '7.0.0');
+            checkDatasetViewable(t, d, CLIENT);
         });
+
         t.end();
     });
 });
+
 
 // PUBAPI-549
 test('ListImages OK', function (t) {
@@ -138,15 +188,18 @@ test('ListImages OK', function (t) {
         t.ok(body, 'GET /my/images body');
         t.ok(Array.isArray(body), 'GET /my/images body is an array');
         t.ok(body.length, 'GET /my/images body array has elements');
+
         body.forEach(function (d) {
             checkDataset(t, d, '7.0.0', '/my/images');
+            checkDatasetViewable(t, d, CLIENT);
         });
+
         t.end();
     });
 });
 
 
-test('Search datasets (7.0)', function (t) {
+test('Search datasets (7.0), no results', function (t) {
     CLIENT.get('/my/datasets?os=plan9', function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets error');
         t.equal(res.statusCode, 200, 'GET /my/datasets status');
@@ -154,6 +207,20 @@ test('Search datasets (7.0)', function (t) {
         t.ok(body, 'GET /my/datasets body');
         t.ok(Array.isArray(body), 'GET /my/datasets body is an array');
         t.ok(!body.length, 'GET /my/datasets body array has no elements');
+        t.end();
+    });
+});
+
+
+test('Search datasets (7.0), results', function (t) {
+    CLIENT.get('/my/datasets?os=smartos', function (err, req, res, body) {
+        t.ifError(err);
+
+        body.forEach(function (d) {
+            checkDataset(t, d, '7.0.0');
+            checkDatasetViewable(t, d, CLIENT);
+        });
+
         t.end();
     });
 });
@@ -172,30 +239,20 @@ test('GetDataset OK', function (t) {
 
 
 test('GetDataset should not return non-permission datasets', function (t) {
-    CLIENT.imgapi.listImages(function (err, images) {
-        t.ifError(err);
+    var inaccessibleImage = getInaccessibleDataset(CLIENT);
 
-        var accountUuid = CLIENT.account.uuid;
-        var inaccessibleImage = images.filter(function (img) {
-            return img.owner !== accountUuid && !img.public;
-        })[0];
+    var path = '/my/datasets/' + inaccessibleImage.uuid;
+    return CLIENT.get(path, function (err2, req, res, body) {
+        t.ok(err2);
 
-        if (!inaccessibleImage) {
-            // can't continue test, so move on
-            return t.end();
-        }
+        t.equal(res.statusCode, 404);
 
-        var path = '/my/datasets/' + inaccessibleImage.uuid;
-        return CLIENT.get(path, function (err2, req, res, body) {
-            t.ok(err2);
-
-            t.deepEqual(body, {
-                code: 'ResourceNotFound',
-                message: 'image not found'
-            });
-
-            t.end();
+        t.deepEqual(body, {
+            code: 'ResourceNotFound',
+            message: 'image not found'
         });
+
+        t.end();
     });
 });
 
@@ -211,6 +268,35 @@ test('Get Image By URN OK', function (t) {
             checkDataset(t, body, '7.0.0', '/my/images');
             t.end();
         });
+});
+
+
+test('Get Image By URN should not return non-permission dataset', function (t) {
+    var inaccessibleImage = getInaccessibleDataset(CLIENT);
+    var urn = inaccessibleImage.urn;
+
+    if (!urn) {
+        // can't go any further here
+        return t.end();
+    }
+
+    var path = '/my/images/' + encodeURIComponent(urn);
+
+    return CLIENT.get(path, function (err, req, res, body) {
+        t.ok(err);
+
+        t.equal(res.statusCode, 404);
+
+        t.equal(err.restCode, 'ResourceNotFound');
+        t.ok(err.message);
+
+        t.deepEqual(body, {
+            code: 'ResourceNotFound',
+            message: urn + ' not found'
+        });
+
+        t.end();
+    });
 });
 
 

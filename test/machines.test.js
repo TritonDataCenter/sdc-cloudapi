@@ -345,7 +345,6 @@ test('CreateMachine using network without permissions', function (t) {
 });
 
 
-
 test('Create machine with invalid parameters', function (t) {
     var obj = {
         image: IMAGE_UUID,
@@ -714,7 +713,6 @@ test('Firewall Rules tests', function (t) {
         t.end();
     });
 });
-
 
 
 test('Delete tests', function (t) {

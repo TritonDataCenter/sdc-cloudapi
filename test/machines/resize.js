@@ -31,7 +31,7 @@ function (suite, client, machine, pkgDown, pkgSame, pkgUp, cb) {
 
         return client.post('/my/machines/' + machine, {
             action: 'resize',
-            'package': pkgUp.name
+            'package': pkgUp.uuid
         }, function (err) {
             t.ok(err);
 
@@ -60,7 +60,7 @@ function (suite, client, machine, pkgDown, pkgSame, pkgUp, cb) {
         console.log('Resizing to package: %s', pkgSame.name);
         client.post('/my/machines/' + machine, {
             action: 'resize',
-            'package': pkgSame.name
+            'package': pkgSame.uuid
         }, function (err) {
             t.ifError(err, 'Resize machine error');
             t.end();
@@ -78,12 +78,13 @@ function (suite, client, machine, pkgDown, pkgSame, pkgUp, cb) {
         console.log('Resizing to package: %s', pkgDown.name);
         client.post('/my/machines/' + machine, {
             action: 'resize',
-            'package': pkgDown.name
+            'package': pkgDown.uuid
         }, function (err) {
             t.ifError(err, 'Resize machine error');
             t.end();
         });
     });
+
     suite.test('Wait For Resized to down', function (t) {
         waitAndCheckResize(t, pkgDown);
     });

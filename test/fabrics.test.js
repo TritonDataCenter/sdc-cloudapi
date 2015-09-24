@@ -15,6 +15,8 @@ var common = require('./common');
 var test = require('tape').test;
 var vasync = require('vasync');
 
+var checkNotFound = common.checkNotFound;
+
 
 // --- Globals
 
@@ -24,6 +26,7 @@ var CHECK_INTERVAL = 500;
 // Maximum
 var CHECK_TIMEOUT = 30000;
 var CLIENT;
+var OTHER;
 var CLIENTS;
 var CREATED = {
     nets: [],
@@ -73,7 +76,18 @@ var TEST_OPTS = {
 // --- Helpers
 
 
-function afterFindInList(t, params, callback, err, req, res, body) {
+/**
+ * Some attributes don't exist in the request, but do in the results. When
+ * comparing request with results, we want to add these attributes in.
+ */
+function addNetOutputAttr(net) {
+    net = clone(net);
+    net.internet_nat = true;
+    return net;
+}
+
+
+function afterFindInList(t, legitUuids, params, callback, err, req, res, body) {
     var found;
 
     t.ifError(err, 'GET error');
@@ -93,17 +107,20 @@ function afterFindInList(t, params, callback, err, req, res, body) {
 
     t.ok(body.length, 'GET body array has elements');
 
-    body.forEach(function (v) {
-        if (v.name === params.name) {
-            found = v;
+    body.forEach(function (net) {
+        t.notEqual(legitUuids.indexOf(net.id), -1,
+            'cloudapi net listing contains networks it should not');
+
+        if (net.name === params.name) {
+            found = net;
 
             // Cover the case (like the default network) where we don't
             // know the id of the thing we're trying to compare:
-            if (v.id && !params.id) {
-                params.id = v.id;
+            if (net.id && !params.id) {
+                params.id = net.id;
             }
 
-            t.deepEqual(v, params, 'params');
+            t.deepEqual(net, params, 'params');
         }
     });
 
@@ -165,7 +182,14 @@ function findNetInList(t, params, callback) {
     assert.object(params, 'params');
     assert.string(params.name, 'params.name');
 
-    CLIENT.get('/my/networks', afterFindInList.bind(null, t, params, callback));
+    var accountUuid = CLIENT.account.uuid;
+
+    findViewableNetworks(t, accountUuid, function (err, nets) {
+        var viewableUuids = getViewableUuids(t, nets, accountUuid);
+
+        CLIENT.get('/my/networks', afterFindInList.bind(null, t,
+                    viewableUuids, params, callback));
+    });
 }
 
 
@@ -178,8 +202,36 @@ function findNetInFabricList(t, params, callback) {
     assert.number(params.vlan_id, 'params.vlan_id');
     assert.string(params.name, 'params.name');
 
-    CLIENT.get(fmt('/my/fabrics/default/vlans/%d/networks', params.vlan_id),
-            afterFindInList.bind(null, t, params, callback));
+    var accountUuid = CLIENT.account.uuid;
+
+    // check that every network in body should be viewable by this user
+    CLIENT.napi.listFabricNetworks(accountUuid, params.vlan_id, {},
+            function (err, nets) {
+        t.ifError(err);
+
+        var viewableUuids = getViewableUuids(t, nets, accountUuid);
+
+        CLIENT.get(fmt('/my/fabrics/default/vlans/%d/networks', params.vlan_id),
+            afterFindInList.bind(null, t, viewableUuids, params, callback));
+    });
+}
+
+
+/**
+ * Fetch all networks and pools from napi that a given account should be able to
+ * see.
+ */
+function findViewableNetworks(t, accountUuid, cb) {
+    // check that every network in body should be viewable by this user
+    CLIENT.napi.listNetworks({ provisionable_by: accountUuid },
+            function (err, nets) {
+        t.ifError(err);
+
+        CLIENT.napi.listNetworkPools(function (err2, pools) {
+            t.ifError(err2);
+            cb(null, nets.concat(pools));
+        });
+    });
 }
 
 
@@ -191,8 +243,64 @@ function findVLANinList(t, params, callback) {
     assert.object(params, 'params');
     assert.number(params.vlan_id, 'params.vlan_id');
 
-    CLIENT.get('/my/fabrics/default/vlans',
-            afterFindInList.bind(null, t, params, callback));
+    var accountUuid = CLIENT.account.uuid;
+
+    CLIENT.napi.listFabricVLANs(accountUuid, {}, function (err, vlans) {
+        t.ifError(err);
+
+        var viewableIds = vlans.map(function (vlan) {
+            t.equal(vlan.owner_uuid, accountUuid, 'vlan belongs to account');
+            return vlan.vlan_id;
+        });
+
+        var path = '/my/fabrics/default/vlans';
+        CLIENT.get(path, function (err2, req, res, body) {
+            t.ifError(err2, 'GET error');
+            t.equal(res.statusCode, 200, 'GET status');
+            common.checkHeaders(t, res.headers);
+            common.checkReqId(t, res.headers);
+
+            t.ok(Array.isArray(body), 'GET body is an array');
+            t.ok(body.length, 'GET body array has elements');
+
+            var found = body.filter(function (vlan) {
+                // this check is more a sanity check than a proper ownership
+                // check, since VLANs from different owners can have the same
+                // ids
+                t.notEqual(viewableIds.indexOf(vlan.vlan_id), -1,
+                    'cloudapi vlan listing contains vlans it should not');
+
+                if (vlan.name === params.name) {
+                    t.deepEqual(vlan, params, 'params');
+                    return true;
+                }
+
+                return false;
+            })[0];
+
+            t.ok(found, 'found ' + params.name);
+
+            t.end();
+        });
+    });
+}
+
+
+/**
+ * Get a list of network UUIDs which this user is allowed to read.
+ */
+function getViewableUuids(t, nets, accountUuid) {
+    var viewableUuids = nets.filter(function (net) {
+        if (net.owner_uuids && net.owner_uuids.indexOf(accountUuid) === -1) {
+            t.ok(false, 'napi listing contains networks it should not');
+            return false;
+        }
+        return true;
+    }).map(function (net) {
+        return net.uuid;
+    });
+
+    return viewableUuids;
 }
 
 
@@ -257,22 +365,16 @@ function waitForDefaultVLAN(t) {
 }
 
 
-function addNetOutputAttr(net) {
-    net = clone(net);
-    net.internet_nat = true;
-    return net;
-}
-
-
 // --- Tests
 
 
 test('setup', TEST_OPTS, function (t) {
-    common.setup(function (_, _clients, _server) {
-        CLIENTS = _clients;
-        SERVER  = _server;
+    common.setup(function (_, clients, server) {
+        CLIENTS = clients;
+        SERVER  = server;
 
-        CLIENT = _clients.user;
+        CLIENT = clients.user;
+        OTHER  = clients.other;
 
         t.end();
     });
@@ -314,8 +416,37 @@ test('VLANs', TEST_OPTS, function (tt) {
     });
 
 
+    tt.test('get fabric VLAN - other', function (t) {
+        OTHER.get('/my/fabrics/default/vlans/' + PARAMS.vlan.vlan_id,
+                function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+
     tt.test('VLAN exists in list', function (t) {
         findVLANinList(t, PARAMS.vlan);
+    });
+
+
+    tt.test('VLAN exists in list - other', function (t) {
+        OTHER.get('/my/fabrics/default/vlans', function (err, req, res, body) {
+            t.ifError(err);
+
+            // there's a race here between this test running and a default VLAN
+            // being created for the new OTHER user (happens to all users)
+            if (body.length === 1) {
+                t.deepEqual(body, [ {
+                    name: 'My-Fabric-VLAN',
+                    vlan_id: 2
+                } ]);
+            } else {
+                t.equal(body.length, 0);
+            }
+
+            t.end();
+        });
     });
 
 
@@ -337,6 +468,29 @@ test('VLANs', TEST_OPTS, function (tt) {
             PARAMS.vlan.description = updateParams.description;
             t.deepEqual(body, PARAMS.vlan, 'response');
 
+            t.end();
+        });
+    });
+
+
+    tt.test('update fabric VLAN - other', function (t) {
+        var updateParams = {
+            name: 'new_vlan_name',
+            description: 'new description'
+        };
+
+        OTHER.put('/my/fabrics/default/vlans/' + PARAMS.vlan.vlan_id,
+                updateParams, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+
+    tt.test('delete fabric VLAN - other', function (t) {
+        OTHER.del('/my/fabrics/default/vlans/' + PARAMS.vlan.vlan_id,
+                function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
             t.end();
         });
     });
@@ -447,6 +601,16 @@ test('networks', TEST_OPTS, function (tt) {
 
     var nets = [];
 
+    tt.test('create fabric network 0 - other', function (t) {
+        OTHER.post(fmt('/my/fabrics/default/vlans/%d/networks',
+                PARAMS.vlan.vlan_id), PARAMS.nets[0],
+                function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+
     tt.test('create fabric network 0', function (t) {
         CLIENT.post(fmt('/my/fabrics/default/vlans/%d/networks',
                 PARAMS.vlan.vlan_id), PARAMS.nets[0],
@@ -494,6 +658,20 @@ test('networks', TEST_OPTS, function (tt) {
             t.deepEqual(body, addNetOutputAttr(PARAMS.nets[0]), 'response');
 
             return t.end();
+        });
+    });
+
+
+    tt.test('get fabric network 0 - other', function (t) {
+        if (!nets[0]) {
+            t.end();
+            return;
+        }
+
+        OTHER.get(fmt('/my/fabrics/default/vlans/%d/networks/%s',
+                PARAMS.vlan.vlan_id, nets[0]), function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
         });
     });
 
@@ -565,11 +743,20 @@ test('networks', TEST_OPTS, function (tt) {
             t.equal(res.statusCode, 200, 'get fabric VLAN');
             common.checkHeaders(t, res.headers);
             common.checkReqId(t, res.headers);
-            if (body) {
+
+            var accountUuid = CLIENT.account.uuid;
+
+            findViewableNetworks(t, accountUuid, function (err2, networks) {
+                t.ifError(err2);
+
+                var viewableUuids = getViewableUuids(t, networks, accountUuid);
+
                 var fabricNets = [];
                 var nonFabricNets = [];
 
                 for (var n in body) {
+                    t.notEqual(viewableUuids.indexOf(body[n].id), -1);
+
                     if (body[n].fabric) {
                         fabricNets.push(body[n]);
                     } else {
@@ -582,9 +769,9 @@ test('networks', TEST_OPTS, function (tt) {
                     'only fabric networks returned');
                 t.deepEqual(nonFabricNets, [],
                     'no non-fabric networks returned');
-            }
 
-            t.end();
+                t.end();
+            });
         });
     });
 
@@ -599,8 +786,7 @@ test('networks', TEST_OPTS, function (tt) {
         };
 
         CLIENT.post(fmt('/my/fabrics/default/vlans/%d/networks',
-                PARAMS.vlan.vlan_id), params,
-                function (err, req, res, body) {
+                PARAMS.vlan.vlan_id), params, function (err, req, res, body) {
             t.ok(err, 'expected error');
 
             if (err) {
@@ -619,6 +805,22 @@ test('networks', TEST_OPTS, function (tt) {
         });
     });
 
+
+    tt.test('create fabric network: overlapping - other', function (t) {
+        var params = {
+            name: 'overlap_network',
+            provision_start_ip: '10.5.1.0',
+            provision_end_ip: '10.5.1.250',
+            resolvers: ['8.8.8.8'],
+            subnet: '10.5.1.0/24'
+        };
+
+        OTHER.post(fmt('/my/fabrics/default/vlans/%d/networks',
+                PARAMS.vlan.vlan_id), params, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
 });
 
 
@@ -765,6 +967,32 @@ test('default fabric', TEST_OPTS, function (tt) {
         changeDefaultNet(t, CREATED.nets[0]);
     });
 
+
+    tt.test('change default network - other', function (t) {
+        if (!DEFAULT_NET) {
+            t.fail('default vlan not found: skipping test');
+            t.end();
+            return;
+        }
+
+        OTHER.put('/my/config', {
+            default_network: CREATED.nets[0].id
+        }, function (err, req, res, body) {
+            t.ok(err);
+            t.equal(res.statusCode, 409);
+
+            t.equal(err.restCode, 'InvalidArgument');
+            t.ok(err.message);
+
+            t.equal(body.code, 'InvalidArgument');
+            t.ok(body.message);
+
+            t.end();
+        });
+    });
+
+
+
     tt.test('confirm default network change', function (t) {
         if (!DEFAULT_NET) {
             t.fail('default vlan not found: skipping test');
@@ -800,6 +1028,23 @@ test('default fabric', TEST_OPTS, function (tt) {
             }
 
             return t.end();
+        });
+    });
+
+
+    tt.test('attempt to delete default network - other', function (t) {
+        if (!DEFAULT_NET) {
+            t.fail('default vlan not found: skipping test');
+            t.end();
+            return;
+        }
+
+        var net = CREATED.nets[0];
+
+        OTHER.del(fmt('/my/fabrics/default/vlans/%d/networks/%s',
+                net.vlan_id, net.id), function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
         });
     });
 

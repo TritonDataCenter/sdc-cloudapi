@@ -26,10 +26,30 @@ var common = require('./common');
 var KEY_NAME = 'cloudapi.test.key.delete.if.seen';
 
 var CA_ZONE;
+var FW_RULE;
 
 var CLIENTS;
 var CLIENT;
+var OTHER;
 var SERVER;
+
+
+// --- Helpers
+
+
+// XXX do we really want forbidden over notfound?
+function checkForbidden(t, err, req, res, body) {
+    t.ok(err);
+    t.ok(body);
+
+    t.equal(err.restCode, 'Forbidden');
+    t.ok(err.message);
+
+    t.equal(body.code, 'Forbidden');
+    t.ok(body.message);
+
+    t.equal(res.statusCode, 403);
+}
 
 
 // --- Tests
@@ -39,6 +59,7 @@ test('setup', function (t) {
     common.setup('~7.1', function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
+        OTHER   = clients.other;
         SERVER  = server;
 
         CLIENT.ufds.getUser('admin', function (err, account) {
@@ -97,8 +118,7 @@ test('GetMachine populates networks', function (t) {
 
 
 
-
-test('ListFirewallRuleMachines populates networks', function (t) {
+test('Add firewall rule OK', function (t) {
     CLIENT.post('/my/fwrules', {
         description: 'rule from cloudapi test. Delete if found',
         rule: 'FROM vm ' + CA_ZONE.id + ' TO subnet 10.99.99.0/24 ' +
@@ -107,21 +127,94 @@ test('ListFirewallRuleMachines populates networks', function (t) {
         t.ifError(err);
         t.equal(res.statusCode, 201);
 
-        var path = '/my/fwrules/' + fwRule.id + '/machines';
-        CLIENT.get(path, function (err2, req2, res2, zones) {
-            t.ifError(err2);
-            t.equal(res.statusCode, 201);
+        FW_RULE = fwRule;
 
-            var zone = zones[0];
-            t.equal(zone.id, CA_ZONE.id);
-            t.ok(typeof (zone.networks[0]), 'string');
+        t.end();
+    });
+});
 
-            CLIENT.del('/my/fwrules/' + fwRule.id, function (err3, req3, res3) {
-                t.ifError(err3);
-                t.equal(res3.statusCode, 204);
-                t.end();
-            });
-        });
+
+
+test('ListFirewallRuleMachines populates networks', function (t) {
+    var path = '/my/fwrules/' + FW_RULE.id + '/machines';
+    CLIENT.get(path, function (err, req, res, zones) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+
+        t.equal(zones.length, 1);
+
+        var zone = zones[0];
+        t.equal(zone.id, CA_ZONE.id);
+        t.ok(typeof (zone.networks[0]), 'string');
+
+        t.end();
+    });
+});
+
+
+
+test('ListFirewallRuleMachines - other', function (t) {
+    var path = '/my/fwrules/' + FW_RULE.id + '/machines';
+    OTHER.get(path, function (err, req, res, body) {
+        checkForbidden(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
+
+test('Delete firewall rule - other', function (t) {
+    OTHER.del('/my/fwrules/' + FW_RULE.id, function (err, req, res, body) {
+        checkForbidden(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
+
+test('Delete firewall rule OK', function (t) {
+    CLIENT.del('/my/fwrules/' + FW_RULE.id, function (err, req, res) {
+        t.ifError(err);
+        t.equal(res.statusCode, 204);
+        t.end();
+    });
+});
+
+
+
+test('ListFirewallRuleMachines populates networks - other', function (t) {
+    OTHER.post('/my/fwrules', {
+        description: 'rule from cloudapi test. Delete if found',
+        rule: 'FROM vm ' + CA_ZONE.id + ' TO subnet 10.99.99.0/24 ' +
+                'BLOCK tcp PORT 25'
+    }, function (err, req, res, fwRule) {
+        t.ifError(err);
+        t.equal(res.statusCode, 201);
+
+        FW_RULE = fwRule;
+
+        t.end();
+    });
+});
+
+
+
+test('ListFirewallRuleMachines of unowned machine', function (t) {
+    var path = '/my/fwrules/' + FW_RULE.id + '/machines';
+    OTHER.get(path, function (err, req, res, zones) {
+        t.ifError(err);
+        t.equal(zones.length, 0);
+        t.end();
+    });
+});
+
+
+
+test('Delete firewall rule OK - other', function (t) {
+    OTHER.del('/my/fwrules/' + FW_RULE.id, function (err, req, res) {
+        t.ifError(err);
+        t.equal(res.statusCode, 204);
+        t.end();
     });
 });
 
