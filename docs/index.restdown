@@ -3758,9 +3758,10 @@ Create machine with tags
 ### User-script
 
 The special value `metadata.user-script` can be specified to provide a custom
-script which will be executed by the machine right after creation.  This script
-can be specified using the command line option `--script`, which should be an
-absolute path to the file we want to upload to our machine.
+script which will be executed by the machine right after creation and on every
+machine reboot.  This script can be specified using the command line option
+`--script`, which should be an absolute path to the file we want to upload to
+our machine.
 
 
 ## StopMachine (POST /:login/machines/:id?action=stop)
