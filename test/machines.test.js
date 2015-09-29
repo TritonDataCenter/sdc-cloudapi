@@ -14,6 +14,7 @@ var restify = require('restify');
 var common = require('./common');
 var uuid = common.uuid;
 var addPackage = common.addPackage;
+var checkNotFound = common.checkNotFound;
 var machinesCommon = require('./machines/common');
 var checkMachine = machinesCommon.checkMachine;
 
@@ -90,6 +91,7 @@ var MACHINE_UUID;
 
 var CLIENTS;
 var CLIENT;
+var OTHER;
 var SERVER;
 
 
@@ -100,6 +102,7 @@ test('setup', function (t) {
     common.setup(function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
+        OTHER   = clients.other;
         SERVER  = server;
 
         addPackage1();
@@ -525,11 +528,25 @@ test('ListMachines all', function (t) {
 });
 
 
+test('ListMachines all - other', function (t) {
+    OTHER.get('/my/machines', function (err, req, res, body) {
+        t.ifError(err);
+        t.deepEqual(body, []);
+        t.end();
+    });
+});
+
+
 // Fixed by PUBAPI-774, again!
 test('ListMachines (filter by dataset)', function (t) {
     searchAndCheck('image=' + IMAGE_UUID, t, function (m) {
         t.equal(m.image, IMAGE_UUID);
     });
+});
+
+
+test('ListMachines (filter by dataset) - other', function (t) {
+    searchAndCheckOther('image=' + IMAGE_UUID, t);
 });
 
 
@@ -540,10 +557,32 @@ test('ListMachines (filter by state)', function (t) {
 });
 
 
+test('ListMachines (filter by state) - other', function (t) {
+    searchAndCheckOther('state=running', t);
+});
+
+
+test('ListMachines (filter by state)', function (t) {
+    searchAndCheck('state=running', t, function (m) {
+        t.equal(m.state, 'running');
+    });
+});
+
+
+test('ListMachines (filter by state) - other', function (t) {
+    searchAndCheckOther('state=running', t);
+});
+
+
 test('ListMachines (filter by memory)', function (t) {
     searchAndCheck('memory=256', t, function (m) {
         t.equal(m.memory, 256);
     });
+});
+
+
+test('ListMachines (filter by memory) - other', function (t) {
+    searchAndCheckOther('memory=256', t);
 });
 
 
@@ -553,6 +592,11 @@ test('ListMachines (filter by package)', function (t) {
     searchAndCheck('package=' + pkgName, t, function (m) {
         t.equal(m['package'], pkgName);
     });
+});
+
+
+test('ListMachines (filter by package) - other', function (t) {
+    searchAndCheckOther('package=' + SDC_256.name, t);
 });
 
 
@@ -566,10 +610,15 @@ test('ListMachines (filter by smartmachine type)', function (t) {
 });
 
 
+test('ListMachines (filter by smartmachine type) - other', function (t) {
+    searchAndCheckOther('type=smartmachine', t);
+});
+
+
 test('ListMachines (filter by virtualmachine type)', function (t) {
     var path = '/my/machines?type=virtualmachine';
 
-    return CLIENT.get(path, function (err, req, res, body) {
+    CLIENT.get(path, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -586,6 +635,11 @@ test('ListMachines (filter by virtualmachine type)', function (t) {
 
         t.end();
     });
+});
+
+
+test('ListMachines (filter by virtualmachine type) - other', function (t) {
+    searchAndCheckOther('type=virtualmachine', t);
 });
 
 
@@ -619,6 +673,14 @@ test('Get Machine', function (t) {
 });
 
 
+test('Get Machine - other', function (t) {
+    OTHER.get('/my/machines/' + MACHINE_UUID, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
 test('Get Machine, including credentials', function (t) {
     var url = '/my/machines/' + MACHINE_UUID + '?credentials=true';
 
@@ -641,7 +703,7 @@ test('Get Machine, including credentials', function (t) {
 
 test('Stop test', function (t) {
     var stopTest = require('./machines/stop');
-    stopTest(t, CLIENT, MACHINE_UUID, function () {
+    stopTest(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -649,7 +711,7 @@ test('Stop test', function (t) {
 
 test('Start test', function (t) {
     var startTest = require('./machines/start');
-    startTest(t, CLIENT, MACHINE_UUID, function () {
+    startTest(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -657,7 +719,7 @@ test('Start test', function (t) {
 
 test('Reboot test', function (t) {
     var rebootTest = require('./machines/reboot');
-    rebootTest(t, CLIENT, MACHINE_UUID, function () {
+    rebootTest(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -677,7 +739,8 @@ test('Resize machine to inactive package', function (t) {
 
 test('Resize machine tests', function (t) {
     var resizeTest = require('./machines/resize');
-    resizeTest(t, CLIENT, MACHINE_UUID, SDC_128, SDC_256, SDC_512, function () {
+    resizeTest(t, CLIENT, OTHER, MACHINE_UUID, SDC_128, SDC_256, SDC_512,
+            function () {
         t.end();
     });
 });
@@ -685,7 +748,7 @@ test('Resize machine tests', function (t) {
 
 test('Tags tests', function (t) {
     var testTags = require('./machines/tags');
-    testTags(t, CLIENT, MACHINE_UUID, function () {
+    testTags(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -693,7 +756,7 @@ test('Tags tests', function (t) {
 
 test('Metadata tests', function (t) {
     var testMetadata = require('./machines/metadata');
-    testMetadata(t, CLIENT, MACHINE_UUID, function () {
+    testMetadata(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -701,7 +764,7 @@ test('Metadata tests', function (t) {
 
 test('Snapshots tests', function (t) {
     var testSnapshots = require('./machines/snapshots');
-    testSnapshots(t, CLIENT, MACHINE_UUID, function () {
+    testSnapshots(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -709,7 +772,7 @@ test('Snapshots tests', function (t) {
 
 test('Firewall Rules tests', function (t) {
     var testFirewallRules = require('./machines/firewall-rules');
-    testFirewallRules(t, CLIENT, MACHINE_UUID, function () {
+    testFirewallRules(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -717,7 +780,7 @@ test('Firewall Rules tests', function (t) {
 
 test('Delete tests', function (t) {
     var deleteTest = require('./machines/delete');
-    deleteTest(t, CLIENT, MACHINE_UUID, function () {
+    deleteTest(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -773,6 +836,16 @@ test('machine audit', function (t) {
 });
 
 
+test('machine audit - other', function (t) {
+    var p = '/my/machines/' + MACHINE_UUID + '/audit';
+
+    OTHER.get(p, function (err, req, res, body) {
+        checkNotFound(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
 test('ListMachines tombstone', function (t) {
     CLIENT.get('/my/machines?tombstone=20', function (err, req, res, body) {
         t.ifError(err, 'GET /my/machines error');
@@ -780,10 +853,17 @@ test('ListMachines tombstone', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body, 'GET /my/machines body');
         t.ok(Array.isArray(body), 'GET /my/machines body is array');
-        t.ok(body.length, 'GET /my/machines list is not empty');
-        t.ok(body.some(function (m) {
-            return (m.id === MACHINE_UUID);
-        }));
+        t.equal(body.length, 1, 'GET /my/machines list is not empty');
+        t.equal(body[0].id, MACHINE_UUID);
+        t.end();
+    });
+});
+
+
+test('ListMachines tombstone - other', function (t) {
+    OTHER.get('/my/machines?tombstone=20', function (err, req, res, body) {
+        t.ifError(err);
+        t.deepEqual(body, []);
         t.end();
     });
 });
@@ -997,7 +1077,7 @@ function deleteMachine(t) {
 
 
 function searchAndCheck(query, t, checkAttr) {
-    return CLIENT.get('/my/machines?' + query, function (err, req, res, body) {
+    CLIENT.get('/my/machines?' + query, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -1010,6 +1090,15 @@ function searchAndCheck(query, t, checkAttr) {
             checkAttr(m);
         });
 
+        t.end();
+    });
+}
+
+
+function searchAndCheckOther(query, t, checkAttr) {
+    OTHER.get('/my/machines?' + query, function (err, req, res, body) {
+        t.ifError(err);
+        t.deepEqual(body, []);
         t.end();
     });
 }

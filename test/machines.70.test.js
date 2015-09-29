@@ -30,6 +30,7 @@ var KVM_MACHINE_UUID;
 
 var CLIENTS;
 var CLIENT;
+var OTHER;
 var SERVER;
 
 
@@ -40,6 +41,7 @@ test('setup', function (t) {
     common.setup('~7.0', function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
+        OTHER   = clients.other;
         SERVER  = server;
 
         t.end();
@@ -182,7 +184,7 @@ test('Get Machine,  with Firewall Enabled', function (t) {
 
 test('Rename machine tests', function (t) {
     var renameTest = require('./machines/rename');
-    renameTest(t, CLIENT, MACHINE_UUID, function () {
+    renameTest(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -190,7 +192,7 @@ test('Rename machine tests', function (t) {
 
 test('Firewall tests', function (t) {
     var firewallTest = require('./machines/firewall');
-    firewallTest(t, CLIENT, MACHINE_UUID, function () {
+    firewallTest(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -198,7 +200,7 @@ test('Firewall tests', function (t) {
 
 test('Delete tests', function (t) {
     var deleteTest = require('./machines/delete');
-    deleteTest(t, CLIENT, MACHINE_UUID, function () {
+    deleteTest(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -275,7 +277,7 @@ test('Wait For KVM machine Running', function (t) {
 test('Delete KVM tests', function (t) {
     if (KVM_MACHINE_UUID) {
         var deleteTest = require('./machines/delete');
-        deleteTest(t, CLIENT, KVM_MACHINE_UUID, function () {
+        deleteTest(t, CLIENT, OTHER, KVM_MACHINE_UUID, function () {
             t.end();
         });
     } else {

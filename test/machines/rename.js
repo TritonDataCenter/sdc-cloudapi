@@ -8,17 +8,32 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
-var uuid = require('../common').uuid;
+var common = require('../common');
 var waitForJob = require('./common').waitForJob;
+
+var uuid = common.uuid;
+var checkNotFound = common.checkNotFound;
 
 
 // --- Tests
 
 
-module.exports = function (suite, client, machine, callback) {
+module.exports = function (suite, client, other, machine, callback) {
     if (!machine) {
         return callback();
     }
+
+
+    suite.test('Rename Machine - other', function (t) {
+        other.post('/my/machines/' + machine, {
+            action: 'rename',
+            name: 'b' + uuid().substr(0, 7)
+        }, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
 
     suite.test('Rename Machine', function (t) {
         client.post('/my/machines/' + machine, {
@@ -49,6 +64,7 @@ module.exports = function (suite, client, machine, callback) {
             });
         });
     });
+
 
     return callback();
 };

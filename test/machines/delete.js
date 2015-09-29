@@ -11,20 +11,32 @@
 var common = require('../common');
 var waitForJob = require('./common').waitForJob;
 
+var checkHeaders = common.checkHeaders;
+var checkNotFound = common.checkNotFound;
+
 
 // --- Tests
 
 
-module.exports = function (suite, client, machine, callback) {
+module.exports = function (suite, client, other, machine, callback) {
     if (!machine) {
         return callback();
     }
+
+
+    suite.test('DeleteMachine - other', function (t) {
+        other.del('/my/machines/' + machine, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
 
     suite.test('DeleteMachine', function (t) {
         client.del('/my/machines/' + machine, function (err, req, res) {
             t.ifError(err, 'DELETE /my/machines error');
             t.equal(res.statusCode, 204, 'DELETE /my/machines status');
-            common.checkHeaders(t, res.headers);
+            checkHeaders(t, res.headers);
             t.end();
         });
     });
@@ -64,7 +76,7 @@ module.exports = function (suite, client, machine, callback) {
                     }
 
                     t.equal(res.statusCode, 410, 'DELETE /my/machines/ status');
-                    common.checkHeaders(t, res.headers);
+                    checkHeaders(t, res.headers);
 
                     t.end();
                 });

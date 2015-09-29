@@ -11,6 +11,9 @@
 var common = require('../common');
 var waitForJob = require('./common').waitForJob;
 
+var checkHeaders = common.checkHeaders;
+var checkNotFound = common.checkNotFound;
+
 
 // --- Helpers
 
@@ -25,10 +28,19 @@ function checkSnapshot(t, snap) {
 // --- Tests
 
 
-module.exports = function (suite, client, machine, callback) {
+module.exports = function (suite, client, other, machine, callback) {
     if (!machine) {
         return callback();
     }
+
+    suite.test('Take Snapshot - other', function (t) {
+        var url = '/my/machines/' + machine + '/snapshots';
+        other.post(url, {}, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
 
     var snapshot;
 
@@ -90,6 +102,19 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
+    suite.test('List Snapshots - other', function (t) {
+        if (snapshot) {
+            var url = '/my/machines/' + machine + '/snapshots';
+            other.get(url, function (err, req, res, body) {
+                checkNotFound(t, err, req, res, body);
+                t.end();
+            });
+        } else {
+            t.end();
+        }
+    });
+
+
     suite.test('Get Snapshot', function (t) {
         if (snapshot) {
             t.ok(snapshot.name, 'Snapshot name OK');
@@ -100,6 +125,34 @@ module.exports = function (suite, client, machine, callback) {
                 common.checkHeaders(t, res.headers);
                 t.ok(body, 'snapshot body');
                 checkSnapshot(t, body);
+                t.end();
+            });
+        } else {
+            t.end();
+        }
+    });
+
+
+    suite.test('Get Snapshot - other', function (t) {
+        if (snapshot) {
+            t.ok(snapshot.name, 'Snapshot name OK');
+            var url = '/my/machines/' + machine + '/snapshots/' + snapshot.name;
+            other.get(url, function (err, req, res, body) {
+                checkNotFound(t, err, req, res, body);
+                t.end();
+            });
+        } else {
+            t.end();
+        }
+    });
+
+
+    suite.test('Rollback Snapshot - other', function (t) {
+        if (snapshot) {
+            t.ok(snapshot.name, 'Snapshot name OK');
+            var url = '/my/machines/' + machine + '/snapshots/' + snapshot.name;
+            other.post(url, {}, function (err, req, res, body) {
+                checkNotFound(t, err, req, res, body);
                 t.end();
             });
         } else {
@@ -141,6 +194,20 @@ module.exports = function (suite, client, machine, callback) {
                     t.ifError(err2, 'Check state error');
                     t.end();
                 });
+            });
+        } else {
+            t.end();
+        }
+    });
+
+
+    suite.test('Delete snapshot - other', function (t) {
+        if (snapshot) {
+            t.ok(snapshot.name, 'Snapshot name OK');
+            var url = '/my/machines/' + machine + '/snapshots/' + snapshot.name;
+            other.del(url, function (err, req, res, body) {
+                checkNotFound(t, err, req, res, body);
+                t.end();
             });
         } else {
             t.end();

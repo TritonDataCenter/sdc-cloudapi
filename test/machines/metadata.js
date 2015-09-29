@@ -11,6 +11,9 @@
 var common = require('../common');
 var waitForJob = require('./common').waitForJob;
 
+var checkNotFound = common.checkNotFound;
+var checkHeaders = common.checkHeaders;
+
 
 // --- Globals
 
@@ -25,22 +28,44 @@ var META_64_VAL = new Buffer('Hello World').toString('base64');
 // --- Tests
 
 
-module.exports = function (suite, client, machine, callback) {
+module.exports = function (suite, client, other, machine, callback) {
     if (!machine) {
         return callback();
     }
+
+    suite.test('ListMetadata - other', function (t) {
+        var url = '/my/machines/' + machine + '/metadata';
+        other.get(url, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+
     suite.test('ListMetadata', function (t) {
         var url = '/my/machines/' + machine + '/metadata';
         client.get(url, function (err, req, res, body) {
             t.ifError(err);
             t.equal(res.statusCode, 200);
-            common.checkHeaders(t, res.headers);
+            checkHeaders(t, res.headers);
             t.ok(body);
             t.ok(body[META_KEY]);
             t.equal(body[META_KEY], META_VAL);
             t.ok(body[META_64_KEY]);
             t.equal(body[META_64_KEY], META_64_VAL);
             t.equal(typeof (body.credentials), 'undefined');
+            t.end();
+        });
+    });
+
+
+    suite.test('AddMetadata - other', function (t) {
+        var path = '/my/machines/' + machine + '/metadata';
+        var meta = {
+            bar: 'baz'
+        };
+        other.post(path, meta, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
             t.end();
         });
     });
@@ -54,7 +79,7 @@ module.exports = function (suite, client, machine, callback) {
         client.post(path, meta, function (err, req, res, body) {
             t.ifError(err, 'Add Metadata error');
             t.equal(res.statusCode, 200, 'Add Metadata Status');
-            common.checkHeaders(t, res.headers);
+            checkHeaders(t, res.headers);
             t.ok(body, 'Add Metadata Body');
             t.ok(body.bar, 'Add Metadata Metadata');
             t.end();
@@ -83,9 +108,50 @@ module.exports = function (suite, client, machine, callback) {
         client.get(path, function (err, req, res, body) {
             t.ifError(err);
             t.equal(res.statusCode, 200);
-            common.checkHeaders(t, res.headers);
+            checkHeaders(t, res.headers);
             t.ok(body);
             t.equal(body, META_VAL);
+            t.end();
+        });
+    });
+
+
+    suite.test('GetMetadata - other', function (t) {
+        var path = '/my/machines/' + machine + '/metadata/' + META_KEY;
+        other.get(path, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+
+    suite.test('GetMetadata Credentials', function (t) {
+        var url = '/my/machines/' + machine + '/metadata/credentials';
+        client.get(url, function (err, req, res, body) {
+            t.ifError(err);
+            t.deepEqual(body, {
+                root: 'secret',
+                admin: 'secret'
+
+            });
+            t.end();
+        });
+    });
+
+
+    suite.test('GetMetadata Credentials - other', function (t) {
+        var url = '/my/machines/' + machine + '/metadata/credentials';
+        other.get(url, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+
+    suite.test('DeleteMetadata - other', function (t) {
+        var url = '/my/machines/' + machine + '/metadata/' + META_KEY;
+        other.del(url, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
             t.end();
         });
     });
@@ -96,7 +162,7 @@ module.exports = function (suite, client, machine, callback) {
         client.del(url, function (err, req, res) {
             t.ifError(err);
             t.equal(res.statusCode, 204);
-            common.checkHeaders(t, res.headers);
+            checkHeaders(t, res.headers);
             t.end();
         });
     });
@@ -118,10 +184,20 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
+    suite.test('DeleteMetadataCredentials - other', function (t) {
+        var url = '/my/machines/' + machine + '/metadata/credentials';
+        other.del(url, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+
     suite.test('DeleteMetadataCredentials', function (t) {
         var url = '/my/machines/' + machine + '/metadata/credentials';
         client.del(url, function (err, req, res) {
             t.ok(err);
+            // XXX: 409?
             t.equal(res.statusCode, 409);
             t.end();
         });
@@ -144,12 +220,21 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
+    suite.test('DeleteAllMetadata - other', function (t) {
+        var url = '/my/machines/' + machine + '/metadata';
+        other.del(url, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+
     suite.test('DeleteAllMetadata', function (t) {
         var url = '/my/machines/' + machine + '/metadata';
         client.del(url, function (err, req, res) {
             t.ifError(err, 'Delete All Metadata Error');
             t.equal(res.statusCode, 204, 'Delete All Metadata status');
-            common.checkHeaders(t, res.headers);
+            checkHeaders(t, res.headers);
             t.end();
         });
     });

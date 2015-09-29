@@ -14,6 +14,7 @@ var common = require('./common');
 var uuid = common.uuid;
 var machinesCommon = require('./machines/common');
 var checkMachine = machinesCommon.checkMachine;
+var checkNotFound = common.checkNotFound;
 
 
 // --- Globals
@@ -28,6 +29,7 @@ var IMAGE_JOB_UUID;
 
 var CLIENTS;
 var CLIENT;
+var OTHER;
 var SERVER;
 
 
@@ -38,6 +40,7 @@ test('setup', function (t) {
     common.setup('~7.1', function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
+        OTHER   = clients.other;
         SERVER  = server;
 
         t.end();
@@ -160,7 +163,7 @@ test('Get Machine', function (t) {
 
 test('Rename machine tests', function (t) {
     var renameTest = require('./machines/rename');
-    renameTest(t, CLIENT, MACHINE_UUID, function () {
+    renameTest(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -168,7 +171,7 @@ test('Rename machine tests', function (t) {
 
 test('Firewall tests', function (t) {
     var firewallTest = require('./machines/firewall');
-    firewallTest(t, CLIENT, MACHINE_UUID, function () {
+    firewallTest(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -176,7 +179,7 @@ test('Firewall tests', function (t) {
 
 test('Stop test', function (t) {
     var stopTest = require('./machines/stop');
-    stopTest(t, CLIENT, MACHINE_UUID, function () {
+    stopTest(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -200,6 +203,32 @@ test('Create image from machine (missing params)', function (t) {
             t.equal(res.statusCode, 409);
             t.ok(err.message);
             t.end();
+        });
+    } else {
+        t.end();
+    }
+});
+
+
+test('Create image from machine - other', function (t) {
+    if (MACHINE_UUID) {
+        var obj = {
+            machine: MACHINE_UUID,
+            name: uuid(),
+            version: '1.0.0'
+        };
+
+        OTHER.post({
+            path: '/my/images',
+            headers: {
+                'accept-version': '~7.1'
+            }
+        }, obj, function (err, req, res, body) {
+            if (!err || err.name !== 'NotAvailableError') {
+                checkNotFound(t, err, req, res, body);
+            }
+
+            return t.end();
         });
     } else {
         t.end();
@@ -277,6 +306,24 @@ test('Update image', function (t) {
 });
 
 
+test('Update image - other', function (t) {
+    var obj = { name: uuid(), version: '1.1.0' };
+    if (IMAGE_JOB_UUID) {
+        var opts = {
+            path: '/my/images/' + IMAGE_UUID,
+            query: { action: 'update' }
+        };
+
+        OTHER.post(opts, obj, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    } else {
+        t.end();
+    }
+});
+
+
 test('Delete image', function (t) {
     if (IMAGE_JOB_UUID) {
         CLIENT.imgapi.deleteImage(IMAGE_UUID, function (err, res) {
@@ -292,7 +339,7 @@ test('Delete image', function (t) {
 
 test('Delete tests', function (t) {
     var deleteTest = require('./machines/delete');
-    deleteTest(t, CLIENT, MACHINE_UUID, function () {
+    deleteTest(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });

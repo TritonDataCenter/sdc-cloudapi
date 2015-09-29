@@ -10,6 +10,9 @@
 
 var common = require('../common');
 var machinesCommon = require('./common');
+
+var checkHeaders = common.checkHeaders;
+var checkNotFound = common.checkNotFound;
 var checkMachine = machinesCommon.checkMachine;
 var waitForJob = machinesCommon.waitForJob;
 
@@ -27,7 +30,7 @@ var TAG_TWO_VAL = 'none';
 // --- Tests
 
 
-module.exports = function (suite, client, machine, callback) {
+module.exports = function (suite, client, other, machine, callback) {
     if (!machine) {
         return callback();
     }
@@ -50,12 +53,22 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
+    suite.test('ListMachines by tag - other', function (t) {
+        var url = '/my/machines?tag.' + TAG_KEY + '=' + TAG_VAL;
+        other.get(url, function (err, req, res, body) {
+            t.ifError(err);
+            t.deepEqual(body, []);
+            t.end();
+        });
+    });
+
+
     suite.test('ListMachines all tagged machines', function (t) {
         var url = '/my/machines?tags=*';
         client.get(url, function (err, req, res, body) {
             t.ifError(err);
             t.equal(res.statusCode, 200);
-            common.checkHeaders(t, res.headers);
+            checkHeaders(t, res.headers);
             t.ok(body);
             t.ok(Array.isArray(body));
             t.ok(body.length);
@@ -63,6 +76,16 @@ module.exports = function (suite, client, machine, callback) {
                 checkMachine(t, m);
                 machine = m.id;
             });
+            t.end();
+        });
+    });
+
+
+    suite.test('ListMachines all tagged machines - other', function (t) {
+        var url = '/my/machines?tags=*';
+        other.get(url, function (err, req, res, body) {
+            t.ifError(err);
+            t.deepEqual(body, []);
             t.end();
         });
     });
@@ -76,7 +99,7 @@ module.exports = function (suite, client, machine, callback) {
         client.get(url, function (err, req, res, body) {
             t.ifError(err);
             t.equal(res.statusCode, 200);
-            common.checkHeaders(t, res.headers);
+            checkHeaders(t, res.headers);
             t.ok(body);
             t.ok(Array.isArray(body));
             t.equal(0, body.length);
@@ -90,7 +113,7 @@ module.exports = function (suite, client, machine, callback) {
         client.get(url, function (err, req, res, body) {
             t.ifError(err);
             t.equal(res.statusCode, 200);
-            common.checkHeaders(t, res.headers);
+            checkHeaders(t, res.headers);
             t.ok(body);
             t.ok(body[TAG_KEY]);
             t.equal(body[TAG_KEY], TAG_VAL);
@@ -99,14 +122,34 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
+    suite.test('ListTags - other', function (t) {
+        var url = '/my/machines/' + machine + '/tags';
+        other.get(url, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+
+    suite.test('AddTag - other', function (t) {
+        var path = '/my/machines/' + machine + '/tags';
+        var tags = {};
+        tags[TAG_TWO_KEY] = TAG_TWO_VAL;
+        other.post(path, tags, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+
     suite.test('AddTag', function (t) {
-        var path = '/my/machines/' + machine + '/tags',
-        tags = {};
+        var path = '/my/machines/' + machine + '/tags';
+        var tags = {};
         tags[TAG_TWO_KEY] = TAG_TWO_VAL;
         client.post(path, tags, function (err, req, res, body) {
             t.ifError(err, 'Add Tag error');
             t.equal(res.statusCode, 200, 'Status code');
-            common.checkHeaders(t, res.headers);
+            checkHeaders(t, res.headers);
             t.ok(body, 'AddTag Body');
             t.ok(body[TAG_TWO_KEY], 'Add Tag Key');
             t.equal(body[TAG_TWO_KEY], TAG_TWO_VAL, 'Add Tag Value');
@@ -138,9 +181,27 @@ module.exports = function (suite, client, machine, callback) {
         client.get(path, function (err, req, res, body) {
             t.ifError(err);
             t.equal(res.statusCode, 200);
-            common.checkHeaders(t, res.headers);
+            checkHeaders(t, res.headers);
             t.ok(body);
             t.equal(body, TAG_VAL);
+            t.end();
+        });
+    });
+
+
+    suite.test('GetTag - other', function (t) {
+        var path = '/my/machines/' + machine + '/tags/' + TAG_KEY;
+        other.get(path, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+
+    suite.test('DeleteTag - other', function (t) {
+        var url = '/my/machines/' + machine + '/tags/' + TAG_KEY;
+        other.del(url, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
             t.end();
         });
     });
@@ -151,7 +212,7 @@ module.exports = function (suite, client, machine, callback) {
         client.del(url, function (err, req, res) {
             t.ifError(err);
             t.equal(res.statusCode, 204);
-            common.checkHeaders(t, res.headers);
+            checkHeaders(t, res.headers);
             t.end();
         });
     });
@@ -173,6 +234,17 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
+    suite.test('ReplaceTags - other', function (t) {
+        var path = '/my/machines/' + machine + '/tags',
+        tags = {};
+        tags[TAG_KEY] = TAG_VAL;
+        other.put(path, tags, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+
     suite.test('ReplaceTags', function (t) {
         var path = '/my/machines/' + machine + '/tags',
         tags = {};
@@ -180,7 +252,7 @@ module.exports = function (suite, client, machine, callback) {
         client.put(path, tags, function (err, req, res, body) {
             t.ifError(err, 'Replace Tags Error');
             t.equal(res.statusCode, 200, 'Replace Tags Status');
-            common.checkHeaders(t, res.headers);
+            checkHeaders(t, res.headers);
             t.ok(body, 'Replace Tags Body');
             t.ok(body[TAG_KEY], 'Tag Key');
             t.equal(body[TAG_KEY], TAG_VAL, 'Tag Value');
@@ -207,12 +279,21 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
+    suite.test('DeleteAllTags - other', function (t) {
+        var url = '/my/machines/' + machine + '/tags';
+        other.del(url, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+
     suite.test('DeleteAllTags', function (t) {
         var url = '/my/machines/' + machine + '/tags';
         client.del(url, function (err, req, res) {
             t.ifError(err);
             t.equal(res.statusCode, 204);
-            common.checkHeaders(t, res.headers);
+            checkHeaders(t, res.headers);
             t.end();
         });
     });

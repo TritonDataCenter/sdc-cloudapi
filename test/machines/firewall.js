@@ -8,16 +8,28 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
+var checkNotFound = require('../common').checkNotFound;
 var waitForJob = require('./common').waitForJob;
 
 
 // --- Tests
 
 
-module.exports = function (suite, client, machine, callback) {
+module.exports = function (suite, client, other, machine, callback) {
     if (!machine) {
         return callback();
     }
+
+
+    suite.test('Disable firewall - other', function (t) {
+        other.post('/my/machines/' + machine, {
+            action: 'disable_firewall'
+        }, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
 
     suite.test('Disable firewall', function (t) {
         client.post('/my/machines/' + machine, {

@@ -38,6 +38,7 @@ var SUB_MACHINE_UUID;
 var CLIENTS;
 var CLIENT;
 var SUB_CLIENT;
+var OTHER;
 var SERVER;
 
 
@@ -51,6 +52,7 @@ test('setup', function (t) {
 
         CLIENT  = clients.user;
         SUB_CLIENT = clients.subuser;
+        OTHER   = clients.other;
 
         ACCOUNT_NAME = CLIENT.account.login;
 
@@ -275,7 +277,7 @@ test('sub-user tests', function (t) {
 
         t.test('Reboot test', function (t2) {
             var rebootTest = require('./machines/reboot');
-            rebootTest(t2, cli, MACHINE_UUID, function () {
+            rebootTest(t2, cli, OTHER, MACHINE_UUID, function () {
                 t2.end();
             });
         });
@@ -404,9 +406,24 @@ test('Add submachine role-tag', function (t) {
 });
 
 
+test('Add submachine role-tag - other', function (t) {
+    OTHER.put({
+        path: '/' + ACCOUNT_NAME + '/machines/' + SUB_MACHINE_UUID,
+        headers: {
+            'accept-version': '~7.2'
+        }
+    }, {
+        'role-tag': [ROLE_NAME]
+    }, function (err, req, res, body) {
+        common.checkNotAuthorized(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
 test('Delete tests', function (t) {
     var deleteTest = require('./machines/delete');
-    deleteTest(t, CLIENT, MACHINE_UUID, function () {
+    deleteTest(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -414,7 +431,7 @@ test('Delete tests', function (t) {
 
 test('Delete sub-user machine tests', function (t) {
     var deleteTest = require('./machines/delete');
-    deleteTest(t, CLIENT, SUB_MACHINE_UUID, function () {
+    deleteTest(t, CLIENT, OTHER, SUB_MACHINE_UUID, function () {
         t.end();
     });
 });

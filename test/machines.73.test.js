@@ -28,6 +28,7 @@ var MACHINE_UUID;
 
 var CLIENTS;
 var CLIENT;
+var OTHER;
 var SERVER;
 
 
@@ -66,6 +67,7 @@ test('setup', function (t) {
     common.setup('~7.3', function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
+        OTHER   = clients.other;
         SERVER  = server;
 
         t.end();
@@ -171,7 +173,7 @@ test('networks: invalid formats', function (tt) {
 
 test('Delete tests', function (t) {
     var deleteTest = require('./machines/delete');
-    deleteTest(t, CLIENT, MACHINE_UUID, function () {
+    deleteTest(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });

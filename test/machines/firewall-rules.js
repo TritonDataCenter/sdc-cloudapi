@@ -12,14 +12,31 @@ var util = require('util');
 var sprintf = util.format;
 var libuuid = require('libuuid');
 
-var common = require('../common');
 var checkMachine = require('./common').checkMachine;
+var checkNotFound = require('../common').checkNotFound;
+
+
+// --- Helpers
+
+
+function checkForbidden(t, err, req, res, body) {
+    t.ok(err);
+    t.ok(body);
+
+    t.equal(err.restCode, 'Forbidden');
+    t.ok(err.message);
+
+    t.equal(body.code, 'Forbidden');
+    t.ok(body.message);
+
+    t.equal(res.statusCode, 403);
+}
 
 
 // --- Tests
 
 
-module.exports = function (suite, client, machine, callback) {
+module.exports = function (suite, client, other, machine, callback) {
     if (!machine) {
         return callback();
     }
@@ -28,6 +45,7 @@ module.exports = function (suite, client, machine, callback) {
     var RULE_UUID;
     var RULES_URL = '/my/fwrules';
     var RULE_URL = RULES_URL + '/%s';
+    var OTHER_RULE_UUID;
 
     function checkRule(t, rule) {
         t.ok(rule.id, 'rule id ok');
@@ -73,8 +91,29 @@ module.exports = function (suite, client, machine, callback) {
             t.ifError(err, 'Error');
             t.equal(200, res.statusCode, 'Status Code');
             t.ok(Array.isArray(body), 'isArray(rules)');
-            t.ok(body.length, 'rules length');
+            t.equal(body.length, 1, 'rules length');
             checkRule(t, body[0]);
+            t.end();
+        });
+    });
+
+
+    suite.test('ListRules - other', function (t) {
+        other.get(RULES_URL, function (err, req, res, body) {
+            t.ifError(err);
+            t.deepEqual(body, []);
+            t.end();
+        });
+    });
+
+
+    suite.test('AddRule - other', function (t) {
+        other.post(RULES_URL, {
+            rule: 'FROM vm ' + machine +
+                ' TO subnet 10.99.99.0/23 ALLOW tcp port 80'
+        }, function (err, req, res, body) {
+            t.ifError(err);
+            OTHER_RULE_UUID = body.id;
             t.end();
         });
     });
@@ -100,14 +139,60 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
+    suite.test('List Rule Machines (not empty set) - other', function (t) {
+        if (RULE_UUID) {
+            var p = sprintf(RULE_URL, RULE_UUID) + '/machines';
+            other.get(p, function (err, req, res, body) {
+                // XXX: this should probably be 404, not 403
+                checkForbidden(t, err, req, res, body);
+                t.end();
+            });
+        } else {
+            t.end();
+        }
+    });
+
+
+    suite.test('List Rule Machines (not empty set) - other 2', function (t) {
+        if (OTHER_RULE_UUID) {
+            var p = sprintf(RULE_URL, OTHER_RULE_UUID) + '/machines';
+            other.get(p, function (err, req, res, body) {
+                t.ifError(err);
+                t.deepEqual(body, []);
+                t.end();
+            });
+        } else {
+            t.end();
+        }
+    });
+
+
     suite.test('List Machine Rules (not empty set)', function (t) {
         var u = '/my/machines/' + machine + '/fwrules';
         client.get(u, function (err, req, res, body) {
             t.ifError(err, 'Error');
             t.equal(200, res.statusCode, 'Status Code');
             t.ok(Array.isArray(body), 'isArray(rules)');
-            t.ok(body.length, 'rules length');
+            t.equal(body.length, 2, 'rules length');
             checkRule(t, body[0]);
+            checkRule(t, body[1]);
+
+            if (body[0].id === RULE_UUID) {
+                t.equal(body[1].description, 'allow pings to all VMs');
+            } else {
+                t.equal(body[0].description, 'allow pings to all VMs');
+                t.equal(body[1].id, RULE_UUID);
+            }
+
+            t.end();
+        });
+    });
+
+
+    suite.test('List Machine Rules (not empty set) - other', function (t) {
+        var u = '/my/machines/' + machine + '/fwrules';
+        other.get(u, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
             t.end();
         });
     });
@@ -120,6 +205,20 @@ module.exports = function (suite, client, machine, callback) {
                 t.ifError(err);
                 t.equal(200, res.statusCode);
                 checkRule(t, body);
+                t.end();
+            });
+        } else {
+            t.end();
+        }
+    });
+
+
+    suite.test('GetRule - other', function (t) {
+        if (RULE_UUID) {
+            other.get(sprintf(RULE_URL, RULE_UUID),
+                    function (err, req, res, body) {
+                // XXX
+                //checkNotFound(t, err, req, res, body);
                 t.end();
             });
         } else {
@@ -146,6 +245,21 @@ module.exports = function (suite, client, machine, callback) {
             }, function (err, req, res, body) {
                 t.ifError(err);
                 t.equal(200, res.statusCode);
+                t.end();
+            });
+        } else {
+            t.end();
+        }
+    });
+
+
+    suite.test('UpdateRule - other', function (t) {
+        if (RULE_UUID) {
+            other.post(sprintf(RULE_URL, RULE_UUID), {
+                rule: 'FROM vm ' + machine +
+                    ' TO subnet 10.99.99.0/24 ALLOW tcp (port 80 AND port 443)'
+            }, function (err, req, res, body) {
+                checkForbidden(t, err, req, res, body);
                 t.end();
             });
         } else {
@@ -183,6 +297,19 @@ module.exports = function (suite, client, machine, callback) {
     });
 
 
+    suite.test('EnableRule - other', function (t) {
+        if (RULE_UUID) {
+            other.post(sprintf(RULE_URL, RULE_UUID) + '/enable', {
+            }, function (err, req, res, body) {
+                checkForbidden(t, err, req, res, body);
+                t.end();
+            });
+        } else {
+            t.end();
+        }
+    });
+
+
     suite.test('GetEnabledRule', function (t) {
         if (RULE_UUID) {
             client.get(sprintf(RULE_URL, RULE_UUID),
@@ -190,6 +317,19 @@ module.exports = function (suite, client, machine, callback) {
                 t.ifError(err);
                 t.equal(200, res.statusCode);
                 checkRule(t, body);
+                t.end();
+            });
+        } else {
+            t.end();
+        }
+    });
+
+
+    suite.test('DeleteRule - other', function (t) {
+        if (RULE_UUID) {
+            other.del(sprintf(RULE_URL, RULE_UUID),
+                    function (err, req, res, body) {
+                checkForbidden(t, err, req, res, body);
                 t.end();
             });
         } else {
@@ -209,6 +349,7 @@ module.exports = function (suite, client, machine, callback) {
             t.end();
         }
     });
+
 
     return callback();
 };

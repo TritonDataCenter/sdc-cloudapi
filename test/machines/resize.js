@@ -9,15 +9,17 @@
  */
 
 var common = require('../common');
-var uuid = common.uuid;
 var waitForJob = require('./common').waitForJob;
+
+var uuid = common.uuid;
+var checkNotFound = common.checkNotFound;
 
 
 // --- Tests
 
 
 module.exports =
-function (suite, client, machine, pkgDown, pkgSame, pkgUp, cb) {
+function (suite, client, other, machine, pkgDown, pkgSame, pkgUp, cb) {
     if (!machine) {
         return cb();
     }
@@ -49,6 +51,19 @@ function (suite, client, machine, pkgDown, pkgSame, pkgUp, cb) {
                 t.equal(error.code, 'InsufficientCapacity');
             }
 
+            t.end();
+        });
+    });
+
+
+    suite.test('Resize Machine to same package - other', function (t) {
+        t.ok(pkgSame, 'Resize same package OK');
+
+        other.post('/my/machines/' + machine, {
+            action: 'resize',
+            'package': pkgSame.uuid
+        }, function (err, req, res, body) {
+            checkNotFound(t, err, req, res, body);
             t.end();
         });
     });
