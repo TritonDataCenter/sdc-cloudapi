@@ -88,6 +88,7 @@ var MAC_RE  = /^(?:[0-9a-f]{2}\:){5}[0-9a-f]{2}/i;
 
 var CLIENTS;
 var CLIENT;
+var OTHER;
 var CLOUDAPI_SERVER;
 
 var MACHINE_UUID;
@@ -113,6 +114,7 @@ test('setup', function (t) {
         common.setup('~7.2', function (err, clients, server) {
             CLIENTS = clients;
             CLIENT  = clients.user;
+            OTHER   = clients.other;
             CLOUDAPI_SERVER = server;
 
             next();
@@ -351,6 +353,17 @@ test('Head NICs', function (t) {
 });
 
 
+test('Head NICs - other', function (t) {
+    var path = '/my/machines/' + MACHINE_UUID + '/nics';
+
+    OTHER.head(path, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(res.statusCode, 404);
+        t.end();
+    });
+});
+
+
 test('List NICs on other machine', function (t) {
     var path = '/my/machines/' + OTHER_MACHINE_UUID + '/nics';
 
@@ -433,6 +446,18 @@ test('Head NIC', function (t) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         t.deepEqual(body, {});
+        t.end();
+    });
+});
+
+
+test('Head NIC - other', function (t) {
+    var mac = VM_NIC.mac.replace(/\:/g, '');
+    var path = '/my/machines/' + MACHINE_UUID + '/nics/' + mac;
+
+    OTHER.head(path, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(res.statusCode, 404);
         t.end();
     });
 });
