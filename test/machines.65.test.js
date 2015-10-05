@@ -56,7 +56,7 @@ test('Get Headnode', function (t) {
 
 test('CreateMachine', function (t) {
     var obj = {
-        dataset: 'smartos',
+        dataset: 'base',
         package: SDC_128.name,
         name: 'a' + uuid().substr(0, 7),
         server_uuid: HEADNODE_UUID

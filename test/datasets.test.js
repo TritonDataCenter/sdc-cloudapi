@@ -145,16 +145,17 @@ test('ListDatasets OK (6.5)', function (t) {
 
 test('GetDataset by name OK (6.5)', function (t) {
     CLIENT.get({
-        path: '/my/datasets/smartos',
+        path: '/my/datasets/base',
         headers: {
             'accept-version': '~6.5'
         }
     }, function (err, req, res, body) {
-        t.ifError(err, 'GET /my/datasets/smartos error');
-        t.equal(res.statusCode, 200, 'GET /my/datasets/smartos status');
+        t.ifError(err, 'GET /my/datasets/base error');
+        t.equal(res.statusCode, 200, 'GET /my/datasets/base status');
         common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/datasets/smartos body');
+        t.ok(body, 'GET /my/datasets/base body');
         checkDataset(t, body, '6.5.0');
+        t.equal(body.name, 'base');
         t.end();
     });
 });
@@ -213,7 +214,7 @@ test('Search datasets (7.0), no results', function (t) {
 
 
 test('Search datasets (7.0), results', function (t) {
-    CLIENT.get('/my/datasets?os=smartos', function (err, req, res, body) {
+    CLIENT.get('/my/datasets?os=base', function (err, req, res, body) {
         t.ifError(err);
 
         body.forEach(function (d) {
@@ -229,9 +230,9 @@ test('Search datasets (7.0), results', function (t) {
 test('GetDataset OK', function (t) {
     CLIENT.get('/my/datasets/' + DATASET.id, function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets/' + DATASET.id + ' error');
-        t.equal(res.statusCode, 200, 'GET /my/datasets/smartos status');
+        t.equal(res.statusCode, 200, 'GET /my/datasets/:uuid status');
         common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/datasets/smartos body');
+        t.ok(body, 'GET /my/datasets/:uuid body');
         checkDataset(t, body, '7.0.0');
         t.end();
     });

@@ -123,9 +123,6 @@ sdc-papi /packages -X POST -d '{
 # This is base-13.4.0:
 base=`joyent-imgadm list os=smartos name=base version=13.4.0 -o uuid|tail -1`
 install_image $base
-# Also, we need smartos image, given that's the default one for SDC 6.5
-smartos=`joyent-imgadm list os=smartos name=smartos version=1.6.3 -o uuid|tail -1`
-install_image $smartos
 
 END=$(date +%s)
 echo "$0 finished in $(($END - $START)) seconds"
