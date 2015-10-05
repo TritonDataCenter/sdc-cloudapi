@@ -219,9 +219,9 @@ test('list networks', function (t) {
 test('get network', function (t) {
     CLIENT.get('/my/networks/' + NET_UUID, function (err, req, res, body) {
         t.ifError(err, 'GET /my/networks/' + NET_UUID + ' error');
-        t.equal(res.statusCode, 200, 'GET /my/networks/smartos status');
+        t.equal(res.statusCode, 200, 'GET /my/networks/:uuid status');
         common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/networks/smartos body');
+        t.ok(body, 'GET /my/networks/:uuid body');
         checkNetwork(t, body);
         t.end();
     });
