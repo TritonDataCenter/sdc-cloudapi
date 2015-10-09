@@ -126,9 +126,9 @@
     "fabrics_enabled": true,
     {{/fabric_cfg}}
 
-    {{#CLOUDAPI_FABRIC_PACKAGES}}
-    "fabric_packages": {{{CLOUDAPI_FABRIC_PACKAGES}}},
-    {{/CLOUDAPI_FABRIC_PACKAGES}}
+    {{#"CLOUDAPI_FABRIC_PACKAGE_PREFIXES}}
+    "fabric_package_prefixes": {{{"CLOUDAPI_FABRIC_PACKAGE_PREFIXES}}},
+    {{/"CLOUDAPI_FABRIC_PACKAGE_PREFIXES}}
 
     {{^CLOUDAPI_MULTIPLE_PUB_NETWORKS}}
     "allow_multiple_public_networks": false,
