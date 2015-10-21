@@ -16,20 +16,19 @@ markdown2extras: wiki-tables, code-friendly
 
 # Joyent CloudAPI
 
-CloudAPI is the public API for a SmartDataCenter cloud: it allows operations
-on VMs, networking, users, datasets, and other relevant details for the running
-of machinery in a SmartDataCenter cloud.
+CloudAPI is the public API for a SmartDataCenter cloud: it allows end users
+of the cloud to manage their accounts, instances, networks, images, and to
+inquire other relevant details. CloudAPI provides a single view of docker
+containers, infrastructure containers and hardware virtual machines owned by
+the user.
 
 This is the reference documentation for the CloudAPI that is part of Joyent's
-SmartDataCenter 7.0 product.  This guide provides descriptions of the APIs
+SmartDataCenter product.  This guide provides descriptions of the APIs
 available, as well as supporting information -- such as how to use the SDK(s),
 command line interface (CLI), and where to find more information.
 
 For more information about this product visit
 [Joyent SmartDataCenter](http://www.joyent.com/software/smartdatacenter).
-
-This document refers to SmartDataCenter 7.0.  For information on version 6.5 of
-this API see [CloudAPI 6.5 Documentation](65.html)
 
 
 ## Conventions
@@ -53,9 +52,17 @@ All other examples and information are formatted like so:
 CloudAPI is the API you use to interact with the SmartDataCenter product.  Using
 CloudAPI, you can:
 
-* Provision new machines (both SmartMachines and traditional Virtual Machines)
+* Provision new containers ('SmartMachines') and virtual machines
 * Manage your account credentials
 * Create custom analytics for monitoring your infrastructure
+
+While CloudAPI provides the visibility into docker containers, the regular
+[Docker CLI](https://docs.docker.com/installation/#installation)
+should be used for provisioning and managing docker containers.
+(SmartDataCenter provides an endpoint that represents the entire datacenter
+as a single `DOCKER_HOST`. Refer to Joyent's [Docker documentation](https://apidocs.joyent.com/docker)
+for more information.)
+
 
 
 ## How do I access CloudAPI?
@@ -482,8 +489,8 @@ Each role can have an arbitrary set of [Policies](#policies):
         description: 'This is completely optional'
     }
 
-A policies' `rules` are used for the access control of an account's users'
-access.  These rules use [Aperture](https://github.com/joyent/node-aperture) as
+The `rules` in policies are used for the access control of an account's users.
+These rules use [Aperture](https://github.com/joyent/node-aperture) as
 the policy language, and are described in detail in the next section.
 
 Our recommendation is to limit each policy's set of rules to a very scoped
@@ -554,7 +561,7 @@ please refer to [Role Based Access Control][acuguide] documentation.
 [acuguide]: https://docs.joyent.com/jpc/rbac/
 
 
-## Fabrics
+## Managing Fabrics
 
 A fabric is the basis for building your own private networks that
 cannot be accessed by any other user. It represents the physical infrastructure
@@ -2849,8 +2856,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ## DeleteImage (DELETE /:login/images/:id)
 
-(**Beta.** Custom image management is currently in beta.)
-
 Delete an image.  One must be the owner of the image to delete it.
 
 ### Inputs
@@ -2899,8 +2904,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 
 ## ExportImage (POST /:login/images/:id?action=export)
-
-(**Beta.** Custom image management is currently in beta.)
 
 Exports an image to the specified Manta path.  One must be the owner of the
 image and the correspondent Manta path prefix in order to export it.  Both the
@@ -2984,8 +2987,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 
 ## CreateImageFromMachine (POST /:login/images)
-
-(**Beta.** Custom image management is currently in beta.)
 
 Create a new custom image from a machine.  The typical process is:
 
@@ -3095,8 +3096,6 @@ Some typical and specific errors for this endpoint:
 
 
 ## UpdateImage (POST /:login/images/:id?action=update)
-
-(**Beta.** Custom image management is currently in beta.)
 
 Updates metadata about an image.
 
@@ -3740,6 +3739,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       "memory": 128,
       "disk": 5120,
       "ips": [],
+      "networks": [],
       "metadata": {},
       "created": "2011-06-03T00:02:31+00:00",
       "updated": "2011-06-03T00:02:31+00:00",
@@ -4461,7 +4461,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ ./sdc-updatemachinemetadata -m foo=bar -m group=test cf055959-d776-482e-bd71-ca510a04bdd7
+    $ sdc-updatemachinemetadata -m foo=bar -m group=test cf055959-d776-482e-bd71-ca510a04bdd7
 
 ### Example Request
 
@@ -5497,7 +5497,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If `:login` does not exist||
 
-### CLI
+### CLI Command
 
     $ sdc-listinstrumentations
 
@@ -5584,7 +5584,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If `:login` or `:id` does not exist||
 
-### CLI
+### CLI Command
 
     $ sdc-getinstrumentation 1
 
@@ -5661,7 +5661,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If `:login` or `:id` does not exist||
 
-### CLI
+### CLI Command
 
     $ sdc-getinstrumentation --value 1
 
@@ -5741,7 +5741,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||ResourceNotFound||If `:login` or `:id` does not exist||
 ||InvalidArgument||If input values were incorrect||
 
-### CLI
+### CLI Command
 
 * None
 
@@ -5813,7 +5813,7 @@ The returned value includes:
 
 ### Errors
 
-### CLI
+### CLI Command
 
 * None
 
@@ -5873,7 +5873,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||InvalidArgument||If input values were incorrect||
 ||MissingParameter||If parameter values were missing||
 
-### CLI
+### CLI Command
 
     $ sdc-createinstrumentation --module=syscall --stat=syscalls
 
@@ -5950,7 +5950,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If `:login` or `:id` does not exist||
 
-### CLI
+### CLI Command
 
     $ sdc-deleteinstrumentation 1
 
@@ -6050,7 +6050,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If `:login` does not exist||
 
-### CLI
+### CLI Command
 
     $ sdc-listfirewallrules
 
@@ -6115,7 +6115,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If `:login` does not exist||
 
-### CLI
+### CLI Command
 
     $ sdc-getfirewallrule 38de17c4-39e8-48c7-a168-0f58083de860
 
@@ -6183,7 +6183,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||MissingParameter||If rule wasn't provided||
 ||ResourceNotFound||If `:login` does not exist||
 
-### CLI
+### CLI Command
 
     $ sdc-createfirewallrule --rule='...' --enabled=true
 
@@ -6252,7 +6252,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||MissingParameter||If rule wasn't present||
 ||ResourceNotFound||If `:login` or `:id` does not exist||
 
-### CLI
+### CLI Command
 
     $ sdc-updatefirewallrule --rule='...' 38de17c4-39e8-48c7-a168-0f58083de860
 
@@ -6318,7 +6318,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If `:login` or `:id` does not exist||
 
-### CLI
+### CLI Command
 
     $ sdc-enablefirewallrule 38de17c4-39e8-48c7-a168-0f58083de860
 
@@ -6383,7 +6383,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If `:login` or `:id` does not exist||
 
-### CLI
+### CLI Command
 
     $ sdc-disablefirewallrule 38de17c4-39e8-48c7-a168-0f58083de860
 
@@ -6441,7 +6441,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If `:login` or `:id` does not exist||
 
-### CLI
+### CLI Command
 
     $ sdc-deletefirewallrule 38de17c4-39e8-48c7-a168-0f58083de860
 
@@ -6472,16 +6472,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ## ListMachineFirewallRules (GET /:login/machines/:machine/fwrules)
 
-Exactly with the same input and output as
+This has exactly the same input and output format as
 [List Firewall Rules](#ListFirewallRules), but just for the rules affecting the
 given `:machine`.
-
-
-## ListFirewallRuleMachines (GET /:login/fwrules/:id/machines)
-
-Will return the collection of machines affected by the firewall rule given by
-`:id`.  The output will be exactly the same as for
-[List Machines](#ListMachines).
 
 
 
@@ -6515,7 +6508,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If :login does not exist||
 
-### CLI
+### CLI Command
 
     $ sdc-fabric vlan list
 
@@ -6569,7 +6562,7 @@ A VLAN Object.
 ||MissingParameter||If you didn't send a key||
 ||InvalidArgument||vlan_id or name are in use, or vlan_id is outside the valid range||
 
-### CLI
+### CLI Command
 
     $ sdc-fabric vlan create
 
@@ -6623,9 +6616,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If `:login` or `:vlan_id` does not exist||
 
-### CLI
+### CLI Command
 
-    $ sdc-fabric vlan get
+    $ sdc-fabric vlan get 2
 
 #### Example Request
 
@@ -6673,7 +6666,7 @@ A VLAN Object.
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If :login or :vlan_id does not exist||
 
-### CLI
+### CLI Command
 
     $ sdc-fabric vlan update 2 --description="new description"
 
@@ -6724,9 +6717,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||ResourceNotFound||If `:login` or `:vlan_id` does not exist||
 ||InUseError||The VLAN currently has active networks on it||
 
-### CLI
+### CLI Command
 
-    $ sdc-fabric vlan delete
+    $ sdc-fabric vlan delete 2
 
 #### Example Request
 
@@ -6769,6 +6762,7 @@ information:
 ||gateway||String||Optional Gateway IP address||
 ||resolvers||String||Resolver IP addresses||
 ||routes||Routes Object||Optional Static routes for hosts on this network||
+||internet_nat||Boolean||Provision internet NAT zone on gateway address||
 
 ### Errors
 
@@ -6777,7 +6771,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If `:login` or `:vlan_id` does not exist||
 
-### CLI
+### CLI Command
 
     $ sdc-fabric network list
 
@@ -6803,6 +6797,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
         "public": false,
         "fabric": true,
         "gateway": "192.168.128.1",
+        "internet_nat": true,
         "provision_end_ip": "192.168.131.250",
         "provision_start_ip": "192.168.128.5",
         "resolvers": [
@@ -6817,11 +6812,18 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
         "name": "newnet",
         "public": false,
         "fabric": true,
+        "gateway": "10.50.1.1",
+        "internet_nat": true,
         "provision_end_ip": "10.50.1.20",
         "provision_start_ip": "10.50.1.2",
         "resolvers": [
-          "8.8.8.8"
+          "8.8.8.8",
+          "8.8.4.4"
         ],
+        "routes": {
+          "10.25.1.0/21": "10.50.1.2",
+          "10.27.1.0/21": "10.50.1.3"
+        },
         "subnet": "10.50.1.0/24",
         "vlan_id": 2
       }
@@ -6841,6 +6843,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||gateway||String||Optional Gateway IP address||
 ||resolvers||String||Optional Resolver IP addresses||
 ||routes||Routes Object||Optional Static routes for hosts on this network||
+||internet_nat||Boolean||Provision internet NAT zone on gateway address, default is true||
 
 ### Returns
 
@@ -6858,6 +6861,7 @@ Network Object:
 ||gateway||String||Optional Gateway IP address||
 ||resolvers||String||Optional Resolver IP addresses||
 ||routes||Routes Object||Optional Static routes for hosts on this network||
+||internet_nat||Boolean||Provision internet NAT zone on gateway address||
 
 ### Errors
 
@@ -6866,9 +6870,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If :login does not exist||
 
-### CLI
+### CLI Command
 
-    $ sdc-fabric network create
+    $ sdc-fabric network create --vlan_id=2 --name="newnet" --subnet="10.50.1.0/24" --provision_start_ip="10.50.1.5" --provision_end_ip="10.50.1.20" --resolvers="8.8.8.8" --resolvers="8.8.4.4" --gateway="10.50.1.1" --routes='{"10.25.1.0/21":"10.50.1.2","10.27.1.0/21":"10.50.1.3"}'
 
 #### Example Request
 
@@ -6881,10 +6885,16 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     {
       "name": "newnet",
       "provision_end_ip": "10.50.1.20",
-      "provision_start_ip": "10.50.1.2",
+      "provision_start_ip": "10.50.1.5",
+      "gateway": "10.50.1.1",
       "resolvers": [
-        "8.8.8.8"
+        "8.8.8.8",
+        "8.8.4.4"
       ],
+      "routes": {
+        "10.25.1.0/21": "10.50.1.2",
+        "10.27.1.0/21": "10.50.1.3"
+      },
       "subnet": "10.50.1.0/24"
     }
 
@@ -6900,14 +6910,29 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       "name": "newnet",
       "public": false,
       "fabric": true,
+      "gateway": "10.50.1.1",
+      "internet_nat": true,
       "provision_end_ip": "10.50.1.20",
-      "provision_start_ip": "10.50.1.2",
+      "provision_start_ip": "10.50.1.5",
       "resolvers": [
-        "8.8.8.8"
+        "8.8.8.8",
+        "8.8.4.4"
       ],
+      "routes": {
+        "10.25.1.0/21": "10.50.1.2",
+        "10.27.1.0/21": "10.50.1.3"
+      },
       "subnet": "10.50.1.0/24",
       "vlan_id": 2
     }
+
+#### More Examples
+
+Create network with no internet NAT zone
+
+    $ sdc-fabric network create --vlan_id=2 --name="internal-net" --subnet="192.168.64.0/24" --provision_start_ip="192.168.64.2" --provision_end_ip="192.168.64.254" --resolvers="8.8.8.8" --gateway="192.168.64.1" --no_internet_nat
+
+
 
 ## GetFabricNetwork (GET /:login/fabrics/default/vlans/:vlan_id/networks/:id)
 
@@ -6931,6 +6956,7 @@ The details of the network object:
 ||gateway||String||Optional Gateway IP address||
 ||resolvers||String||Optional Resolver IP addresses||
 ||routes||Routes Object||Optional Static routes for hosts on this network||
+||internet_nat||Boolean||Provision internet NAT zone on gateway address||
 
 ### Errors
 
@@ -6940,9 +6966,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||ResourceNotFound||If `:login`, `:vlan_id` or `id` does not exist||
 
 
-### CLI
+### CLI Command
 
-    $ sdc-fabric network get
+    $ sdc-fabric network get 7fa999c8-0d2c-453e-989c-e897716d0831
 
 #### Example Request
 
@@ -6964,11 +6990,18 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       "name": "newnet",
       "public": false,
       "fabric": true,
+      "gateway": "10.50.1.1",
+      "internet_nat": true,
       "provision_end_ip": "10.50.1.20",
-      "provision_start_ip": "10.50.1.2",
+      "provision_start_ip": "10.50.1.5",
       "resolvers": [
-        "8.8.8.8"
+        "8.8.8.8",
+        "8.8.4.4"
       ],
+      "routes": {
+        "10.25.1.0/21": "10.50.1.2",
+        "10.27.1.0/21": "10.50.1.3"
+      },
       "subnet": "10.50.1.0/24",
       "vlan_id": 2
     }
@@ -6996,9 +7029,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||ResourceNotFound||If `:login`, `:vlan_id` or `id` does not exist||
 ||InUseError||The VLAN currently has active networks on it||
 
-### CLI
+### CLI Command
 
-    $ sdc-fabric network delete
+    $ sdc-fabric network delete 7fa999c8-0d2c-453e-989c-e897716d0831
 
 #### Example Request
 
@@ -7035,6 +7068,7 @@ fabric.
 ||gateway||String||Optional Gateway IP address||
 ||resolvers||String||Optional Resolver IP addresses||
 ||routes||Routes Object||Optional Static routes for hosts on this network||
+||internet_nat||Boolean||Provision internet NAT zone on gateway address||
 
 
 
@@ -7067,6 +7101,7 @@ If the network is on a fabric, the following additional fields are included:
 ||gateway||String||Optional Gateway IP address||
 ||resolvers||String||Optional Resolver IP addresses||
 ||routes||Routes Object||Optional Static routes for hosts on this network||
+||internet_nat||Boolean||Provision internet NAT zone on gateway address||
 
 
 ### Errors
@@ -7076,7 +7111,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If `:login` does not exist||
 
-### CLI
+### CLI Command
 
     $ sdc-listnetworks
 
@@ -7140,7 +7175,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||**Error Code**||**Description**||
 ||ResourceNotFound||If `:login` or `:id` does not exist||
 
-### CLI
+### CLI Command
 
     $ sdc-getnetwork daeb93a2-532e-4bd4-8788-b6b30f10ac17
 
@@ -7210,7 +7245,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||ResourceNotFound||If `:login or `:id` does not exist||
 ||InvalidArgument||If `:id` isn't a UUID||
 
-### CLI
+### CLI Command
 
     $ sdc-nics list 76a533e9-aa3c-4fd4-a194-03fa05663e0e
 
@@ -7287,7 +7322,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||ResourceNotFound||If `:login`, `:id`, or `:mac` does not exist||
 ||InvalidArgument||If `:id` isn't a UUID, or `:mac` isn't a MAC address (without colons)||
 
-### CLI
+### CLI Command
 
     $ sdc-nics get 90:b8:d0:2f:b8:f9 76a533e9-aa3c-4fd4-a194-03fa05663e0e
 
@@ -7373,7 +7408,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||InvalidArgument||If `:id` isn't a UUID, or the `network` argument isn't a valid UUID||
 ||MissingParameter||If the `network` argument isn't present||
 
-### CLI
+### CLI Command
 
     $ sdc-nics create 7007b198-f6aa-48f0-9843-78a3149de3d7 76a533e9-aa3c-4fd4-a194-03fa05663e0e
 
@@ -7448,7 +7483,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ||ResourceNotFound||If `:login`, `:id` or `:mac` does not exist||
 ||InvalidArgument||If `:id` isn't a UUID||
 
-### CLI
+### CLI Command
 
     $ sdc-nics delete 90:b8:d0:2f:b8:f9 76a533e9-aa3c-4fd4-a194-03fa05663e0e
 
@@ -8214,7 +8249,7 @@ Sample code for generating the `Authorization` header (and `Date` header):
 ||[sdc-enablefirewallrule](#EnableFirewallRule)||Enable a disabled firewall rule.||
 ||[sdc-enablemachinefirewall](#EnableMachineFirewall)||Enable the firewall on a machine.||
 ||[sdc-exportimage](#ExportImage)||Export an image to Manta.||
-||[sdc-fabric](#Fabrics)||Administer fabric networks and VLANs.||
+||[sdc-fabric](#fabrics)||Administer fabric networks and VLANs.||
 ||[sdc-getaccount ](#GetAccount)||Gets details about your account.||
 ||[sdc-getdataset](#GetDataset)||Gets an individual dataset by id. (deprecated)||
 ||[sdc-getfirewallrule](#GetFirewallRule)||Get details about a specific firewall rule.||
@@ -8228,27 +8263,26 @@ Sample code for generating the `Authorization` header (and `Date` header):
 ||[sdc-getmachinetag](#GetMachineTag)||Returns the value for a single tag on this machine.||
 ||[sdc-getnetwork](#GetNetwork)||Gets a network by the given id.||
 ||[sdc-getpackage](#GetPackage)||Gets a package by name.||
-||sdc-info||List of role-tags assigned to a given resource.||
+||[sdc-info](#SetRoleTags)||List of role-tags assigned to a given resource.||
 ||[sdc-listdatacenters](#ListDatacenters)||Provides a list of all datacenters this cloud is aware of.||
 ||[sdc-listdatasets](#ListDatasets)||Provides a list of datasets available in this datacenter. (deprecated)||
-||sdc-listfirewallrulemachines||||
 ||[sdc-listfirewallrules](#ListFirewallRules)||List all firewall rules applying to this account.||
 ||[sdc-listimages](#ListImages)||Provides a list of images available in this datacenter.||
 ||[sdc-listinstrumentations](#ListInstrumentations)||Retrieves all currently created instrumentations.||
 ||[sdc-listkeys](#ListKeys)||Lists all public keys we have on record for the specified account.||
-||sdc-listmachinefirewallrules||List firewall rules applying to a specific machine.||
+||[sdc-listmachinefirewallrules](#ListMachineFirewallRules)||List firewall rules applying to a specific machine.||
 ||[sdc-listmachines](#ListMachines)||Lists all machines on an account.||
 ||[sdc-listmachinesnapshots](#ListMachineSnapshots)||Lists all snapshots taken for a given machine.||
 ||[sdc-listmachinetags](#ListMachineTags)||Returns the complete set of tags associated with this machine.||
 ||[sdc-listnetworks](#ListNetworks)||Provides a list of networks available to the user in this datacenter.||
 ||[sdc-listpackages](#ListPackages)||Provides a list of packages available in this datacenter.||
-||[sdc-policy](#Policies)||Add, list, update and remove policies.||
+||[sdc-nics](#nics)||List, add and remove NICs attached to a machine.||
+||[sdc-policy](#policies)||Add, list, update and remove policies.||
 ||[sdc-rebootmachine](#RebootMachine)||Allows you to 'reboot' a machine.||
 ||[sdc-renamemachine](#RenameMachine)||Rename a machine.||
 ||[sdc-replacemachinetags](#ReplaceMachineTags)||Replace all tags on a machine.||
 ||[sdc-resizemachine](#ResizeMachine)||Allows you to resize a SmartMachine.||
-||[sdc-role](#Roles)||Add, list, update and remove roles.||
-||[sdc-setup](#set-up-your-cli)||Sets up an account on a datacenter for use with this CLI.||
+||[sdc-role](#roles)||Add, list, update and remove roles.||
 ||[sdc-startmachine](#StartMachine)||Allows you to boot up a machine||
 ||[sdc-startmachinefromsnapshot](#StartMachineFromSnapshot)||Starts a stopped machine from the referenced snapshot.||
 ||[sdc-stopmachine](#StopMachine)||Allows you to shut down a machine.||
@@ -8256,7 +8290,7 @@ Sample code for generating the `Authorization` header (and `Date` header):
 ||[sdc-updatefirewallrule](#UpdateFirewallRule)||Change a firewall rule.||
 ||[sdc-updateimage](#UpdateImage)||Update metadata about an image.||
 ||[sdc-updatemachinemetadata](#UpdateMachineMetadata)||Allows you to update the metadata for a given machine.||
-||[sdc-user](#Users)||Add, update and remove account users and their keys.||
+||[sdc-user](#users)||Add, update and remove account users and their keys.||
 
 
 
