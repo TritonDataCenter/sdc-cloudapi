@@ -224,8 +224,17 @@ test('Create image from machine - other', function (t) {
                 'accept-version': '~7.1'
             }
         }, obj, function (err, req, res, body) {
-            if (!err || err.name !== 'NotAvailableError') {
-                checkNotFound(t, err, req, res, body);
+            t.ok(err);
+            t.ok(body);
+
+            if (err.name !== 'NotAvailableError') {
+                t.equal(err.restCode, 'InvalidParameter');
+                t.ok(err.message);
+
+                t.equal(body.code, 'InvalidParameter');
+                t.ok(body.message);
+
+                t.equal(res.statusCode, 422);
             }
 
             return t.end();
