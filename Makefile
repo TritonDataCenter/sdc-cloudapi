@@ -30,7 +30,7 @@ TAP		:= ./node_modules/.bin/tape
 #
 # Files
 #
-DOC_FILES	 = index.restdown admin.restdown 65.restdown dev.restdown
+DOC_FILES	 = index.md admin.md 65.md dev.md
 RESTDOWN_FLAGS   = --brand-dir=deps/restdown-brand-remora
 EXTRA_DOC_DEPS += deps/restdown-brand-remora/.git
 JS_FILES	:= $(shell ls *.js) $(shell find lib -maxdepth 1 -name '*.js') \
