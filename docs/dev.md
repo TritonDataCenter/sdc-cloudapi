@@ -107,7 +107,7 @@ exist.
 
 In addition to the normal documentation updates that need to happen with the
 introduction of a new route, you must add an entry to `Appendix E: SDC 7
-Changelog` in `docs/index.restdown`.
+Changelog` in `docs/index.md`.
 
 ## Changing Behavior Across Versions
 
