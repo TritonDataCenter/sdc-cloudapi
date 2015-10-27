@@ -217,8 +217,8 @@ module.exports = function (suite, client, other, machine, callback) {
         if (RULE_UUID) {
             other.get(sprintf(RULE_URL, RULE_UUID),
                     function (err, req, res, body) {
-                // XXX
-                //checkNotFound(t, err, req, res, body);
+                // XXX: this should probably be 404, not 403
+                checkForbidden(t, err, req, res, body);
                 t.end();
             });
         } else {
