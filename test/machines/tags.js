@@ -8,6 +8,7 @@
  * Copyright (c) 2014, Joyent, Inc.
  */
 
+var vasync = require('vasync');
 var common = require('../common');
 var machinesCommon = require('./common');
 
@@ -137,6 +138,91 @@ module.exports = function (suite, client, other, machine, callback) {
         tags[TAG_TWO_KEY] = TAG_TWO_VAL;
         other.post(path, tags, function (err, req, res, body) {
             checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+
+    suite.test('AddTag - bad tags', function (t) {
+        var path = '/my/machines/' + machine + '/tags';
+
+        function call(method, tags, expectedErr, next) {
+            client[method](path, tags, function (err, req, res, body) {
+                t.ok(err);
+                t.equal(err.restCode, 'ValidationFailed');
+                t.equal(err.message, 'Invalid Metadata parameters');
+                t.equal(res.statusCode, 409);
+
+                t.deepEqual(body, {
+                    code: 'ValidationFailed',
+                    message: 'Invalid Metadata parameters',
+                    errors: [ {
+                        field: 'tags',
+                        code: 'Invalid',
+                        message: expectedErr
+                    } ]
+                });
+
+                next();
+            });
+        }
+
+        var unrecognizedMsg = 'Unrecognized special triton tag "triton.foo"';
+        var stringMsg = '"triton.cns.services" must be a string';
+        var booleanMsg = '"triton.cns.disable" must be a boolean';
+        var dnsMsg = '"_foo.bar" is not DNS safe';
+        var dockerMsg = 'Special tag "docker:label:com.docker." not supported';
+
+        function postBadTritonTag(_, next) {
+            call('post', { 'triton.foo': true }, unrecognizedMsg, next);
+        }
+
+        function postBadTritonTagType1(_, next) {
+            call('post', { 'triton.cns.services': true }, stringMsg, next);
+        }
+
+        function postBadTritonTagType2(_, next) {
+            call('post', { 'triton.cns.disable': 'true' }, booleanMsg, next);
+        }
+
+        function postBadTritonDNS(_, next) {
+            call('post', { 'triton.cns.services': 'foo,_foo.bar' }, dnsMsg,
+                next);
+        }
+
+        function postBadReservedDockerTag(_, next) {
+            call('post', { 'docker:label:com.docker.': 'foo,_foo.bar' },
+                dockerMsg, next);
+        }
+
+        function putBadTritonTag(_, next) {
+            call('put', { 'triton.foo': true }, unrecognizedMsg, next);
+        }
+
+        function putBadTritonTagType1(_, next) {
+            call('put', { 'triton.cns.services': true }, stringMsg, next);
+        }
+
+        function putBadTritonTagType2(_, next) {
+            call('put', { 'triton.cns.disable': 'true' }, booleanMsg, next);
+        }
+
+        function putBadTritonDNS(_, next) {
+            call('put', { 'triton.cns.services': 'foo,_foo.bar' }, dnsMsg,
+                next);
+        }
+
+        function putBadReservedDockerTag(_, next) {
+            call('put', { 'docker:label:com.docker.': 'foo,_foo.bar' },
+                dockerMsg, next);
+        }
+
+        vasync.pipeline({ funcs: [
+            postBadTritonTag, postBadTritonTagType1, postBadTritonTagType2,
+            postBadTritonDNS, putBadTritonTag, putBadTritonTagType1,
+            putBadTritonTagType2, putBadTritonDNS, postBadReservedDockerTag,
+            putBadReservedDockerTag
+        ]}, function () {
             t.end();
         });
     });

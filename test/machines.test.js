@@ -967,14 +967,14 @@ test('Check CreateMachine flattens same networks', function (t) {
 test('DeleteMachine which flattened networks', deleteMachine);
 
 
-test('Check resize does not affect docker machines (setup)', function (t) {
-    var vmUuid = CLIENT.account.uuid;
+test('Create Docker machine', function (t) {
+    var ownerUuid = CLIENT.account.uuid;
     var vmDescription = {
-        owner_uuid: vmUuid,
+        owner_uuid: ownerUuid,
         uuid: uuid(),
         alias: 'cloudapi-fake-docker-test',
         internal_metadata: {
-            'docker:id': vmUuid,
+            'docker:id': ownerUuid,
             'docker:tty': true,
             'docker:attach_stdin': true,
             'docker:attach_stdout': true,
@@ -983,6 +983,9 @@ test('Check resize does not affect docker machines (setup)', function (t) {
             'docker:noipmgmtd': true,
             'docker:cmd': '["/bin/bash"]',
             'docker:entrypoint': '[]'
+        },
+        tags: {
+            'docker:label:com.docker.blah': 'quux'
         },
         autoboot: true, // false
         docker: true,
@@ -1011,10 +1014,10 @@ test('Check resize does not affect docker machines (setup)', function (t) {
 });
 
 
-test('Check resize does not affect docker machines (waiting)', waitForRunning);
+test('Wait for running Docker machine', waitForRunning);
 
 
-test('Check resize does not affect docker machines (test)', function (t) {
+test('Check resize does not affect Docker machine', function (t) {
     CLIENT.post('/my/machines/' + MACHINE_UUID, {
         action: 'resize',
         package: SDC_128_LINUX.name
@@ -1032,7 +1035,62 @@ test('Check resize does not affect docker machines (test)', function (t) {
 });
 
 
-test('Check resize does not affect docker machines (teardown)', deleteMachine);
+test('Check cannot update Docker machine tag', function (t) {
+    CLIENT.post('/my/machines/' + MACHINE_UUID + '/tags', {
+        'docker:label:com.docker.blah': 'baz'
+    }, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.restCode, 'ValidationFailed');
+        t.equal(err.message, 'Invalid Metadata parameters');
+        t.equal(res.statusCode, 409);
+
+        t.deepEqual(body, {
+            code: 'ValidationFailed',
+            message: 'Invalid Metadata parameters',
+            errors: [ {
+                field: 'tags',
+                code: 'Invalid',
+                message: 'Special tag "docker:label:com.docker.blah" not ' +
+                    'supported'
+            } ]
+        });
+
+        t.end();
+    });
+});
+
+
+test('Check cannot replace tags containing Docker machine tag', function (t) {
+    CLIENT.put('/my/machines/' + MACHINE_UUID + '/tags', {
+        foo: 'bar'
+    }, function (err, req, res, body) {
+        checkValidationError(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
+test('Check cannot delete Docker machine tag', function (t) {
+    CLIENT.del('/my/machines/' + MACHINE_UUID + '/tags/docker%3Alabel%3A' +
+        'com.docker.blah',
+    function (err, req, res, body) {
+        checkValidationError(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
+test('Check cannot delete all tags when containing Docker machine tag',
+function (t) {
+    CLIENT.del('/my/machines/' + MACHINE_UUID + '/tags',
+            function (err, req, res, body) {
+        checkValidationError(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
+test('Delete Docker machine', deleteMachine);
 
 
 test('teardown', function (t) {
@@ -1100,5 +1158,24 @@ function searchAndCheckOther(query, t, checkAttr) {
         t.ifError(err);
         t.deepEqual(body, []);
         t.end();
+    });
+}
+
+
+function checkValidationError(t, err, req, res, body) {
+    t.ok(err);
+    t.equal(err.restCode, 'ValidationFailed');
+    t.equal(err.message, 'Invalid Metadata parameters');
+    t.equal(res.statusCode, 409);
+
+    t.deepEqual(body, {
+        code: 'ValidationFailed',
+        message: 'Invalid Metadata parameters',
+        errors: [ {
+            field: 'tags',
+            code: 'Invalid',
+            message: 'Special tag "docker:label:com.docker.blah" may not be ' +
+                    'deleted'
+        } ]
     });
 }
