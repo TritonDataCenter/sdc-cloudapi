@@ -3673,7 +3673,7 @@ to a near/far key.
 ||locality||Object[String => Array]||Optionally specify which machines the new machine should be near or far from||
 ||metadata.$name||String||An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata."||
 ||tag.$name||String||An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag."||
-||firewall_enabled||Boolean||(Added in SDC 7.0.)Completely enable or disable firewall for this machine||
+||firewall_enabled||Boolean||(Added in CloudAPI 7.0.) Completely enable or disable firewall for this machine. Default is false.||
 
 ### Returns
 
