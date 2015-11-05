@@ -491,7 +491,10 @@ test('CreateMachine', function (t) {
         image: IMAGE_UUID,
         package: SDC_256.name,
         name: 'a' + uuid().substr(0, 7),
-        locality: { far: 'af4167f0-beda-4af9-9ae4-99d544499c14' }, // fake UUID
+        locality: {
+            far: 'af4167f0-beda-4af9-9ae4-99d544499c14', // fake UUID
+            strict: true
+        },
         server_uuid: HEADNODE_UUID,
         firewall_enabled: true
     };

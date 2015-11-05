@@ -3649,20 +3649,31 @@ internal network can reach it.
 Typically, SDC will allocate the new machine somewhere reasonable within the
 cloud.  You may want this machine to be placed close to, or far away from, other
 existing machines belonging to you;  if so, you can provide locality hints to
-cloudapi.  Locality hints are not guarantees, but SDC will attempt to satisfy
-the hints if possible. An example of a locality hint is:
+cloudapi.  Locality hints are not guarantees, unless `strict` is set true,
+but SDC will attempt to satisfy the hints if possible. An example of a locality
+hint is:
 
     "locality": {
+      "strict": false,
       "near": ["af7ebb74-59be-4481-994f-f6e05fa53075"],
       "far": ["da568166-9d93-42c8-b9b2-bce9a6bb7e0a", "d45eb2f5-c80b-4fea-854f-32e4a9441e53"]
     }
 
 UUIDs provided should be the ids of machines belonging to you.
 
-Locality hints are optional. Both `near` and `far` are also optional; you can
-provide just one if desired. Lastly, if there's only a single UUID entry in an
-array, you can omit the array and provide the UUID string directly as the value
-to a near/far key.
+Locality hints are optional. Both `near`, `far`, and `strict` are also optional;
+you can provide just one if desired. Lastly, if there's only a single UUID entry
+in an array, you can omit the array and provide the UUID string directly as the
+value to a near/far key.
+
+`strict` defaults to false if not provided. If `strict` is provided and is true,
+the creation of the new machine will fail if the provided `near` and/or `far`
+cannot be met. `near` will try to place the new machine on the same server as
+the given machine UUIDs, otherwise in the same rack; it will fail if no space
+can be found in that rack. `far` will try to place the new machine in a
+different, otherwise a different server in the same rack; it will fail if space
+can only be found on the same server as the given machine UUIDs.
+
 
 ### Inputs
 
@@ -3933,9 +3944,13 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 Resize a machine to a new [package](#packages) (a.k.a. instance type).
 
-**Note:** Resizing is only supported for SmartMachines (machines with
+Resizing is only supported for SmartMachines (machines with
 `type=smartmachine`, also known as 'zones').  KVM virtual machines
 (`type=virtualmachine`) cannot be resized.
+
+Resizing is not guaranteed to work, especially when resizing upwards in
+resources. It is best-effort, and may fail. Resizing downwards will usually
+succeed.
 
 ### Inputs
 
