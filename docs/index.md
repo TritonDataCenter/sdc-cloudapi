@@ -8370,6 +8370,8 @@ allowing [Machine Creation from Images](#CreateImageFromMachine),
 [exporting images to the specified manta path](#ExportImage) and
 [custom images deletion](#DeleteImage).
 
+* Version 7.1.0 now adds the listing and manipulation of NICs on VMs.
+
 * Starting with version 7.1.1, firewall rules will include information regarding
 rules being global or not, and will optionally include a human-readable
 description for the rules (which can be modified except for the global rules).
@@ -8379,10 +8381,12 @@ interface. Accounts can create users, rules can be created and combined to make
 policies, policies and users can be associated together using roles, and role
 tags can be applied to CloudAPI resources.
 
+* Version 7.3.0 adds support for network fabrics (software-defined networking).
+This allows the creation of virtuan LANs and layer-three networks.
 
 
 
-* Version 7.1.0 now adds the listing and manipulation of NICs on VMs.
+
 
 # Appendix F: SDC 6.5 Support
 
