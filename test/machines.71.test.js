@@ -58,7 +58,7 @@ test('Get Headnode', function (t) {
 
 
 test('Get base dataset', function (t) {
-    common.getBaseDataset(CLIENT, function (err, img) {
+    common.getBaseImage(CLIENT, function (err, img) {
         t.ifError(err);
         IMAGE_UUID = img.id;
         t.end();

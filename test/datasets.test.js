@@ -10,8 +10,8 @@
 
 var test = require('tape').test;
 var util = require('util');
+var semver = require('semver');
 var common = require('./common');
-
 
 
 // --- Globals
@@ -19,6 +19,7 @@ var common = require('./common');
 
 var CLIENTS;
 var CLIENT;
+var OTHER;
 var SERVER;
 
 var RAW_DATASETS = {};
@@ -28,7 +29,7 @@ var DATASET;
 // --- Helpers
 
 
-function checkDataset(t, dataset, version, path) {
+function checkDataset(t, dataset, path) {
     if (typeof (path) === 'undefined') {
         path = '/my/datasets';
     }
@@ -50,11 +51,8 @@ function checkDataset(t, dataset, version, path) {
         t.ok(dataset.urn, 'dataset.urn');
     }
 
-    if (/6\.5/.test(version)) {
-        t.notEqual(typeof (dataset['default']), 'undefined', 'dataset.default');
-    } else {
-        t.equal(typeof (dataset['default']), 'undefined', 'dataset.default');
-    }
+    t.notEqual(typeof (dataset.default), 'undefined', 'dataset.default');
+    t.equal(dataset.type, 'smartmachine');
 }
 
 
@@ -95,9 +93,10 @@ function getInaccessibleDataset(client) {
 
 
 test('setup', function (t) {
-    common.setup(function (_, clients, server) {
+    common.setup('~6.5', function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
+        OTHER   = clients.other;
         SERVER  = server;
 
         CLIENT.imgapi.listImages(function (err, imgs) {
@@ -113,13 +112,8 @@ test('setup', function (t) {
 });
 
 
-test('ListDatasets OK (6.5)', function (t) {
-    CLIENT.get({
-        path: '/my/datasets',
-        headers: {
-            'accept-version': '~6.5'
-        }
-    }, function (err, req, res, body) {
+test('ListDatasets OK', function (t) {
+    CLIENT.get('/my/datasets', function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets error');
         t.equal(res.statusCode, 200, 'GET /my/datasets status');
         common.checkHeaders(t, res.headers);
@@ -128,7 +122,7 @@ test('ListDatasets OK (6.5)', function (t) {
         t.ok(body.length, 'GET /my/datasets body array has elements');
 
         body.forEach(function (d) {
-            checkDataset(t, d, '6.5.0');
+            checkDataset(t, d);
             checkDatasetViewable(t, d, CLIENT);
         });
 
@@ -143,84 +137,28 @@ test('ListDatasets OK (6.5)', function (t) {
 });
 
 
-test('GetDataset by name OK (6.5)', function (t) {
-    CLIENT.get({
-        path: '/my/datasets/base',
-        headers: {
-            'accept-version': '~6.5'
-        }
-    }, function (err, req, res, body) {
+test('GetDataset by name OK', function (t) {
+    CLIENT.get('/my/datasets/base', function (err, req, res, body) {
         t.ifError(err, 'GET /my/datasets/base error');
         t.equal(res.statusCode, 200, 'GET /my/datasets/base status');
         common.checkHeaders(t, res.headers);
         t.ok(body, 'GET /my/datasets/base body');
-        checkDataset(t, body, '6.5.0');
+        checkDataset(t, body);
         t.equal(body.name, 'base');
         t.end();
     });
 });
 
 
-test('ListDatasets OK', function (t) {
-    CLIENT.get('/my/datasets', function (err, req, res, body) {
-        t.ifError(err, 'GET /my/datasets error');
-        t.equal(res.statusCode, 200, 'GET /my/datasets status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/datasets body');
-        t.ok(Array.isArray(body), 'GET /my/datasets body is an array');
-        t.ok(body.length, 'GET /my/datasets body array has elements');
+test('GetDataset by name - other', function (t) {
+    var inaccessibleDataset = getInaccessibleDataset(OTHER);
+    var path = '/my/datasets/' + inaccessibleDataset.name;
 
-        body.forEach(function (d) {
-            checkDataset(t, d, '7.0.0');
-            checkDatasetViewable(t, d, CLIENT);
-        });
+    OTHER.get(path, function (err, req, res, body) {
+        t.ok(err);
 
-        t.end();
-    });
-});
-
-
-// PUBAPI-549
-test('ListImages OK', function (t) {
-    CLIENT.get('/my/images', function (err, req, res, body) {
-        t.ifError(err, 'GET /my/images error');
-        t.equal(res.statusCode, 200, 'GET /my/images status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/images body');
-        t.ok(Array.isArray(body), 'GET /my/images body is an array');
-        t.ok(body.length, 'GET /my/images body array has elements');
-
-        body.forEach(function (d) {
-            checkDataset(t, d, '7.0.0', '/my/images');
-            checkDatasetViewable(t, d, CLIENT);
-        });
-
-        t.end();
-    });
-});
-
-
-test('Search datasets (7.0), no results', function (t) {
-    CLIENT.get('/my/datasets?os=plan9', function (err, req, res, body) {
-        t.ifError(err, 'GET /my/datasets error');
-        t.equal(res.statusCode, 200, 'GET /my/datasets status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/datasets body');
-        t.ok(Array.isArray(body), 'GET /my/datasets body is an array');
-        t.ok(!body.length, 'GET /my/datasets body array has no elements');
-        t.end();
-    });
-});
-
-
-test('Search datasets (7.0), results', function (t) {
-    CLIENT.get('/my/datasets?os=base', function (err, req, res, body) {
-        t.ifError(err);
-
-        body.forEach(function (d) {
-            checkDataset(t, d, '7.0.0');
-            checkDatasetViewable(t, d, CLIENT);
-        });
+        t.equal(res.statusCode, 404);
+        t.equal(body.code, 'ResourceNotFound');
 
         t.end();
     });
@@ -233,67 +171,24 @@ test('GetDataset OK', function (t) {
         t.equal(res.statusCode, 200, 'GET /my/datasets/:uuid status');
         common.checkHeaders(t, res.headers);
         t.ok(body, 'GET /my/datasets/:uuid body');
-        checkDataset(t, body, '7.0.0');
+        checkDataset(t, body);
         t.end();
     });
 });
 
 
-test('GetDataset should not return non-permission datasets', function (t) {
-    var inaccessibleImage = getInaccessibleDataset(CLIENT);
+test('GetDataset - other', function (t) {
+    var inaccessibleDataset = getInaccessibleDataset(OTHER);
+    var path = '/my/datasets/' + inaccessibleDataset.uuid;
 
-    var path = '/my/datasets/' + inaccessibleImage.uuid;
-    return CLIENT.get(path, function (err2, req, res, body) {
-        t.ok(err2);
+    OTHER.get(path, function (err, req, res, body) {
+        t.ok(err);
 
         t.equal(res.statusCode, 404);
 
         t.deepEqual(body, {
             code: 'ResourceNotFound',
             message: 'image not found'
-        });
-
-        t.end();
-    });
-});
-
-
-test('Get Image By URN OK', function (t) {
-    CLIENT.get('/my/images/' + encodeURIComponent(DATASET.urn),
-        function (err, req, res, body) {
-            t.ifError(err, 'GET /my/images/' + DATASET.urn + ' error');
-            t.equal(res.statusCode, 200, 'GET /my/images/' + DATASET.urn +
-                ' status');
-            common.checkHeaders(t, res.headers);
-            t.ok(body, 'GET /my/images/' + DATASET.urn + ' body');
-            checkDataset(t, body, '7.0.0', '/my/images');
-            t.end();
-        });
-});
-
-
-test('Get Image By URN should not return non-permission dataset', function (t) {
-    var inaccessibleImage = getInaccessibleDataset(CLIENT);
-    var urn = inaccessibleImage.urn;
-
-    if (!urn) {
-        // can't go any further here
-        return t.end();
-    }
-
-    var path = '/my/images/' + encodeURIComponent(urn);
-
-    return CLIENT.get(path, function (err, req, res, body) {
-        t.ok(err);
-
-        t.equal(res.statusCode, 404);
-
-        t.equal(err.restCode, 'ResourceNotFound');
-        t.ok(err.message);
-
-        t.deepEqual(body, {
-            code: 'ResourceNotFound',
-            message: urn + ' not found'
         });
 
         t.end();

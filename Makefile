@@ -157,7 +157,7 @@ publish: release
 	mkdir -p $(BITS_DIR)/$(NAME)
 	cp $(ROOT)/$(RELEASE_TARBALL) $(BITS_DIR)/$(NAME)/$(RELEASE_TARBALL)
 
-.PHONY: test no_machines_test auth_test account_test analytics_test datacenters_test datasets_test fabrics_test keys_test networks_test nics_test machines_all_test machines_65_test machines_70_test machines_71_test machines_72_test machines_73_test machines_test packages_test populate_networks_test services_test users_test provision_limits_plugin_test plugins_test
+.PHONY: test no_machines_test auth_test account_test analytics_test datacenters_test datasets_test fabrics_test images_test keys_test networks_test nics_test machines_all_test machines_65_test machines_70_test machines_71_test machines_72_test machines_73_test machines_80_test machines_test packages_test populate_networks_test services_test users_test provision_limits_plugin_test plugins_test
 
 auth_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/auth.test.js
@@ -176,6 +176,11 @@ datasets_test: $(TAP)
 
 fabrics_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/fabrics.test.js
+
+images_test: $(TAP)
+	$(NODE_EXEC) $(TAP) test/images.70.test.js
+	$(NODE_EXEC) $(TAP) test/images.80.test.js
+	$(NODE_EXEC) $(TAP) test/images.test.js
 
 keys_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/keys.test.js
@@ -204,7 +209,10 @@ machines_72_test:
 machines_73_test:
 	$(NODE_EXEC) $(TAP) test/machines.73.test.js
 
-machines_test: machines_all_test machines_65_test machines_70_test machines_71_test machines_72_test machines_73_test
+machines_80_test:
+	$(NODE_EXEC) $(TAP) test/machines.80.test.js
+
+machines_test: machines_all_test machines_65_test machines_70_test machines_71_test machines_72_test machines_73_test machines_80_test
 
 packages_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/packages.test.js
@@ -218,9 +226,9 @@ services_test: $(TAP)
 users_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/users.test.js
 
-test: auth_test account_test analytics_test datacenters_test datasets_test fabrics_test keys_test networks_test packages_test populate_network_test services_test users_test nics_test machines_test
+test: auth_test account_test analytics_test datacenters_test datasets_test fabrics_test images_test keys_test networks_test packages_test populate_network_test services_test users_test nics_test machines_test
 
-no_machines_test: auth_test account_test analytics_test datacenters_test datasets_test fabrics_test keys_test networks_test packages_test populate_network_test services_test users_test
+no_machines_test: auth_test account_test analytics_test datacenters_test datasets_test fabrics_test images_test keys_test networks_test packages_test populate_network_test services_test users_test
 
 provision_limits_plugin_test:
 	$(NODE_EXEC) $(TAP) test/provision_limits.test.javascript

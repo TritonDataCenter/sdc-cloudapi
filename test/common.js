@@ -690,10 +690,10 @@ function getHeadnode(client, cb) {
 }
 
 
-function getBaseDataset(client, cb) {
-    client.get('/my/datasets?name=base', function (err, req, res, body) {
+function getBaseImage(client, cb) {
+    client.get('/my/images?name=base', function (err, req, res, body) {
         if (err) {
-            return err;
+            return cb(err);
         }
 
         var dataset = body.filter(function (d) {
@@ -766,7 +766,7 @@ module.exports = {
     addPackage: addPackage,
     deletePackage: deletePackage,
     getHeadnode: getHeadnode,
-    getBaseDataset: getBaseDataset,
+    getBaseImage: getBaseImage,
 
     sdc_128_package: SDC_128_PACKAGE,
 

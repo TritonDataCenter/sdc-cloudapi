@@ -32,39 +32,11 @@ var OTHER;
 var SERVER;
 
 
-// --- Helpers
-
-
-/**
- * Provision a machine with an invalid network and check the error message
- */
-function provisionWithInvalidNetwork(t, networks, errMessage) {
-    var obj = {
-        image: IMAGE_UUID,
-        package: SDC_128.name,
-        name: 'a' + uuid().substr(0, 7),
-        networks: networks,
-        server_uuid: HEADNODE_UUID
-    };
-
-    CLIENT.post({
-        path: '/my/machines'
-    }, obj, function (err, req, res, body) {
-        t.ok(err, 'error expected');
-        if (err) {
-            t.equal(err.message, errMessage, 'error message');
-        }
-
-        t.end();
-    });
-}
-
-
 // --- Tests
 
 
 test('setup', function (t) {
-    common.setup('~7.3', function (_, clients, server) {
+    common.setup('~8.0', function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
         OTHER   = clients.other;
@@ -93,29 +65,13 @@ test('Get base dataset', function (t) {
 });
 
 
-test('get provisionable network', function (t) {
-    machinesCommon.getProvisionableNetwork(CLIENT, function (err, net) {
-        t.ifError(err);
-
-        if (net) {
-            PROVISIONABLE_NET_UUID = net.id;
-            t.ok(net.id, 'net id: ' + net.id);
-        }
-
-        t.end();
-    });
-});
-
-
-test('CreateMachine: new networks format', function (t) {
+test('CreateMachine', function (t) {
     var obj = {
         image: IMAGE_UUID,
         package: SDC_128.name,
         name: 'a' + uuid().substr(0, 7),
-        networks: [ {
-            ipv4_uuid: PROVISIONABLE_NET_UUID
-        } ],
-        server_uuid: HEADNODE_UUID
+        server_uuid: HEADNODE_UUID,
+        firewall_enabled: true
     };
 
     machinesCommon.createMachine(t, CLIENT, obj, function (_, machineUuid) {
@@ -139,35 +95,41 @@ test('Wait For Running', function (t) {
 });
 
 
-test('networks: invalid formats', function (tt) {
-
-    tt.test('ipv4_uuid: not a UUID', function (t) {
-        provisionWithInvalidNetwork(t, [
-            { ipv4_uuid: 'asdf' }
-        ], 'Invalid Networks');
+test('GetMachine', function (t) {
+    machinesCommon.getMachine(t, CLIENT, MACHINE_UUID, function (_, machine) {
+        t.equal(machine.brand, 'joyent');
+        t.end();
     });
+});
 
 
-    tt.test('ipv4_uuid: wrong type', function (t) {
-        provisionWithInvalidNetwork(t, [
-            { ipv4_uuid: {} }
-        ], 'property "networks[0].ipv4_uuid": string expected');
+test('ListMachines (filter by joyent brand)', function (t) {
+    CLIENT.get('/my/machines?brand=joyent', function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+
+        t.ok(Array.isArray(body));
+
+        // at the moment, only the machine created in the above tests should
+        // list here:
+        t.equal(body.length, 1);
+        t.equal(body[0].id, MACHINE_UUID);
+        t.equal(body[0].brand, 'joyent');
+
+        checkMachine(t, body[0]);
+
+        t.end();
     });
+});
 
 
-    tt.test('ipv4_count: wrong type', function (t) {
-        provisionWithInvalidNetwork(t, [
-            { ipv4_uuid: PROVISIONABLE_NET_UUID, ipv4_count: 'a' }
-        ], 'Invalid VM parameters: Invalid networks');
+test('ListMachines (filter by joyent brand) - other', function (t) {
+    OTHER.get('/my/machines?brand=joyent', function (err, req, res, body) {
+        t.ifError(err);
+        t.deepEqual(body, []);
+        t.end();
     });
-
-
-    tt.test('ipv4_count: wrong type', function (t) {
-        provisionWithInvalidNetwork(t, [
-            { ipv4_uuid: PROVISIONABLE_NET_UUID, ipv4_count: 2 }
-        ], 'Invalid VM parameters: Invalid networks');
-    });
-
 });
 
 

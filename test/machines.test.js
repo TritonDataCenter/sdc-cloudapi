@@ -151,7 +151,7 @@ test('Get Headnode', function (t) {
 
 
 test('Get base dataset', function (t) {
-    common.getBaseDataset(CLIENT, function (err, img) {
+    common.getBaseImage(CLIENT, function (err, img) {
         t.ifError(err);
         IMAGE_UUID = img.id;
         t.end();
@@ -606,6 +606,7 @@ test('ListMachines (filter by package) - other', function (t) {
 test('ListMachines (filter by smartmachine type)', function (t) {
     searchAndCheck('type=smartmachine', t, function (m) {
         t.equal(m.type, 'smartmachine');
+        t.equal(m.brand, 'joyent');
         // at the moment, only the machine created in the above tests should
         // list here:
         t.equal(m.id, MACHINE_UUID);
@@ -634,6 +635,7 @@ test('ListMachines (filter by virtualmachine type)', function (t) {
         //body.forEach(function (m) {
         //    checkMachine(t, m);
         //    t.equal(m.type, 'virtualmachine');
+        //    t.equal(m.brand, 'kvm');
         //});
 
         t.end();
@@ -643,6 +645,21 @@ test('ListMachines (filter by virtualmachine type)', function (t) {
 
 test('ListMachines (filter by virtualmachine type) - other', function (t) {
     searchAndCheckOther('type=virtualmachine', t);
+});
+
+
+test('ListMachines (filter by joyent brand)', function (t) {
+    searchAndCheck('brand=joyent', t, function (m) {
+        t.equal(m.brand, 'joyent');
+        // at the moment, only the machine created in the above tests should
+        // list here:
+        t.equal(m.id, MACHINE_UUID);
+    });
+});
+
+
+test('ListMachines (filter by joyent brand) - other', function (t) {
+    searchAndCheckOther('brand=joyent', t);
 });
 
 
@@ -1032,6 +1049,30 @@ test('Check resize does not affect Docker machine', function (t) {
             code: 'InvalidArgument',
             message: 'resize is not supported for docker containers'
         });
+
+        t.end();
+    });
+});
+
+
+test('Check GetMachine for Docker machine has true docker attr', function (t) {
+    CLIENT.get('/my/machines/' + MACHINE_UUID, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(body.docker, true);
+        t.end();
+    });
+});
+
+
+test('Check ListMachines has true docker attr on Docker machine', function (t) {
+    CLIENT.get('/my/machines', function (err, req, res, body) {
+        t.ifError(err);
+
+        var dockerMachine = body.filter(function (vm) {
+            return vm.id === MACHINE_UUID;
+        })[0];
+
+        t.equal(dockerMachine.docker, true);
 
         t.end();
     });

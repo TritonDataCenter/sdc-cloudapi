@@ -79,6 +79,7 @@ function checkMachine(t, m) {
     t.ok(m.ips, 'checkMachine ips ok');
     t.ok(m.memory, 'checkMachine memory ok');
     t.ok(m.metadata, 'checkMachine metadata ok');
+    t.notOk(m.docker, 'checkMachine docker attr not set');
 
     // Sometimes test suites from other applications create zones with a
     // 00000000-0000-0000-0000-000000000000 billing_id, which is changed by
@@ -155,7 +156,7 @@ function waitForRunningMachine(client, machineUuid, cb) {
 function getProvisionableNetwork(client, cb) {
     client.get('/my/networks', function (err, req, res, body) {
         if (err) {
-            return err;
+            return cb(err);
         }
 
         var net = body[0];
