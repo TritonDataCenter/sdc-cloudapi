@@ -234,7 +234,7 @@ function clientTeardown(client, cb) {
  * Check and log the request ID header
  */
 function checkReqId(t, headers) {
-    var reqID = headers['x-request-id'];
+    var reqID = headers['request-id'];
     t.ok(reqID, 'request ID: ' + reqID);
 }
 
@@ -457,6 +457,10 @@ function waitForMahiCache(mahiclient, apath, cb) {
 function withTemporaryUser(ufdsClient, userOpts, bodyCb, cb) {
     var tmpUser = 'a' + uuid().substr(0, 7) + '.test@joyent.com';
 
+    var keyPath = __dirname + '/testkeys/id_rsa';
+    var publicKey  = fs.readFileSync(keyPath + '.pub', 'ascii');
+    var privateKey = fs.readFileSync(keyPath, 'ascii');
+
     var entry = {
         login: tmpUser,
         email: tmpUser,
@@ -479,23 +483,22 @@ function withTemporaryUser(ufdsClient, userOpts, bodyCb, cb) {
 
         tmpAccount.passwd = entry.userpassword; // sometimes bodyCb needs this
 
-        var keyPath = __dirname + '/testkeys/id_rsa.pub';
-        return fs.readFile(keyPath, 'ascii', function readKey(err2, data) {
-            if (err2) {
-                return invokeBodyCb(err2);
-            }
-
-            return ufdsClient.addKey(tmpAccount, {
-                openssh: data,
-                name: 'id_rsa'
-            }, function (err3, tmpKey) {
-                invokeBodyCb(err3, tmpAccount, tmpKey);
-            });
+        return ufdsClient.addKey(tmpAccount, {
+            openssh: publicKey,
+            name: 'id_rsa'
+        }, function (err3, tmpKey) {
+            invokeBodyCb(err3, tmpAccount, tmpKey);
         });
     }
 
     function invokeBodyCb(err, tmpAccount, tmpKey) {
-        bodyCb(err, tmpAccount, function () {
+        var keyId = '/' + tmpAccount.uuid + '/keys/id_rsa';
+
+        function signer(req) {
+            requestSigner(req, keyId, privateKey);
+        }
+
+        bodyCb(err, tmpAccount, signer, function () {
             destroyTmpUser(null, tmpAccount, tmpKey);
         });
     }
@@ -638,11 +641,11 @@ function checkHeaders(t, headers) {
     t.ok(headers['access-control-allow-origin'], 'headers allow-origin');
     t.ok(headers['access-control-allow-methods'], 'headers allow-methods');
     t.ok(headers.date, 'headers date');
-    t.ok(headers['x-request-id'], 'headers x-request-id');
-    t.ok(headers['x-response-time'] >= 0, 'headers response time');
+    t.ok(headers['request-id'], 'headers request-id');
+    t.ok(headers['response-time'] >= 0, 'headers response time');
     t.ok(headers.server, 'headers server');
     t.equal(headers.connection, 'Keep-Alive', 'headers connection');
-    t.ok(headers['x-api-version'], 'headers x-api-version OK');
+    t.ok(headers['api-version'], 'headers api-version OK');
 }
 
 
@@ -650,8 +653,8 @@ function checkVersionHeader(t, version, headers) {
     assert.ok(t);
     assert.ok(version);
 
-    var msg = util.format('headers x-api-version %s', version);
-    t.equal(headers['x-api-version'], version, msg);
+    var msg = util.format('headers api-version %s', version);
+    t.equal(headers['api-version'], version, msg);
 }
 
 

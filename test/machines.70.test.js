@@ -58,7 +58,7 @@ test('Get Headnode', function (t) {
 });
 
 
-test('Get base dataset', function (t) {
+test('Get base image', function (t) {
     common.getBaseImage(CLIENT, function (err, img) {
         t.ifError(err);
         IMAGE_UUID = img.id;
@@ -206,7 +206,7 @@ test('Delete tests', function (t) {
 });
 
 
-test('KVM dataset', function (t) {
+test('KVM image', function (t) {
     CLIENT.get('/my/images?os=linux', function (er1, req1, res1, body1) {
         t.ifError(er1, 'GET /my/images error');
         t.equal(res1.statusCode, 200, 'GET /my/images status');

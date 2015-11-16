@@ -58,134 +58,6 @@ test('setup', function (t) {
 });
 
 
-test('basic auth (accept-version: ~6.5)', function (t) {
-    var user = CLIENT.login;
-    var pwd  = CLIENT.passwd;
-
-    var cli = restify.createJsonClient({
-        url: SERVER.url,
-        version: '*',
-        retryOptions: {
-            retry: 0
-        },
-        log: CLIENT.log,
-        rejectUnauthorized: false
-    });
-
-    cli.basicAuth(user, pwd);
-
-    cli.get({
-        path: '/my',
-        headers: {
-            'accept-version': '~6.5'
-        }
-    }, function (err, req, res, obj) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
-        t.ok(obj);
-        t.equal(obj.login, user);
-
-        cli.close();
-        t.end();
-    });
-});
-
-
-test('basic auth (x-api-version: ~6.5)', function (t) {
-    var user = CLIENT.login;
-    var pwd  = CLIENT.passwd;
-
-    var cli = restify.createJsonClient({
-        url: SERVER.url,
-        retryOptions: {
-            retry: 0
-        },
-        log: CLIENT.log,
-        rejectUnauthorized: false
-    });
-
-    cli.basicAuth(user, pwd);
-
-    cli.get({
-        path: '/my',
-        headers: {
-            'x-api-version': '~6.5'
-        }
-    }, function (err, req, res, obj) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
-        t.ok(obj);
-        t.equal(obj.login, user);
-
-        cli.close();
-        t.end();
-    });
-});
-
-
-test('basic auth (accept-version: ~7.0)', function (t) {
-    var user = CLIENT.login;
-    var pwd  = CLIENT.passwd;
-
-    var cli = restify.createJsonClient({
-        url: SERVER.url,
-        retryOptions: {
-            retry: 0
-        },
-        log: CLIENT.log,
-        rejectUnauthorized: false
-    });
-
-    cli.basicAuth(user, pwd);
-
-    cli.get({
-        path: '/my',
-        headers: {
-            'accept-version': '~7.0'
-        }
-    }, function (err, req, res, obj) {
-        t.ok(err);
-        t.equal(res.statusCode, 401);
-        t.ok(/authorization scheme/.test(err.message));
-
-        cli.close();
-        t.end();
-    });
-});
-
-
-test('admin basic auth (x-api-version: ~6.5)', function (t) {
-    var user = 'admin';
-    var pwd = 'joypass123';
-
-    var cli = restify.createJsonClient({
-        url: SERVER.url,
-        retryOptions: {
-            retry: 0
-        },
-        log: CLIENT.log,
-        rejectUnauthorized: false
-    });
-
-    cli.basicAuth(user, pwd);
-
-    cli.get({
-        path: '/' + CLIENT.login,
-        headers: {
-            'x-api-version': '~6.5'
-        }
-    }, function (err, req, res, obj) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
-        t.ok(obj);
-        t.equal(obj.login, CLIENT.login);
-
-        cli.close();
-        t.end();
-    });
-});
-
-
 test('signature auth', function (t) {
     CLIENT.get('/my/keys', function (err, req, res, body) {
         t.ifError(err);
@@ -272,7 +144,7 @@ test('token auth', function (t) {
                 // override the date then, and sporadic failures occur
                 date: now,
                 'x-auth-token': JSON.stringify(token),
-                'x-api-version': '~6.5',
+                'api-version': '~8.0',
                 authorization: authorization
             }
         };
@@ -371,25 +243,18 @@ test('token auth', function (t) {
 // inside cloudapi conflict with simple updates of the existing user. That
 // implies skipping using the existing http client.
 test('auth of disabled account', function (t) {
-    function attemptGet(err, tmpAccount, cb) {
+    function attemptGet(err, tmpAccount, signer, cb) {
         t.ifError(err);
 
         var httpClient = restify.createJsonClient({
             url: CLIENT.url.href, // grab from old client
             retryOptions: { retry: 0 },
             log: CLIENT.log,
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
+            signRequest: signer
         });
 
-        // cheating a bit by using the old auth method to make things easier
-        httpClient.basicAuth(tmpAccount.login, tmpAccount.passwd);
-
-        httpClient.get({
-            path: '/my',
-            headers: {
-                'accept-version': '~6.5'
-            }
-        }, function (err2, req, res, body) {
+        httpClient.get('/my', function (err2, req, res, body) {
             t.ok(err2);
 
             t.deepEqual(body, {

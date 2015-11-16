@@ -64,22 +64,7 @@ var VIEWABLE_PACKAGE_UUIDS;
 // --- Helpers
 
 
-function checkPackage_6_5(t, pkg) {
-    t.ok(pkg, 'Package OK');
-    t.ok(pkg.name, 'Package name');
-    t.notOk(pkg.id, 'Package has not id');
-    t.ok(pkg.memory, 'Package memory');
-    t.ok(pkg.disk, 'Package Disk');
-    t.ok(!isNaN(pkg.vcpus), 'Package VCPUs OK');
-    t.notOk(pkg.version, 'Package has not version');
-    t.ok(pkg.swap, 'Package swap');
-    t.ok(pkg['default'] !== undefined, 'Package default');
-
-    t.notEqual(VIEWABLE_PACKAGE_NAMES.indexOf(pkg.name), -1, 'can view pkg');
-}
-
-
-function checkPackage_7(t, pkg) {
+function checkPackage(t, pkg) {
     t.ok(pkg, 'Package OK');
     t.ok(pkg.name, 'Package name');
     t.ok(pkg.id, 'Package id OK');
@@ -96,12 +81,7 @@ function checkPackage_7(t, pkg) {
 
 
 function searchAndCheck(query, t, checkAttr) {
-    CLIENT.get({
-        path: '/my/packages?' + query,
-        headers: {
-            'accept-version': '~7.0'
-        }
-    }, function (err, req, res, body) {
+    CLIENT.get('/my/packages?' + query, function (err, req, res, body) {
         t.ifError(err);
 
         t.equal(res.statusCode, 200);
@@ -111,7 +91,7 @@ function searchAndCheck(query, t, checkAttr) {
         t.ok(body.length > 0);
 
         body.forEach(function (p) {
-            checkPackage_7(t, p);
+            checkPackage(t, p);
             checkAttr(p);
         });
 
@@ -160,13 +140,8 @@ test('setup', function (t) {
 });
 
 
-test('ListPackages OK (6.5)', function (t) {
-    CLIENT.get({
-        path: '/my/packages',
-        headers: {
-            'accept-version': '~6.5'
-        }
-    }, function (err, req, res, body) {
+test('ListPackages OK', function (t) {
+    CLIENT.get('/my/packages', function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -174,129 +149,64 @@ test('ListPackages OK (6.5)', function (t) {
         t.ok(Array.isArray(body));
         t.ok(body.length);
         body.forEach(function (p) {
-            checkPackage_6_5(t, p);
+            checkPackage(t, p);
         });
         t.end();
     });
 });
 
 
-test('GetPackage OK (6.5)', function (t) {
-    CLIENT.get({
-        path: '/my/packages/' + SDC_512.name,
-        headers: {
-            'accept-version': '~6.5'
-        }
-    }, function (err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
-        common.checkHeaders(t, res.headers);
-
-        t.deepEqual(body, {
-            name:    SDC_512.name,
-            memory:  SDC_512.max_physical_memory,
-            disk:    SDC_512.quota,
-            swap:    SDC_512.max_swap,
-            vcpus:   SDC_512.vcpus,
-            lwps:    SDC_512.max_lwps,
-            default: SDC_512.default
-        });
-
-        t.end();
-    });
-});
-
-
-test('GetPackage not OK (6.5) - no permission', function (t) {
-    CLIENT.get({
-        path: '/my/packages/' + SDC_512_NO_PERMISSION.name,
-        headers: {
-            'accept-version': '~6.5'
-        }
-    }, function (err, req, res, body) {
-        checkNotFound(t, err, req, res, body);
-        t.end();
-    });
-});
-
-
-test('ListPackages OK (7.0)', function (t) {
-    CLIENT.get({
-        path: '/my/packages',
-        headers: {
-            'accept-version': '~7.0'
-        }
-    }, function (err, req, res, body) {
-        t.ifError(err);
-        t.equal(res.statusCode, 200);
-        common.checkHeaders(t, res.headers);
-        t.ok(body);
-        t.ok(Array.isArray(body));
-        t.ok(body.length);
-        body.forEach(function (p) {
-            checkPackage_7(t, p);
-        });
-        t.end();
-    });
-});
-
-
-test('search packages by name (7.0)', function (t) {
+test('search packages by name', function (t) {
     searchAndCheck('name=' + SDC_512.name, t, function (pkg) {
         t.equal(pkg.name, SDC_512.name);
     });
 });
 
 
-test('search packages by memory (7.0)', function (t) {
+test('search packages by memory', function (t) {
     searchAndCheck('memory=128', t, function (pkg) {
         t.equal(pkg.memory, 128);
     });
 });
 
 
-test('search packages by disk (7.0)', function (t) {
+test('search packages by disk', function (t) {
     searchAndCheck('disk=10240', t, function (pkg) {
         t.equal(pkg.disk, 10240);
     });
 });
 
 
-test('search packages by swap (7.0)', function (t) {
+test('search packages by swap', function (t) {
     searchAndCheck('swap=256', t, function (pkg) {
         t.equal(pkg.swap, 256);
     });
 });
 
 
-test('search packages by lwps (7.0)', function (t) {
+test('search packages by lwps', function (t) {
     searchAndCheck('lwps=2000', t, function (pkg) {
         t.equal(pkg.lwps, 2000);
     });
 });
 
 
-test('search packages by vcpus (7.0)', function (t) {
+test('search packages by vcpus', function (t) {
     searchAndCheck('vcpus=2', t, function (pkg) {
         t.equal(pkg.vcpus, 2);
     });
 });
 
 
-test('search packages by version (7.0)', function (t) {
+test('search packages by version', function (t) {
     searchAndCheck('version=1.0.0', t, function (pkg) {
         t.equal(pkg.version, '1.0.0');
     });
 });
 
 
-test('GetPackage by name OK (7.0)', function (t) {
-    CLIENT.get({
-        path: '/my/packages/' + SDC_512.name,
-        headers: {
-            'accept-version': '~7.0'
-        }
-    }, function (err, req, res, body) {
+test('GetPackage by name OK', function (t) {
+    CLIENT.get('/my/packages/' + SDC_512.name, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -318,26 +228,17 @@ test('GetPackage by name OK (7.0)', function (t) {
 });
 
 
-test('GetPackage by name not OK (7.0) - no permission', function (t) {
-    CLIENT.get({
-        path: '/my/packages/' + SDC_512_NO_PERMISSION.name,
-        headers: {
-            'accept-version': '~7.0'
-        }
-    }, function (err, req, res, body) {
+test('GetPackage by name not OK - no permission', function (t) {
+    var path = '/my/packages/' + SDC_512_NO_PERMISSION.name;
+    CLIENT.get(path, function (err, req, res, body) {
         checkNotFound(t, err, req, res, body);
         t.end();
     });
 });
 
 
-test('GetPackage by id OK (7.0)', function (t) {
-    CLIENT.get({
-        path: '/my/packages/' + SDC_512.uuid,
-        headers: {
-            'accept-version': '~7.0'
-        }
-    }, function (err, req, res, body) {
+test('GetPackage by id OK', function (t) {
+    CLIENT.get('/my/packages/' + SDC_512.uuid, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
@@ -359,13 +260,9 @@ test('GetPackage by id OK (7.0)', function (t) {
 });
 
 
-test('GetPackage by id not OK (7.0) - no permission', function (t) {
-    CLIENT.get({
-        path: '/my/packages/' + SDC_512_NO_PERMISSION.uuid,
-        headers: {
-            'accept-version': '~7.0'
-        }
-    }, function (err, req, res, body) {
+test('GetPackage by id not OK - no permission', function (t) {
+    var path = '/my/packages/' + SDC_512_NO_PERMISSION.uuid;
+    CLIENT.get(path, function (err, req, res, body) {
         checkNotFound(t, err, req, res, body);
         t.end();
     });

@@ -1,7 +1,7 @@
 ---
 title: Joyent CloudAPI
 mediaroot: ./media
-apisections: Account, Keys, Config, Datacenters, Datasets, Images, Packages, Machines, Analytics, FirewallRules, Networks, Nics, Users, Roles, Policies, Services, User SSH Keys, Role Tags, Fabrics
+apisections: Account, Keys, Config, Datacenters, Images, Packages, Machines, Analytics, FirewallRules, Networks, Nics, Users, Roles, Policies, Services, User SSH Keys, Role Tags, Fabrics
 markdown2extras: wiki-tables, code-friendly
 ---
 <!--
@@ -206,7 +206,6 @@ Once you have the package and image ids, to provision a new machine:
       "created": "2014-05-28T10:12:38.329Z",
       "updated": "2014-05-28T10:12:38.329Z",
       "networks": [],
-      "dataset": "sdc:sdc:base64:13.4.1",
       "firewall_enabled": false,
       "compute_node": null,
       "package": "g3-devtier-0.25-smartos"
@@ -244,7 +243,6 @@ Retrieve the status of your new machine by:
           "65ae3604-7c5c-4255-9c9f-6248e5d78900",
           "56f0fd52-4df1-49bd-af0c-81c717ea8bce"
         ],
-        "dataset": "sdc:sdc:base64:13.4.1",
         "primaryIp": "165.225.138.124",
         "firewall_enabled": false,
         "compute_node": "44454c4c-3800-104b-805a-b4c04f355631",
@@ -281,9 +279,6 @@ other images available as well, such as Linux or Windows images.  The list of
 available images can be obtained with:
 
     $ sdc-listimages
-
-The main difference with (older) datasets is that images will not provide an
-URN, but just a unique id which must be used to identify your image of choice.
 
 
 <a name="packages-description"></a>
@@ -743,12 +738,6 @@ responses have the following headers:
 ||Request-Id||A unique id for this request; you should log this||
 ||Response-Time||How long the server took to process your request (ms)||
 
-For backwards compatibility with `~6.5` version of the API, the headers
-`X-Api-Version`, `X-Request-Id` and `X-Response-Time` are also provided with
-exactly the same values as their counterparts without the `X-` prefix.  These
-`X-` prefixed headers will be removed when we remove
-[support for version 6.5 of CloudAPI](#appendix-f-sdc-65-support).
-
 If there is content, you can expect:
 
 ||**Header**||**Description**||
@@ -878,9 +867,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     api-version: 8.0.0
     request-id: 29be67c0-7d0c-11e2-8048-5195b6159808
     response-time: 164
-    x-request-id: 29be67c0-7d0c-11e2-8048-5195b6159808
-    x-api-version: 8.0.0
-    x-response-time: 164
 
     {
       "id": "cc71f8bb-f310-4746-8e36-afd7c6dd2895",
@@ -981,9 +967,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     api-version: 8.0.0
     request-id: be62e5b0-7d0f-11e2-918f-912e9d0235c1
     response-time: 326
-    x-request-id: be62e5b0-7d0f-11e2-918f-912e9d0235c1
-    x-api-version: 8.0.0
-    x-response-time: 326
 
     {
       "id": "cc71f8bb-f310-4746-8e36-afd7c6dd2895",
@@ -1072,9 +1055,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 28 Jun 2011 23:05:42 GMT
-    X-API-Version: 8.0.0
-    X-RequestId: 9E962AAA-E5F6-487F-8339-45FABA3CF5BD
-    X-Response-Time: 66
+    Api-Version: 8.0.0
+    Request-Id: 9E962AAA-E5F6-487F-8339-45FABA3CF5BD
+    Response-Time: 66
     Content-Type: application/json
     Content-Length: 503
     Content-MD5: RHiVkkX0AZHOjijYqJFRNg==
@@ -1130,9 +1113,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: BE3559EE-713B-43EB-8DEB-6EE93F441C23
-    X-Response-Time: 78
+    Api-Version: 8.0.0
+    Request-Id: BE3559EE-713B-43EB-8DEB-6EE93F441C23
+    Response-Time: 78
     Content-Type: application/json
     Content-Length: 501
     Content-MD5: O5KO1sbXxLHk1KHxN6U+Fw==
@@ -1198,9 +1181,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: BE3559EE-713B-43EB-8DEB-6EE93F441C23
-    X-Response-Time: 78
+    Api-Version: 8.0.0
+    Request-Id: BE3559EE-713B-43EB-8DEB-6EE93F441C23
+    Response-Time: 78
     Content-Type: application/json
     Content-Length: 501
     Content-MD5: O5KO1sbXxLHk1KHxN6U+Fw==
@@ -1251,9 +1234,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: 4655EA0A-C4CB-4486-8AA9-8C8C9A0B71B1
-    X-Response-Time: 65
+    Api-Version: 8.0.0
+    Request-Id: 4655EA0A-C4CB-4486-8AA9-8C8C9A0B71B1
+    Response-Time: 65
     Content-Length: 0
 
 
@@ -1492,9 +1475,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     api-version: 7.2.0
     request-id: 34d05030-d146-11e3-a115-31daadd0e9a3
     response-time: 155
-    x-request-id: 34d05030-d146-11e3-a115-31daadd0e9a3
-    x-api-version: 7.2.0
-    x-response-time: 155
 
     {
       "id": "1e8369ff-d701-4468-8bfe-950a6ea2432e",
@@ -2523,11 +2503,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET
     Connection: close
-    x-api-version: 8.0.0
     Date: Mon, 06 Jun 2011 18:45:21 GMT
     Server: SmartDataCenter
-    x-request-id: 75812321-5887-45ae-b0d4-6e562cb463b5
-    x-response-time: 0
+    api-version: 8.0.0
+    request-id: 75812321-5887-45ae-b0d4-6e562cb463b5
+    response-time: 0
     Content-Type: application/json
     Content-Length: 28
     Content-MD5: nvk5mzwiEmQEfWbQCcBauQ==
@@ -2577,11 +2557,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET
     Connection: close
-    x-api-version: 8.0.0
     Date: Mon, 06 Jun 2011 18:47:01 GMT
     Server: SmartDataCenter
-    x-request-id: e7b35c46-c36d-4e02-8cde-6fdf2695af15
-    x-response-time: 178
+    api-version: 8.0.0
+    request-id: e7b35c46-c36d-4e02-8cde-6fdf2695af15
+    response-time: 178
     Content-Type: application/json
     Content-Length: 875
     Content-MD5: FV3cglJSamXOETia0jOZ5g==
@@ -2645,9 +2625,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Api-Version: 7.2.0
     Request-Id: da9eaf80-be3e-11e4-8b3c-078d3dc40603
     Response-Time: 100
-    X-Request-Id: da9eaf80-be3e-11e4-8b3c-078d3dc40603
-    X-Api-Version: 7.2.0
-    X-Response-Time: 100
 
     {
       "cloudapi": "https://us-west-1.api.example.com",
@@ -2660,7 +2637,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 An [image](#image-description) contains the software packages that will be
 available on newly provisioned machines.  In the case of virtual machines, the
-dataset also includes the operating system.
+image also includes the operating system.
 
 ## ListImages (GET /:login/images)
 
@@ -2689,7 +2666,7 @@ An array of images.  Image objects include the following fields:
 || name         || String ||The "friendly" name for this image||
 || os           || String ||The underlying operating system for this image||
 || version      || String ||The version for this image||
-|| type         || String ||What kind of dataset this is. The values differ after v8.0.0+.||
+|| type         || String ||What kind of image this is. The values differ after v8.0.0+.||
 || requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
 || homepage     || String ||(New in 7.0.) The URL for a web page with more detailed information for this image||
 || files        || Array  ||(New in 7.1.) An array of image files that make up each image. Currently only a single file per image is supported.||
@@ -2736,9 +2713,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 28 Jun 2015 23:14:34 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
-    X-Response-Time: 257
+    Api-Version: 8.0.0
+    RequestId: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
+    Response-Time: 257
     Content-Type: application/json
     Content-Length: 402
     Content-MD5: y7YOeXG98DYchC96s46yRw==
@@ -2780,7 +2757,7 @@ None
 || name         || String ||The "friendly" name for this image||
 || os           || String ||The underlying operating system for this image||
 || version      || String ||The version for this image||
-|| type         || String ||What kind of dataset this is. The values differ after v8.0.0+.||
+|| type         || String ||What kind of image this is. The values differ after v8.0.0+.||
 || requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
 || homepage     || String ||(New in 7.0.) The URL for a web page with more detailed information for this image||
 || files        || Array  ||(New in 7.1.) An array of image files that make up each image. Currently only a single file per image is supported.||
@@ -2838,9 +2815,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Api-Version: 8.0.0
     Request-Id: 27431d80-fff0-11e2-b61a-f51841e5d1bd
     Response-Time: 491
-    X-Request-Id: 27431d80-fff0-11e2-b61a-f51841e5d1bd
-    X-Api-Version: 8.0.0
-    X-Response-Time: 491
 
     {
       "id": "e42f8c84-bbea-11e2-b920-078fab2aab1f",
@@ -2900,9 +2874,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Api-Version: 8.0.0
     Request-Id: e23eeef0-0155-11e3-8fd4-39aa5371c390
     Response-Time: 244
-    X-Request-Id: e23eeef0-0155-11e3-8fd4-39aa5371c390
-    X-Api-Version: 8.0.0
-    X-Response-Time: 244
 
 
 ## ExportImage (POST /:login/images/:id?action=export)
@@ -2977,9 +2948,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Api-Version: 7.1.0
     Request-Id: 8180ad80-14ef-11e3-a62d-89e8106c294e
     Response-Time: 670
-    X-Request-Id: 8180ad80-14ef-11e3-a62d-89e8106c294e
-    X-Api-Version: 7.1.0
-    X-Response-Time: 670
 
     {
       "manta_url": "https://us-east.manta.joyent.com",
@@ -3020,7 +2988,7 @@ not all fields listed there can be specified here.
 || name         || String ||The "friendly" name for this image||
 || os           || String ||The underlying operating system for this image||
 || version      || String ||The version for this image||
-|| type         || String ||What kind of dataset this is. The values differ after v8.0.0+.||
+|| type         || String ||What kind of image this is. The values differ after v8.0.0+.||
 || requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
 || homepage     || String ||(New in 7.0.) The URL for a web page with more detailed information for this image||
 || files        || Array  ||(New in 7.1.) An array of image files that make up each image. Currently only a single file per image is supported.||
@@ -3082,9 +3050,6 @@ Some typical and specific errors for this endpoint:
     Api-Version: 8.0.0
     Request-Id: 88af23b0-f952-11e2-8f2c-fff0ec35f4ce
     Response-Time: 160
-    X-Request-Id: 88af23b0-f952-11e2-8f2c-fff0ec35f4ce
-    X-Api-Version: 8.0.0
-    X-Response-Time: 160
 
     {
         "id": "62306cd7-7b8a-c5dd-d44e-8491c83b9974",
@@ -3123,7 +3088,7 @@ An updated image object.
 || name         || String ||The "friendly" name for this image||
 || os           || String ||The underlying operating system for this image||
 || version      || String ||The version for this image||
-|| type         || String ||What kind of dataset this is. The values differ after v8.0.0+.||
+|| type         || String ||What kind of image this is. The values differ after v8.0.0+.||
 || requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
 || homepage     || String ||(New in 7.0.) The URL for a web page with more detailed information for this image||
 || files        || Array  ||(New in 7.1.) An array of image files that make up each image. Currently only a single file per image is supported.||
@@ -3167,11 +3132,9 @@ Some typical and specific errors for this endpoint:
     HTTP/1.1 200 OK
     Content-Type: application/json
     ...
+    Api-Version: 7.2.0
     Request-Id: b8e43c60-b904-11e3-93b7-1f685001b0c3
     Response-Time: 135
-    X-Request-Id: b8e43c60-b904-11e3-93b7-1f685001b0c3
-    X-Api-Version: 7.2.0
-    X-Response-Time: 135
 
     {
       "id": "eca995fe-b904-11e3-b05a-83a4899322dc",
@@ -3226,7 +3189,7 @@ An array of objects, of the form:
 ||swap||Number||How much swap space will be available (in MiB)||
 ||lwps||Number||Maximum number of light-weight processes (threads) allowed||
 ||vcpus||Number||Number of vCPUs for this package||
-||default||Boolean||Whether this is the default package in this datacenter||
+||default||Boolean||(deprecated)Whether this is the default package in this datacenter||
 |id||String||Unique identifier for this package||
 ||version||String||The version of this package||
 ||group||String||The group this package belongs to||
@@ -3259,9 +3222,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
-    X-Response-Time: 257
+    Api-Version: 8.0.0
+    Request-Id: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
+    Response-Time: 257
     Content-Type: application/json
     Content-Length: 402
     Content-MD5: y7YOeXG98DYchC96s46yRw==
@@ -3326,7 +3289,7 @@ Gets a package by `name` or `id`.
 ||swap||Number||How much swap space will be available (in MiB)||
 ||vcpus||Number||Number of vCPUs for this package||
 ||lwps||Number||Maximum number of light-weight processes (threads) allowed||
-||default||Boolean||Whether this is the default package in this datacenter||
+||default||Boolean||(deprecated)Whether this is the default package in this datacenter||
 ||id||String||Unique identifier for this package||
 ||version||String||The version of this package||
 ||group||String||The group this package belongs to||
@@ -3359,9 +3322,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 16 Oct 2012 23:14:34 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: F01F0DC1-12DE-4D9A-B92B-FB3A041E46B8
-    X-Response-Time: 120
+    Api-Version: 8.0.0
+    Request-Id: F01F0DC1-12DE-4D9A-B92B-FB3A041E46B8
+    Response-Time: 120
     Content-Type: application/json
     Content-Length: 122
     Content-MD5: aokYYCYw/EU8JwTD9F6PyA==
@@ -3423,7 +3386,6 @@ An array of machine objects, which contain:
 ||type||String||(deprecated)The type of machine (virtualmachine or smartmachine)||
 ||brand||String||(8.0+)The type of machine (e.g. lx)||
 ||state||String||The current state of this machine (e.g. running)||
-||dataset||URN||The dataset urn this machine was provisioned with (for new images without a URN, this value will be the image id)||
 ||memory||Number||The amount of RAM this machine has (in MiB)||
 ||disk||Number||The amount of disk this machine has (in MiB)||
 ||ips||Array[String]||The IP addresses this machine has||
@@ -3491,9 +3453,9 @@ can combine them.  Run `$ sdc-listmachines --help` to see all the options.
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: AECD793C-3368-45FA-ACD9-19AC394B8933
-    X-Response-Time: 315
+    Api-Version: 8.0.0
+    Request-Id: AECD793C-3368-45FA-ACD9-19AC394B8933
+    Response-Time: 315
     x-resource-count: 2
     x-query-limit: 25
     Content-Type: application/json
@@ -3507,7 +3469,6 @@ can combine them.  Run `$ sdc-listmachines --help` to see all the options.
         "type": "smartmachine",
         "brand": "lx",
         "state": "running",
-        "dataset": "sdc:sdc:smartos:1.3.15",
         "image": "01b2c898-945f-11e1-a523-af1afbe22822",
         "memory": 256,
         "disk": 5120,
@@ -3536,7 +3497,6 @@ Gets the details for an individual machine.
 ||type||String||(deprecated)The type of machine (virtualmachine or smartmachine)||
 ||brand||String||(8.0+)The type of machine (e.g. lx)||
 ||state||String||The current state of this machine (e.g. running)||
-||dataset||URN||The dataset urn this machine was provisioned with (for new images without a URN, this value will be the image id)||
 ||memory||Number||The amount of RAM this machine has (in MiB)||
 ||disk||Number||The amount of disk this machine has (in MiB)||
 ||ips||Array[String]||The IP addresses this machine has||
@@ -3576,9 +3536,9 @@ Get the details for the machine with id 75cfe125-a5ce-49e8-82ac-09aa31ffdf26:
     Server: SmartDataCenter
     Connection: close
     Date: Tue, 28 Jun 2011 23:14:34 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: 4A8C4694-03C3-484D-80E0-ACBA9FEE6C7C
-    X-Response-Time: 174
+    Api-Version: 8.0.0
+    Request-Id: 4A8C4694-03C3-484D-80E0-ACBA9FEE6C7C
+    Response-Time: 174
     Content-Type: application/json
     Content-Length: 261
     Content-MD5: oDccU7ZWZrOkdl/pGZ4oNA==
@@ -3589,7 +3549,6 @@ Get the details for the machine with id 75cfe125-a5ce-49e8-82ac-09aa31ffdf26:
       "type": "smartmachine",
       "brand": "lx",
       "state": "running",
-      "dataset": "sdc:sdc:smartos:1.3.15",
       "image": "01b2c898-945f-11e1-a523-af1afbe22822",
       "ips": [
         "10.88.88.51"
@@ -3701,7 +3660,6 @@ can only be found on the same server as the given machine UUIDs.
 ||type||String||(deprecated)The type of machine (virtualmachine or smartmachine)||
 ||brand||String||(8.0+)The type of machine (e.g. lx)||
 ||state||String||The current state of this machine (e.g. running)||
-||dataset||URN||The dataset urn this machine was provisioned with (for new images without a URN, this value will be the image id)||
 ||memory||Number||The amount of RAM this machine has (in MiB)||
 ||disk||Number||The amount of disk this machine has (in MiB)||
 ||ips||Array[String]||The IP addresses this machine has||
@@ -3743,9 +3701,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: Joyent
     Connection: close
     Date: Wed, 13 Apr 2011 23:12:39 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: 04BF964B-C285-4BDF-84B1-762B8FDCADB1
-    X-Response-Time: 470
+    Api-Version: 8.0.0
+    Request-Id: 04BF964B-C285-4BDF-84B1-762B8FDCADB1
+    Response-Time: 470
     Content-Type: application/json
     Content-Length: 197
     Content-MD5: yuUKkqnVw/ZtHXTTeoWVDQ==
@@ -3756,7 +3714,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       "type": "smartmachine",
       "brand": "joyent",
       "state": "provisioning",
-      "dataset": nodejs-1.1.4",
       "image": "01b2c898-945f-11e1-a523-af1afbe22822",
       "memory": 128,
       "disk": 5120,
@@ -3835,9 +3792,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:35:25 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: F09F3674-2151-434B-9911-29DD188057F0
-    X-Response-Time: 115
+    Api-Version: 8.0.0
+    Request-Id: F09F3674-2151-434B-9911-29DD188057F0
+    Response-Time: 115
     Content-Length: 0
 
 
@@ -3890,9 +3847,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:35:25 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: F09F3674-2151-434B-9911-29DD188057F0
-    X-Response-Time: 115
+    Api-Version: 8.0.0
+    Request-Id: F09F3674-2151-434B-9911-29DD188057F0
+    Response-Time: 115
     Content-Length: 0
 
 
@@ -3945,9 +3902,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:35:25 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: F09F3674-2151-434B-9911-29DD188057F0
-    X-Response-Time: 115
+    Api-Version: 8.0.0
+    Request-Id: F09F3674-2151-434B-9911-29DD188057F0
+    Response-Time: 115
     Content-Length: 0
 
 
@@ -4004,11 +3961,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
-    x-api-version: 8.0.0
     Date: Sat, 11 Jun 2011 18:31:14 GMT
     Server: SmartDataCenter
-    x-request-id: 3974ead1-0f1d-49ed-974c-1abfd13d6087
-    x-response-time: 161
+    api-version: 8.0.0
+    request-id: 3974ead1-0f1d-49ed-974c-1abfd13d6087
+    response-time: 161
     Content-Length: 0
 
 
@@ -4058,11 +4015,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
-    x-api-version: 8.0.0
     Date: Sat, 11 Jun 2011 18:31:14 GMT
     Server: SmartDataCenter
-    x-request-id: 3974ead1-0f1d-49ed-974c-1abfd13d6087
-    x-response-time: 161
+    api-version: 8.0.0
+    request-id: 3974ead1-0f1d-49ed-974c-1abfd13d6087
+    response-time: 161
     Content-Length: 0
 
 
@@ -4110,11 +4067,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
-    x-api-version: 8.0.0
     Date: Sat, 11 Jun 2011 18:31:14 GMT
     Server: SmartDataCenter
-    x-request-id: 3974ead1-0f1d-49ed-974c-1abfd13d6087
-    x-response-time: 161
+    api-version: 8.0.0
+    request-id: 3974ead1-0f1d-49ed-974c-1abfd13d6087
+    response-time: 161
     Content-Length: 0
 
 ## DisableMachineFirewall (POST /:login/machines/:id?action=disable_firewall)
@@ -4161,11 +4118,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
-    x-api-version: 8.0.0
     Date: Sat, 11 Jun 2011 18:31:14 GMT
     Server: SmartDataCenter
-    x-request-id: 3974ead1-0f1d-49ed-974c-1abfd13d6087
-    x-response-time: 161
+    api-version: 8.0.0
+    request-id: 3974ead1-0f1d-49ed-974c-1abfd13d6087
+    response-time: 161
     Content-Length: 0
 
 
@@ -4225,11 +4182,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
     Connection: close
-    X-Api-Version: 8.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
-    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    X-Response-Time: 754
+    Api-Version: 8.0.0
+    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    Response-Time: 754
     Content-Type: application/json
     Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
     Content-Length: 116
@@ -4282,11 +4239,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
-    X-Api-Version: 8.0.0
     Date: Tue, 05 Jul 2011 17:26:56 GMT
     Server: SmartDataCenter
-    X-Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
-    X-Response-Time: 297
+    Api-Version: 8.0.0
+    Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
+    Response-Time: 297
     Content-Length: 0
 
 
@@ -4333,11 +4290,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
     Connection: close
-    X-Api-Version: 8.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
-    X-Request-Id: 06a57272-9238-4276-951b-4123fbfdb948
-    X-Response-Time: 66
+    Api-Version: 8.0.0
+    Request-Id: 06a57272-9238-4276-951b-4123fbfdb948
+    Response-Time: 66
     Content-Type: application/json
     Content-MD5: UYdtqgRjRZVikfCM5Uf4XQ==
     Content-Length: 119
@@ -4392,11 +4349,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
-    X-Api-Version: 8.0.0
     Date: Tue, 05 Jul 2011 17:26:56 GMT
     Server: SmartDataCenter
-    X-Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
-    X-Response-Time: 297
+    Api-Version: 8.0.0
+    Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
+    Response-Time: 297
     Content-Type: application/json
     Content-MD5: VoPeS9cac4YMBIs8gUkd/A==
     Content-Length: 117
@@ -4448,11 +4405,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
-    X-Api-Version: 8.0.0
     Date: Tue, 05 Jul 2011 17:26:56 GMT
     Server: SmartDataCenter
-    X-Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
-    X-Response-Time: 297
+    Api-Version: 8.0.0
+    Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
+    Response-Time: 297
     Content-Length: 0
 
 
@@ -4507,11 +4464,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
     Connection: close
-    X-Api-Version: 8.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
-    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    X-Response-Time: 754
+    Api-Version: 8.0.0
+    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    Response-Time: 754
     Content-Type: application/json
     Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
     Content-Length: 116
@@ -4563,11 +4520,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
     Connection: close
-    X-Api-Version: 8.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
-    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    X-Response-Time: 754
+    Api-Version: 8.0.0
+    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    Response-Time: 754
     Content-Type: application/json
     Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
     Content-Length: 116
@@ -4620,11 +4577,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
     Connection: close
-    X-Api-Version: 8.0.0
     Date: Tue, 05 Jul 2014 17:19:26 GMT
     Server: SmartDataCenter
-    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    X-Response-Time: 754
+    Api-Version: 8.0.0
+    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    Response-Time: 754
     Content-Type: application/json
     Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
     Content-Length: 4
@@ -4669,11 +4626,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
     Connection: close
-    X-Api-Version: 8.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
-    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    X-Response-Time: 754
+    Api-Version: 8.0.0
+    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    Response-Time: 754
     Content-Type: application/json
     Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
     Content-Length: 0
@@ -4718,11 +4675,11 @@ to keep the shell from matching files in the current directory.
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
     Connection: close
-    X-Api-Version: 8.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
-    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    X-Response-Time: 754
+    Api-Version: 8.0.0
+    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    Response-Time: 754
     Content-Type: application/json
     Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
     Content-Length: 0
@@ -4777,11 +4734,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, PUT
     Connection: close
-    X-Api-Version: 8.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
-    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    X-Response-Time: 754
+    Api-Version: 8.0.0
+    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    Response-Time: 754
     Content-Type: application/json
     Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
     Content-Length: 116
@@ -4841,11 +4798,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, PUT
     Connection: close
-    X-Api-Version: 8.0.0
     Date: Tue, 05 Jul 2012 17:19:26 GMT
     Server: SmartDataCenter
-    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    X-Response-Time: 754
+    Api-Version: 8.0.0
+    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    Response-Time: 754
     Content-Type: application/json
     Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
     Content-Length: 116
@@ -4896,11 +4853,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, PUT
     Connection: close
-    X-Api-Version: 8.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
-    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    X-Response-Time: 754
+    Api-Version: 8.0.0
+    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    Response-Time: 754
     Content-Type: application/json
     Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
     Content-Length: 116
@@ -4951,11 +4908,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
     Connection: close
-    X-Api-Version: 8.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
-    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    X-Response-Time: 754
+    Api-Version: 8.0.0
+    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    Response-Time: 754
     Content-Type: text/plain
     Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
     Content-Length: 3
@@ -5000,11 +4957,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
-    X-Api-Version: 8.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
-    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    X-Response-Time: 754
+    Api-Version: 8.0.0
+    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    Response-Time: 754
     Content-Length: 0
 
 
@@ -5048,11 +5005,11 @@ to keep the shell from matching files in the current directory.
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
-    X-Api-Version: 8.0.0
     Date: Tue, 05 Jul 2011 17:19:26 GMT
     Server: SmartDataCenter
-    X-Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    X-Response-Time: 754
+    Api-Version: 8.0.0
+    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    Response-Time: 754
     Content-Length: 0
 
 
@@ -5097,9 +5054,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:38:03 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: 762C3F37-8ACA-4A49-AF10-84CEC8137B1D
-    X-Response-Time: 72
+    Api-Version: 8.0.0
+    Request-Id: 762C3F37-8ACA-4A49-AF10-84CEC8137B1D
+    Response-Time: 72
     Content-Length: 0
 
 
@@ -5165,9 +5122,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     api-version: 8.0.0
     request-id: 453aee00-7d03-11e2-8048-5195b6159808
     response-time: 34
-    x-request-id: 453aee00-7d03-11e2-8048-5195b6159808
-    x-api-version: 8.0.0
-    x-response-time: 34
 
     [{
         "success": "yes",
@@ -5464,9 +5418,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:40:30 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: 83BB32FC-1F65-4FEB-871E-BABCD96D588D
-    X-Response-Time: 285
+    Api-Version: 8.0.0
+    Request-Id: 83BB32FC-1F65-4FEB-871E-BABCD96D588D
+    Response-Time: 285
     Content-Type: application/json
     Content-Length: 2806
     Content-MD5: M4mXJlxSgflBnhXPYYCp1g==
@@ -5543,9 +5497,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:49:40 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: 99839114-1B59-4733-AC64-A93144CA7D8B
-    X-Response-Time: 48
+    Api-Version: 8.0.0
+    Request-Id: 99839114-1B59-4733-AC64-A93144CA7D8B
+    Response-Time: 48
     Content-Type: application/json
     Content-Length: 1062
     Content-MD5: 8dSboZrGVMsaRYWGFbq88A==
@@ -5631,9 +5585,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:53:29 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: E79B48A2-EC5B-475E-A473-1AF0053FCF4F
-    X-Response-Time: 60
+    Api-Version: 8.0.0
+    Request-Id: E79B48A2-EC5B-475E-A473-1AF0053FCF4F
+    Response-Time: 60
     Content-Type: application/json
     Content-Length: 530
     Content-MD5: kOuwnsK6U9yQY7MpN3lEvQ==
@@ -5707,9 +5661,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:53:29 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: E79B48A2-EC5B-475E-A473-1AF0053FCF4F
-    X-Response-Time: 60
+    Api-Version: 8.0.0
+    Request-Id: E79B48A2-EC5B-475E-A473-1AF0053FCF4F
+    Response-Time: 60
     Content-Type: application/json
     Content-Length: 530
     Content-MD5: kOuwnsK6U9yQY7MpN3lEvQ==
@@ -5785,11 +5739,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET
     Connection: close
-    X-Api-Version: 8.0.0
     Date: Wed, 29 Jun 2011 23:57:44 GMT
     Server: SmartDataCenter
-    X-Request-Id: 3d511185-36b8-4699-9cdd-a67bf8be7a6d
-    X-Response-Time: 109
+    Api-Version: 8.0.0
+    Request-Id: 3d511185-36b8-4699-9cdd-a67bf8be7a6d
+    Response-Time: 109
     Content-Type: application/json
     Content-MD5: r5tPNDLr1HQE1tsLNqPbvg==
     Content-Length: 2052
@@ -5924,9 +5878,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:43:24 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: F4238406-ED7D-4938-937B-4E3D0F93D924
-    X-Response-Time: 1508
+    Api-Version: 8.0.0
+    Request-Id: F4238406-ED7D-4938-937B-4E3D0F93D924
+    Response-Time: 1508
     Content-Type: application/json
     Content-Length: 544
     Content-MD5: CrcS3CTR5mwpOvJEx60s1g==
@@ -5996,9 +5950,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Server: SmartDataCenter
     Connection: close
     Date: Wed, 13 Apr 2011 23:56:29 GMT
-    X-Api-Version: 8.0.0
-    X-RequestId: E4DD448D-F491-4A88-9237-DAF6C4DC782C
-    X-Response-Time: 49
+    Api-Version: 8.0.0
+    Request-Id: E4DD448D-F491-4A88-9237-DAF6C4DC782C
+    Response-Time: 49
     Content-Length: 0
 
 
@@ -6104,9 +6058,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     api-version: 8.0.0
     request-id: 35147710-7f49-11e2-8585-bd5fc323c72c
     response-time: 134
-    x-request-id: 35147710-7f49-11e2-8585-bd5fc323c72c
-    x-api-version: 8.0.0
-    x-response-time: 134
 
     [
       {
@@ -6166,9 +6117,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     api-version: 8.0.0
     request-id: cf1c1340-7f49-11e2-8585-bd5fc323c72c
     response-time: 203
-    x-request-id: cf1c1340-7f49-11e2-8585-bd5fc323c72c
-    x-api-version: 8.0.0
-    x-response-time: 203
 
     {
       "id": "38de17c4-39e8-48c7-a168-0f58083de860",
@@ -6236,9 +6184,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     api-version: 8.0.0
     request-id: 2c0a2a20-7f49-11e2-8585-bd5fc323c72c
     response-time: 36
-    x-request-id: 2c0a2a20-7f49-11e2-8585-bd5fc323c72c
-    x-api-version: 8.0.0
-    x-response-time: 36
 
     {
       "id": "38de17c4-39e8-48c7-a168-0f58083de860",
@@ -6307,9 +6252,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     api-version: 8.0.0
     request-id: 284907d0-7f67-11e2-8585-bd5fc323c72c
     response-time: 225
-    x-request-id: 284907d0-7f67-11e2-8585-bd5fc323c72c
-    x-api-version: 8.0.0
-    x-response-time: 225
 
     {
       "id": "38de17c4-39e8-48c7-a168-0f58083de860",
@@ -6372,9 +6314,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     api-version: 8.0.0
     request-id: 1ebe23c0-7f68-11e2-8585-bd5fc323c72c
     response-time: 232
-    x-request-id: 1ebe23c0-7f68-11e2-8585-bd5fc323c72c
-    x-api-version: 8.0.0
-    x-response-time: 232
 
     {
       "id": "38de17c4-39e8-48c7-a168-0f58083de860",
@@ -6437,9 +6376,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     api-version: 8.0.0
     request-id: 8a2d7490-7f67-11e2-8585-bd5fc323c72c
     response-time: 234
-    x-request-id: 8a2d7490-7f67-11e2-8585-bd5fc323c72c
-    x-api-version: 8.0.0
-    x-response-time: 234
 
     {
       "id": "38de17c4-39e8-48c7-a168-0f58083de860",
@@ -6491,9 +6427,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     api-version: 8.0.0
     request-id: 50a78b60-7f68-11e2-8585-bd5fc323c72c
     response-time: 219
-    x-request-id: 50a78b60-7f68-11e2-8585-bd5fc323c72c
-    x-api-version: 8.0.0
-    x-response-time: 219
 
 
 ## ListMachineFirewallRules (GET /:login/machines/:machine/fwrules)
@@ -7165,9 +7098,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     api-version: 8.0.0
     request-id: 35147710-7f49-11e2-8585-bd5fc323c72c
     response-time: 134
-    x-request-id: 35147710-7f49-11e2-8585-bd5fc323c72c
-    x-api-version: 8.0.0
-    x-response-time: 134
 
     [
       {
@@ -7226,9 +7156,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     api-version: 8.0.0
     request-id: cf1c1340-7f49-11e2-8585-bd5fc323c72c
     response-time: 203
-    x-request-id: cf1c1340-7f49-11e2-8585-bd5fc323c72c
-    x-api-version: 8.0.0
-    x-response-time: 203
 
     {
       "id": "daeb93a2-532e-4bd4-8788-b6b30f10ac17",
@@ -7301,9 +7228,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     request-id: 6b8c5170-d45a-11e3-8db6-c7649670227d
     response-time: 183
     x-resource-count: 1
-    x-request-id: 6b8c5170-d45a-11e3-8db6-c7649670227d
-    x-api-version: 7.2.0
-    x-response-time: 183
 
     [
         {
@@ -7378,9 +7302,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     request-id: 6b8c5170-d45a-11e3-8db6-c7649670227d
     response-time: 183
     x-resource-count: 1
-    x-request-id: 6b8c5170-d45a-11e3-8db6-c7649670227d
-    x-api-version: 7.2.0
-    x-response-time: 183
 
     {
         "mac": "90:b8:d0:2f:b8:f9",
@@ -7469,9 +7390,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     request-id: 6b8c5170-d45a-11e3-8db6-c7649670227d
     response-time: 183
     x-resource-count: 1
-    x-request-id: 6b8c5170-d45a-11e3-8db6-c7649670227d
-    x-api-version: 7.2.0
-    x-response-time: 183
 
     {
         "mac": "90:b8:d0:2f:b8:f9",
@@ -7538,9 +7456,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     request-id: 6b8c5170-d45a-11e3-8db6-c7649670227d
     response-time: 183
     x-resource-count: 1
-    x-request-id: 6b8c5170-d45a-11e3-8db6-c7649670227d
-    x-api-version: 7.2.0
-    x-response-time: 183
 
 
 
@@ -8229,7 +8144,7 @@ Sample code for generating the `Authorization` header (and `Date` header):
       host: 'api.example.com',
       path: '/my/machines',
       headers: {
-        'x-api-version': '~8.0',
+        'api-version': '~8.0',
         'Date': date,
         'Authorization': authz
       }
@@ -8277,7 +8192,6 @@ Sample code for generating the `Authorization` header (and `Date` header):
 ||[sdc-exportimage](#ExportImage)||Export an image to Manta.||
 ||[sdc-fabric](#fabrics)||Administer fabric networks and VLANs.||
 ||[sdc-getaccount ](#GetAccount)||Gets details about your account.||
-||[sdc-getdataset](#GetDataset)||Gets an individual dataset by id. (deprecated)||
 ||[sdc-getfirewallrule](#GetFirewallRule)||Get details about a specific firewall rule.||
 ||[sdc-getimage](#GetImage)||Gets an individual image by id.||
 ||[sdc-getinstrumentation](#GetInstrumentation)||Retrieves the configuration for an instrumentation.||
@@ -8291,7 +8205,6 @@ Sample code for generating the `Authorization` header (and `Date` header):
 ||[sdc-getpackage](#GetPackage)||Gets a package by name.||
 ||[sdc-info](#SetRoleTags)||List of role-tags assigned to a given resource.||
 ||[sdc-listdatacenters](#ListDatacenters)||Provides a list of all datacenters this cloud is aware of.||
-||[sdc-listdatasets](#ListDatasets)||Provides a list of datasets available in this datacenter. (deprecated)||
 ||[sdc-listfirewallrules](#ListFirewallRules)||List all firewall rules applying to this account.||
 ||[sdc-listimages](#ListImages)||Provides a list of images available in this datacenter.||
 ||[sdc-listinstrumentations](#ListInstrumentations)||Retrieves all currently created instrumentations.||
@@ -8323,33 +8236,12 @@ Sample code for generating the `Authorization` header (and `Date` header):
 
 # Appendix E: SDC Changelog
 
-CloudAPI and SmartDC CLI have been completely rewritten for SDC 7.0.  Notably,
-required version of Node.js to run the CLI is now greater or equal than 0.8.14.
-
-Most of the commands remain the same, taking exactly the same options and
-returning exactly the same JSON information in an attempt to preserve backwards
-compatibility between 6.5 and 7.0 API clients, and software built for 6.5.
-
-There are some important differences between SDC 7.0 and the previous version,
-where the main one is:
-
-* The request version of SDC 7.0 CLI is `~7.0` instead of `6.5`.
-
-* This means that the parameter `--image` (or the equivalent `-e` short option)
-is mandatory for the command `sdc-createmachine`.  On previous versions of the
-API, it was possible to provision a machine without specifying an image to the
-create machine command.  This behavior has been deprecated, and the desired
-image **must** be specified.
-
 * Starting with version 7.0, there isn't a `default` image.  For backward
 compatibility purposes, when a request using `~6.5` is received, the latest
 version of the `smartos` image will become the default one.
 
 * Starting with version 7.0, virtual machines can also be resized, but **only
 resizing virtual machines to a higher capacity/package is supported**.
-
-* Version 7.0 also deprecates the `URN` attribute for any entity, either Images
-or Packages.  URN support will finish with SDC 6.5 support.
 
 * Starting with version 7.0, packages listed by GET `/:account/packages` accept
 search filters.  Additionally, the package members `vcpus`, `id` and `version`
@@ -8399,19 +8291,10 @@ This allows the creation of virtuan LANs and layer-three networks.
 existing `type` (now deprecated), and a `docker` boolean attribute as well,
 which indicates whether a machine is a Docker container or not. The version also
 makes a breaking change to the attribute `type` on images.
-ListDatasets/GetDataset have been removed.
+ListDatasets/GetDataset have been removed. The deprecated 6.5 API support, and
+most related 6.5-isms, have been removed. The `default` attribute on packages is
+deprecated, since it only had meaning in 6.5.
 
-
-
-
-# Appendix F: SDC 6.5 Support
-
-**Version 6.5 of the API will not be supported longer than a period of six
-months after the public release of SDC 7.0.**
-
-During this period, backwards compatibility will be granted in order to give
-3rd-party software built on top of the previous API version time enough to
-migrate to the new version.
 
 
 <p style="min-height: 31px; margin-top: 60px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0">

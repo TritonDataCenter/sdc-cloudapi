@@ -150,7 +150,7 @@ test('Get Headnode', function (t) {
 });
 
 
-test('Get base dataset', function (t) {
+test('Get base image', function (t) {
     common.getBaseImage(CLIENT, function (err, img) {
         t.ifError(err);
         IMAGE_UUID = img.id;
@@ -359,12 +359,7 @@ test('Create machine with invalid parameters', function (t) {
         server_uuid: '123456'
     };
 
-    CLIENT.post({
-        path: '/my/machines',
-        headers: {
-            'accept-version': '~6.5'
-        }
-    }, obj, function (err, req, res, body) {
+    CLIENT.post('/my/machines', obj, function (err, req, res, body) {
         t.ok(err, 'POST Create machine with invalid parameters');
         t.ok(/name/.test(err.message));
         t.notOk(/server/.test(err.message));
@@ -398,7 +393,7 @@ test('Create machine with invalid locality', function (t) {
 });
 
 
-test('CreateMachine using dataset without permission', function (t) {
+test('CreateMachine using image without permission', function (t) {
     CLIENT.imgapi.listImages(function (err, images) {
         t.ifError(err);
 
@@ -437,18 +432,16 @@ test('CreateMachine using dataset without permission', function (t) {
 // inside cloudapi conflict with simple updates of the existing user. That
 // implies skipping using the existing http client.
 test('CreateMachine without approved_for_provisioning', function (t) {
-    function attemptProvision(err, tmpAccount, cb) {
+    function attemptProvision(err, tmpAccount, signer, cb) {
         t.ifError(err);
 
         var httpClient = restify.createJsonClient({
             url: CLIENT.url.href, // grab from old client
             retryOptions: { retry: 0 },
             log: CLIENT.log,
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
+            signRequest: signer
         });
-
-        // cheating a bit by using the old auth method to make things easier
-        httpClient.basicAuth(tmpAccount.login, tmpAccount.passwd);
 
         var obj = {
             image: IMAGE_UUID,
@@ -456,10 +449,7 @@ test('CreateMachine without approved_for_provisioning', function (t) {
             server_uuid: HEADNODE_UUID
         };
 
-        httpClient.post({
-            path: '/my/machines',
-            headers: { 'accept-version': '~6.5' }
-        }, obj, function (err2, req, res, body) {
+        httpClient.post('/my/machines', obj, function (err2, req, res, body) {
             t.ok(err2);
 
             t.deepEqual(body, {
@@ -541,14 +531,14 @@ test('ListMachines all - other', function (t) {
 
 
 // Fixed by PUBAPI-774, again!
-test('ListMachines (filter by dataset)', function (t) {
+test('ListMachines (filter by image)', function (t) {
     searchAndCheck('image=' + IMAGE_UUID, t, function (m) {
         t.equal(m.image, IMAGE_UUID);
     });
 });
 
 
-test('ListMachines (filter by dataset) - other', function (t) {
+test('ListMachines (filter by image) - other', function (t) {
     searchAndCheckOther('image=' + IMAGE_UUID, t);
 });
 

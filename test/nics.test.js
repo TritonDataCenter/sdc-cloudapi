@@ -181,7 +181,7 @@ test('setup', function (t) {
 
     var dataset;
     var findDataset = function (_, next) {
-        CLIENT.get('/my/datasets?name=base', function (err, req, res, body) {
+        CLIENT.get('/my/images?name=base', function (err, req, res, body) {
             t.ifError(err);
             t.equal(res.statusCode, 200);
             t.ok(Array.isArray(body));
