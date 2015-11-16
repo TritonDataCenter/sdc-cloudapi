@@ -61,6 +61,7 @@ var IMAGE;
 
 var CLIENTS;
 var CLIENT;
+var OTHER;
 var SERVER;
 
 
@@ -110,6 +111,7 @@ test('setup', function (t) {
     common.setup(function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
+        OTHER   = clients.other;
         SERVER  = server;
 
         createLimit(t, function () {
@@ -128,8 +130,8 @@ test('Get Headnode', function (t) {
 });
 
 
-test('Get base dataset', function (t) {
-    common.getBaseDataset(CLIENT, function (err, img) {
+test('Get base image', function (t) {
+    common.getBaseImage(CLIENT, function (err, img) {
         t.ifError(err);
         IMAGE = img;
         t.end();
@@ -330,7 +332,7 @@ test('CreateMachine #3', function (t) {
 
 test('Delete tests', function (t) {
     var deleteTest = require('./machines/delete');
-    deleteTest(t, CLIENT, MACHINE_UUID, function () {
+    deleteTest(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });
@@ -338,7 +340,7 @@ test('Delete tests', function (t) {
 
 test('Delete tests', function (t) {
     var deleteTest = require('./machines/delete');
-    deleteTest(t, CLIENT, MACHINE_UUID_2, function () {
+    deleteTest(t, CLIENT, OTHER, MACHINE_UUID_2, function () {
         t.end();
     });
 });
