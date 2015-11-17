@@ -1486,19 +1486,22 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 
 
-## UpdateUser (POST /:account/users/:user)
+## UpdateUser (POST /:account/users/:id)
 
-Update any user's modifiable properties.
+Update an RBAC user's modifiable properties.
 
-Password changes are not allowed using this route; there is an additional route
-for password changes so it can be selectively allowed/disallowed for users
-using policies.
+Note: Password changes are not allowed using this endpoint; there is an
+additional endpoint ([ChangeUserPassword](ChangeUserPassword)) for password
+changes so it can be selectively allowed/disallowed for users using policies.
 
 ### Inputs
 
 ||**Field**||**Type**||**Description**||
-||email||String||(Required) Email address||
-||companyName||String||...||
+||account||String (URL)||(Required) The user's unique id (a UUID)||
+||id||String (URL)||(Required) The user identifier (`login` or `id` UUID)||
+||login||String||(Optional) A new user login||
+||email||String||(Optional) Email address||
+||companyName||String||(Optional)||
 ||firstName||String||...||
 ||lastName||String||...||
 ||address||String||...||
@@ -1513,8 +1516,8 @@ using policies.
 User object:
 
 ||**Field**||**Type**||**Description**||
-||id||String||Unique id for the user||
-||login||String||Sub-user login name||
+||id||String||Unique id (UUID) for the user||
+||login||String||User login name||
 ||email||String||Email address||
 ||companyName||String||...||
 ||firstName||String||...||
@@ -1722,7 +1725,7 @@ Returns an array of account roles.
 
 ## GetRole (GET /:account/roles/:role)
 
-Get an account role (`:role`) by `id`.
+Get an account role (`:role`) by `id` or `name`.
 
 ### Inputs
 
@@ -1920,7 +1923,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ## DeleteRole (DELETE /:account/roles/:role)
 
-Remove a role.
+Remove a role. `:role` must be the role `id` (a UUID).
 
 ### Inputs
 
@@ -2274,7 +2277,7 @@ Upgrades an existing account policy.  Everything but id can be modified.
 
 ## DeletePolicy (DELETE /:account/policies/:policy)
 
-Deletes an existing policy.
+Delete an RBAC policy. `:policy` must be the policy `id` (a UUID).
 
 ### Inputs
 
