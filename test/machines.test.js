@@ -653,6 +653,43 @@ test('ListMachines (filter by joyent brand) - other', function (t) {
 });
 
 
+test('ListMachines (filter by docker true)', function (t) {
+    CLIENT.get('/my/machines?docker=true', function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+
+        body.forEach(function (vm) {
+            t.equal(vm.docker, true);
+        });
+
+        t.end();
+    });
+});
+
+
+test('ListMachines (filter by docker false)', function (t) {
+    CLIENT.get('/my/machines?docker=false', function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+
+        t.ok(body.length > 0);
+
+        body.forEach(function (vm) {
+            t.equal(vm.docker, undefined);
+        });
+
+        t.end();
+    });
+});
+
+
+test('ListMachines (filter by docker) - other', function (t) {
+    searchAndCheckOther('docker=false', t);
+});
+
+
 test('ListMachines (filter by bad type)', function (t) {
     var path = '/my/machines?type=0xdeadbeef';
 
@@ -1101,6 +1138,43 @@ test('Check cannot replace tags containing Docker machine tag', function (t) {
         checkValidationError(t, err, req, res, body);
         t.end();
     });
+});
+
+
+test('Check can list Docker machines only', function (t) {
+    CLIENT.get('/my/machines?docker=true', function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+
+        t.ok(body.length > 0);
+
+        body.forEach(function (vm) {
+            t.equal(vm.docker, true);
+        });
+
+        t.end();
+    });
+});
+
+
+test('Check can list non-Docker machines only', function (t) {
+    CLIENT.get('/my/machines?docker=false', function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+
+        body.forEach(function (vm) {
+            t.equal(vm.docker, undefined);
+        });
+
+        t.end();
+    });
+});
+
+
+test('ListMachines (filter by docker) - other', function (t) {
+    searchAndCheckOther('docker=false', t);
 });
 
 
