@@ -15,7 +15,7 @@
     "dependencies": {
         "vasync": "1.4.3",
         "filed": "0.0.7",
-        "http-signature": "0.10.0",
+        "http-signature": "1.1.0",
         "mime": "1.2.7",
         "libuuid": "0.1.2",
         "nopt": "2.0.0",
