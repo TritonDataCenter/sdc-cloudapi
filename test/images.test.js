@@ -46,7 +46,9 @@ function checkImage(t, image, path) {
 
     t.equal(typeof (image.urn), 'undefined', 'image.urn');
     t.equal(typeof (image.default), 'undefined', 'image.default');
-    t.equal(image.type, 'zone-dataset');
+    var expectedTypes = ['zone-dataset', 'lx-dataset', 'zvol', 'docker'];
+    t.ok(expectedTypes.indexOf(image.type) !== -1,
+        'expected image.type: ' + image.type);
 }
 
 
