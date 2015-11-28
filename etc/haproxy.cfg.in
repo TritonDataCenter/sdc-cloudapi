@@ -30,5 +30,6 @@ frontend cloudapi
         default_backend servers
 
 backend servers
-        option httpchk GET /--ping
+        #XXX
+        #option httpchk GET /--ping
 @@CLOUDAPI_INSTANCES@@

@@ -125,8 +125,8 @@ file called ~/.ssh/id_rsa.
 
 You need to know the following information in order to interact with CloudAPI:
 
-* `SDC_ACCOUNT`: Your username.  The login you use for SDC.
-* `SDC_USER`: The account subuser when you are using
+* `SDC_ACCOUNT`: Your account name.  The login you use for SDC.
+* `SDC_USER`: The account sub-user when you are using
   [Role Based Access Control](#rbac-users-roles-policies).
 * `SDC_URL`: The URL of the CloudAPI endpoint.
 * `SDC_KEY_ID`: Fingerprint for the key you uploaded to SmartDC through portal.

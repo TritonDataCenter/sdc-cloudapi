@@ -63,7 +63,9 @@ function setupLogger(config) {
     LOG = bunyan.createLogger({
         name: 'cloudapi',
         serializers: restify.bunyan.serializers,
-        src: Boolean(bunyan.resolveLevel(level) <= bunyan.TRACE),
+        //XXX
+        //src: Boolean(bunyan.resolveLevel(level) <= bunyan.TRACE),
+        src: true, //XXX
         streams: [
             {
                 level: level,

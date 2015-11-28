@@ -1,7 +1,7 @@
 {
     "port": 443,
     "bunyan": {
-        "level": "info"
+        "level": "trace"
     },
     "datacenter_name": "{{{datacenter_name}}}",
     "read_only": {{{CLOUDAPI_READONLY}}},
