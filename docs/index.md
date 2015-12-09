@@ -3647,7 +3647,7 @@ can only be found on the same server as the given machine UUIDs.
 
 ### Inputs
 
-||name||String||Friendly name for this machine; default is a randomly generated name||
+||name||String||Friendly name for this machine; default is the first 8 characters of the machine id||
 ||package||String||Id of the package to use on provisioning, obtained from [ListPackages](#ListPackages)||
 ||image||String||The image UUID (the "id" field in [ListImages](#ListImages))||
 ||networks||Array||Desired networks ids, obtained from [ListNetworks](#ListNetworks)||
