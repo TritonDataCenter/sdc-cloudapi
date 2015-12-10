@@ -26,6 +26,10 @@ var waitForJob = machinesCommon.waitForJob;
 // --- Globals
 
 
+var FABRIC_TEST_OPTS = {
+    skip: !common.getCfg().fabrics_enabled
+};
+
 var SDC_128 = common.sdc_128_package;
 
 var NETWORKS = [ {
@@ -602,7 +606,7 @@ test('Get NIC from nonexistent machine', function (t) {
 });
 
 
-// NB: changes value of VM_NIC global
+// NB: changes value of VM_NIC and LOCATION globals
 test('Create NIC using network', function (t) {
     var path = '/my/machines/' + MACHINE_UUID + '/nics';
     var args = { network: NETWORKS[0].uuid };
@@ -883,7 +887,6 @@ test('Remove non-owner NIC from non-owner machine', function (t) {
 });
 
 
-
 test('Remove invalid NIC', function (t) {
     var path = '/my/machines/' + MACHINE_UUID + '/nics/wowzers';
 
@@ -900,7 +903,6 @@ test('Remove invalid NIC', function (t) {
 
     delErr(t, path, expectedErr);
 });
-
 
 
 test('Remove NIC from invalid machine', function (t) {
@@ -927,7 +929,6 @@ test('Remove NIC from invalid machine', function (t) {
 });
 
 
-
 test('Remove nonexistent NIC', function (t) {
     var path = '/my/machines/' + MACHINE_UUID + '/nics/012345678901';
 
@@ -946,18 +947,15 @@ test('Remove nonexistent NIC', function (t) {
 });
 
 
-
 test('Remove NIC using network', function (t) {
     removeNic(t, VM_NIC);
 });
 
 
-
 test('Wait til network NIC removed', waitTilNicDeleted);
 
 
-
-// NB: changes value of VM_NIC global
+// NB: changes value of VM_NIC and LOCATION globals
 test('Create NIC using network pool', function (t) {
     var path = '/my/machines/' + MACHINE_UUID + '/nics';
     var args = { network: NETWORK_POOLS[0].uuid };
@@ -995,11 +993,9 @@ test('Create NIC using network pool', function (t) {
 });
 
 
-
 test('Wait til network pool NIC added', function (t) {
     waitTilNicAdded(t, LOCATION);
 });
-
 
 
 test('Remove NIC using network pool', function (t) {
@@ -1007,9 +1003,48 @@ test('Remove NIC using network pool', function (t) {
 });
 
 
-
 test('Wait til network pool NIC removed', waitTilNicDeleted);
 
+
+// NB: changes value of VM_NIC and LOCATION globals
+test('Add fabric network NIC', FABRIC_TEST_OPTS, function (t) {
+    CLIENT.get('/my/networks', function (err, req, res, networks) {
+        t.ifError(err);
+
+        var fabricNetwork = networks.filter(function (net) {
+            return net.fabric;
+        })[0];
+
+        var path = '/my/machines/' + MACHINE_UUID + '/nics';
+        var args = { network: fabricNetwork.id };
+
+        CLIENT.post(path, args, function (err2, req2, res2, nic) {
+            t.ifError(err2);
+            t.equal(res2.statusCode, 201);
+
+            LOCATION = res2.headers.location;
+            t.ok(LOCATION);
+            VM_NIC = nic;
+            t.ok(VM_NIC);
+
+            t.end();
+        });
+    });
+});
+
+
+test('Wait til fabric network NIC added', FABRIC_TEST_OPTS, function (t) {
+    waitTilNicAdded(t, LOCATION);
+});
+
+
+test('Remove NIC using fabric network', FABRIC_TEST_OPTS, function (t) {
+    removeNic(t, VM_NIC);
+});
+
+
+test('Wait til fabric network NIC removed', FABRIC_TEST_OPTS,
+    waitTilNicDeleted);
 
 
 test('teardown', function (t) {
