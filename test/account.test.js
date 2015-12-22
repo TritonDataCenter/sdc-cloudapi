@@ -142,6 +142,21 @@ test('PostAccount other', function (t) {
 });
 
 
+// a test of a role-tag corner-case
+test('PutAccount OK', function (t) {
+    var path = '/' + encodeURIComponent(CLIENT.login);
+
+    CLIENT.put(path, USER_DETAILS, function (err, req, res, obj) {
+        t.ifError(err);
+
+        t.equal(typeof (obj.name), 'string');
+        t.deepEqual(obj['role-tag'], []);
+
+        t.end();
+    });
+});
+
+
 test('teardown', function (t) {
     common.teardown(CLIENTS, SERVER, function () {
         t.end();
