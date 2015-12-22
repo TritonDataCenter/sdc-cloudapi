@@ -6,7 +6,7 @@
 #
 
 #
-# Copyright (c) 2014, Joyent, Inc.
+# Copyright (c) 2015, Joyent, Inc.
 #
 
 #
@@ -93,7 +93,6 @@ do
     esac
 done
 
-
 # Setup a clean output dir.
 OUTPUT_DIR=/var/tmp/cloudapitest
 echo "# Setup a clean output dir ($OUTPUT_DIR)."
@@ -106,44 +105,66 @@ echo "#     SDC_SSO_ADMIN_IP is $SDC_SSO_ADMIN_IP"
 
 cd $TOP
 
-# Run the tests.
-echo ""
+# Generate list of tests
 test_files=$(ls -1 test/*.test.js)
 if [[ -n "$opt_test_pattern" ]]; then
     test_files=$(echo "$test_files" | grep "$opt_test_pattern" || true)
     echo "# Running filtered set of test files: $test_files"
 fi
 
-if [[ -n "$test_files" ]]; then
-    PATH=$NODE_INSTALL/bin:$PATH SDC_SETUP_TESTS=1 $TAPE $test_files \
-        | tee $OUTPUT_DIR/cloudapi.tap
-fi
-
-echo ""
-echo "# test output:"
-ls $OUTPUT_DIR/*.tap
-
-
-# Colored summary of results (borrowed from smartos-live.git/src/vm/run-tests).
-echo ""
-echo "# test results:"
+failed_test_names=
+set +o errexit
+set -o pipefail
+for t in ${test_files}; do
+    PATH=${NODE_INSTALL}/bin:${PATH} SDC_SETUP_TESTS=1 ${NODE_INSTALL}/bin/node \
+        --abort_on_uncaught_exception ${t} | tee -a ${OUTPUT_DIR}/cloudapi.tap
+    if [[ $? != 0 ]]; then
+        failed_tests=$((${failed_tests} + 1))
+        failed_test_names="${failed_test_names} ${t}"
+    fi
+done
+set +o pipefail
+set -o errexit
 
 end_time=$(date +%s)
 elapsed=$((${end_time} - ${start_time}))
 
-tests=$(grep "^# tests [0-9]" $OUTPUT_DIR/*.tap | cut -d ' ' -f3 | xargs | tr ' ' '+' | bc)
-passed=$(grep "^# pass  [0-9]" $OUTPUT_DIR/*.tap | tr -s ' ' | cut -d ' ' -f3 | xargs | tr ' ' '+' | bc)
+tests=$(grep "^# tests [0-9]" ${OUTPUT_DIR}/cloudapi.tap | cut -d ' ' -f3 | xargs | tr ' ' '+' | bc)
+passed=$(grep "^# pass  [0-9]" ${OUTPUT_DIR}/cloudapi.tap | tr -s ' ' | cut -d ' ' -f3 | xargs | tr ' ' '+' | bc)
+skipped=$(grep "^# skip  [0-9]" ${OUTPUT_DIR}/cloudapi.tap | tr -s ' ' | cut -d ' ' -f3 | xargs | tr ' ' '+' | bc)
+
 [[ -z ${tests} ]] && tests=0
 [[ -z ${passed} ]] && passed=0
-fail=$((${tests} - ${passed}))
+[[ -z ${skipped} ]] && skipped=0
 
-echo "# Completed in ${elapsed} seconds."
-echo -e "# \033[32mPASS: ${passed} / ${tests}\033[39m"
-if [[ ${fail} -gt 0 ]]; then
-    echo -e "# \033[31mFAIL: ${fail} / ${tests}\033[39m"
+fail=$((${tests} - ${passed} - ${skipped}))
+if [[ ${failed_tests} != 0 ]]; then
+    fail=$((${fail} + ${failed_tests}))
 fi
-echo ""
 
-if [[ ${tests} != ${passed} ]]; then
+if [[ -t 0 ]]; then
+    # We're on a terminal so output the summary
+    echo "#"
+    echo "# TESTS COMPLETE IN ${elapsed} SECONDS, SUMMARY:"
+    echo "#"
+    echo -e "#   \033[32mPASS: ${passed} / ${tests}\033[39m"
+    if [[ ${skipped} -gt 0 ]]; then
+        echo -e "#   \033[31mSKIP: ${skipped} / ${tests}\033[39m"
+    fi
+    if [[ ${fail} -gt 0 ]]; then
+        echo -e "#   \033[31mFAIL: ${fail} / ${tests}\033[39m"
+        echo "#"
+        echo "# FAILED TESTS:"
+        echo "#"
+        for t in ${failed_test_names}; do
+            echo "#   - ${t}"
+        done
+    fi
+    echo "#"
+fi
+
+if [[ ${fail} -gt 0 ]]; then
     exit 1
 fi
+
+exit 0
