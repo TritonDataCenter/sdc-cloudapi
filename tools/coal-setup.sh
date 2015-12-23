@@ -81,7 +81,6 @@ function hack_imgapi_to_allow_local_custom_images {
 #---- mainline
 
 trap 'errexit $?' EXIT
-START=$(date +%s)
 
 echo "# Setup CloudAPI and prepare COAL DC for ."
 
@@ -94,10 +93,6 @@ sdcadm post-setup dev-headnode-prov
 
 echo "# Allow retrieval of images over public network"
 sdcadm post-setup common-external-nics
-
-echo "# Setup fabrics"
-sdcadm experimental portolan
-sdcadm experimental fabrics --coal
 
 echo "# Setup NAT and Docker"
 sdcadm experimental update-docker --servers=cns,headnode
@@ -124,5 +119,62 @@ sdc-papi /packages -X POST -d '{
 base=`joyent-imgadm list os=smartos name=base version=13.4.0 -o uuid|tail -1`
 install_image $base
 
-END=$(date +%s)
-echo "$0 finished in $(($END - $START)) seconds"
+# setup fabrics
+if [[ "$(sdc-napi /nic_tags | json -H -c 'this.name==="sdc_underlay"')" == "[]" ]]; then
+    sdc-napi /nic_tags -X POST -d '{"name": "sdc_underlay"}'
+fi
+
+if [[ "$(sdc-napi /networks?name=sdc_underlay | json -H)" == "[]" ]]; then
+    sdc-napi /networks -X POST -d@- <<EOM
+{
+    "name": "sdc_underlay",
+    "subnet": "10.88.88.0/24",
+    "provision_start_ip": "10.88.88.205",
+    "provision_end_ip": "10.88.88.250",
+    "nic_tag": "sdc_underlay",
+    "vlan_id": 0,
+    "owner_uuids": ["$(sdc-ufds search login=admin | json uuid)"]
+}
+EOM
+fi
+
+if [[ "$(sdc-napi /network_pools?name=sdc_nat | json -H)" == "[]" ]]; then
+    sdc-napi /network_pools -X POST -d@- <<EOM
+{
+    "name": "sdc_nat",
+    "networks": ["$(sdc-napi /networks?name=external | json -H 0.uuid)"]
+}
+EOM
+fi
+
+fabric_cfg=$(/opt/smartdc/bin/sdc-sapi /applications?name=sdc | json -H 0.metadata.fabric_cfg)
+if [[ -z "$fabric_cfg" ]]; then
+    cat <<EOM >/tmp/fabrics.cfg
+{
+    "default_underlay_mtu": 1500,
+    "default_overlay_mtu": 1400,
+    "sdc_nat_pool": "$(sdc-napi /network_pools?name=sdc_nat | json -H 0.uuid)",
+    "sdc_underlay_assignment": "manual",
+    "sdc_underlay_tag": "sdc_underlay"
+}
+EOM
+    sdcadm post-setup fabrics -c /tmp/fabrics.cfg
+fi
+
+if ! $(nictagadm exists sdc_underlay 2>/dev/null); then
+    external_nic=$(sdc-sapi /applications?name=sdc | json -H 0.metadata.external_nic)
+    sdc-napi /nics/$(echo $external_nic | sed -e 's/://g') \
+        -d '{"nic_tags_provided": ["external","sdc_underlay"]}' -X PUT
+
+    sdcadm post-setup underlay-nics \
+        $(sdc-napi /networks?name=sdc_underlay | json -H 0.uuid) \
+        $(sysinfo | json UUID)
+
+    sdc-usbkey mount
+    sdc-login -l dhcpd /opt/smartdc/booter/bin/hn-netfile \
+        > /mnt/usbkey/boot/networking.json
+    sdc-usbkey unmount
+
+    reboot
+fi
+
