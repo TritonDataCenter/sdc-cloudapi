@@ -112,6 +112,7 @@ if [[ -n "$opt_test_pattern" ]]; then
     echo "# Running filtered set of test files: $test_files"
 fi
 
+failed_tests=0
 failed_test_names=
 set +o errexit
 set -o pipefail
