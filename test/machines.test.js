@@ -1064,19 +1064,26 @@ test('Create Docker machine', function (t) {
 test('Wait for running Docker machine', waitForRunning);
 
 
-test('Check resize does not affect Docker machine', function (t) {
+test('Check Docker machine can resize', function (t) {
     CLIENT.post('/my/machines/' + MACHINE_UUID, {
         action: 'resize',
         package: SDC_128_LINUX.name
     }, function (err, req, res, body) {
-        t.ok(err, 'Prevent resize machine error');
-        t.equal(res.statusCode, 409);
+        t.ifErr(err, 'Prevent resize machine error');
+        t.equal(res.statusCode, 202);
+        t.deepEqual(body, {});
+        t.end();
+    });
+});
 
-        t.deepEqual(body, {
-            code: 'InvalidArgument',
-            message: 'resize is not supported for docker containers'
-        });
 
+test('Wait for resize of Docker machine', waitForResize);
+
+
+test('Check Docker machine resized', function (t) {
+    CLIENT.get('/my/machines/' + MACHINE_UUID, function (err, req, res, body) {
+        t.ifError(err, 'Get machines error');
+        t.equal(body.package, SDC_128_LINUX.name, 'correct package name');
         t.end();
     });
 });
@@ -1229,6 +1236,25 @@ function waitForRunning(t) {
         }
 
         t.end();
+    });
+}
+
+
+function waitForResize(t) {
+    CLIENT.vmapi.listJobs({
+        vm_uuid: MACHINE_UUID,
+        task: 'update'
+    }, function (err, jobs) {
+        t.ifError(err, 'list jobs error');
+
+        var resizeJobs = jobs.filter(function (job) {
+            return job.params.subtask === 'resize';
+        });
+
+        machinesCommon.waitForJob(CLIENT, resizeJobs[0].uuid, function (err2) {
+            t.ifError(err2, 'Check state error');
+            t.end();
+        });
     });
 }
 
