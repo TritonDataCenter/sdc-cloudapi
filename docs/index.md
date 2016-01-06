@@ -14,27 +14,32 @@ markdown2extras: wiki-tables, code-friendly
     Copyright (c) 2015, Joyent, Inc.
 -->
 
+
+
+
 # Joyent CloudAPI
 
-CloudAPI is the public API for a SmartDataCenter cloud: it allows end users
-of the cloud to manage their accounts, instances, networks, images, and to
-inquire other relevant details. CloudAPI provides a single view of docker
-containers, infrastructure containers and hardware virtual machines owned by
-the user.
+CloudAPI is one of the public APIs for a SmartDataCenter (SDC) cloud: it
+allows end users of the cloud to manage their accounts, instances, networks,
+images, and to inquire about other relevant details.  CloudAPI provides a single
+view of docker containers, infrastructure containers and hardware virtual
+machines owned by the user.
 
 This is the reference documentation for the CloudAPI that is part of Joyent's
-SmartDataCenter product.  This guide provides descriptions of the APIs
-available, as well as supporting information -- such as how to use the SDK(s),
+SDC stack.  This guide provides descriptions of the APIs available, as well as
+supporting information -- such as how to use the software developer kits (SDK),
 command line interface (CLI), and where to find more information.
 
-For more information about this product visit
-[Joyent SmartDataCenter](http://www.joyent.com/software/smartdatacenter).
+SDC also provides a Docker API, which Docker clients can use, but this
+documentation does not cover. For more information about SDC visit
+[Joyent Triton](https://www.joyent.com/private-cloud). Triton can be treated as
+another name for SDC.
 
 
 ## Conventions
 
-Any content formatted as follows is a command-line example that you
-can run from a shell:
+Any content formatted as follows is a command-line example that you can run from
+a shell:
 
     $ sdc-listmachines
 
@@ -49,67 +54,84 @@ All other examples and information are formatted like so:
 
 ## What is CloudAPI?
 
-CloudAPI is the API you use to interact with the SmartDataCenter product.  Using
+CloudAPI is one of the two public APIs you can use to interact with SDC.  Using
 CloudAPI, you can:
 
-* Provision new containers ('SmartMachines') and virtual machines
+* Create and manage containers and virtual machines (sometimes collectively known as instances)
 * Manage your account credentials
 * Create custom analytics for monitoring your infrastructure
+* Create and modify virtual private networks for your instances
+* Manage snapshots of instances
+* Manage sub-users and their permissions using RBAC
+* And more! Oh yes!
 
-While CloudAPI provides the visibility into docker containers, the regular
-[Docker CLI](https://docs.docker.com/installation/#installation)
-should be used for provisioning and managing docker containers.
-(SmartDataCenter provides an endpoint that represents the entire datacenter
-as a single `DOCKER_HOST`. Refer to Joyent's [Docker documentation](https://apidocs.joyent.com/docker)
-for more information.)
-
+While CloudAPI provides visibility into Docker containers, the regular
+[Docker CLI](https://docs.docker.com/installation/#installation) should be used
+for provisioning and managing Docker containers; SDC provides an endpoint
+that represents the entire datacenter as a single `DOCKER_HOST`, which Docker
+clients can communicate with.  Refer to Joyent's
+[Docker documentation](https://apidocs.joyent.com/docker) for more information.
 
 
 ## How do I access CloudAPI?
 
 CloudAPI is available as a REST API, and you can access it using:
 
-* SmartDataCenter Customer Portal
-* [Command line interface](https://github.com/joyent/node-smartdc) (CLI)
+* Triton Customer Portal
+* [node-triton CLI](https://github.com/joyent/node-triton)
+* [node-smartdc CLI](https://github.com/joyent/node-smartdc)
 * [node.js SDK](https://github.com/joyent/node-smartdc)
 * REST API
 
-If you don't want to write any code, use the CloudAPI CLI.  The CLI lets you use
-command-line tools to perform every action available in the SDK and REST API.
+If you don't want to write any code, use one of the two CLIs. The CLIs let you
+use command-line tools to perform every action available in the SDK and REST
+API.
+
+There are two CLIs available for calling CloudAPI: node-triton and node-smartdc.
+node-triton is newer and easier to use, while node-smartdc is more stable and
+complete, but both CLIs are supported. These docs will provide examples for
+both, although node-triton will be omitted where it does not yet support that
+functionality.
 
 
 
 
 # Getting Started
 
-If you choose to use the CloudAPI command line interface (CLI), be aware that it
-requires Node.js and npm.
+If you choose to use node-triton or node-smartdc, be aware that they both
+require Node.js.
 
 You can get Node.js from [nodejs.org](http://nodejs.org) as source code, and as
-precompiled packages for Windows and Macintosh.  It should be greater or equal
-than v0.8.14, so npm should come with it as well.
+precompiled packages for Windows, Macintosh, Linux and Illumos distributions.
+Alternatively, when using a *nix, you can usually install Node.js using a
+package manager as well (e.g. pkgsrc, brew, apt-get, yum).  The version of
+Node.js should be at least v0.10, so npm (Node.js's package manager) should come
+with it as well.
 
-Once you've installed Node.js and npm, install the CloudAPI CLI as follows:
+Once you've installed Node.js, to install node-triton invoke:
 
-    $ npm install smartdc -g
+    $ npm install -g triton
 
-You will also want to install [json](https://www.npmjs.org/package/json), a tool
-that makes it easier to work with JSON-formatted output.  You can install it
-like this:
+or, to install node-smartdc:
 
-    $ npm install json -g
+    $ npm install -g smartdc
 
-In both cases the `-g` switch installs the tools globally, usually in
-`/usr/local/bin`, so that you can use them easily from the command line.  You
-can omit this switch if you'd rather the tools be installed in your home
-hierachy, but you'll need to set your PATH appropriately.
+You will probably want to install [json](https://www.npmjs.org/package/json) as
+well. It is a tool that makes it easier to work with JSON-formatted output.  You
+can install it like this:
+
+    $ npm install -g json
+
+In all cases above, the `-g` switch installs the tools globally, usually in
+`/usr/local/bin`, so that you can use them easily from the command line.  Omit
+this switch if you'd rather the tools be installed in your home hierachy, but
+you'll need to set your PATH appropriately.
 
 
 ## Generate an SSH key
 
-The CloudAPI CLI does not allow you to use HTTP Basic Authentication, as that is
-a weak security mechanism.  Furthermore, to interact with the provisioned
-machines themselves, you need an SSH key to login.
+Both CLIs require an SSH key to communicate with CloudAPI, as well as logging-in
+to many instances.
 
 If you haven't already generated an SSH key (required to use both SSH and HTTP
 Signing), run the following command:
@@ -117,34 +139,37 @@ Signing), run the following command:
     $ ssh-keygen -b 2048 -t rsa
 
 This will prompt you with a place to save the key.  You should probably just
-accept the defaults, as many programs (SSH and SDC CLI) will first look for a
-file called ~/.ssh/id_rsa.
+accept the defaults, as many programs (SSH and CloudAPI CLIs) will first look
+for a file called ~/.ssh/id_rsa. Before running the above command, ensure that
+~/.ssh/id_rsa does not already exist; overwriting it may have unintended
+consequences.
 
 
 ## Set Up your CLI
 
-You need to know the following information in order to interact with CloudAPI:
+You need to set the following environment variables information in order to
+interact with CloudAPI using either node-triton or node-smartdc:
 
-* `SDC_ACCOUNT`: Your username.  The login you use for SDC.
-* `SDC_USER`: The account subuser when you are using
-  [Role Based Access Control](#rbac-users-roles-policies).
 * `SDC_URL`: The URL of the CloudAPI endpoint.
-* `SDC_KEY_ID`: Fingerprint for the key you uploaded to SmartDC through portal.
+* `SDC_KEY_ID`: Fingerprint for the key you uploaded to SDC.
+* `SDC_ACCOUNT`: Your username; the login you use for SDC.
+* `SDC_USER`: If authenticating as a subuser, the username of the subuser.
+  See [Role Based Access Control](#rbac-users-roles-policies).
 
 An example for `SDC_URL` is `https://us-west-1.api.joyentcloud.com`.  Each
 datacenter in a cloud has its own CloudAPI endpoint; a different cloud that uses
-SmartDataCenter would have a different URL.
+SDC would have a different URL.
 
 In this document, we'll use `api.example.com` as the `SDC_URL` endpoint; please
-replace it with the URL of your DC(s).  Note that CloudAPI always uses secure
-HTTP, which means that the endpoint URL must begin with `https`.
+replace it with the URL of your datacenter(s).  Note that CloudAPI always uses
+SSL/TLS, which means that the endpoint URL must begin with `https`.
 
 You can quickly get your key fingerprint for `SDC_KEY_ID` by running:
 
     $ ssh-keygen -l -f ~/.ssh/id_rsa.pub | awk '{print $2}' | tr -d '\n'
 
-where you obviously replace `~/.ssh/id_rsa.pub` with the path to the public key
-you want to use for signing requests.
+where you replace `~/.ssh/id_rsa.pub` with the path to the public key you want
+to use for signing requests.
 
 
 ## Working with the CLI
@@ -152,23 +177,39 @@ you want to use for signing requests.
 For a complete list of CloudAPI CLI commands available, please see
 [Appendix D: CloudAPI CLI Commands](#appendix-d-cloudapi-cli-commands).
 
-To get help on command, use the `--help` flag.  For example:
+To get help on a command, use the `--help` flag.  For example:
 
+    $ triton datacenters --help
+    Show datacenters in this cloud.
+    A "cloud" is a set of related datacenters that share account
+    information.
+
+    Usage:
+         triton datacenters
+
+    Options:
+        -h, --help                Show this help.
+
+      Output options:
+        -H                        Omit table header row.
+        -o field1,...             Specify fields (columns) to output.
+        -s field1,...             Sort on the given fields. Default is "name".
+        -j, --json                JSON output.
+
+or
+  
     $ sdc-listdatacenters --help
-    sdc-listdatacenters [--account string] [--debug boolean] [--help boolean] [--keyId string] [--url url]
+    sdc-listdatacenters [--account string] [--api-version string] [--debug boolean] [--help boolean] [--keyId string] [--url url] [--version boolean] [--verbose boolean] [--user string] [--role string] 
 
 You can set environment variables for the following flags so that you don't have
 to type them for each request (e.g. in your .bash_profile).  All the examples in
 this document assume that these variables have been set:
 
-|| **CLI Flags** || **Description** || **Environment Variable** ||
-||--account<br/>-a||Login name (account)||SDC\_ACCOUNT||
-||--user||Subuser name when using [Role Based Access Control](#rbac-users-roles-policies)||SDC\_USER||
-||--keyId<br/>-k||Fingerprint of the key to use for signing||SDC\_KEY\_ID||
-||--url<br/>-u||URL of the CloudAPI endpoint||SDC\_URL||
-
-You can use the short form of flags as well.  For instance, you can use the `-a`
-or `--account` flag.
+|| **CLI Flags**    || **Description**              || **Environment Variable** ||
+|| --account<br/>-a || Login name (account)         || SDC_ACCOUNT              ||
+|| --user           || Subuser name when using [Role Based Access Control](#rbac-users-roles-policies) || SDC_USER ||
+|| --keyId<br/>-k   || Fingerprint of key to use for signing || SDC_KEY_ID      ||
+|| --url<br/>-u     || URL of the CloudAPI endpoint || SDC_URL                  ||
 
 
 ## Provision a new machine
@@ -176,40 +217,29 @@ or `--account` flag.
 To provision a new machine, you first need to get the `id`s for the image and
 package you want to use as the base for your machine.
 
-An image is a snapshot of a filesystem and its software (for SmartMachines),
-or a disk image (for Virtual Machines).  You can get the list of available
-images using the `sdc-listimages` command; see the [ListImages](#ListImages)
-section below for a detailed explanation of this command.
+An image is a snapshot of a filesystem and its software (for some types of
+container), or a disk image (for virtual machines).  You can get the list of
+available images using the `triton images` or `sdc-listimages` commands; see the
+[ListImages](#ListImages) section below for a detailed explanation of these
+commands.
 
 A package is a set of dimensions for the new machine, such as RAM and disk size.
-You can get the list of available packages using the `sdc-listpackages` command;
-see the [ListPackages](#ListPackages) section below for a detailed explanation
-of this command.
+You can get the list of available packages using the `triton packages` or
+`sdc-listpackages` commands; see the [ListPackages](#ListPackages) section below
+for a detailed explanation of these commands.
 
 Once you have the package and image ids, to provision a new machine:
 
-    $ sdc-createmachine --name=getting-started --image=c3321aac-a07c-11e3-9430-fbb1cc12d1df --package=9fcd9ab7-bd07-cb3c-9f9a-ac7ec3aa934e
-    {
-      "id": "4adf88fb-ba7e-c4b1-a017-b988f510cbc2",
-      "name": "getting-started",
-      "type": "smartmachine",
-      "brand": "joyent",
-      "state": "provisioning",
-      "image": "c3321aac-a07c-11e3-9430-fbb1cc12d1df",
-      "ips": [],
-      "memory": 256,
-      "disk": 16384,
-      "metadata": {
-        "root_authorized_keys": "..."
-      },
-      "tags": {},
-      "created": "2014-05-28T10:12:38.329Z",
-      "updated": "2014-05-28T10:12:38.329Z",
-      "networks": [],
-      "firewall_enabled": false,
-      "compute_node": null,
-      "package": "g3-devtier-0.25-smartos"
-    }
+    $ triton create-instance $image $package
+
+or
+
+    $ sdc-createmachine --image=$image --package=$package
+
+For example:
+
+    $ triton create-instance 2b683a82-a066-11e3-97ab-2faa44701c5a 64e23114-d502-c171-967f-b0e0cfb2009a
+    Creating instance 61dc8be (9205af5b-f2c0-ef07-e1f3-94bf1ff8fb93, base@13.4.0, test_128)
 
 You can use the `--name` flag to name your machine; if you do not specify a
 name, SmartDataCenter will generate one for you.  `--image` is the `id` of the
@@ -218,55 +248,62 @@ the package to use to set machine dimensions.
 
 Retrieve the status of your new machine by:
 
-    $ sdc-listmachines --name=getting-started
-    [
-      {
-        "id": "4adf88fb-ba7e-c4b1-a017-b988f510cbc2",
-        "name": "getting-started",
+    $ triton instance $instance_id
+
+or
+
+    $ sdc-getmachine $instance_id
+
+For example:
+
+    $ triton instance 9205af5b-f2c0-ef07-e1f3-94bf1ff8fb93
+    {
+        "id": "9205af5b-f2c0-ef07-e1f3-94bf1ff8fb93",
+        "name": "61dc8be",
         "type": "smartmachine",
         "brand": "joyent",
         "state": "running",
-        "image": "c3321aac-a07c-11e3-9430-fbb1cc12d1df",
+        "image": "2b683a82-a066-11e3-97ab-2faa44701c5a",
         "ips": [
-          "165.225.138.124",
-          "10.112.2.89"
+            "10.88.88.56",
+            "192.168.128.5"
         ],
-        "memory": 256,
-        "disk": 16384,
+        "memory": 128,
+        "disk": 12288,
         "metadata": {
-          "root_authorized_keys": "..."
+            "root_authorized_keys": "<...>"
         },
         "tags": {},
-        "created": "2014-05-28T10:15:33.301Z",
-        "updated": "2014-05-28T10:16:50.000Z",
+        "created": "2015-12-06T04:31:17.053Z",
+        "updated": "2015-12-06T04:31:26.000Z",
         "networks": [
-          "65ae3604-7c5c-4255-9c9f-6248e5d78900",
-          "56f0fd52-4df1-49bd-af0c-81c717ea8bce"
+            "67f1232c-5b40-4693-8b55-560245984233",
+            "05dcc9e2-8ae6-48d9-8222-25f64465693f"
         ],
-        "primaryIp": "165.225.138.124",
+        "primaryIp": "10.88.88.56",
         "firewall_enabled": false,
-        "compute_node": "44454c4c-3800-104b-805a-b4c04f355631",
-        "package": "g3-devtier-0.25-smartos"
-      }
-    ]
+        "compute_node": "564d0b8e-6099-7648-351e-877faf6c56f6",
+        "package": "test_128"
+    }
 
 When you provision a new machine, the machine will take time to be initialized
 and booted; the `state` attribute will reflect this.  Once the `state` attribute
-in the JSON from `sdc-listmachines` is "running", you can login to your new
-machine (assuming it's a Unix-based machine), with the following:
+"running", you can login to your new machine (assuming it's a Unix-based
+machine), with the following:
 
-    $ ssh-add ~/.ssh/id_rsa
-    $ ssh -A admin@165.225.138.124
-
-Replace `~/.ssh/id_rsa` with the path to the key you added in the portal, and
-`165.225.138.124` with the IP of your new machine.
+    $ ssh-add ~/.ssh/<key file>
+    $ ssh -A admin@<new machine IP address>
 
 These two commands set up your SSH agent (which has some magical properties,
-such as the ability for the CLI to work on your SmartMachine without keys), and
-logs you in as the `admin` user on that machine.  Note that the `admin` user has
-password-less sudo capabilities, so you may want to set up some less priviledged
-users.  The SSH keys on your account will allow you to login as `root` or
-`admin` on your SmartMachine.
+so you need to handle your SSH keys less often), and logs you in as the `admin`
+user on a machine.  Note that the `admin` user has password-less sudo
+capabilities, so you may want to set up some less priviledged users.  The SSH
+keys on your account will allow you to login as `root` or `admin` on your new
+machine.
+
+An alternative of using SSH directly is:
+
+    $ triton ssh <name of machine>
 
 Now that we've done some basics with a machine, let's introduce a few concepts:
 
@@ -274,11 +311,21 @@ Now that we've done some basics with a machine, let's introduce a few concepts:
 <a name="image-description"></a>
 ### Images
 
-By default, you can use SmartOS images.  Your SmartDataCenter cloud may have
-other images available as well, such as Linux or Windows images.  The list of
-available images can be obtained with:
+By default, SmartOS images should be available to your for use.  Your
+SmartDataCenter cloud may have other images available as well, such as Linux or
+Windows images.  The list of available images can be obtained with:
+
+    $ triton images
+
+or
 
     $ sdc-listimages
+
+For example:
+
+    $ triton images
+    SHORTID   NAME  VERSION  STATE   FLAGS  OS       PUBDATE
+    2b683a82  base  13.4.0   active  P      smartos  2014-02-28
 
 
 <a name="packages-description"></a>
@@ -286,45 +333,30 @@ available images can be obtained with:
 
 You can list packages available in your cloud with:
 
+    $ triton packages
+
+or
+
     $ sdc-listpackages
-    [
-      {
-        "name": "g3-standard-8-smartos",
-        "memory": 8192,
-        "disk": 807936,
-        "swap": 16384,
-        "lwps": 2000,
-        "vcpus": 0,
-        "default": false,
-        "id": "28d8c3f1-cf62-422a-a41d-fdf8b5110d00",
-        "version": "1.0.0",
-        "description": "Standard 8 GB RAM 2 vCPUs and bursting 789 GB Disk",
-        "group": "Standard"
-      },
-      ...
-    ]
 
-Packages are the SmartDataCenter name for the dimensions of your machine.
-Packages are provided so that you do not need to select individual settings,
-such as RAM or disk size.  To provision a new SmartMachine with more memory than
-the one your created above, try:
+For example:
 
-    $ sdc-createmachine --name=big-one --image=3390ca7c-f2e7-11e1-8818-c36e0b12e58b --package=28d8c3f1-cf62-422a-a41d-fdf8b5110d00
+    $  ./triton packages
+    SHORTID   NAME      DEFAULT  MEMORY  SWAP  DISK
+    64e23114  test_128  false      128M  256M   12G
 
-Please note this example assumes that the package and image `id`s above exist in
-the SmartDataCenter setup you are interacting with.  That may or not be the
-case, given that packages and image may change from one setup to another.  Just
-make sure you try the previous example with an existing package and image `id`s
-from those you obtained using `sdc-listpackages` and `sdc-listimages`
-respectively.
+Packages are the SmartDataCenter name for the dimensions of a machine (how much
+CPU will be available, how much RAM, disk and swap, and so forth).  Packages are
+provided so that you do not need to select individual settings, such as RAM or
+disk size.
 
 
 ## Managing SSH keys
 
-For machines which don't have a `brand` of `kvm` (see the JSON returned from
-`sdc-listmachines`), you can manage the SSH keys that allow logging into the
-machine via CloudAPI (Virtual Machines are static, and whatever keys were in
-your account at machine creation time are used).  For example, to rotate keys:
+For machines which don't have a `brand` of `kvm` (see
+`triton instances -o id,brand` or `sdc-listmachines`), you can manage the SSH
+keys that allow logging into the machine via CloudAPI.  For example, to rotate
+keys: 
 
     $ sdc-createkey --name=my-other-rsa-key ~/.ssh/my_other_rsa_key.pub
 
@@ -338,12 +370,16 @@ To use the new key, you will need to update the environment variables:
 At this point you could delete your other key from the system; see
 [Cleaning Up](#cleaning-up) for a quick example.
 
+You cannot manage the SSH keys of machines with a `brand` of `kvm`. Virtual
+Machines are static, and whatever keys were in your account at machine creation
+time are used, provided the OS inside KVM is a *nix.
+
 
 ## Creating Analytics
 
-Now that you have a SmartMachine up and running, and you logged in and did
+Now that you have a container up and running, and you logged in and did
 whatever it is you thought was awesome, let's create an instrumentation to
-monitor performance.  Analytics are one of the most powerful features of
+monitor performance.  Analytics are one of the more powerful features of
 SmartDataCenter, so for more information, be sure to read
 [Appendix B: Cloud Analytics](#appendix-b-cloud-analytics).
 
@@ -364,12 +400,12 @@ To get started, let's create an instrumentation on our network bytes:
       "nsources": 0,
       "granularity": 1,
       "persist-data": false,
-      "crtime": 1401278156130,
+      "crtime": 1449379321811,
       "value-scope": "interval",
       "id": "1",
       "uris": [
         {
-          "uri": "/.../analytics/instrumentations/1/value/raw",
+          "uri": "/marsell/analytics/instrumentations/1/value/raw",
           "name": "value_raw"
         }
       ]
@@ -394,21 +430,21 @@ Back on your CLI, go ahead and run:
       "retention-time": 600,
       "idle-max": 3600,
       "transformations": {},
-      "nsources": 0,
+      "nsources": 1,
       "granularity": 1,
       "persist-data": false,
-      "crtime": 1401278293816,
+      "crtime": 1449379321811,
       "value-scope": "interval",
-      "id": "2",
+      "id": "1",
       "uris": [
         {
-          "uri": "/marsell/analytics/instrumentations/2/value/raw",
+          "uri": "/marsell/analytics/instrumentations/1/value/raw",
           "name": "value_raw"
         }
       ]
     }
 
-Where `1` is the id you got back from `sdc-createinstrumentation`.  You should
+Where `1` is the `id` you got back from `sdc-createinstrumentation`.  You should
 be able to run this a few times and see the changes.  This is just a starting
 point, for a full discussion of analytics, be sure to read
 [Appendix B: Cloud Analytics](#appendix-b-cloud-analytics).
@@ -429,30 +465,34 @@ created:
 
 ### Deleting Machines
 
-Machines need to be shutdown before you can delete them, so let's do some fancy
-shell work to do that:
+To clean up a machine, you can use either:
 
-    $ sdc-listmachines -n getting-started | json 0.id | xargs sdc-stopmachine
+    $ triton delete-instance $machine_id
 
-Now go ahead and check the state a few times until it's `stopped`, then run
-`sdc-deletemachine`:
+or
 
-    $ sdc-listmachines -n getting-started | json 0.state
-    $ sdc-listmachines -n getting-started | json 0.id | xargs sdc-deletemachine
+    $ sdc-deletemachine $machine_id
+
+For example:
+
+    $ triton delete-instance 9205af5b
+    Delete (async) instance 9205af5b (9205af5b-f2c0-ef07-e1f3-94bf1ff8fb93)
 
 ### Deleting keys
 
 Finally, you probably have one or two SSH keys uploaded to SmartDataCenter after
-going through the guide, so delete the one we setup:
+going through the guide, so to delete the one we setup:
 
     $ sdc-deletekey id_rsa
 
 
-## RBAC: Users, Roles & Policies.
+
+
+# RBAC: Users, Roles & Policies
 
 Starting at version 7.2.0, CloudAPI supports Role Based Access Control (RBAC),
-which means that [accounts](#account) can have multiple users and
-roles associated with them.
+which means that [accounts](#account) can have multiple users and roles
+associated with them.
 
 While the behaviour of the [main account](#GetAccount) remains the same,
 including the [SSH keys](#keys) associated with it, it's now possible to have
@@ -470,25 +510,40 @@ forth.
 These account users can additionally be organized using [Roles](#roles):
 
     {
-        id: '802fbab6-ec2b-41c3-9399-064ccb65075b',
-        name: 'devs',
-        members: [ 'bob', 'fred', 'pedro' ],
-        default_members: [ 'bob', 'fred' ],
-        policies: [ 'createMachine', 'resizeMachine', 'CreateImageFromMachine']
+      "id": "ff578c1f-bad5-4d3c-8880-2f76745f2511",
+      "name": "devs",
+      "members": [
+        "bob",
+        "fred",
+        "pedro"
+      ],
+      "default_members": [
+        "bob",
+        "fred"
+      ],
+      "policies": [
+        "createMachine",
+        "resizeMachine",
+        "createImageFromMachine"
+      ]
     }
 
 Each role can have an arbitrary set of [Policies](#policies):
 
     {
-        id: '9d99a799-8234-4dd8-b37d-9af14b96da25',
-        name: 'restart machines',
-        rules: [ 'CAN rebootmachine if requesttime::time > 07:30:00 and requesttime::time < 18:30:00 and requesttime::day in (Mon, Tue, Wed, THu, Fri)', 'CAN stopmachine', 'CAN startmachine' ],
-        description: 'This is completely optional'
+      "name": "restart machines",
+      "id": "e8bdd555-eef0-4c1c-83be-93c443b59e3e",
+      "rules": [
+        "CAN rebootmachine if requesttime::time > 07:30:00 and requesttime::time < 18:30:00 and requesttime::day in (Mon, Tue, Wed, THu, Fri)",
+        "CAN stopmachine",
+        "CAN startmachine"
+      ],
+      "description": "This is completely optional"
     }
 
 The `rules` in policies are used for the access control of an account's users.
-These rules use [Aperture](https://github.com/joyent/node-aperture) as
-the policy language, and are described in detail in the next section.
+These rules use [Aperture](https://github.com/joyent/node-aperture) as the
+policy language, and are described in detail in the next section.
 
 Our recommendation is to limit each policy's set of rules to a very scoped
 collection, and then add one or more of these policies to each group.  This aids
@@ -510,12 +565,12 @@ complete details about the different possibilities when defining new rules.
 This section will only cover a limited set strictly related to CloudAPI's usage.
 
 In the case of CloudAPI, `<principal>` will be always the user performing the
-HTTP request. Likewise, `<resource>` will always be the URL
-of such request, for example `/:account/machines/:machine_id`.
+HTTP request. Likewise, `<resource>` will always be the URL of such request,
+for example `/:account/machines/:machine_id`.
 
 We add one or more roles to a resource to explicitly define the active roles a
 user trying to access a given resource must have. Therefore, we don't need to
-specify `<principal>` in our rules, given it'll be always defined by the
+specify `<principal>` in our rules, since it'll always be defined by the
 role-tags of the resource the user is trying to get access to. For the same
 reason, we don't need to specify `<resource>` in our rules.
 
@@ -523,8 +578,8 @@ Therefore, CloudAPI's Aperture rules have the format:
 
         CAN <actions> WHEN <conditions>
 
-By default, the access policy will `DENY` any attempt made by any account
-user to access a given resource, unless:
+By default, the access policy will `DENY` any attempt made by any account user
+to access a given resource, unless:
 
 * that resource is tagged with a role
 * that role is active
@@ -548,44 +603,22 @@ As an aside, the active roles of a user are set by the `default_members`
 attribute in a role. If three different roles contain the "john" user (amongst
 others) in their default-members list, then the "john" user will have those
 three roles as active roles by default. This can be overridden by passing in
-`?as-role=<comma-separated list of role names>` as part of the URL; provided
-that each role contains that user in their `members` list, then those roles are
-set as the currently-active roles for a request instead.
+`?as-role=<comma-separated list of role names>` as part of the URL, or adding a
+--role flag when using a node-smartdc command; provided that each role contains
+that user in their `members` list, then those roles are set as the
+currently-active roles for a request instead.
 
 For more details on how Access Control works for both CloudAPI and Manta,
-please refer to [Role Based Access Control][acuguide] documentation.
+please refer to [Role Based Access Control](https://docs.joyent.com/jpc/rbac/)
+documentation.
 
-[acuguide]: https://docs.joyent.com/jpc/rbac/
-
-
-## Managing Fabrics
-
-A fabric is the basis for building your own private networks that
-cannot be accessed by any other user. It represents the physical infrastructure
-that makes up a network; however, you don't have to cable or program it. Every
-account has its own unique `fabric` in every data center.
-
-On a fabric, you can create your own VLANs and layer three IPv4 networks. You
-can create any VLAN from 0-4095, and you can create any number of IPv4 networks
-on top of the VLANs, with all of the traditional IPv4 private addresses spaces -
-`10.0.0.0/8`, `192.168.0.0/16`, and `172.16.0.0/12` - available for use.
-
-You can create networks on your fabrics to create most network topologies. For
-example, you could create a single isolated private network that nothing else
-could reach, or you could create a traditional configuration where you have a
-database network, a web network, and a load balancer network, each on their own
-VLAN.
-
-
-
-
-# An important note about RBAC and certain reads after writes
+### An important note about RBAC and certain reads after writes
 
 CloudAPI uses replication and caching behind the scenes for user, role and
 policy data. This implies that API reads after a write on these particular
 objects can be up to several seconds out of date.
 
-For example, when a user is created, cloudapi returns both a user object
+For example, when a user is created, CloudAPI returns both a user object
 (which is up to date), and a location header indicating where that new user
 object actually lives. Following that location header may result in a 404 for
 a short period.
@@ -605,21 +638,25 @@ have eventual consistency, not read-after-write.
 
 CloudAPI exposes a REST API over HTTPS.  You can work with the REST API by
 either calling it directly via tooling you already know about (such as curl, et
-al), or by using the CloudAPI SDK from Joyent.  The CloudAPI SDK is available as
-an npm module, which you can install with:
+al), or by using the CloudAPI CLSs and SDKs from Joyent.  The node-triton
+CloudAPI SDK & CLI is available as an npm module, which you can install with:
+
+    $ npm install triton
+
+Alternatively, there is the more stable and feature-complete node-smartdc:
 
     $ npm install smartdc
 
 The rest of this document will show all APIs in terms of both the raw HTTP
-specification, the SDK API, and the CLI command.
+specification, the CLI commands, and sometimes the node-smartdc SDK.
 
 
 ## Issuing Requests
 
-All HTTP calls to CloudAPI must be made over SSL/TLS, and requests must carry at
+All HTTP calls to CloudAPI must be made over TLS, and requests must carry at
 least two headers (in addition to standard HTTP headers): `Authorization` and
-`Api-Version` header.  The details are explained below.  In addition to these
-headers, any requests requiring content must be sent in an acceptable scheme to
+`Api-Version`.  The details are explained below.  In addition to these headers,
+any requests requiring content must be sent in an acceptable scheme to
 CloudAPI.  Details are also below.
 
 ### Content-Type
@@ -674,7 +711,7 @@ are supported, and your keyId must be equal to the path returned from a
 `demo`, and you've uploaded an RSA SSH key with the name `foo`, an Authorization
 header would look like:
 
-    Authorization: Signature keyId=/demo/keys/foo,algorithm="rsa-sha256" ${Base64($Date)}
+    Authorization: Signature keyId=/demo/keys/foo,algorithm="rsa-sha256" ${Base64(sign($Date))}
 
 The default value to sign for CloudAPI requests is simply the value of the HTTP
 `Date` header.  For more informaton on the Date header value, see
@@ -683,11 +720,11 @@ CloudAPI using the Signature authentication scheme *must* send a Date header.
 Note that clock skew will be enforced to within 300 seconds (positive or
 negative) from the value sent.
 
-Full support for the HTTP Signature Authentication scheme is in the CloudAPI
-SDK; an additional reference implementation for Node.js is available in the npm
-`http-signature` module, which you can install with:
+Full support for the HTTP Signature Authentication scheme is provided in both
+CloudAPI SDKs; an additional reference implementation for Node.js is available
+in the npm `http-signature` module, which you can install with:
 
-    npm install http-signature@0.9.11
+    npm install http-signature
 
 ### Api-Version
 
@@ -695,9 +732,8 @@ CloudAPI is strongly versioned, and all requests *must* specify a version of
 the API.  The `Api-Version` header is expected to contain a
 [semver](http://semver.org/) string describing the API version the client wants
 to use, with the additional twist that your client can specify ranges of
-versions it supports, much like you can with npm.  For details on how to specify
-ranges, check [node-semver](https://github.com/isaacs/node-semver).  A couple
-examples:
+versions it supports.  For details on how to specify ranges, check
+[node-semver](https://github.com/isaacs/node-semver).  A couple examples:
 
     Api-Version: ~8.0
     Api-Version: >=7.0.0
@@ -710,16 +746,19 @@ version.
 ### Using cURL with CloudAPI
 
 Since [cURL](http://curl.haxx.se/) is commonly used to script requests to web
-services, here's a simple function you can use to wrap cURL when communicating
-with CloudAPI:
+services, here's a simple Bash function you can use to wrap cURL when
+communicating with CloudAPI:
 
     $ function cloudapi() {
-      local now=`date -u "+%a, %d %h %Y %H:%M:%S GMT"` ;
-      local signature=`echo ${now} | tr -d '\n' | openssl dgst -sha256 -sign ~/.ssh/id_rsa | openssl enc -e -a | tr -d '\n'` ;
+      local now=`date -u "+%a, %d %h %Y %H:%M:%S GMT"`;
+      local signature=`echo ${now} | tr -d '\n' | openssl dgst -sha256 -sign ~/.ssh/id_rsa | openssl enc -e -a | tr -d '\n'`;
 
-      curl -is -H "Accept: application/json" -H "api-version: ~8.0" -H "Date: ${now}" -H "Authorization: Signature keyId=\"/demo/keys/id_rsa\",algorithm=\"rsa-sha256\" ${signature}" --url https://api.example.com$@ ;
+      curl -i -H "Accept: application/json" -H "api-version: ~8.0" -H "Date: ${now}" -H "Authorization: Signature keyId=\"/$SDC_ACCOUNT/keys/id_rsa\",algorithm=\"rsa-sha256\" ${signature}" --url $SDC_URL$@;
       echo "";
     }
+
+You may need to alter the path to your SSH key in the above function, as well as
+the path its public-key is saved under in SDC.
 
 With that function, you could just do:
 
@@ -728,46 +767,45 @@ With that function, you could just do:
 
 ## CloudAPI HTTP Responses
 
-Like mentioned above, CloudAPI returns all response objects as
-`application/json` encoded HTTP bodies.  In addition to the JSON body, all
-responses have the following headers:
+CloudAPI returns all response objects as `application/json` encoded HTTP bodies.
+In addition to the JSON body, all responses have the following headers:
 
-||**Header**||**Description**||
-||Date||When the response was sent (RFC 1123 format)||
-||Api-Version||The exact version of the CloudAPI server you spoke with||
-||Request-Id||A unique id for this request; you should log this||
-||Response-Time||How long the server took to process your request (ms)||
+|| **Header**    || **Description**                                           ||
+|| Date          || When the response was sent (RFC 1123 format)              ||
+|| Api-Version   || The exact version of the CloudAPI server you spoke with   ||
+|| Request-Id    || A unique id for this request; you should log this         ||
+|| Response-Time || How long the server took to process your request (ms)     ||
 
 If there is content, you can expect:
 
-||**Header**||**Description**||
-||Content-Length||How much content, in bytes||
-||Content-Type||Formatting of the response (almost always application/json)||
-||Content-MD5||An MD5 checksum of the response; you should check this||
+|| **Header**     || **Description**                                             ||
+|| Content-Length || How much content, in bytes                                  ||
+|| Content-Type   || Formatting of the response (almost always application/json) ||
+|| Content-MD5    || An MD5 checksum of the response; you should check this      ||
 
 ### HTTP Status Codes
 
 Your client should check for each of the following status codes from any API
 request:
 
-||**Response**||**Code**||**Description**||
-||400||Bad Request||Invalid HTTP Request||
-||401||Unauthorized||Either no Authorization header was sent, or invalid credentials were used||
-||403||Forbidden||No permissions to the specified resource||
-||404||Not Found||Something you requested was not found||
-||405||Method Not Allowed||Method not supported for the given resource||
-||406||Not Acceptable||Try sending a different Accept header||
-||409||Conflict||Most likely invalid or missing parameters||
-||413||Request Entity Too Large||You sent too much data||
-||415||Unsupported Media Type||You encoded your request in a format we don't understand||
-||420||Slow Down||You're sending too many requests||
-||449||Retry With||Invalid Version header; try with a different Api-Version string||
-||503||Service Unavailable||Either there's no capacity in this datacenter, or we're in a maintenance window||
+|| **Code** || **Description* || **Details**                                      ||
+|| 400      || Bad Request    || Invalid HTTP Request                             ||
+|| 401      || Unauthorized   || Either no Authorization header was sent, or invalid credentials were used ||
+|| 403      || Forbidden      || No permissions to the specified resource         ||
+|| 404      || Not Found      || Resource was not found                           ||
+|| 405      || Method Not Allowed || Method not supported for the given resource  ||
+|| 406      || Not Acceptable || Try sending a different Accept header            ||
+|| 409      || Conflict       || Most likely invalid or missing parameters        ||
+|| 413      || Request Entity Too Large || You sent too much data                 ||
+|| 415      || Unsupported Media Type   || Request was encoded in a format CloudAPI does not understand ||
+|| 420      || Slow Down      || You're sending too many requests too quickly     ||
+|| 449      || Retry With     || Invalid Version header; try with a different Api-Version string ||
+|| 503      || Service Unavailable || Either there's no capacity in this datacenter, or it's in a maintenance window ||
 
 ### Error Responses
 
-In the event of an error, CloudAPI will return a standard error response object
-in the body with the scheme:
+In the event of an error, CloudAPI will return a standard JSON error response
+object in the body with the scheme:
 
     {
       "code": "CODE",
@@ -776,21 +814,21 @@ in the body with the scheme:
 
 Where the code element is one of:
 
-||**Code**||**Description**||
-||BadRequest||You sent bad HTTP||
-||InternalError||Something was wrong on our end||
-||InUseError||The object is in use and cannot be operated on||
-||InvalidArgument||You sent bad arguments or a bad value for an argument||
-||InvalidCredentials||Try authenticating correctly||
-||InvalidHeader||You sent a bad HTTP header||
-||InvalidVersion||You sent a bad Api-Version string||
-||MissingParameter||You didn't send a required parameter||
-||NotAuthorized||You don't have access to the requested resource||
-||RequestThrottled||You were throttled||
-||RequestTooLarge||You sent too much request data||
-||RequestMoved||HTTP Redirect||
-||ResourceNotFound||What you asked for wasn't found||
-||UnknownError||Something completely unexpected happened||
+|| **Code**           || **Description**                                       ||
+|| BadRequest         || You sent bad HTTP                                     ||
+|| InternalError      || Something went wrong in SDC                           ||
+|| InUseError         || The object is in use and cannot be operated on        ||
+|| InvalidArgument    || You sent bad arguments or a bad value for an argument ||
+|| InvalidCredentials || Authentication failed                                 ||
+|| InvalidHeader      || You sent a bad HTTP header                            ||
+|| InvalidVersion     || You sent a bad Api-Version string                     ||
+|| MissingParameter   || You didn't send a required parameter                  ||
+|| NotAuthorized      || You don't have access to the requested resource       ||
+|| RequestThrottled   || You were throttled                                    ||
+|| RequestTooLarge    || You sent too much request data                        ||
+|| RequestMoved       || HTTP Redirect                                         ||
+|| ResourceNotFound   || What you asked for wasn't found                       ||
+|| UnknownError       || Something completely unexpected happened!             ||
 
 Clients are expected to check HTTP status code first, and if it's in the 4xx
 range, they can leverage the codes above.
@@ -800,14 +838,14 @@ range, they can leverage the codes above.
 
 # Account
 
-You can obtain your account details and update them through CloudAPI, with the
-notable exception of `login` and `password`. Any password modification should
-happen through SDC Portal. `login` cannot be changed at all.
+You can obtain your account details and update them through CloudAPI, although
+`login` cannot be changed, and `password` can not be retrieved.
 
 
 ## GetAccount (GET /:login)
 
-Retrieves your account details.
+Retrieves your account details. Instead of providing your login name, you can
+also provide 'my' (i.e. GET /my).
 
 ### Inputs
 
@@ -817,36 +855,40 @@ Retrieves your account details.
 
 Account object:
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique id for you||
-||login||String||Your login name||
-||email||String||Email address||
-||companyName||String||...||
-||firstName||String||...||
-||lastName||String||...||
-||address||String||...||
-||postalCode||String||...||
-||city||String||...||
-||state||String||...||
-||country||String||...||
-||phone||String||...||
-||created||Date (ISO8601)||When this account was created||
-||updated||Date (ISO8601)||When this account was updated||
+|| **Field**   || **Type** || **Description**                                    ||
+|| id          || UUID     || Unique id for this account                         ||
+|| login       || String   || Your login name                                    ||
+|| email       || String   || Email address                                      ||
+|| companyName || String   || ...                                                ||
+|| firstName   || String   || ...                                                ||
+|| lastName    || String   || ...                                                ||
+|| address     || String   || ...                                                ||
+|| postalCode  || String   || ...                                                ||
+|| city        || String   || ...                                                ||
+|| state       || String   || ...                                                ||
+|| country     || String   || ...                                                ||
+|| phone       || String   || ...                                                ||
+|| created     || ISO8601 date || When this account was created                ||
+|| updated     || ISO8601 date || When this account's details was last updated ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If :login does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` does not exist                             ||
 
 ### CLI Command
+
+    $ triton account
+
+or
 
     $ sdc-getaccount
 
 ### Example Request
 
-    GET /login HTTP/1.1
+    GET /my HTTP/1.1
     authorization: Signature keyId="..."
     accept: application/json
     accept-version: ~8.0
@@ -855,38 +897,32 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ### Example Response
 
     HTTP/1.1 200 OK
-    content-type: application/json
-    content-length: 316
-    access-control-allow-origin: *
-    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
-    access-control-allow-methods: GET
-    access-control-expose-headers: Api-Version, Request-Id, Response-Time
-    connection: Keep-Alive
-    content-md5: F7ACwRAC1+7//jajYKbvYw==
-    server: Joyent SmartDataCenter 8.0.0
-    api-version: 8.0.0
-    request-id: 29be67c0-7d0c-11e2-8048-5195b6159808
-    response-time: 164
+    Content-Type: application/json
+    Content-Length: 285
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST, PUT
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: Sz+3BJ3EKDxL3MLQQumPgg==
+    Date: Tue, 22 Dec 2015 05:06:33 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: c3d496f0-a869-11e5-8662-47ccf5717dbf
+    Response-Time: 2122
 
     {
-      "id": "cc71f8bb-f310-4746-8e36-afd7c6dd2895",
-      "login": "login",
-      "email": "login@example.com",
-      "companyName": "Example",
-      "firstName": "Name",
-      "lastName": "Surname",
-      "postalCode": "4967",
-      "address": [
-        "liltingly, Inc.",
-        "6165 pyrophyllite Street"
-      ],
-      "city": "benzoylation concoctive",
-      "state": "SP",
-      "country": "BAT",
-      "phone": "+1 891 657 5818",
-      "updated": "2013-12-20T08:58:51.026Z",
-      "created": "2013-12-20T08:58:50.721Z"
+      "id": "b89d9dd3-62ce-4f6f-eb0d-f78e57d515d9",
+      "login": "barbar",
+      "email": "barbar@example.com",
+      "companyName": "Example Inc",
+      "firstName": "BarBar",
+      "lastName": "Jinks",
+      "phone": "123-456-7890",
+      "updated": "2015-12-21T11:48:54.884Z",
+      "created": "2015-12-21T11:48:54.884Z"
     }
+
 
 
 ## UpdateAccount (POST /:login)
@@ -895,44 +931,44 @@ Update your account details with the given parameters.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||email||String||Email address||
-||companyName||String||...||
-||firstName||String||...||
-||lastName||String||...||
-||address||String||...||
-||postalCode||String||...||
-||city||String||...||
-||state||String||...||
-||country||String||...||
-||phone||String||...||
+|| **Field**   || **Type** || **Description**                                 ||
+|| email       || String   || Email address                                   ||
+|| companyName || String   || ...                                             ||
+|| firstName   || String   || ...                                             ||
+|| lastName    || String   || ...                                             ||
+|| address     || String   || ...                                             ||
+|| postalCode  || String   || ...                                             ||
+|| city        || String   || ...                                             ||
+|| state       || String   || ...                                             ||
+|| country     || String   || ...                                             ||
+|| phone       || String   || ...                                             ||
 
 ### Returns
 
 Account object:
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique id for you||
-||login||String||Your login name||
-||email||String||Email address||
-||companyName||String||...||
-||firstName||String||...||
-||lastName||String||...||
-||address||String||...||
-||postalCode||String||...||
-||city||String||...||
-||state||String||...||
-||country||String||...||
-||phone||String||...||
-||created||Date (ISO8601)||When this account was created||
-||updated||Date (ISO8601)||When this account was updated||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || UUID     || Unique id for this account                      ||
+|| login       || String   || Your login name                                 ||
+|| email       || String   || Email address                                   ||
+|| companyName || String   || ...                                             ||
+|| firstName   || String   || ...                                             ||
+|| lastName    || String   || ...                                             ||
+|| address     || String   || ...                                             ||
+|| postalCode  || String   || ...                                             ||
+|| city        || String   || ...                                             ||
+|| state       || String   || ...                                             ||
+|| country     || String   || ...                                             ||
+|| phone       || String   || ...                                             ||
+|| created     || ISO8601 date || When this account was created                ||
+|| updated     || ISO8601 date || When this account's details was last updated ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If :login does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` does not exist                             ||
 
 ### CLI Command
 
@@ -940,7 +976,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### Example Request
 
-    POST /login HTTP/1.1
+    POST /my HTTP/1.1
     authorization: Signature keyId="...
     accept: application/json
     content-type: application/json
@@ -955,37 +991,31 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ### Example Response
 
     HTTP/1.1 200 OK
-    content-type: application/json
-    content-length: 317
-    access-control-allow-origin: *
-    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
-    access-control-allow-methods: GET
-    access-control-expose-headers: Api-Version, Request-Id, Response-Time
-    connection: Keep-Alive
-    content-md5: dRwQeA63/aCqc43sGyyheg==
-    server: Joyent SmartDataCenter 8.0.0
-    api-version: 8.0.0
-    request-id: be62e5b0-7d0f-11e2-918f-912e9d0235c1
-    response-time: 326
+    Content-Type: application/json
+    Content-Length: 309
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST, PUT
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: xxJ5ppNDrEyAf5VIlt4GZw==
+    Date: Tue, 22 Dec 2015 12:16:37 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: d8db9e90-a8a5-11e5-90c9-4dcf4848c834
+    Response-Time: 1244
 
     {
-      "id": "cc71f8bb-f310-4746-8e36-afd7c6dd2895",
-      "login": "login",
-      "email": "login@example.com",
-      "companyName": "Example",
-      "firstName": "Name",
-      "lastName": "Surname",
+      "id": "b89d9dd3-62ce-4f6f-eb0d-f78e57d515d9",
+      "login": "barbar",
+      "email": "barbar@example.com",
+      "companyName": "Example Inc",
+      "firstName": "BarBar",
+      "lastName": "Jinks",
       "postalCode": "12345",
-      "address": [
-        "liltingly, Inc.",
-        "6165 pyrophyllite Street"
-      ],
-      "city": "benzoylation concoctive",
-      "state": "SP",
-      "country": "BAT",
       "phone": "1 (234) 567 890",
-      "updated": "2013-12-20T08:58:51.026Z",
-      "created": "2013-12-20T08:58:50.721Z"
+      "updated": "2015-12-22T12:16:37.781Z",
+      "created": "2015-12-21T11:48:54.884Z"
     }
 
 
@@ -1000,14 +1030,14 @@ requests to this API (see the HTTP Signature Authentication Scheme outlined in
 
 Currently CloudAPI supports uploads of public keys in the OpenSSH format.
 
-Note that while it's possible to provide a `name` attribute for an SSH key, in
-order to use it as an human-friendly alias, this attribute's presence is
-completely optional.  When it's not provided, the ssh key fingerprint will be
-used as the `name` instead.
+Note that while it's possible to provide a `name` attribute for an SSH key in
+order to use it as a human-friendly alias, this attribute's presence is
+optional.  When it's not provided, the ssh key fingerprint will be used as the
+`name` instead.
 
-On the following routes, the parameter placeholder `:key` can be replaced with
+For the following routes, the parameter placeholder `:key` can be replaced with
 with either the key's `name` or its `fingerprint`.  It's strongly recommended to
-use `fingerprint` when possible, since the `name` attribute does not have
+use `fingerprint` when possible, since the `name` attribute does not have any
 uniqueness constraints.
 
 
@@ -1021,21 +1051,25 @@ Lists all public keys we have on record for the specified account.
 
 ### Returns
 
-An array of key objects.  Keys are:
+Array of key objects.  Each key object has the following fields:
 
-||**Field**||**Type**||**Description**||
-||name||String||Name for this key||
-||fingerprint||String||Key fingerprint||
-||key||String||Public key in OpenSSH format||
+|| **Field**   || **Type** || **Description**                                 ||
+|| name        || String   || Name for this key                               ||
+|| fingerprint || String   || Key fingerprint                                 ||
+|| key         || String   || Public key in OpenSSH format                    ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` does not exist                             ||
 
 ### CLI Command
+
+    $ triton keys
+
+    or
 
     $ sdc-listkeys
 
@@ -1050,23 +1084,25 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ### Example Response
 
     HTTP/1.1 200 OK
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST
-    Server: SmartDataCenter
-    Connection: close
-    Date: Tue, 28 Jun 2011 23:05:42 GMT
-    Api-Version: 8.0.0
-    Request-Id: 9E962AAA-E5F6-487F-8339-45FABA3CF5BD
-    Response-Time: 66
     Content-Type: application/json
-    Content-Length: 503
-    Content-MD5: RHiVkkX0AZHOjijYqJFRNg==
+    Content-Length: 832
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: u4xmk+MgKzzIvrRt09k4sg==
+    Date: Tue, 22 Dec 2015 12:23:12 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: c44e2000-a8a6-11e5-9030-479dc847c4b2
+    Response-Time: 1041
 
     [
       {
-        "name": "rsa",
-        "key": "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA0A5Pf5Cq...",
-        "fingerprint": "59:a4:..."
+        "name": "barbar",
+        "fingerprint": "03:7f:8e:ef:da:3d:3b:9e:a4:82:67:71:8c:35:2c:aa",
+        "key": "<...>"
       }
     ]
 
@@ -1081,25 +1117,25 @@ Retrieves the record for an individual key.
 
 ### Returns
 
-||**Field**||**Type**||**Description**||
-||name||String||Name for this key||
-||fingerprint||String||Key fingerprint||
-||key||String||OpenSSH formatted public key||
+|| **Field**    || **Type** || **Description**                                ||
+|| name         || String   || Name for this key                              ||
+|| fingerprint  || String   || Key fingerprint                                ||
+|| key          || String   || OpenSSH formatted public key                   ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:key` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:key` does not exist                   ||
 
 ### CLI Command
 
-    $ sdc-getkey rsa
+    $ sdc-getkey barbar
 
 ### Example Request
 
-    GET /my/keys/rsa HTTP/1.1
+    GET /my/keys/barbar HTTP/1.1
     Authorization: ...
     Host: api.example.com
     Accept: application/json
@@ -1108,22 +1144,24 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ### Example Response
 
     HTTP/1.1 200 OK
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, DELETE
-    Server: SmartDataCenter
-    Connection: close
-    Date: Tue, 28 Jun 2011 23:14:34 GMT
-    Api-Version: 8.0.0
-    Request-Id: BE3559EE-713B-43EB-8DEB-6EE93F441C23
-    Response-Time: 78
     Content-Type: application/json
-    Content-Length: 501
-    Content-MD5: O5KO1sbXxLHk1KHxN6U+Fw==
+    Content-Length: 830
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, DELETE
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: p8gjrCZqMiZbD15TA9ymEQ==
+    Date: Tue, 22 Dec 2015 13:26:17 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 94423be0-a8af-11e5-a95f-e74285cfeb5b
+    Response-Time: 999
 
     {
-      "name": "rsa",
-      "key": "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA0A5Pf5Cq...",
-      "fingerprint": "59:a4:61:..."
+      "name": "barbar",
+      "fingerprint": "03:7f:8e:ef:da:3d:3b:9e:a4:82:67:71:8c:35:2c:aa",
+      "key": "<...>"
     }
 
 
@@ -1133,29 +1171,29 @@ Uploads a new OpenSSH key to SmartDataCenter for use in HTTP signing and SSH.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||name||String||Name for this key (optional)||
-||key||String||OpenSSH formatted public key||
+|| **Field** || **Type** || **Description**                                   ||
+|| name      || String   || Name for this key (optional)                      ||
+|| key       || String   || OpenSSH formatted public key                      ||
 
 ### Returns
 
-||**Field**||**Type**||**Description**||
-||name||String||Name for this key||
-||fingerprint||String||Key fingerprint||
-||key||String||OpenSSH formatted public key||
+|| **Field**   || **Type** || **Description**                                 ||
+|| name        || String   || Name for this key                               ||
+|| fingerprint || String   || Key fingerprint                                 ||
+|| key         || String   || OpenSSH formatted public key                    ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||InvalidArgument||If name or key is invalid (usually key)||
-||MissingParameter||If you didn't send a key||
-||ResourceNotFound||If `:login` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| InvalidArgument  || If name or key is invalid (usually key)                ||
+|| MissingParameter || If you didn't send a key                               ||
+|| ResourceNotFound || If `:login` does not exist                             ||
 
 ### CLI Command
 
-    $ sdc-createkey -n id_rsa ~/.ssh/id_rsa.pub
+    $ sdc-createkey -n barbardos ~/.ssh/id_rsa.pub
 
 ### Example Request
 
@@ -1168,30 +1206,32 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Api-Version: ~8.0
 
     {
-      "name": "id_rsa",
-      "key": "ssh-rsa AAA...",
-      "fingerprint": "59:a4:..."
+      "name": "barbardos",
+      "fingerprint": "03:7f:8e:ef:da:3d:3b:9e:a4:82:67:71:8c:35:2c:aa",
+      "key": "ssh-rsa AAA..."
     }
 
 ### Example Response
 
     HTTP/1.1 201 Created
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST
-    Server: SmartDataCenter
-    Connection: close
-    Date: Tue, 28 Jun 2011 23:14:34 GMT
-    Api-Version: 8.0.0
-    Request-Id: BE3559EE-713B-43EB-8DEB-6EE93F441C23
-    Response-Time: 78
     Content-Type: application/json
-    Content-Length: 501
-    Content-MD5: O5KO1sbXxLHk1KHxN6U+Fw==
+    Content-Length: 830
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, DELETE
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: p8gjrCZqMiZbD15TA9ymEQ==
+    Date: Tue, 22 Dec 2015 13:26:17 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 94423be0-a8af-11e5-a95f-e74285cfeb5b
+    Response-Time: 999
 
     {
-      "name": "rsa",
-      "key": "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA0A5Pf5Cq...",
-      "fingerprint": "59:a4:..."
+      "name": "barbardos",
+      "fingerprint": "03:7f:8e:ef:da:3d:3b:9e:a4:82:67:71:8c:35:2c:aa",
+      "key": "<...>"
     }
 
 
@@ -1211,16 +1251,16 @@ Deletes a single SSH key, by name or fingerprint.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:key` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:key` does not exist                   ||
 
 ### CLI Command
 
-    $ sdc-deletekey id_rsa
+    $ sdc-deletekey barbados
 
 #### Example Request
 
-    DELETE /my/keys/id_rsa HTTP/1.1
+    DELETE /my/keys/barbardos HTTP/1.1
     Host: api.example.com
     Accept: application/json
     Api-Version: ~8.0
@@ -1230,24 +1270,30 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
     HTTP/1.1 204 No Content
     Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, DELETE
-    Server: SmartDataCenter
-    Connection: close
-    Date: Tue, 28 Jun 2011 23:14:34 GMT
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, DELETE
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Date: Tue, 22 Dec 2015 13:31:43 GMT
+    Server: Joyent SmartDataCenter 8.0.0
     Api-Version: 8.0.0
-    Request-Id: 4655EA0A-C4CB-4486-8AA9-8C8C9A0B71B1
-    Response-Time: 65
-    Content-Length: 0
+    Request-Id: 5677a420-a8b0-11e5-8702-0daf2c627de5
+    Response-Time: 829
 
 
 
 
 # Users
 
+These are users (also known as sub-users); additional users who are authorized
+to use the same account, but are subject to the RBAC system. See the
+[RBAC](#rbac-users-roles-policies) section for more details.
+
+
 ## ListUsers (GET /:account/users)
 
-Returns a list of account user objects.  These have the same format as the main
-[account](#account) object.
+Returns a list of an account's user objects.  These have the same format as the
+main [account](#account) object.
 
 ### Inputs
 
@@ -1257,132 +1303,161 @@ Returns a list of account user objects.  These have the same format as the main
 
 Array of user objects.  Each user object has the following fields:
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique id for the user||
-||login||String||Sub-user login name||
-||email||String||Email address||
-||companyName||String||...||
-||firstName||String||...||
-||lastName||String||...||
-||address||String||...||
-||postalCode||String||...||
-||city||String||...||
-||state||String||...||
-||country||String||...||
-||phone||String||...||
-||created||Date (ISO8601)||When this user was created||
-||updated||Date (ISO8601)||When this user was updated||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || UUID     || Unique id for this user                         ||
+|| login       || String   || Sub-user login name                             ||
+|| email       || String   || Email address                                   ||
+|| companyName || String   || ...                                             ||
+|| firstName   || String   || ...                                             ||
+|| lastName    || String   || ...                                             ||
+|| address     || String   || ...                                             ||
+|| postalCode  || String   || ...                                             ||
+|| city        || String   || ...                                             ||
+|| state       || String   || ...                                             ||
+|| country     || String   || ...                                             ||
+|| phone       || String   || ...                                             ||
+|| created     || ISO8601 date || When this user was created                  ||
+|| updated     || ISO8601 date || When this user's details was last updated   ||
 
 ### Errors
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:account` does not exist||
-
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:account` does not exist                           ||
 
 ### CLI Command:
 
-    $ sdc-user list
+    $ triton rbac users
 
+    or
+
+    $ sdc-user list
 
 ### Example Request
 
     GET /my/users HTTP/1.1
     Accept: application/json
     Host: api.example.com
-    Api-Version: ~7.2
+    Api-Version: ~8.0
     Authorization: Signature keyId...
 
 ### Example Response
 
-    HTTP/1.1 200 Ok
-    Location: /my/users
+    HTTP/1.1 200 OK
     Content-Type: application/json
-    Content-Length: 400
-    Server: Joyent SmartDataCenter 7.2.0
-    Api-Version: 7.2.0
-    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+    Content-Length: 503
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: 6csVzj9aNZWB5/ZW9JsD8w==
+    Date: Wed, 23 Dec 2015 06:42:20 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 50182970-a940-11e5-af28-0b661ec813b9
+    Response-Time: 1051
 
-    [{
-        id: 'ed976ee5-80a4-42cd-b0d6-5493b7d41132',
-        login: 'a4ce91ff',
-        email: 'a4ce91ff_test@test.com',
-        updated: '2014-02-13T09:18:46.644Z',
-        created: '2014-02-13T09:18:46.644Z'
-    }, {
-        id: '27829465-4150-4fad-9c01-08e0a52267fb',
-        login: 'a0af26cf',
-        email: 'a0af26cf_test@test.com',
-        updated: '2014-02-13T09:20:08.334Z',
-        created: '2014-02-13T09:20:08.334Z'
-    }]
+    [
+      {
+        "id": "4fc13ac6-1e7d-cd79-f3d2-96276af0d638",
+        "login": "barbar",
+        "email": "barbar@example.com",
+        "companyName": "Example",
+        "firstName": "BarBar",
+        "lastName": "Jinks",
+        "phone": "(123)457-6890",
+        "updated": "2015-12-23T06:41:11.032Z",
+        "created": "2015-12-23T06:41:11.032Z"
+      },
+      {
+        "id": "332ce629-fcc5-45c3-e34f-e7cfbeab1327",
+        "login": "san",
+        "email": "san@example.com",
+        "companyName": "Example Inc",
+        "firstName": "San",
+        "lastName": "Holo",
+        "phone": "(123)456-0987",
+        "updated": "2015-12-23T06:41:56.102Z",
+        "created": "2015-12-23T06:41:56.102Z"
+      }
+    ]
 
 
 ## GetUser (GET /:account/users/:user)
 
-Get an account user.
+Get one user fo an account.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||membership||Boolean||When given, the user roles will also be returned||
+|| **Field**  || **Type** || **Description**                                  ||
+|| membership || Boolean  || When given, the user roles will also be returned ||
 
 ### Returns
 
 An array of user objects.  Each user object has the following fields:
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique id for the user||
-||login||String||Sub-user login name||
-||email||String||Email address||
-||companyName||String||...||
-||firstName||String||...||
-||lastName||String||...||
-||address||String||...||
-||postalCode||String||...||
-||city||String||...||
-||state||String||...||
-||country||String||...||
-||phone||String||...||
-||created||Date (ISO8601)||When this user was created||
-||updated||Date (ISO8601)||When this user was updated||
-||roles||Array||User role names (only when `membership` option is present in request)||
-||default_roles||Array||User active role names (only when `membership` option is present in request)||
+|| **Field**     || **Type** || **Description**                               ||
+|| id            || UUID     || Unique id for this user                       ||
+|| login         || String   || Sub-user login name                           ||
+|| email         || String   || Email address                                 ||
+|| companyName   || String   || ...                                           ||
+|| firstName     || String   || ...                                           ||
+|| lastName      || String   || ...                                           ||
+|| address       || String   || ...                                           ||
+|| postalCode    || String   || ...                                           ||
+|| city          || String   || ...                                           ||
+|| state         || String   || ...                                           ||
+|| country       || String   || ...                                           ||
+|| phone         || String   || ...                                           ||
+|| roles         || Array    || User role names (only when `membership` option is present in request) ||
+|| default_roles || Array    || User active role names (only when `membership` option is present in request) ||
+|| created       || ISO8601 date || When this user was created                ||
+|| updated       || ISO8601 date || When this user's details was last updated ||
 
 ### Errors
 
-||**Error Code**||**Description**||
-||ResourceNotFound||When `:account` or `:user` do not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || When `:account` or `:user` do not exist                ||
 
 ### CLI Command:
 
-    $ sdc-user get ed976ee5-80a4-42cd-b0d6-5493b7d41132
-
+    $ sdc-user get 4fc13ac6-1e7d-cd79-f3d2-96276af0d638
 
 ### Example Request
 
-    GET /my/users/ed976ee5-80a4-42cd-b0d6-5493b7d41132?membership=true HTTP/1.1
+    GET /my/users/4fc13ac6-1e7d-cd79-f3d2-96276af0d638 HTTP/1.1
     Accept: application/json
     Host: api.example.com
-    Api-Version: ~7.2
+    Api-Version: ~8
     Authorization: Signature keyId...
 
 ### Example Response
 
-    HTTP/1.1 200 Ok
+    HTTP/1.1 200 OK
     Content-Type: application/json
-    Content-Length: 199
-    Server: Joyent SmartDataCenter 7.2.0
-    Api-Version: 7.2.0
-    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+    Content-Length: 253
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST, DELETE
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: p4/N2pQwLkNuvKTjaKJPOw==
+    Date: Wed, 23 Dec 2015 07:07:44 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: dc761fa0-a943-11e5-842f-87950f2a2edd
+    Response-Time: 961
 
     {
-        id: 'ed976ee5-80a4-42cd-b0d6-5493b7d41132',
-        login: 'a4ce91ff',
-        email: 'a4ce91ff_test@test.com',
-        roles: ['devs', 'admins'],
-        default_roles: ['devs'],
-        updated: '2014-02-13T09:18:46.644Z',
-        created: '2014-02-13T09:18:46.644Z'
+      "id": "4fc13ac6-1e7d-cd79-f3d2-96276af0d638",
+      "login": "barbar",
+      "email": "barbar@example.com",
+      "companyName": "Example",
+      "firstName": "BarBar",
+      "lastName": "Jinks",
+      "phone": "(123)457-6890",
+      "updated": "2015-12-23T06:41:11.032Z",
+      "created": "2015-12-23T06:41:11.032Z"
     }
 
 
@@ -1392,58 +1467,57 @@ Creates a new user under an account.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||email||String||(Required) Email address||
-||login||String||(Required) Login||
-||password||String||(Required) Password||
-||companyName||String||...||
-||firstName||String||...||
-||lastName||String||...||
-||address||String||...||
-||postalCode||String||...||
-||city||String||...||
-||state||String||...||
-||country||String||...||
-||phone||String||...||
+|| **Field**   || **Type** || **Description**                                 ||
+|| email       || String   || (Required) Email address                        ||
+|| login       || String   || (Required) Login                                ||
+|| password    || String   || (Required) Password                             ||
+|| companyName || String   || ...                                             ||
+|| firstName   || String   || ...                                             ||
+|| lastName    || String   || ...                                             ||
+|| address     || String   || ...                                             ||
+|| postalCode  || String   || ...                                             ||
+|| city        || String   || ...                                             ||
+|| state       || String   || ...                                             ||
+|| country     || String   || ...                                             ||
+|| phone       || String   || ...                                             ||
 
 ### Returns
 
 User object:
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique id for the user||
-||login||String||Sub-user `login` name||
-||email||String||Email address||
-||companyName||String||...||
-||firstName||String||...||
-||lastName||String||...||
-||address||String||...||
-||postalCode||String||...||
-||city||String||...||
-||state||String||...||
-||country||String||...||
-||phone||String||...||
-||created||Date (ISO8601)||When this user was created||
-||updated||Date (ISO8601)||When this user was updated||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || UUID     || Unique id for this user                         ||
+|| login       || String   || Sub-user `login` name                           ||
+|| email       || String   || Email address                                   ||
+|| companyName || String   || ...                                             ||
+|| firstName   || String   || ...                                             ||
+|| lastName    || String   || ...                                             ||
+|| address     || String   || ...                                             ||
+|| postalCode  || String   || ...                                             ||
+|| city        || String   || ...                                             ||
+|| state       || String   || ...                                             ||
+|| country     || String   || ...                                             ||
+|| phone       || String   || ...                                             ||
+|| created     || ISO8601 date || When this user was created                  ||
+|| updated     || ISO8601 date || When this user's details was last updated   ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||InvalidArgument||If any of the parameters are invalid, e.g. you try to add a login name already taken by another user of your account||
-||MissingParameter||If you didn't send a `login`, `email` or `password`||
-||ResourceNotFound||If `:account` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| InvalidArgument  || If any of the parameters are invalid, e.g. you try to add a login name already taken by another user of your account ||
+|| MissingParameter || If you didn't send a `login`, `email` or `password`    ||
+|| ResourceNotFound || If `:account` does not exist                           ||
 
 ### CLI Command:
 
     $ sdc-user create --login=bob --email=bob@test.joyent.com --password=123secret
 
-
 ### Request:
 
     POST /my/users HTTP/1.1
-    Host: 0.0.0.0:8080
+    Host: api.example.com
     accept: application/json
     content-type: application/json
     user-agent: restify/2.6.1 (x64-darwin; v8/3.14.5.9; OpenSSL/1.0.1e) node/0.10.26
@@ -1453,42 +1527,42 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     content-md5: E9EmDJjKXMfIsi2mKbwoZA==
 
     {
-      "login": "pedro",
-      "email": "pedro_test@joyent.com",
-      "password": "s3cr3t"
+      "login": "varth",
+      "email": "varth@example.com",
+      "password": "123secret"
     }
 
 ### Response:
 
     HTTP/1.1 201 Created
-    location: /thejoy.test@joyent.com/users/1e8369ff-d701-4468-8bfe-950a6ea2432e
-    content-type: application/json
-    content-length: 173
-    access-control-allow-origin: *
-    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
-    access-control-allow-methods: POST, GET, HEAD
-    access-control-expose-headers: Api-Version, Request-Id, Response-Time
-    connection: Keep-Alive
-    content-md5: 2laf0bFOI8tw9uxMmzPbPw==
-    date: Thu, 01 May 2014 15:35:21 GMT
-    server: Joyent SmartDataCenter 7.1.1
-    api-version: 7.2.0
-    request-id: 34d05030-d146-11e3-a115-31daadd0e9a3
-    response-time: 155
+    Location: /my/users/varth
+    Content-Type: application/json
+    Content-Length: 163
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: qC9LnijSqZ1I+zea5GQXvQ==
+    Date: Wed, 23 Dec 2015 09:42:36 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 7f1193b0-a959-11e5-9cdd-eb0b10bce309
+    Response-Time: 1229
 
     {
-      "id": "1e8369ff-d701-4468-8bfe-950a6ea2432e",
-      "login": "pedro",
-      "email": "pedro_test@joyent.com",
-      "updated": "2014-05-01T15:35:21.638Z",
-      "created": "2014-05-01T15:35:21.638Z"
+      "id": "b5c9cf06-b7de-4c11-9b66-8ace6cb92ee8",
+      "login": "varth",
+      "email": "varth@example.com",
+      "updated": "2015-12-23T09:42:36.517Z",
+      "created": "2015-12-23T09:42:36.517Z"
     }
 
 
 
 ## UpdateUser (POST /:account/users/:id)
 
-Update an RBAC user's modifiable properties.
+Update a user's modifiable properties.
 
 Note: Password changes are not allowed using this endpoint; there is an
 additional endpoint ([ChangeUserPassword](ChangeUserPassword)) for password
@@ -1496,105 +1570,145 @@ changes so it can be selectively allowed/disallowed for users using policies.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||account||String (URL)||(Required) The user's unique id (a UUID)||
-||id||String (URL)||(Required) The user identifier (`login` or `id` UUID)||
-||login||String||(Optional) A new user login||
-||email||String||(Optional) Email address||
-||companyName||String||(Optional)||
-||firstName||String||...||
-||lastName||String||...||
-||address||String||...||
-||postalCode||String||...||
-||city||String||...||
-||state||String||...||
-||country||String||...||
-||phone||String||...||
+|| **Field**   || **Type** || **Description**                                 ||
+|| login       || String   ||                                                 ||
+|| email       || String   ||                                                 ||
+|| companyName || String   ||                                                 ||
+|| firstName   || String   ||                                                 ||
+|| lastName    || String   ||                                                 ||
+|| address     || String   ||                                                 ||
+|| postalCode  || String   ||                                                 ||
+|| city        || String   ||                                                 ||
+|| state       || String   ||                                                 ||
+|| country     || String   ||                                                 ||
+|| phone       || String   ||                                                 ||
 
 ### Returns
 
 User object:
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique id (UUID) for the user||
-||login||String||User login name||
-||email||String||Email address||
-||companyName||String||...||
-||firstName||String||...||
-||lastName||String||...||
-||address||String||...||
-||postalCode||String||...||
-||city||String||...||
-||state||String||...||
-||country||String||...||
-||phone||String||...||
-||created||Date (ISO8601)||When this user was created||
-||updated||Date (ISO8601)||When this user was updated||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || UUID     || Unique id for this user                         ||
+|| login       || String   || User login name                                 ||
+|| email       || String   || Email address                                   ||
+|| companyName || String   || ...                                             ||
+|| firstName   || String   || ...                                             ||
+|| lastName    || String   || ...                                             ||
+|| address     || String   || ...                                             ||
+|| postalCode  || String   || ...                                             ||
+|| city        || String   || ...                                             ||
+|| state       || String   || ...                                             ||
+|| country     || String   || ...                                             ||
+|| phone       || String   || ...                                             ||
+|| created     || ISO8601 date || When this user was created                  ||
+|| updated     || ISO8601 date || When this user's details was last updated   ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||InvalidArgument||If any of the parameters are invalid, e.g. you try to add a `login` name already taken by another user of your account||
-||MissingParameter||If you didn't send a `login` or `email`||
-||ResourceNotFound||If `:account` or `:user` do not exist||
+|| **Error Code**  || **Description**                                         ||
+|| InvalidArgument || If any of the parameters are invalid, e.g. you try to add a `login` name already taken by another user of your account                                 ||
+|| MissingParameter|| If you didn't send a `login` or `email`                 ||
+|| ResourceNotFound|| If `:account` or `:user` do not exist                   ||
 
 ### CLI Command:
 
-    $ sdc-user update 93c3d419-a927-6195-b6fc-b3a4af541aa3 --login=joe
+    $ sdc-user update b5c9cf06-b7de-4c11-9b66-8ace6cb92ee8 --login=joe
+
+### Request:
+
+    POST /my/users/b5c9cf06-b7de-4c11-9b66-8ace6cb92ee8 HTTP/1.1
+    Host: api.example.com
+    Api-Version: ~8
+    accept: application/json
+    content-type: application/json
+    user-agent: restify/2.6.1 (x64-darwin; v8/3.14.5.9; OpenSSL/1.0.1e) node/0.10.26
+    date: Thu, 24 Dec 2015 10:30:44 GMT
+    content-length: 79
+    content-md5: E9EmDJjKXMfIsi2mKbwoZA==
+
+    {
+      "login": "joe",
+    }
+
+### Response:
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Content-Length: 161
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST, DELETE
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: 4Sn7xQHfoc1+LvLkA2KbNA==
+    Date: Thu, 24 Dec 2015 10:30:45 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 63a27380-aa29-11e5-ace8-d79496f2469d
+    Response-Time: 1148
+
+    {
+      "id": "b5c9cf06-b7de-4c11-9b66-8ace6cb92ee8",
+      "login": "joe",
+      "email": "varth@example.com",
+      "updated": "2015-12-24T10:28:59.634Z",
+      "created": "2015-12-23T09:42:36.517Z"
+    }
+
 
 ## ChangeUserPassword (POST /:account/users/:user/change_password)
 
-This is a separate rule for password change, so different policies can be used
+This is a separate rule for password changes, so different policies can be used
 for an user trying to modify other data, or only their own password.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||password||String||(Required) Password||
-||password\_confirmation||String||(Required) Password confirmation||
+|| **Field** || **Type** || **Description**                                   ||
+|| password  || String   || ...                                               ||
+|| password_confirmation || String || string must match `password`            ||
 
 ### Returns
 
 User object:
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique id for the user||
-||login||String||Sub-user login name||
-||email||String||Email address||
-||companyName||String||...||
-||firstName||String||...||
-||lastName||String||...||
-||address||String||...||
-||postalCode||String||...||
-||city||String||...||
-||state||String||...||
-||country||String||...||
-||phone||String||...||
-||created||Date (ISO8601)||When this user was created||
-||updated||Date (ISO8601)||When this user was updated||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || UUID     || Unique id for the user                          ||
+|| login       || String   || User login name                                 ||
+|| email       || String   || Email address                                   ||
+|| companyName || String   || ...                                             ||
+|| firstName   || String   || ...                                             ||
+|| lastName    || String   || ...                                             ||
+|| address     || String   || ...                                             ||
+|| postalCode  || String   || ...                                             ||
+|| city        || String   || ...                                             ||
+|| state       || String   || ...                                             ||
+|| country     || String   || ...                                             ||
+|| phone       || String   || ...                                             ||
+|| created     || Date (ISO8601) || When this user was created                ||
+|| updated     || Date (ISO8601) || When this user's details was last updated ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||InvalidArgument||The provided `password` and `password\_confirmation` didn't match||
-||MissingParameter||Either `password` or `password\_confirmation` parameters are missing||
-||ResourceNotFound||If `:account` or `:user` do not exist||
+|| **Error Code**   || **Description**                                        ||
+|| InvalidArgument  || The provided `password` and `password\_confirmation` didn't match    ||
+|| MissingParameter || Either `password` or `password\_confirmation` parameters are missing ||
+|| ResourceNotFound || If `:account` or `:user` do not exist                  ||
 
 ### CLI Command:
 
-    $ sdc-user change-password 93c3d419-a927-6195-b6fc-b3a4af541aa3 --password=foo123bar --password-confirmation=foo123bar
+    $ sdc-user change-password b5c9cf06-b7de-4c11-9b66-8ace6cb92ee8 --password=foo123bar --password-confirmation=foo123bar
 
 ### Example Request
 
-    POST /my/users/ed976ee5-80a4-42cd-b0d6-5493b7d41132/change_password HTTP/1.1
+    POST /my/users/b5c9cf06-b7de-4c11-9b66-8ace6cb92ee8/change_password HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
-    Api-Version: ~7.2
+    Api-Version: ~8
     Content-Length: 40
     Authorization: Signature keyId...
 
@@ -1607,16 +1721,25 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Content-Length: 199
-    Api-Version: 7.2.0
-    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+    Content-Length: 161
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: qU6CaBlWpuehWaj0IdtPCw==
+    Date: Thu, 24 Dec 2015 10:34:51 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: f6338220-aa29-11e5-8484-a9b10ef4e687
+    Response-Time: 1297
 
     {
-        id: 'ed976ee5-80a4-42cd-b0d6-5493b7d41132',
-        login: 'a4ce91ff',
-        email: 'a4ce91ff_test@test.com',
-        updated: '2014-02-13T09:18:46.644Z',
-        created: '2014-02-13T09:18:46.644Z'
+      "id": "b5c9cf06-b7de-4c11-9b66-8ace6cb92ee8",
+      "login": "joe",
+      "email": "varth@example.com",
+      "updated": "2015-12-24T10:34:51.790Z",
+      "created": "2015-12-23T09:42:36.517Z"
     }
 
 
@@ -1636,38 +1759,43 @@ Remove a user. They will no longer be able to use this API.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:account` does not exist or there isn't a user with either the `login` or `id` given as `:user` value||
+|| **Error Code**   || **Description** ||
+|| ResourceNotFound || If `:account` does not exist or there isn't a user with either the `login` or `id` given as `:user` value||
 
 ### CLI Command:
 
-    $ sdc-user delete 707811cd-d0fa-c5cc-f41f-bfd2d9f545d1
+    $ sdc-user delete b5c9cf06-b7de-4c11-9b66-8ace6cb92ee8
 
 #### Example Request
 
-    DELETE /my/users/ed976ee5-80a4-42cd-b0d6-5493b7d41132 HTTP/1.1
+    DELETE /my/users/b5c9cf06-b7de-4c11-9b66-8ace6cb92ee8 HTTP/1.1
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~7.2
+    Api-Version: ~8
     Content-Length: 0
 
 #### Example Response
 
     HTTP/1.1 204 No Content
     Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, DELETE
-    Server: SmartDataCenter
-    Connection: close
-    Date: Tue, 28 Jun 2011 23:14:34 GMT
-    Api-Version: 7.2.0
-    RequestId: 4655EA0A-C4CB-4486-8AA9-8C8C9A0B71B1
-    Response-Time: 65
-    Content-Length: 0
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST, DELETE
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Date: Thu, 24 Dec 2015 10:36:18 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 29bcb710-aa2a-11e5-b9f6-05ee86f81e61
+    Response-Time: 997
 
 
 
 
 # Roles
+
+Roles a sub-users can adopt when attempting to access a resource. See the
+[RBAC](#rbac-users-roles-policies) section for more details.
+
 
 ## ListRoles (GET /:account/roles)
 
@@ -1679,20 +1807,25 @@ Returns an array of account roles.
 
 ### Returns
 
-||**Field**||**Type**||**Description**||
-||name||String||The role name||
-||members||Array||The list of this account's user logins this role applies to (Optional)||
-||default_members||Array||The list of this account's user logins this role applies to by default (Optional)||
-||policies||Array||The list of this account's policies which this role obeys (Optional)||
-||id||String||(UUID) Unique role identifier||
+Array of role objects.  Each role object has the following fields:
+
+|| **Field** || **Type** || **Description**                                   ||
+|| id        || UUID     || Unique id for this role                           ||
+|| name      || String   || The role name                                     ||
+|| policies  || Array    || This account's policies which this role obeys (Optional)   ||
+|| members   || Array    || This account's user logins this role applies to (Optional) ||
+|| default_members|| Array || This account's user logins this role applies to by default (Optional) ||
 
 ### Errors
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:account` does not exist||
-
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:account` does not exist                           ||
 
 ### CLI Command:
+
+    $ triton rbac roles
+
+or
 
     $ sdc-role list
 
@@ -1702,25 +1835,41 @@ Returns an array of account roles.
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
-    Api-Version: ~7.2
+    Api-Version: ~8
     Authorization: Signature keyId...
 
 ### Example Response
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Content-Length: 99
-    Server: Joyent SmartDataCenter 7.2.0
-    Api-Version: 7.2.0
-    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+    Content-Length: 136
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: cxF+Tamx+GkSloXKYHvX/Q==
+    Date: Tue, 19 Jan 2016 10:54:05 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: f2a9bf40-be9a-11e5-820f-3bf7c01a78db
+    Response-Time: 4086
 
-    [{
-        "id": "4025de02-b4b6-4041-ae72-0749e99a5ac4",
-        "name": "reboot",
-        "members": ["bob","fred","pedro"],
-        "default_members": ["bob","fred"],
-        "policies": ["rebootMachine"]
-    }]
+    [
+      {
+        "name": "readable",
+        "id": "e53b8fec-e661-4ded-a21e-959c9ba08cb2",
+        "members": [
+          "foo"
+        ],
+        "default_members": [
+          "foo"
+        ],
+        "policies": [
+          "readmachine"
+        ]
+      }
+    ]
 
 
 ## GetRole (GET /:account/roles/:role)
@@ -1733,46 +1882,64 @@ Get an account role (`:role`) by `id` or `name`.
 
 ### Returns
 
-||**Field**||**Type**||**Description**||
-||name||String||The role name||
-||members||Array||The list of this account's user logins this role applies to (Optional)||
-||default_members||Array||The list of this account's user logins this role applies to by default (Optional)||
-||policies||Array||The list of this account's policies which this role obeys (Optional)||
-||id||String||(UUID) Unique role identifier||
+|| **Field** || **Type** || **Description**                                   ||
+|| id        || UUID     || Unique id for this role                           ||
+|| name      || String   || The role name                                     ||
+|| policies  || Array    || This account's policies which this role obeys (Optional)   ||
+|| members   || Array    || This account's user logins this role applies to (Optional) ||
+|| default_members|| Array || This account's user logins this role applies to by default (Optional) ||
 
 ### Errors
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:account` or `:role` do not exist||
-
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:account` or `:role` do not exist                  ||
 
 ### CLI Command:
 
-    $ sdc-role get 4025de02-b4b6-4041-ae72-0749e99a5ac4
+    $ triton rbac role e53b8fec-e661-4ded-a21e-959c9ba08cb2
+
+or
+
+    $ sdc-role get e53b8fec-e661-4ded-a21e-959c9ba08cb2
 
 ### Example Request
 
-    GET /my/roles/4025de02-b4b6-4041-ae72-0749e99a5ac4 HTTP/1.1
+    GET /my/roles/e53b8fec-e661-4ded-a21e-959c9ba08cb2 HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
-    Api-Version: ~7.2
+    Api-Version: ~8
     Authorization: Signature keyId...
 
 ### Example Response
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Content-Length: 97
-    Server: Joyent SmartDataCenter 7.2.0
-    Api-Version: 7.2.0
-    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+    Content-Length: 134
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST, DELETE
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: Sr2lbN/2Jhl7q1VsGV63xg==
+    Date: Tue, 19 Jan 2016 11:00:08 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: cd193de0-be9b-11e5-b9fe-8768cab09198
+    Response-Time: 1268
 
     {
-        "id": "4025de02-b4b6-4041-ae72-0749e99a5ac4",
-        "name": "reboot",
-        "members": ["bob","fred","pedro"],
-        "policies": ["rebootMachine"]
+      "name": "readable",
+      "id": "e53b8fec-e661-4ded-a21e-959c9ba08cb2",
+      "members": [
+        "foo"
+      ],
+      "default_members": [
+        "foo"
+      ],
+      "policies": [
+        "readmachine"
+      ]
     }
 
 
@@ -1782,43 +1949,42 @@ Create a new role for your account.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||name||String||The role name||
-||members||Array||The list of account's user logins to be added to this role (Optional)||
-||default_members||Array||The list of account's user logins to be added to this role and have it enabled by default (Optional)||
-||policies||Array||The list of account's policies to be given to this role (Optional)||
+|| **Field** || **Type** ||**Description**                                    ||
+|| name      || String   || The role's name                                   ||
+|| policies  || Array    || This account's policies to be given to this role (Optional)    ||
+|| members   || Array    || This account's user logins to be added to this role (Optional) ||
+|| default_members || Array || This account's user logins to be added to this role and have it enabled by default (Optional) ||
 
 ### Returns
 
 Account role.
 
-||**Field**||**Type**||**Description**||
-||name||String||The role name||
-||members||Array||The list of this account's user logins this role applies to (Optional)||
-||default_members||Array||The list of this account's user logins this role applies to by default (Optional)||
-||policies||Array||The list of this account's policies which this role obeys (Optional)||
-||id||String||(UUID) Unique role identifier||
+|| **Field** || **Type** || **Description**                                   ||
+|| id        || UUID     || Unique id for this role                           ||
+|| name      || String   || The role name                                     ||
+|| policies  || Array    || This account's policies which this role obeys (Optional)   ||
+|| members   || Array    || This account's user logins this role applies to (Optional) ||
+|| default_members|| Array || This account's user logins this role applies to by default (Optional) ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||InvalidArgument||If member or policies are invalid, e.g. you try to add a non-existent user||
-||MissingParameter||If you didn't send a `name`||
-||ResourceNotFound||If `:account` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| InvalidArgument  || If member or policies are invalid, e.g. you try to add a non-existent user ||
+|| MissingParameter || If you didn't send a `name`                            ||
+|| ResourceNotFound || If `:account` does not exist                           ||
 
 ### CLI Command:
 
-    $ sdc-role create --name='test-role' --members=bob --members=fred --default-members=bob --policies=test-policy
+    $ sdc-role create --name=readable --members=foo --default-members=foo --policies=readmachine
 
 Possible alternate formats to pass in multiple items; in `sdc-role`, CSV and
 JSON are also acceptable formats for `--members`, `--default-members` and
 `--policies`:
 
-    $ sdc-role create --name='test-role' --members=bob,fred --default-members=bob --policies=test-policy
-    $ sdc-role create --name='test-role' --members='["bob","fred"]' --default-members=bob --policies=test-policy
-
+    $ sdc-role create --name=readable --members=bob,fred --default-members=foo --policies=readmachine
+    $ sdc-role create --name=readable --members='["bob","fred"]' --default-members=foo --policies=readmachine
 
 ### Example Request
 
@@ -1826,31 +1992,47 @@ JSON are also acceptable formats for `--members`, `--default-members` and
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
-    Api-Version: ~7.2
+    Api-Version: ~8
     Content-Length: 40
     Authorization: Signature keyId...
 
     {
-        "name": "reboot",
-        "members": ["bob","fred","pedro"],
-        "policies": ["rebootMachine"]
+        "name": "readable",
+        "members": ["foo"],
+        "default_members": ["foo"],
+        "policies": ["readmachine"]
     }
 
 ### Example Response
 
     HTTP/1.1 201 Created
-    Location: /my/roles/4025de02-b4b6-4041-ae72-0749e99a5ac4
+    Location: /my/roles/e53b8fec-e661-4ded-a21e-959c9ba08cb2
     Content-Type: application/json
-    Content-Length: 97
-    Server: Joyent SmartDataCenter 7.2.0
-    Api-Version: 7.2.0
-    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+    Content-Length: 135
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: JC584Ys8XLt9OsqeKzFGRA==
+    Date: Tue, 19 Jan 2016 11:49:25 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: af9adf10-bea2-11e5-820f-3bf7c01a78db
+    Response-Time: 1017
 
     {
-        "id": "4025de02-b4b6-4041-ae72-0749e99a5ac4",
-        "name": "reboot",
-        "members": ["bob","fred","pedro"],
-        "policies": ["rebootMachine"]
+      "name": "readable",
+      "id": "e53b8fec-e661-4ded-a21e-959c9ba08cb2",
+      "members": [
+        "foo"
+      ],
+      "default_members": [
+        "foo"
+      ],
+      "policies": [
+        "readmachine"
+      ]
     }
 
 
@@ -1860,64 +2042,80 @@ Modifies an account role.  Anything but `id` can be modified.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||name||String||The role name (Required)||
-||members||Array||The list of account's user logins to be added to this role (Optional)||
-||default_members||Array||The list of account's user logins to be added to this role and have it enabled by default (Optional)||
-||policies||Array||The list of account's policies to be given to this role (Optional)||
+|| **Field** || **Type** ||**Description**                                    ||
+|| name      || String   || The role's name                                   ||
+|| policies  || Array    || This account's policies to be given to this role (Optional)    ||
+|| members   || Array    || This account's user logins to be added to this role (Optional) ||
+|| default_members || Array || This account's user logins to be added to this role and have it enabled by default (Optional) ||
 
 ### Returns
 
 Account role
 
-||**Field**||**Type**||**Description**||
-||name||String||The role name||
-||members||Array||The list of account's user logins to be added to this role (Optional)||
-||default_members||Array||The list of account's user logins to be added to this role and have it enabled by default (Optional)||
-||policies||Array||The list of account's policies to be given to this role (Optional)||
-||id||String||(UUID) Unique role identifier. Identifier purpose is just to allow role name modifications||
+|| **Field** || **Type** || **Description**                                   ||
+|| id        || UUID     || Unique id for this role                           ||
+|| name      || String   || The role name                                     ||
+|| policies  || Array    || This account's policies which this role obeys (Optional)   ||
+|| members   || Array    || This account's user logins this role applies to (Optional) ||
+|| default_members|| Array || This account's user logins this role applies to by default (Optional) ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||InvalidArgument||If member or policies are invalid, e.g. you tried to add an non-existent user||
-||MissingParameter||If you didn't send a `name`||
-||ResourceNotFound||If `:account` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| InvalidArgument  || If member or policies are invalid, e.g. you tried to add an non-existent user ||
+|| MissingParameter || If you didn't send a `name`                            ||
+|| ResourceNotFound || If `:account` does not exist                           ||
 
 ### CLI Command:
 
-    $ sdc-role update 3c2ef9da-b137-6a87-f227-dad1db4219b7 --members=joe,bob --default-members=bob,joe
+    $ sdc-role update e53b8fec-e661-4ded-a21e-959c9ba08cb2 --members=foo,bar
 
 ### Example Request
 
-    POST /my/roles/4025de02-b4b6-4041-ae72-0749e99a5ac4 HTTP/1.1
+    POST /my/roles/e53b8fec-e661-4ded-a21e-959c9ba08cb2 HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
-    Api-Version: ~7.2
+    Api-Version: ~8
     Content-Length: 40
     Authorization: Signature keyId...
 
     {
-        "policies": ["rebootMachine", "resizeMachine"]
+        "members": ["foo", "bar"]
     }
 
 ### Example Response
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Content-Length: 97
-    Server: Joyent SmartDataCenter 7.2.0
-    Api-Version: 7.2.0
-    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+    Content-Length: 134
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST, DELETE
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: Sr2lbN/2Jhl7q1VsGV63xg==
+    Date: Tue, 19 Jan 2016 13:31:13 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: e8534140-beb0-11e5-b819-3f29fab5fc3a
+    Response-Time: 1310
 
     {
-        "id": "4025de02-b4b6-4041-ae72-0749e99a5ac4",
-        "name": "reboot",
-        "members": ["bob","fred","pedro"],
-        "policies": ["rebootMachine", "resizeMachine"]
+      "name": "readable",
+      "id": "e53b8fec-e661-4ded-a21e-959c9ba08cb2",
+      "members": [
+        "foo",
+        "bar"
+      ],
+      "default_members": [
+        "foo"
+      ],
+      "policies": [
+        "readmachine"
+      ]
     }
 
 
@@ -1937,30 +2135,38 @@ Remove a role. `:role` must be the role `id` (a UUID).
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:account` or `:role` do not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:account` or `:role` do not exist                  ||
 
 ### CLI Command:
 
-    $ sdc-role delete 4025de02-b4b6-4041-ae72-0749e99a5ac4
+    $ triton rbac role e53b8fec-e661-4ded-a21e-959c9ba08cb2 --delete
+
+or
+
+    $ sdc-role delete e53b8fec-e661-4ded-a21e-959c9ba08cb2
 
 #### Example Request
 
-    DELETE /my/roles/4025de02-b4b6-4041-ae72-0749e99a5ac4 HTTP/1.1
+    DELETE /my/roles/e53b8fec-e661-4ded-a21e-959c9ba08cb2 HTTP/1.1
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~7.2
+    Api-Version: ~8
     Content-Length: 0
 
 #### Example Response
 
     HTTP/1.1 204 No Content
-    Connection: close
-    Date: Tue, 28 Jun 2011 23:14:34 GMT
-    Api-Version: 7.2.0
-    RequestId: 4655EA0A-C4CB-4486-8AA9-8C8C9A0B71B1
-    Response-Time: 65
-    Content-Length: 0
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST, DELETE
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Date: Tue, 19 Jan 2016 13:33:33 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 3b6aec20-beb1-11e5-820f-3bf7c01a78db
+    Response-Time: 1095
 
 
 
@@ -1970,47 +2176,46 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ## SetRoleTags (PUT /:resource_path)
 
 Sets the given role tags to the provided resource path. `resource_path`
-can be the path to any of the CloudAPI resources described into this document:
+can be the path to any of the CloudAPI resources described in this document:
 account, keys, users, roles, policies, user's ssh keys, datacenters, images,
 packages, machines, analytics, instrumentations, firewall rules and networks.
 
 For each of these you can set role tags either for an individual resource or
 for the whole group; i.e., you can set role tags for all the machines using:
 
-        PUT /:account/machines
+    PUT /:account/machines
 
 or just for a given machine using
 
-        PUT /:account/machines/:machine_id
+    PUT /:account/machines/:machine_id
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||role-tag||Array||The list role-tags to be added to this resource||
+|| **Field** || **Type** || **Description**                                   ||
+|| role-tag  || Array    || The list role-tags to be added to this resource   ||
 
 ### Returns
 
 Resource role tags
 
-||**Field**||**Type**||**Description**||
-||name||String||Path to the resource||
-||role-tag||Array||The list of role tags assigned to this resource||
+|| **Field** || **Type** || **Description**                                   ||
+|| name      || String   || Path to the resource                              ||
+|| role-tag  || Array    || The list of role tags assigned to this resource   ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||InvalidArgument||The provided resource path is not valid||
-||ResourceNotFound||If :resource_path does not exist||
-
+|| **Error Code**   || **Description**                                        ||
+|| InvalidArgument  || The provided resource path is not valid                ||
+|| ResourceNotFound || If `:resource_path` does not exist                     ||
 
 ### CLI Command:
 
     $ sdc-chmod -- =read,create /my/machines
 
 The list of role-tags assigned to a given resource can be obtained from the
-command line with `sdc-info /:resource_path`:
+command line with `sdc-info /:resource_path`. E.g.:
 
     $ sdc-info /my/machines
 
@@ -2020,7 +2225,7 @@ command line with `sdc-info /:resource_path`:
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
-    Api-Version: ~7.2
+    Api-Version: ~8
     content-length: 26
     content-md5: KwJKP+w/roeR+pRgKTMo7w==
     Authorization: Signature keyId...
@@ -2033,17 +2238,26 @@ command line with `sdc-info /:resource_path`:
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Content-Length: 97
-    Server: Joyent SmartDataCenter 7.2.0
-    Api-Version: 7.2.0
-    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+    Content-Length: 76
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: PUT
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: glSyrrDK7km8e0oHkK8MFQ==
+    Date: Tue, 19 Jan 2016 13:31:01 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: e0ec6b20-beb0-11e5-bb37-b3b95e8d52c8
+    Response-Time: 1108
 
     {
-        "name": "/my/machines",
-        "role-tag": [
-          "test-role"
-        ]
+      "name": "/my/machines",
+      "role-tag": [
+        "test-role"
+      ]
     }
+
 
 
 
@@ -2059,19 +2273,24 @@ Retrieves a list of account policies.
 
 ### Returns
 
-||**Field**||**Type**||**Description**||
-||name||String||The policy name||
-||rules||Array||One or more Aperture sentences applying to the policy||
-||description||String||A description for this policy||
-||id||String||(UUID) Unique policy identifier||
+Array of policy objects.  Each policy object has the following fields:
+
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || UUID     || Unique id for this policy                       ||
+|| name        || String   || The policy name                                 ||
+|| rules       || Array    || One or more Aperture sentences applying to the policy ||
+|| description || String   || A description for this policy                   ||
 
 ### Errors
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:account` does not exist||
-
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:account` does not exist                           ||
 
 ### CLI Command:
+
+    $ triton rbac policies
+
+or
 
     $ sdc-policy list
 
@@ -2081,24 +2300,35 @@ Retrieves a list of account policies.
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
-    Api-Version: ~7.2
+    Api-Version: ~8
     Authorization: Signature keyId...
 
 ### Example Response
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Content-Length: 97
-    Server: Joyent SmartDataCenter 7.2.0
-    Api-Version: 7.2.0
-    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+    Content-Length: 111
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: KIok0p7Vj1ywnmKotC0dxw==
+    Date: Wed, 20 Jan 2016 10:27:01 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 56d4a410-bf60-11e5-8d8f-d9c2edd19b69
+    Response-Time: 1539
 
-    [{
-        "id": "4025de02-b4b6-4041-ae72-0749e99a5ac4",
-        "name": "rebootMachine",
-        "rules": ["* can rebootMachine *"],
-        "description": "Restart any machine"
-    }]
+    [
+      {
+        "name": "readmachine",
+        "id": "95ca7b25-5c8f-4c1b-92da-4276f23807f3",
+        "rules": [
+          "can listmachine and getmachine"
+        ]
+      }
+    ]
 
 
 ## GetPolicy (GET /:account/policies/:policy)
@@ -2111,45 +2341,58 @@ Get an account policy (`:policy`) by `id`.
 
 ### Returns
 
-||**Field**||**Type**||**Description**||
-||name||String||The policy name||
-||rules||Array||One or more Aperture sentences applying to the policy||
-||description||String||A description for this policy||
-||id||String||(UUID) Unique policy identifier||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || UUID     || Unique id for this policy                       ||
+|| name        || String   || The policy name                                 ||
+|| rules       || Array    || One or more Aperture sentences applying to the policy ||
+|| description || String   || A description for this policy                   ||
 
 ### Errors
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:account` or `:role` do not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:account` or `:role` do not exist                  ||
 
 
 ### CLI Command:
 
-    $ sdc-policy get 1e14dd3e-dc9d-6cd6-dd5a-ab5a159e96d7
+    $ triton rbac policy 95ca7b25-5c8f-4c1b-92da-4276f23807f3
+
+or
+
+    $ sdc-policy get 95ca7b25-5c8f-4c1b-92da-4276f23807f3
 
 ### Example Request
 
-    GET /my/policies/4025de02-b4b6-4041-ae72-0749e99a5ac4 HTTP/1.1
+    GET /my/policies/95ca7b25-5c8f-4c1b-92da-4276f23807f3 HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
-    Api-Version: ~7.2
+    Api-Version: ~8
     Authorization: Signature keyId...
 
 ### Example Response
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Content-Length: 97
-    Server: Joyent SmartDataCenter 7.2.0
-    Api-Version: 7.2.0
-    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+    Content-Length: 109
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST, DELETE
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: aJlIu8bZIl2QvcSBk/OjxQ==
+    Date: Wed, 20 Jan 2016 10:27:41 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 6f6517d0-bf60-11e5-9252-e35f55471f16
+    Response-Time: 684
 
     {
-        "id": "4025de02-b4b6-4041-ae72-0749e99a5ac4",
-        "name": "rebootMachine",
-        "rules": ["* can rebootMachine *"],
-        "description": "Restart any machine"
+      "name": "readmachine",
+      "id": "95ca7b25-5c8f-4c1b-92da-4276f23807f3",
+      "rules": [
+        "can listmachine and getmachine"
+      ]
     }
 
 
@@ -2159,24 +2402,23 @@ Creates a new account policy.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||name||String||The policy name||
-||rules||Array||One or more Aperture sentences to be added to the current policy||
-||description||String||A description for this policy (Optional)||
+|| **Field**   || **Type** || **Description**                                 ||
+|| name        || String   || The policy name                                 ||
+|| rules       || Array    || One or more Aperture sentences to be added to the current policy ||
+|| description || String   || A description for this policy (Optional)        ||
 
 ### Returns
 
-||**Field**||**Type**||**Description**||
-||name||String||The policy name||
-||rules||Array||One or more Aperture sentences applying to the policy||
-||description||String||A description for this policy||
-||id||String||(UUID) Unique policy identifier||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || UUID     || Unique id for this policy                       ||
+|| name        || String   || The policy name                                 ||
+|| rules       || Array    || One or more Aperture sentences applying to the policy ||
+|| description || String   || A description for this policy                   ||
 
 ### Errors
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:account` or `:role` do not exist||
-
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:account` or `:role` do not exist                  ||
 
 ### CLI Command:
 
@@ -2193,25 +2435,36 @@ Creates a new account policy.
 
 
     {
-        "name": "rebootMachine",
-        "rules": ["* can rebootMachine *"],
-        "description": "Restart any machine"
+        "name": "test-policy",
+        "rules": ["can rebootMachine"],
+        "description": "can reboot any machine"
     }
 
 ### Example Response
 
     HTTP/1.1 201 Created
+    Location: /my/policies/8700e959-4cb3-4337-8afa-fb0a53b5366e
     Content-Type: application/json
-    Content-Length: 97
-    Server: Joyent SmartDataCenter 7.2.0
-    Api-Version: 7.2.0
-    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+    Content-Length: 123
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: U9aAcBqQD9i80axNg4aK9A==
+    Date: Wed, 20 Jan 2016 10:34:44 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 6b01c840-bf61-11e5-9252-e35f55471f16
+    Response-Time: 1116
 
     {
-        "id": "4025de02-b4b6-4041-ae72-0749e99a5ac4",
-        "name": "rebootMachine",
-        "rules": ["* can rebootMachine *"],
-        "description": "Restart any machine"
+      "name": "test-policy",
+      "id": "8700e959-4cb3-4337-8afa-fb0a53b5366e",
+      "rules": [
+        "can rebootMachine"
+      ],
+      "description": "can reboot any machine"
     }
 
 
@@ -2221,57 +2474,68 @@ Upgrades an existing account policy.  Everything but id can be modified.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||name||String||The policy name||
-||rules||Array||One or more Aperture sentences to replace in the current policy||
-||description||String||A description for this policy||
+|| **Field**   || **Type** || **Description**                                 ||
+|| name        || String   || The policy name                                 ||
+|| rules       || Array    || One or more Aperture sentences to be added to the current policy ||
+|| description || String   || A description for this policy (Optional)        ||
 
 ### Returns
 
-||**Field**||**Type**||**Description**||
-||name||String||The policy name||
-||rules||Array||One or more Aperture sentences applying to the policy||
-||description||String||A description for this policy||
-||id||String||(UUID) Unique policy identifier||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || UUID     || Unique id for this policy                       ||
+|| name        || String   || The policy name                                 ||
+|| rules       || Array    || One or more Aperture sentences applying to the policy ||
+|| description || String   || A description for this policy                   ||
 
 ### Errors
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:account` or `:role` do not exist||
-
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:account` or `:role` do not exist                  ||
 
 ### CLI Command:
 
-    $ sdc-policy update 1e14dd3e-dc9d-6cd6-dd5a-ab5a159e96d7 --rules='CAN rebootmachine, createmachine AND getmachine' --rules='CAN listkeys AND listuserkeys' --rules='CAN stopmachine, startmachine, renamemachine, enablemachinefirewall AND disablemachinefirewall'
+    $ triton rbac policy 8700e959-4cb3-4337-8afa-fb0a53b5366e --edit
+
+    $ sdc-policy update 8700e959-4cb3-4337-8afa-fb0a53b5366e --rules='CAN rebootmachine, createmachine AND getmachine' --rules='CAN listkeys AND listuserkeys' --rules='CAN stopmachine, startmachine, renamemachine, enablemachinefirewall AND disablemachinefirewall'
 
 ### Example Request
 
-    POST /my/policies/4025de02-b4b6-4041-ae72-0749e99a5ac4 HTTP/1.1
+    POST /my/policies/8700e959-4cb3-4337-8afa-fb0a53b5366e HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
-    Api-Version: ~7.2
+    Api-Version: ~8
     Authorization: Signature keyId...
 
 
     {
-        "description": "Restart whatever machine, no matter from which IP address"
+        "description": "Restart any machine, no matter which origin IP"
     }
 
 ### Example Response
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Content-Length: 97
-    Server: Joyent SmartDataCenter 7.2.0
-    Api-Version: 7.2.0
-    Request-Id: 84c20bf0-93da-11e3-a4d2-8dccf42a3df3
+    Content-Length: 159
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST, DELETE
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: V0Ud8w9ChirsRyEm341wQg==
+    Date: Wed, 20 Jan 2016 11:02:55 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 5b10fbf0-bf65-11e5-8d2c-33d19d9c4408
+    Response-Time: 1091
 
     {
-        "id": "4025de02-b4b6-4041-ae72-0749e99a5ac4",
-        "name": "rebootMachine",
-        "rules": ["* can rebootMachine *"],
-        "description": "Restart whatever machine, no matter from which IP address"
+      "name": "test-policy",
+      "id": "8700e959-4cb3-4337-8afa-fb0a53b5366e",
+      "rules": [
+        "can rebootMachine"
+      ],
+      "description": "Restart any machine, no matter which origin IP"
     }
 
 
@@ -2291,30 +2555,37 @@ Delete an RBAC policy. `:policy` must be the policy `id` (a UUID).
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:account` or `:policy` do not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:account` or `:policy` do not exist                ||
 
 ### CLI Command:
 
-    $ sdc-policy delete 1e14dd3e-dc9d-6cd6-dd5a-ab5a159e96d7
+    $ triton rbac policy 95ca7b25-5c8f-4c1b-92da-4276f23807f3 --delete
+
+    $ sdc-policy delete 8700e959-4cb3-4337-8afa-fb0a53b5366e
 
 #### Example Request
 
-    DELETE /my/policies/4025de02-b4b6-4041-ae72-0749e99a5ac4 HTTP/1.1
+    DELETE /my/policies/8700e959-4cb3-4337-8afa-fb0a53b5366e HTTP/1.1
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~7.2
+    Api-Version: ~8
+    Authorization: Signature keyId...
     Content-Length: 0
 
 #### Example Response
 
     HTTP/1.1 204 No Content
-    Connection: close
-    Date: Tue, 28 Jun 2011 23:14:34 GMT
-    Api-Version: 7.2.0
-    RequestId: 4655EA0A-C4CB-4486-8AA9-8C8C9A0B71B1
-    Response-Time: 65
-    Content-Length: 0
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST, DELETE
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Date: Wed, 20 Jan 2016 11:04:11 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 8887ee40-bf65-11e5-a1c5-412a81a23b66
+    Response-Time: 872
 
 
 
@@ -2324,6 +2595,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 See account [keys](#keys) for a detailed description.  Only difference is the
 path from where you can access users' keys:
 
+
 ## ListUserKeys (GET /:account/users/:user/keys)
 
 Lists all public keys we have on record for the specified account user.
@@ -2331,7 +2603,12 @@ See [ListKeys](#ListKeys).
 
 ### CLI Command:
 
+    $ triton rbac keys dd71f8bb-f310-4746-8e36-afd7c6dd2895
+
+or
+
     $ sdc-user keys dd71f8bb-f310-4746-8e36-afd7c6dd2895
+
 
 ## GetUserKey (GET /:account/users/:user/keys/:key)
 
@@ -2339,6 +2616,8 @@ Retrieves the given key record either by fingerprint or name.
 See [GetKey](#GetKey).
 
 ### CLI Command:
+
+    $ triton rbac key dd71f8bb-f310-4746-8e36-afd7c6dd2895 0b:56:ae:c5:d1:7b:7a:98:09:58:1a:a2:0c:22:63:9f
 
     $ sdc-user key dd71f8bb-f310-4746-8e36-afd7c6dd2895 '0b:56:ae:c5:d1:7b:7a:98:09:58:1a:a2:0c:22:63:9f'
 
@@ -2349,13 +2628,18 @@ Creates a new key record.  See [CreateKey](#CreateKey).
 
 ### CLI Command:
 
+    $ triton rbac key --add -n test 93c3d419-a927-6195-b6fc-b3a4af541aa3 ~/.ssh/id_rsa.pub
+
     $ sdc-user upload-key -n test 93c3d419-a927-6195-b6fc-b3a4af541aa3 ~/.ssh/id_rsa.pub
+
 
 ## DeleteUserKey (DELETE /:account/users/:user/keys/:key)
 
 Removes a key.  See [GetKey](#GetKey).
 
 ### CLI Command:
+
+    $ triton rbac key --delete dd71f8bb-f310-4746-8e36-afd7c6dd2895 0b:56:ae:c5:d1:7b:7a:98:09:58:1a:a2:0c:22:63:9f
 
     $ sdc-user delete-key dd71f8bb-f310-4746-8e36-afd7c6dd2895 '0b:56:ae:c5:d1:7b:7a:98:09:58:1a:a2:0c:22:63:9f'
 
@@ -2397,23 +2681,32 @@ command uses this endpoint to retrieve it.
 ### Example Request
 
     GET /my/config HTTP/1.1
-    Authorization: Basic ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~7.3
+    Authorization: Signature keyId...
+    Api-Version: ~8
 
 ### Example Response
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Content-Length: 60
-    Server: Joyent SmartDataCenter 7.3.0
-    Api-Version: 7.3.0
-
+    Content-Length: 58
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, PUT
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: 0ZhWHGmb65TwGb3V1+XFlA==
+    Date: Thu, 21 Jan 2016 05:23:10 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 0faa8fb0-bfff-11e5-a42d-41bc4fcc136a
+    Response-Time: 379
 
     {
-      "default_network": "7fa999c8-0d2c-453e-989c-e897716d0831"
+      "default_network": "45607081-4cd2-45c8-baf7-79da760fffaa"
     }
+
 
 ## UpdateConfig (PUT /:login/config)
 
@@ -2421,8 +2714,8 @@ Updates configuration values for your account.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||default_network||String||ID of the network used for provisioning docker containers||
+|| **Field**       || **Type** || **Description** ||
+|| default_network || String   || ID of the network used for provisioning docker containers ||
 
 ### Returns
 
@@ -2434,29 +2727,39 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ sdc-fabric network set-default c786128e-fa80-11e4-bdad-83592a0bd906
+    $ sdc-fabric network set-default c00cbe98-7dea-44d3-b644-5bd078700bf8
 
 ### Example Request
 
     PUT /my/config HTTP/1.1
-    Authorization: Basic ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~7.3
+    Authorization: Signature keyId...
+    Api-Version: ~8
+
     {
-        "default_network": "c786128e-fa80-11e4-bdad-83592a0bd906"
+        "default_network": "c00cbe98-7dea-44d3-b644-5bd078700bf8"
     }
 
 ### Example Response
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Content-Length: 60
-    Server: Joyent SmartDataCenter 7.3.0
-    Api-Version: 7.3.0
+    Content-Length: 58
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, PUT
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: g7ZJ7pMsDmGHEbxBpH0gug==
+    Date: Thu, 21 Jan 2016 05:24:58 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 4ed86b80-bfff-11e5-bf5e-35b3b5208a80
+    Response-Time: 1643
 
     {
-        "default_network": "c786128e-fa80-11e4-bdad-83592a0bd906"
+      "default_network": "c00cbe98-7dea-44d3-b644-5bd078700bf8"
     }
 
 
@@ -2475,20 +2778,23 @@ Provides a list of all datacenters this cloud is aware of.
 ### Returns
 
 An object where the keys are the datacenter name, and the value is the URL
-endpoint of that datacenter's Cloud API.
+endpoint of that datacenter's CloudAPI.
 
-||**Field**||**Type**||**Description**||
-||$datacentername||URL||location of the datacenter||
-
+|| **Field**       || **Type** || **Description**                             ||
+|| $datacentername || URL      || location of the datacenter                  ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` does not exist                             ||
 
 ### CLI Command
+
+    $ triton datacenters
+
+or
 
     $ sdc-listdatacenters
 
@@ -2497,23 +2803,26 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     GET /my/datacenters HTTP/1.1
     Host: api.example.com
     Accept: application/json
+    Authorization: Signature keyId...
     Api-Version: ~8.0
     Content-Length: 0
 
 #### Example Response
 
     HTTP/1.1 200 OK
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET
-    Connection: close
-    Date: Mon, 06 Jun 2011 18:45:21 GMT
-    Server: SmartDataCenter
-    api-version: 8.0.0
-    request-id: 75812321-5887-45ae-b0d4-6e562cb463b5
-    response-time: 0
     Content-Type: application/json
-    Content-Length: 28
-    Content-MD5: nvk5mzwiEmQEfWbQCcBauQ==
+    Content-Length: 42
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: Ju6/xjora7HcwoGG8a8CyA==
+    Date: Thu, 21 Jan 2016 05:29:22 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: ec8bd1a0-bfff-11e5-acb9-49a3959d8bb3
+    Response-Time: 958
 
     {
       "us-west-1": "https://us-west-1.api.joyentcloud.com"
@@ -2522,8 +2831,8 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ## GetDatacenter (GET /:login/datacenters/:name)
 
-Gets an individual datacenter by name.  Returns an HTTP redirect to your
-client, where the datacenter url is in the Location header.
+Gets an individual datacenter by name.  Returns an HTTP redirect to your client,
+where the datacenter url is in the Location header.
 
 ### Inputs
 
@@ -2538,8 +2847,8 @@ URL itself.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` does not exist or `:name` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` does not exist or `:name` does not exist   ||
 
 ### CLI Command
 
@@ -2547,9 +2856,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### Example Request
 
-    GET /my/datacenters/joyent HTTP/1.1
-    Authorization: Basic ...
+    GET /my/datacenters/example HTTP/1.1
     Host: api.example.com
+    Authorization: Signature keyId...
     Accept: application/json
     Api-Version: ~8.0
 
@@ -2557,23 +2866,25 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
     HTTP/1.1 302 Moved Temporarily
     Location: https://api.example.com
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET
-    Connection: close
-    Date: Mon, 06 Jun 2011 18:47:01 GMT
-    Server: SmartDataCenter
-    api-version: 8.0.0
-    request-id: e7b35c46-c36d-4e02-8cde-6fdf2695af15
-    response-time: 178
     Content-Type: application/json
-    Content-Length: 875
-    Content-MD5: FV3cglJSamXOETia0jOZ5g==
-
+    Content-Length: 74
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: LWs/o6eHtZLqPJPJEcN46A==
+    Date: Thu, 21 Jan 2016 05:31:51 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 45769340-c000-11e5-a6b9-4349e525b06c
+    Response-Time: 830
 
     {
       "code": "ResourceMoved",
-      "message": joyent is at https://api.example.com"
+      "message": "example https://api.example.com"
     }
+
 
 
 
@@ -2581,8 +2892,8 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ## ListServices (GET /:login/services)
 
-Provides the URL endpoints for services for this datacenter. It is a mapping
-of service name to URL endpoint.
+Provides the URL endpoints for services for this datacenter. It is a mapping of
+service name to URL endpoint.
 
 ### Inputs
 
@@ -2593,21 +2904,25 @@ of service name to URL endpoint.
 An object where the keys are the service name, and the value is the URL
 endpoint.
 
-||**Field**||**Type**||**Description**||
-||$serviceName||URL||URL endpoint of that service||
+|| **Field**    || **Type** || **Description**                                ||
+|| $serviceName || URL      || URL endpoint of that service                   ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` does not exist                             ||
 
+### CLI Command
+
+    $ triton services
 
 #### Example Request
 
     GET /my/services HTTP/1.1
     Host: api.example.com
+    Authorization: Signature keyId...
     Accept: application/json
     Api-Version: ~8.0
     Content-Length: 0
@@ -2616,18 +2931,18 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Content-Length: 26
+    Content-Length: 100
     Access-Control-Allow-Origin: *
-    Access-Control-Allow-Headers: Accept, Accept-Version, ...
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
     Access-Control-Allow-Methods: GET
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
-    Content-MD5: xeiJhwRr1nPZp1bDheSJZg==
-    Date: Fri, 27 Feb 2015 05:09:49 GMT
-    Server: Joyent SmartDataCenter 7.2.0
-    Api-Version: 7.2.0
-    Request-Id: da9eaf80-be3e-11e4-8b3c-078d3dc40603
-    Response-Time: 100
+    Content-MD5: jzCseheYDALjhInUqjTbDg==
+    Date: Thu, 21 Jan 2016 05:39:52 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 645d8920-c001-11e5-a42d-41bc4fcc136a
+    Response-Time: 882
 
     {
       "cloudapi": "https://us-west-1.api.example.com",
@@ -2636,11 +2951,14 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     }
 
 
+
+
 # Images
 
 An [image](#image-description) contains the software packages that will be
-available on newly provisioned machines.  In the case of virtual machines, the
+available on newly-provisioned machines.  In the case of virtual machines, the
 image also includes the operating system.
+
 
 ## ListImages (GET /:login/images)
 
@@ -2651,41 +2969,41 @@ Provides a list of images available in this datacenter.
 The following optional query parameters are available to filter the list of
 images:
 
-||**Field**||**Type**||**Description**||
-||name||String||The "friendly" name for this image||
-||os||String||The underlying operating system for this image||
-||version||String||The version for this image||
-||public||Boolean||Filter public/private images, e.g. `?public=true`, `?public=false`||
-||state||String||Filter on image [state](https://images.joyent.com/docs/#manifest-state). By default only active images are shown. Use `?state=all` to list all images.||
-||owner||String||Filter on the owner UUID.||
-||type||String||Filter on the image type. The types changed in v8.0.0.||
+|| **Field** || **Type** || **Description**                                   ||
+|| name      || String   || The "friendly" name for this image                ||
+|| os        || String   || The underlying operating system for this image    ||
+|| version   || String   || The version for this image                        ||
+|| public    || Boolean  || Filter public/private images                      ||
+|| state     || String   || Filter on image [state](https://images.joyent.com/docs/#manifest-state). By default only active images are shown. Use `?state=all` to list all images ||
+|| owner     || String   || Filter on owner UUID                              ||
+|| type      || String   || Filter on image type. The types changed in v8.0.0 ||
 
 ### Returns
 
 An array of images.  Image objects include the following fields:
 
-|| **Field**    ||**Type**||**Description**||
-|| id           || String ||A unique identifier for this image||
-|| name         || String ||The "friendly" name for this image||
-|| os           || String ||The underlying operating system for this image||
-|| version      || String ||The version for this image||
-|| type         || String ||What kind of image this is. The values differ after v8.0.0+.||
-|| requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
-|| homepage     || String ||(New in 7.0.) The URL for a web page with more detailed information for this image||
-|| files        || Array  ||(New in 7.1.) An array of image files that make up each image. Currently only a single file per image is supported.||
-|| files[0].compression     || String ||(New in 7.1.) The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'.||
-|| files[0].sha1     || String ||(New in 7.1.) SHA-1 hex digest of the file content. Used for corruption checking.||
-|| files[0].size     || Number ||(New in 7.1.) File size in bytes.||
-|| published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
-|| owner        || String ||(New in 7.1.) The UUID of the user who owns this image.||
-|| public       || Boolean ||(New in 7.1.) Indicates if this image is publicly available.||
-|| state        || String ||(New in 7.1.) The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed'.||
-|| tags         || Object ||(New in 7.1.) An object of key/value pairs that allows clients to categorize images by any given criteria.||
-|| eula         || String ||(New in 7.1.) URL of the End User License Agreement (EULA) for the image.||
-|| acl          || Array ||(New in 7.1.) Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
-|| error        || Object ||(New in 7.1.) If `state=="failed"`, resulting from [CreateImageFromMachine](#CreateImageFromMachine) failure, then there may be an error object of the form `{"code": "<string error code>", "message": "<string desc>"}`||
-|| error.code   || String ||(New in 7.1.) A CamelCase string code for this error, e.g. "PrepareImageDidNotRun". See [GetImage](#GetImage) docs for a table of error.code values.||
-|| error.message|| String ||(New in 7.1.) A short description of the image creation failure.||
+|| **Field**    || **Type** || **Description**                                ||
+|| id           || UUID     || Unique id for this image                       ||
+|| name         || String   || The "friendly" name for this image             ||
+|| os           || String   || The underlying operating system for this image ||
+|| version      || String   || The version for this image                     ||
+|| type         || String   || What kind of image this is. The values differ after v8.0.0+ ||
+|| requirements || Object   || Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided ||
+|| homepage     || String   || The URL for a web page with more detailed information for this image ||
+|| files        || Array    || An array of image files that make up each image. Currently only a single file per image is supported ||
+|| files[0].compression || String || The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none' ||
+|| files[0].sha1        || String || SHA-1 hex digest of the file content. Used for corruption checking ||
+|| files[0].size        || Number || File size in bytes                       ||
+|| published_at || ISO8859 date || The time this image has been made publicly available ||
+|| owner        || String   || The UUID of the user who owns this image       ||
+|| public       || Boolean  || Indicates if this image is publicly available  ||
+|| state        || String   || The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed' ||
+|| tags         || Object   || An object of key/value pairs that allows clients to categorize images by any given criteria ||
+|| eula         || String   || URL of the End User License Agreement (EULA) for the image ||
+|| acl          || Array    || Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
+|| error        || Object   || If `state=="failed"`, resulting from [CreateImageFromMachine](#CreateImageFromMachine) failure, then there may be an error object of the form `{"code": "<string error code>", "message": "<string desc>"}` ||
+|| error.code   || String   || A CamelCase string code for this error, e.g. "PrepareImageDidNotRun". See [GetImage](#GetImage) docs for a table of error.code values ||
+|| error.message|| String   || A short description of the image creation failure ||
 
 <!-- TODO: list possible error.code values, link to troubleshooting docs -->
 
@@ -2693,55 +3011,69 @@ An array of images.  Image objects include the following fields:
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `login` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `login` does not exist                              ||
 
 ### CLI Command
+
+    $ triton images
+
+or
 
     $ sdc-listimages
 
 ### Example Request
 
     GET /my/images HTTP/1.1
-    Authorization: ...
     Host: api.example.com
+    Authorization: Signature keyId...
     Accept: application/json
     Api-Version: ~8.0
 
 ### Example Response
 
     HTTP/1.1 200 OK
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET
-    Server: SmartDataCenter
-    Connection: close
-    Date: Tue, 28 Jun 2015 23:14:34 GMT
-    Api-Version: 8.0.0
-    RequestId: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
-    Response-Time: 257
     Content-Type: application/json
-    Content-Length: 402
-    Content-MD5: y7YOeXG98DYchC96s46yRw==
+    Content-Length: 611
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: 9eDxMdIxc+3aED7Z3qyL8w==
+    Date: Thu, 21 Jan 2016 07:57:59 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: af34a510-c014-11e5-9c73-6767e338bf5d
+    Response-Time: 1506
 
     [
       {
-        "name": "nodejs",
-        "version": "1.1.3",
+        "id": "2b683a82-a066-11e3-97ab-2faa44701c5a",
+        "name": "base",
+        "version": "13.4.0",
         "os": "smartos",
-        "id": "7456f2b0-67ac-11e0-b5ec-832e6cf079d5",
-        "default": true,
+        "requirements": {},
         "type": "zone-dataset",
-        "published_at": "2011-04-15T22:04:12+00:00"
+        "description": "A 32-bit SmartOS image with just essential packages installed. Ideal for users who are comfortable with setting up their own environment and tools.",
+        "files": [
+          {
+            "compression": "gzip",
+            "sha1": "3bebb6ae2cdb26eef20cfb30fdc4a00a059a0b7b",
+            "size": 110742036
+          }
+        ],
+        "tags": {
+          "role": "os",
+          "group": "base-32"
+        },
+        "homepage": "https://docs.joyent.com/images/smartos/base",
+        "published_at": "2014-02-28T10:50:42Z",
+        "owner": "930896af-bf8c-48d4-885c-6573a94b1853",
+        "public": true,
+        "state": "active"
       },
-      {
-        "name": "smartos",
-        "version": "1.3.12",
-        "os": "smartos",
-        "id": "febaa412-6417-11e0-bc56-535d219f2590",
-        "default": false,
-        "type": "zone-dataset",
-        "published_at": "2011-04-11T08:45:00+00:00"
-      }
+      ...
     ]
 
 
@@ -2755,36 +3087,36 @@ None
 
 ### Returns
 
-|| **Field**    ||**Type**||**Description**||
-|| id           || String ||A unique identifier for this image||
-|| name         || String ||The "friendly" name for this image||
-|| os           || String ||The underlying operating system for this image||
-|| version      || String ||The version for this image||
-|| type         || String ||What kind of image this is. The values differ after v8.0.0+.||
-|| requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
-|| homepage     || String ||(New in 7.0.) The URL for a web page with more detailed information for this image||
-|| files        || Array  ||(New in 7.1.) An array of image files that make up each image. Currently only a single file per image is supported.||
-|| files[0].compression     || String ||(New in 7.1.) The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'.||
-|| files[0].sha1     || String ||(New in 7.1.) SHA-1 hex digest of the file content. Used for corruption checking.||
-|| files[0].size     || Number ||(New in 7.1.) File size in bytes.||
-|| published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
-|| owner        || String ||(New in 7.1.) The UUID of the user who owns this image.||
-|| public       || Boolean ||(New in 7.1.) Indicates if this image is publicly available.||
-|| state        || String ||(New in 7.1.) The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed'.||
-|| tags         || Object ||(New in 7.1.) An object of key/value pairs that allows clients to categorize images by any given criteria.||
-|| eula         || String ||(New in 7.1.) URL of the End User License Agreement (EULA) for the image.||
-|| acl          || Array ||(New in 7.1.) Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
-|| error        || Object ||(New in 7.1.) If `state=="failed"`, resulting from [CreateImageFromMachine](#CreateImageFromMachine) failure, then there may be an error object of the form `{"code": "<string error code>", "message": "<string desc>"}`||
-|| error.code   || String ||(New in 7.1.) A CamelCase string code for this error, e.g. "PrepareImageDidNotRun". See [GetImage](#GetImage) docs for a table of error.code values.||
-|| error.message|| String ||(New in 7.1.) A short description of the image creation failure.||
+|| **Field**    || **Type** || **Description**                                ||
+|| id           || UUID     || Unique id for this image                       ||
+|| name         || String   || The "friendly" name for this image             ||
+|| os           || String   || The underlying operating system for this image ||
+|| version      || String   || The version for this image                     ||
+|| type         || String   || What kind of image this is. The values differ after v8.0.0+ ||
+|| requirements || Object   || Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided ||
+|| homepage     || String   || The URL for a web page with more detailed information for this image ||
+|| files        || Array    || An array of image files that make up each image. Currently only a single file per image is supported ||
+|| files[0].compression || String || The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none' ||
+|| files[0].sha1        || String || SHA-1 hex digest of the file content. Used for corruption checking ||
+|| files[0].size        || Number || File size in bytes                       ||
+|| published_at || ISO8859 date || The time this image has been made publicly available ||
+|| owner        || String   || The UUID of the user who owns this image       ||
+|| public       || Boolean  || Indicates if this image is publicly available  ||
+|| state        || String   || The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed' ||
+|| tags         || Object   || An object of key/value pairs that allows clients to categorize images by any given criteria ||
+|| eula         || String   || URL of the End User License Agreement (EULA) for the image ||
+|| acl          || Array    || Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
+|| error        || Object   || If `state=="failed"`, resulting from [CreateImageFromMachine](#CreateImageFromMachine) failure, then there may be an error object of the form `{"code": "<string error code>", "message": "<string desc>"}` ||
+|| error.code   || String   || A CamelCase string code for this error, e.g. "PrepareImageDidNotRun". See [GetImage](#GetImage) docs for a table of error.code values ||
+|| error.message|| String   || A short description of the image creation failure ||
 
 Possible `error.code` values:
 
-|| **error.code** || **Details** ||
-|| PrepareImageDidNotRun || This typically means that the target KVM machine (e.g. Linux) has old guest tools that pre-date the image creation feature. Guest tools can be upgraded with installers at <https://download.joyent.com/pub/guest-tools/>. Other possibilities are: a boot time greater than the five-minute timeout, or a bug or crash in the image-preparation script. ||
-|| VmHasNoOrigin || Origin image data could not be found for the machine. Typically this is for a machine *migrated* before image creation support was added. ||
-|| NotSupported  || Indicates an error due to functionality that isn't currently supported. One example is that custom image creation of a VM based on a custom image isn't currently supported. ||
-|| InternalError || A catch-all error for unexpected or internal errors. ||
+|| **error.code** || **Details**                                              ||
+|| PrepareImageDidNotRun || This typically means that the target KVM machine (e.g. Linux) has old guest tools that pre-date the image creation feature. Guest tools can be upgraded with installers at <https://download.joyent.com/pub/guest-tools/>. Other possibilities are: a boot time greater than the five-minute timeout, or a bug or crash in the image-preparation script ||
+|| VmHasNoOrigin  || Origin image data could not be found for the machine. Typically this is for a machine *migrated* before image creation support was added ||
+|| NotSupported   || Indicates an error due to functionality that isn't currently supported. One example is that custom image creation of a VM based on a custom image isn't currently supported ||
+|| InternalError  || A catch-all error for unexpected or internal errors      ||
 
 ### Errors
 
@@ -2792,50 +3124,67 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ sdc-getimage e42f8c84-bbea-11e2-b920-078fab2aab1f
+    $ triton image get 2b683a82-a066-11e3-97ab-2faa44701c5a
+
+or
+
+    $ sdc-getimage 2b683a82-a066-11e3-97ab-2faa44701c5a
 
 #### Example Request
 
-    GET /my/images/e42f8c84-bbea-11e2-b920-078fab2aab1f HTTP/1.1
-    Authorization: ...
+    GET /my/images/2b683a82-a066-11e3-97ab-2faa44701c5a HTTP/1.1
     Host: api.example.com
+    Authorization: Signature keyId...
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 #### Example Response
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Content-Length: 340
+    Content-Length: 609
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
-    Access-Control-Allow-Methods: GET, HEAD, POST
+    Access-Control-Allow-Methods: GET, HEAD, POST, DELETE
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
-    Content-MD5: Q4ibyY8+ckGrTqyr/sbYLw==
-    Date: Thu, 08 Aug 2013 06:02:49 GMT
+    Content-MD5: 42n5PWY5xZP0lnjdMb7Omg==
+    Date: Thu, 21 Jan 2016 08:00:09 GMT
     Server: Joyent SmartDataCenter 8.0.0
     Api-Version: 8.0.0
-    Request-Id: 27431d80-fff0-11e2-b61a-f51841e5d1bd
-    Response-Time: 491
+    Request-Id: fd5679d0-c014-11e5-a8f8-951890fd520a
+    Response-Time: 876
 
     {
-      "id": "e42f8c84-bbea-11e2-b920-078fab2aab1f",
-      "name": "fedora",
-      "version": "2.4.2",
-      "os": "linux",
-      "type": "zvol",
+      "id": "2b683a82-a066-11e3-97ab-2faa44701c5a",
+      "name": "base",
+      "version": "13.4.0",
+      "os": "smartos",
       "requirements": {},
-      "description": "Fedora 18 64-bit image with just essential...",
-      "published_at": "2013-05-17T18:18:36.472Z",
-      "public": true
-      "state": "active",
+      "type": "zone-dataset",
+      "description": "A 32-bit SmartOS image with just essential packages installed. Ideal for users who are comfortable with setting up their own environment and tools.",
+      "files": [
+        {
+          "compression": "gzip",
+          "sha1": "3bebb6ae2cdb26eef20cfb30fdc4a00a059a0b7b",
+          "size": 110742036
+        }
+      ],
+      "tags": {
+        "role": "os",
+        "group": "base-32"
+      },
+      "homepage": "https://docs.joyent.com/images/smartos/base",
+      "published_at": "2014-02-28T10:50:42Z",
+      "owner": "930896af-bf8c-48d4-885c-6573a94b1853",
+      "public": true,
+      "state": "active"
     }
 
 
 ## DeleteImage (DELETE /:login/images/:id)
 
-Delete an image.  One must be the owner of the image to delete it.
+Delete an image.  Caller must be the owner of the image to delete it.
 
 ### Inputs
 
@@ -2849,16 +3198,16 @@ Responds with HTTP 204 'No Content'.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
-    $ sdc-deleteimage 0c428eb9-7f03-4bb0-ac9f-c0718945d604
+    $ sdc-deleteimage 2b683a82-a066-11e3-97ab-2faa44701c5a
 
 #### Example Request
 
-    DELETE /my/images/e42f8c84-bbea-11e2-b920-078fab2aab1f HTTP/1.1
+    DELETE /my/images/2b683a82-a066-11e3-97ab-2faa44701c5a HTTP/1.1
     Authorization: ...
     Host: api.example.com
     Accept: application/json
@@ -2867,22 +3216,24 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 #### Example Response
 
     HTTP/1.1 204 No Content
+    Content-Type: application/json
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
-    Access-Control-Allow-Methods: GET, HEAD, DELETE
+    Access-Control-Allow-Methods: GET, HEAD, POST, DELETE
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
-    Date: Sat, 10 Aug 2015 00:43:33 GMT
+    Content-MD5: 83MuHssrpOMWvPXLB9stgg==
+    Date: Thu, 21 Jan 2016 08:02:08 GMT
     Server: Joyent SmartDataCenter 8.0.0
     Api-Version: 8.0.0
-    Request-Id: e23eeef0-0155-11e3-8fd4-39aa5371c390
-    Response-Time: 244
+    Request-Id: 440f5590-c015-11e5-b5f9-2b49303f7fc4
+    Response-Time: 1262
 
 
 ## ExportImage (POST /:login/images/:id?action=export)
 
-Exports an image to the specified Manta path.  One must be the owner of the
-image and the correspondent Manta path prefix in order to export it.  Both the
+Exports an image to the specified Manta path.  Caller must be the owner of the
+image, and the correspondent Manta path prefix, in order to export it.  Both the
 image manifest and the image file will be exported, and their filenames will
 default to the following format when the specified manta path is a directory:
 
@@ -2907,8 +3258,8 @@ the following shows how to export foo-1.0.0 with a custom name:
 
 ### Inputs
 
-||**Field** ||**Type**||**Description**||
-||manta_path||String||The Manta path prefix to use when exporting the image.||
+|| **Field**  || **Type** || **Description**                                  ||
+|| manta_path || String   || Manta path prefix used when exporting the image  ||
 
 ### Returns
 
@@ -2920,8 +3271,8 @@ image_path, manifest_path.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
@@ -2946,9 +3297,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Content-MD5: qSUhN+dwdJKEFlcyrUdBiw==
-    Date: Tue, 03 Sep 2013 23:21:05 GMT
-    Server: Joyent SmartDataCenter 7.1.0
-    Api-Version: 7.1.0
+    Date: Thu, 21 Jan 2016 08:00:09 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
     Request-Id: 8180ad80-14ef-11e3-a62d-89e8106c294e
     Response-Time: 670
 
@@ -2963,9 +3314,9 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 Create a new custom image from a machine.  The typical process is:
 
-1. Customize a machine so it's the way you want it.
-2. Call this endpoint to create the new image.
-3. ... repeat from step 1 if more customizations are desired with different images.
+1. Customize a machine the way you want it.
+2. Call this endpoint (CreateImageFromMachine) to create a new image.
+3. Repeat from step 1 if more customizations are desired with different images.
 4. Use the new image(s) for provisioning via [CreateMachine](#CreateMachine).
 
 ### Inputs
@@ -2974,46 +3325,46 @@ All inputs except `machine` are image manifest fields as defined by
 [the IMGAPI docs](https://images.joyent.com/docs/#image-manifests).  Note that
 not all fields listed there can be specified here.
 
-||**Field**||**Type**||**Required?**||**Default**||**Notes**||
-||machine||UUID||Yes||-||The prepared and stopped machine UUID from which the image is to be created.||
-||name||String||Yes||-||The name of the custom image, e.g. "my-image". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-name) for details.||
-||version||String||Yes||-||The version of the custom image, e.g. "1.0.0". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-version) for details.||
-||description||String||No||-||The image [description](https://images.joyent.com/docs/#manifest-description).||
-||homepage||String||No||-||The image [homepage](https://images.joyent.com/docs/#manifest-homepage).||
-||eula||String||No||-||The image [eula](https://images.joyent.com/docs/#manifest-eula).||
-||acl||String||No||-||The image [acl](https://images.joyent.com/docs/#manifest-acl).||
-||tags||String||No||-||The image [tags](https://images.joyent.com/docs/#manifest-tags).||
+|| **Field**   || **Type** || **Required?** || **Description**                ||
+|| machine     || UUID     || Yes || The prepared and stopped machine UUID from which the image is to be created ||
+|| name        || String   || Yes || The name of the custom image, e.g. "my-image". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-name) for details    ||
+|| version     || String   || Yes || The version of the custom image, e.g. "1.0.0". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-version) for details ||
+|| description || String   || No  || The image [description](https://images.joyent.com/docs/#manifest-description) ||
+|| homepage    || String   || No  || The image [homepage](https://images.joyent.com/docs/#manifest-homepage) ||
+|| eula        || String   || No  || The image [eula](https://images.joyent.com/docs/#manifest-eula) ||
+|| acl         || String   || No  || The image [acl](https://images.joyent.com/docs/#manifest-acl)   ||
+|| tags        || String   || No  || The image [tags](https://images.joyent.com/docs/#manifest-tags) ||
 
 ### Returns
 
-|| **Field**    ||**Type**||**Description**||
-|| id           || String ||A unique identifier for this image||
-|| name         || String ||The "friendly" name for this image||
-|| os           || String ||The underlying operating system for this image||
-|| version      || String ||The version for this image||
-|| type         || String ||What kind of image this is. The values differ after v8.0.0+.||
-|| requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
-|| homepage     || String ||(New in 7.0.) The URL for a web page with more detailed information for this image||
-|| files        || Array  ||(New in 7.1.) An array of image files that make up each image. Currently only a single file per image is supported.||
-|| files[0].compression     || String ||(New in 7.1.) The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'.||
-|| files[0].sha1     || String ||(New in 7.1.) SHA-1 hex digest of the file content. Used for corruption checking.||
-|| files[0].size     || Number ||(New in 7.1.) File size in bytes.||
-|| published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
-|| owner        || String ||(New in 7.1.) The UUID of the user who owns this image.||
-|| public       || Boolean ||(New in 7.1.) Indicates if this image is publicly available.||
-|| state        || String ||(New in 7.1.) The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed'.||
-|| tags         || Object ||(New in 7.1.) An object of key/value pairs that allows clients to categorize images by any given criteria.||
-|| eula         || String ||(New in 7.1.) URL of the End User License Agreement (EULA) for the image.||
-|| acl          || Array ||(New in 7.1.) Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
+|| **Field**    || **Type** || **Description**                                ||
+|| id           || UUID     || Unique id for this image                       ||
+|| name         || String   || The "friendly" name for this image             ||
+|| os           || String   || The underlying operating system for this image ||
+|| version      || String   || The version for this image                     ||
+|| type         || String   || What kind of image this is. The values differ after v8.0.0+ ||
+|| requirements || Object   || Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided ||
+|| homepage     || String   || The URL for a web page with more detailed information for this image ||
+|| files        || Array    || An array of image files that make up each image. Currently only a single file per image is supported ||
+|| files[0].compression || String ||The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none' ||
+|| files[0].sha1        || String || SHA-1 hex digest of the file content. Used for corruption checking ||
+|| files[0].size        || Number || File size in bytes                       ||
+|| published_at || ISO8859 date || The time this image has been made publicly available ||
+|| owner        || String   || The UUID of the user who owns this image       ||
+|| public       || Boolean  || Indicates if this image is publicly available  ||
+|| state        || String   || The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed' ||
+|| tags         || Object   || An object of key/value pairs that allows clients to categorize images by any given criteria ||
+|| eula         || String   || URL of the End User License Agreement (EULA) for the image ||
+|| acl          || Array    || Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images ||
 
 ### Errors
 
 For general errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 Some typical and specific errors for this endpoint:
 
-|| **Code** || **HTTP Status** || **Description** ||
-|| InsufficientServerVersionError || 422 || The `machine` given is running on a server that is too old. ||
-|| NotAvailable || 501 || Typically this indicates that image creation is not supported for the OS of the given VM. ||
+|| **Error Code** || **Description**                                          ||
+|| InsufficientServerVersionError || The `machine` given is running on a server that is too old ||
+|| NotAvailable   || Typically this indicates that image creation is not supported for the OS of the given VM ||
 
 <!-- TODO: integrate these errors into the general table above -->
 
@@ -3048,7 +3399,7 @@ Some typical and specific errors for this endpoint:
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Content-MD5: 2sEZ45LmhRiretMPn5sqVA==
-    Date: Tue, 30 Jul 2013 19:59:25 GMT
+    Date: Thu, 21 Jan 2016 08:00:09 GMT
     Server: Joyent SmartDataCenter 8.0.0
     Api-Version: 8.0.0
     Request-Id: 88af23b0-f952-11e2-8f2c-fff0ec35f4ce
@@ -3073,46 +3424,46 @@ Updates metadata about an image.
 
 Only the image attributes listed below can be updated.
 
-||**Field**||**Type**||**Notes**||
-||name||String||Name of the image, e.g. "my-image". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-name) for details.||
-||version||String||Version of the image, e.g. "1.0.0". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-version) for details.||
-||description||String||The image [description](https://images.joyent.com/docs/#manifest-description).||
-||homepage||String||The image [homepage](https://images.joyent.com/docs/#manifest-homepage).||
-||eula||String||The image [eula](https://images.joyent.com/docs/#manifest-eula).||
-||acl||String||The image [acl](https://images.joyent.com/docs/#manifest-acl).||
-||tags||String||The image [tags](https://images.joyent.com/docs/#manifest-tags).||
+|| **Field**   || **Type** || **Description**                                 ||
+|| name        || String   || The name of the custom image, e.g. "my-image". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-name) for details    ||
+|| version     || String   || The version of the custom image, e.g. "1.0.0". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-version) for details ||
+|| description || String   || The image [description](https://images.joyent.com/docs/#manifest-description) ||
+|| homepage    || String   || The image [homepage](https://images.joyent.com/docs/#manifest-homepage) ||
+|| eula        || String   || The image [eula](https://images.joyent.com/docs/#manifest-eula) ||
+|| acl         || String   || The image [acl](https://images.joyent.com/docs/#manifest-acl)   ||
+|| tags        || String   || The image [tags](https://images.joyent.com/docs/#manifest-tags) ||
 
 ### Returns
 
 An updated image object.
 
-|| **Field**    ||**Type**||**Description**||
-|| id           || String ||A unique identifier for this image||
-|| name         || String ||The "friendly" name for this image||
-|| os           || String ||The underlying operating system for this image||
-|| version      || String ||The version for this image||
-|| type         || String ||What kind of image this is. The values differ after v8.0.0+.||
-|| requirements || Object ||Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided.||
-|| homepage     || String ||(New in 7.0.) The URL for a web page with more detailed information for this image||
-|| files        || Array  ||(New in 7.1.) An array of image files that make up each image. Currently only a single file per image is supported.||
-|| files[0].compression     || String ||(New in 7.1.) The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'.||
-|| files[0].sha1     || String ||(New in 7.1.) SHA-1 hex digest of the file content. Used for corruption checking.||
-|| files[0].size     || Number ||(New in 7.1.) File size in bytes.||
-|| published_at || String (ISO-8859) ||(New in 7.0.) The time this image has been made publicly available.||
-|| owner        || String ||(New in 7.1.) The UUID of the user who owns this image.||
-|| public       || Boolean ||(New in 7.1.) Indicates if this image is publicly available.||
-|| state        || String ||(New in 7.1.) The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed'.||
-|| tags         || Object ||(New in 7.1.) An object of key/value pairs that allows clients to categorize images by any given criteria.||
-|| eula         || String ||(New in 7.1.) URL of the End User License Agreement (EULA) for the image.||
-|| acl          || Array ||(New in 7.1.) Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
+|| **Field**    || **Type** || **Description**                                ||
+|| id           || UUID     || Unique id for this image                       ||
+|| name         || String   || The "friendly" name for this image             ||
+|| os           || String   || The underlying operating system for this image ||
+|| version      || String   || The version for this image                     ||
+|| type         || String   || What kind of image this is. The values differ after v8.0.0+ ||
+|| requirements || Object   || Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided ||
+|| homepage     || String   || The URL for a web page with more detailed information for this image ||
+|| files        || Array    || An array of image files that make up each image. Currently only a single file per image is supported ||
+|| files[0].compression || String ||The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none' ||
+|| files[0].sha1        || String || SHA-1 hex digest of the file content. Used for corruption checking ||
+|| files[0].size        || Number || File size in bytes                       ||
+|| published_at || ISO8859 date || The time this image has been made publicly available ||
+|| owner        || String   || The UUID of the user who owns this image       ||
+|| public       || Boolean  || Indicates if this image is publicly available  ||
+|| state        || String   || The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed' ||
+|| tags         || Object   || An object of key/value pairs that allows clients to categorize images by any given criteria ||
+|| eula         || String   || URL of the End User License Agreement (EULA) for the image ||
+|| acl          || Array    || Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images ||
 
 ### Errors
 
 For general errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 Some typical and specific errors for this endpoint:
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### Example CLI Command
 
@@ -3134,8 +3485,16 @@ Some typical and specific errors for this endpoint:
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    ...
-    Api-Version: 7.2.0
+    Content-Length: 125
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: 2sEZ45LmhRiretMPn5sqVA==
+    Date: Thu, 21 Jan 2016 08:00:09 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
     Request-Id: b8e43c60-b904-11e3-93b7-1f685001b0c3
     Response-Time: 135
 
@@ -3158,7 +3517,7 @@ Some typical and specific errors for this endpoint:
 # Packages
 
 [Packages](#packages-description) are named collections of resources that are
-used to describe the dimensions of either a smart machine or a virtual machine.
+used to describe the dimensions of either a container or a virtual machine.
 These resources include (but are not limited to) RAM size, CPUs, CPU caps,
 lightweight threads, disk space, swap size, and logical networks.
 
@@ -3170,111 +3529,91 @@ Provides a list of packages available in this datacenter.
 
 * The following are all optional inputs:
 
-||name||String||The "friendly" name for this package||
-||memory||Number||How much memory will by available (in MiB)||
-||disk||Number||How much disk space will be available (in MiB)||
-||swap||Number||How much swap space will be available (in MiB)||
-||lwps||Number||Maximum number of light-weight processes (threads) allowed||
-||version||String||The version of this package||
-||vcpus||Number||Number of vCPUs for this package||
-||group||String||The group this package belongs to||
+|| **Field**  || **Type** || **Description**                                  ||
+|| name       || String   || The "friendly" name for this package             ||
+|| memory     || Number   || How much memory will by available (in MiB)       ||
+|| disk       || Number   || How much disk space will be available (in MiB)   ||
+|| swap       || Number   || How much swap space will be available (in MiB)   ||
+|| lwps       || Number   || Maximum number of light-weight processes (threads) allowed ||
+|| vcpus      || Number   || Number of vCPUs for this package                 ||
+|| version    || String   || The version of this package                      ||
+|| group      || String   || The group this package belongs to                ||
 
-When any value is provided for one or more of the aforementioned inputs, the
+When any values are provided for one or more of the aforementioned inputs, the
 retrieved packages will match all of them.
 
 ### Returns
 
 An array of objects, of the form:
 
-||name||String||The "friendly" name for this package||
-||memory||Number||How much memory will by available (in MiB)||
-||disk||Number||How much disk space will be available (in MiB)||
-||swap||Number||How much swap space will be available (in MiB)||
-||lwps||Number||Maximum number of light-weight processes (threads) allowed||
-||vcpus||Number||Number of vCPUs for this package||
-||default||Boolean||(deprecated)Whether this is the default package in this datacenter||
-|id||String||Unique identifier for this package||
-||version||String||The version of this package||
-||group||String||The group this package belongs to||
-||description||String||A human-friendly description about this package||
+|| **Field**  || **Type** || **Description**                                  ||
+|| id         || UUID     || Unique id for this package                       ||
+|| name       || String   || The "friendly" name for this package             ||
+|| memory     || Number   || How much memory will by available (in MiB)       ||
+|| disk       || Number   || How much disk space will be available (in MiB)   ||
+|| swap       || Number   || How much swap space will be available (in MiB)   ||
+|| lwps       || Number   || Maximum number of light-weight processes (threads) allowed ||
+|| vcpus      || Number   || Number of vCPUs for this package                 ||
+|| version    || String   || The version of this package                      ||
+|| group      || String   || The group this package belongs to                ||
+|| description || String  || A human-friendly description about this package  ||
+|| default    || Boolean  || (deprecated) Whether this is the default package in this datacenter ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` does not exist                             ||
 
 ### CLI Command
+
+    $ triton packages
+
+or
 
     $ sdc-listpackages
 
 ### Example Request
 
     GET /my/packages HTTP/1.1
-    Authorization: ...
     Host: api.example.com
+    Authorization: ...
     Accept: application/json
     Api-Version: ~8.0
 
 ### Example Response
 
     HTTP/1.1 200 OK
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET
-    Server: SmartDataCenter
-    Connection: close
-    Date: Tue, 28 Jun 2011 23:14:34 GMT
-    Api-Version: 8.0.0
-    Request-Id: FD6F87E7-5EA5-4B55-97D9-DEE29259731D
-    Response-Time: 257
     Content-Type: application/json
-    Content-Length: 402
-    Content-MD5: y7YOeXG98DYchC96s46yRw==
+    Content-Length: 314
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: u0+0E3G28WL4Y4K8p6+pIg==
+    Date: Thu, 21 Jan 2016 08:33:52 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: b24219e0-c019-11e5-99e1-8339f3270a9f
+    Response-Time: 1992
 
     [
       {
-        "name": "regular_128",
-        "id": "5968a8a4-5bff-4c5e-8034-d79de962e7f6",
+        "id": "7b17343c-94af-6266-e0e8-893a3b9993d0",
+        "name": "sdc_128",
         "memory": 128,
-        "disk": 5120,
+        "disk": 12288,
         "swap": 256,
-        "lwps": 1000,
-        "version": "1.0.0",
         "vcpus": 1,
-        "default": true
+        "lwps": 1000,
+        "default": false,
+        "version": "1.0.0"
       },
-      {
-        "name": "regular_256",
-        "id": "ebb5dffb-04fd-487f-bd03-581ade19f717",
-        "memory": 256,
-        "disk": 5120,
-        "swap": 512,
-        "lwps": 2000,
-        "version": "1.0.0",
-        "default": false
-      },
-      {
-        "name": "regular_512",
-        "id": "4dad8aa6-2c7c-e20a-be26-c7f4f1925a9a",
-        "memory": 512,
-        "disk": 10240,
-        "swap": 1024,
-        "lwps": 2000,
-        "version": "1.0.1",
-        "default": false
-      },
-      {
-        "name": "regular_1024",
-        "id": "9fcd9ab7-bd07-cb3c-9f9a-ac7ec3aa934e",
-        "memory": 1024,
-        "disk": 15360,
-        "swap": 2048,
-        "lwps": 4000,
-        "version": "1.2.0",
-        "default": false
-      }
+      ...
     ]
+
 
 ## GetPackage (GET /:login/packages/:id)
 
@@ -3286,61 +3625,68 @@ Gets a package by `name` or `id`.
 
 ### Returns
 
-||name||String||The "friendly" name for this package||
-||memory||Number||How much memory will by available (in MiB)||
-||disk||Number||How much disk space will be available (in MiB)||
-||swap||Number||How much swap space will be available (in MiB)||
-||vcpus||Number||Number of vCPUs for this package||
-||lwps||Number||Maximum number of light-weight processes (threads) allowed||
-||default||Boolean||(deprecated)Whether this is the default package in this datacenter||
-||id||String||Unique identifier for this package||
-||version||String||The version of this package||
-||group||String||The group this package belongs to||
-||description||String||A human-friendly description about this package||
+|| **Field**  || **Type** || **Description**                                  ||
+|| id         || UUID     || Unique id for this package                       ||
+|| name       || String   || The "friendly" name for this package             ||
+|| memory     || Number   || How much memory will by available (in MiB)       ||
+|| disk       || Number   || How much disk space will be available (in MiB)   ||
+|| swap       || Number   || How much swap space will be available (in MiB)   ||
+|| lwps       || Number   || Maximum number of light-weight processes (threads) allowed ||
+|| vcpus      || Number   || Number of vCPUs for this package                 ||
+|| version    || String   || The version of this package                      ||
+|| group      || String   || The group this package belongs to                ||
+|| description || String  || A human-friendly description about this package  ||
+|| default    || Boolean  || (deprecated) Whether this is the default package in this datacenter ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
-    $ sdc-getpackage 5968a8a4-5bff-4c5e-8034-d79de962e7f6
+    $ triton package get 7b17343c-94af-6266-e0e8-893a3b9993d0
+
+or
+
+    $ sdc-getpackage 7b17343c-94af-6266-e0e8-893a3b9993d0
 
 ### Example Request
 
-    GET /my/packages/5968a8a4-5bff-4c5e-8034-d79de962e7f6 HTTP/1.1
-    Authorization: ...
+    GET /my/packages/7b17343c-94af-6266-e0e8-893a3b9993d0 HTTP/1.1
     Host: api.example.com
+    Authorization: ...
     Accept: application/json
     Api-Version: ~8.0
 
 ### Example Response
 
     HTTP/1.1 200 OK
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET
-    Server: SmartDataCenter
-    Connection: close
-    Date: Tue, 16 Oct 2012 23:14:34 GMT
-    Api-Version: 8.0.0
-    Request-Id: F01F0DC1-12DE-4D9A-B92B-FB3A041E46B8
-    Response-Time: 120
     Content-Type: application/json
-    Content-Length: 122
-    Content-MD5: aokYYCYw/EU8JwTD9F6PyA==
+    Content-Length: 156
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: MEUpS89GsEaHBykatBp5rg==
+    Date: Thu, 21 Jan 2016 08:37:04 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 253dd4c0-c01a-11e5-b5f9-2b49303f7fc4
+    Response-Time: 1482
 
     {
-      "name": "regular_128",
+      "id": "7b17343c-94af-6266-e0e8-893a3b9993d0",
+      "name": "sdc_128",
       "memory": 128,
+      "disk": 12288,
       "swap": 256,
-      "disk": 5120,
-      "lwps": 1000,
-      "default": true,
-      "id": "5968a8a4-5bff-4c5e-8034-d79de962e7f6",
       "vcpus": 1,
+      "lwps": 1000,
+      "default": false,
       "version": "1.0.0"
     }
 
@@ -3365,17 +3711,18 @@ machines themselves.
 
 ### Inputs
 
-||type||String||(deprecated)The type of machine (virtualmachine or smartmachine)||
-||brand||String||(8.0+)The type of machine (e.g. lx)||
-||name||String||Machine name to find (will make your list size 1, or 0 if nothing found)||
-||image||String||Image id; returns machines provisioned with that image||
-||state||String||The current state of the machine (e.g. running)||
-||memory||Number||The current size of the RAM deployed for the machine (in MiB)||
-||tombstone||Number||Include machines destroyed in the last N minutes||
-||limit||Number||Return a max of N machines; default is 1000 (which is also the maximum allowable result set size)||
-||offset||Number||Get a `limit` number of machines starting at this `offset`||
-||tag.$name||String||An arbitrary set of tags can be used for querying, assuming they are prefixed with "tag."||
-||credentials||Boolean||Whether to include the generated credentials for machines, if present. Defaults to false.||
+|| **Field**   || **Type** || **Description**                                 ||
+|| type        || String   || (deprecated) The type of machine (virtualmachine or smartmachine) ||
+|| brand       || String   || (v8.0+) The type of machine (e.g. lx)           ||
+|| name        || String   || Machine name to find (will make your list size 1, or 0 if nothing found) ||
+|| image       || String   || Image id; returns machines provisioned with that image        ||
+|| state       || String   || The current state of the machine (e.g. running) ||
+|| memory      || Number   || The current size of the RAM deployed for the machine (in MiB) ||
+|| tombstone   || Number   || Include machines destroyed in the last N minutes              ||
+|| limit       || Number   || Return a max of N machines; default is 1000 (which is also the maximum allowable result set size) ||
+|| offset      || Number   || Get a `limit` number of machines starting at this `offset`    ||
+|| tag.$name   || String   || An arbitrary set of tags can be used for querying, assuming they are prefixed with "tag." ||
+|| credentials || Boolean  || Whether to include the generated credentials for machines, if present. Defaults to false  ||
 
 Note that if the special input `tags=*` is provided, any other input will be
 completely ignored and the response will return all machines with any tag.
@@ -3384,44 +3731,61 @@ completely ignored and the response will return all machines with any tag.
 
 An array of machine objects, which contain:
 
-||id||String||Unique identifier for this machine||
-||name||String||The "friendly" name for this machine||
-||type||String||(deprecated)The type of machine (virtualmachine or smartmachine)||
-||brand||String||(8.0+)The type of machine (e.g. lx)||
-||state||String||The current state of this machine (e.g. running)||
-||memory||Number||The amount of RAM this machine has (in MiB)||
-||disk||Number||The amount of disk this machine has (in MiB)||
-||ips||Array[String]||The IP addresses this machine has||
-||metadata||Object[String => String]||Any additional metadata this machine has||
-||created||Date (ISO8601)||When this machine was created||
-||updated||Date (ISO8601)||When this machine was last updated||
-||package||String||The id or name of the package used to create this machine||
-||image||String||The image id this machine was provisioned with||
-||docker||Boolean||Whether this machine is a Docker container, if present||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || UUID     || Unique id for this machine                      ||
+|| name        || String   || The "friendly" name for this machine            ||
+|| type        || String   || (deprecated) The type of machine (virtualmachine or smartmachine) ||
+|| brand       || String   || (v8.0+) The type of machine (e.g. lx)           ||
+|| state       || String   || The current state of this machine (e.g. running)||
+|| memory      || Number   || The amount of RAM this machine has (in MiB)     ||
+|| disk        || Number   || The amount of disk this machine has (in MiB)    ||
+|| ips         || Array[String] || The IP addresses this machine has          ||
+|| metadata    || Object[String => String] || Any additional metadata this machine has  ||
+|| package     || String   || The id or name of the package used to create this machine ||
+|| image       || String   || The image id this machine was provisioned with  ||
+|| docker      || Boolean  || Whether this machine is a Docker container, if present    ||
+|| created     || ISO8601 date || When this machine was created               ||
+|| updated     || ISO8601 date || When this machine's details was last updated          ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` does not exist||
-||InvalidArgument||If one of the input parameters was invalid||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` does not exist                             ||
+|| InvalidArgument  || If one of the input parameters was invalid             ||
 
 ### CLI Command
 
 Get all machines:
 
+    $ triton instances
+
+or
+
     $ sdc-listmachines
 
 Get all LX machines:
+
+    $ triton instances brand=lx
+
+or
 
     $ sdc-listmachines --brand lx
 
 Get all LX machines that are currently running:
 
+    $ triton instances brand=lx state=running
+
+or
+
     $ sdc-listmachines --brand lx --state running
 
-Get all LX machiens that are currently running and have 256 MiB of memory:
+Get all LX machines that are currently running, and have 256 MiB of memory:
+
+    $ triton instances brand=lx state=running memory=256
+
+or
 
     $ sdc-listmachines --brand lx --state running --memory 256
 
@@ -3438,7 +3802,8 @@ Beware that depending on your shell you may need to escape the asterisk
 character. E.g. Bash requires it escaped.
 
 The CLI has parameters that let you filter on most things in the API, and you
-can combine them.  Run `$ sdc-listmachines --help` to see all the options.
+can combine them.  Run `triton instances --help` or `sdc-listmachines --help` to
+see all the options.
 
 ### Example Request
 
@@ -3451,36 +3816,50 @@ can combine them.  Run `$ sdc-listmachines --help` to see all the options.
 ### Example Response
 
     HTTP/1.1 200 OK
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST
-    Server: SmartDataCenter
-    Connection: close
-    Date: Tue, 28 Jun 2011 23:14:34 GMT
-    Api-Version: 8.0.0
-    Request-Id: AECD793C-3368-45FA-ACD9-19AC394B8933
-    Response-Time: 315
-    x-resource-count: 2
-    x-query-limit: 25
+    x-query-limit: 1000
+    x-resource-count: 1
     Content-Type: application/json
-    Content-Length: 292
-    Content-MD5: kGRcBWkLgMT+IAjDM46rFg==
+    Content-Length: 1310
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: w5wJLKlhDzPpC6zKjtqaCw==
+    Date: Thu, 21 Jan 2016 10:55:25 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 779b5cc0-c02d-11e5-a7d2-fdf229d32220
+    Response-Time: 3444
 
     [
       {
-        "id": "15080eca-3786-4bb8-a4d0-f43e1981cd72",
-        "name": "getting-started",
+        "id": "b6979942-7d5d-4fe6-a2ec-b812e950625a",
+        "name": "test",
         "type": "smartmachine",
-        "brand": "lx",
+        "brand": "joyent",
         "state": "running",
-        "image": "01b2c898-945f-11e1-a523-af1afbe22822",
-        "memory": 256,
-        "disk": 5120,
+        "image": "2b683a82-a066-11e3-97ab-2faa44701c5a",
         "ips": [
-          "10.88.88.50"
+          "10.88.88.26",
+          "192.168.128.5"
         ],
-        "metadata": {},
-        "created": "2011-06-03T00:02:31+00:00",
-        "updated": "2011-06-03T00:02:31+00:00"
+        "memory": 128,
+        "disk": 12288,
+        "metadata": {
+          "root_authorized_keys": "..."
+        },
+        "tags": {},
+        "created": "2016-01-04T12:55:50.539Z",
+        "updated": "2016-01-21T08:56:59.000Z",
+        "networks": [
+          "a9c130da-e3ba-40e9-8b18-112aba2d3ba7",
+          "45607081-4cd2-45c8-baf7-79da760fffaa"
+        ],
+        "primaryIp": "10.88.88.26",
+        "firewall_enabled": false,
+        "compute_node": "564d0b8e-6099-7648-351e-877faf6c56f6",
+        "package": "sdc_128"
       }
     ]
 
@@ -3495,37 +3874,42 @@ Gets the details for an individual machine.
 
 ### Returns
 
-||id||String||Unique identifier for this machine||
-||name||String||The "friendly" name for this machine||
-||type||String||(deprecated)The type of machine (virtualmachine or smartmachine)||
-||brand||String||(8.0+)The type of machine (e.g. lx)||
-||state||String||The current state of this machine (e.g. running)||
-||memory||Number||The amount of RAM this machine has (in MiB)||
-||disk||Number||The amount of disk this machine has (in MiB)||
-||ips||Array[String]||The IP addresses this machine has||
-||metadata||Object[String => String]||Any additional metadata this machine has||
-||created||Date (ISO8601)||When this machine was created||
-||updated||Date (ISO8601)||When this machine was last updated||
-||package||String||The id or name of the package used to create this machine||
-||image||String||The image id this machine was provisioned with||
-||docker||Boolean||Whether this machine is a Docker container, if present||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || UUID     || Unique id for this machine                      ||
+|| name        || String   || The "friendly" name for this machine            ||
+|| type        || String   || (deprecated) The type of machine (virtualmachine or smartmachine) ||
+|| brand       || String   || (v8.0+) The type of machine (e.g. lx)           ||
+|| state       || String   || The current state of this machine (e.g. running)||
+|| memory      || Number   || The amount of RAM this machine has (in MiB)     ||
+|| disk        || Number   || The amount of disk this machine has (in MiB)    ||
+|| ips         || Array[String] || The IP addresses this machine has          ||
+|| metadata    || Object[String => String] || Any additional metadata this machine has  ||
+|| package     || String   || The id or name of the package used to create this machine ||
+|| image       || String   || The image id this machine was provisioned with  ||
+|| docker      || Boolean  || Whether this machine is a Docker container, if present    ||
+|| created     || ISO8601 date || When this machine was created               ||
+|| updated     || ISO8601 date || When this machine's details was last updated          ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
 Get the details for the machine with id 75cfe125-a5ce-49e8-82ac-09aa31ffdf26:
 
-    $ sdc-getmachine 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+    $ triton instance get b6979942-7d5d-4fe6-a2ec-b812e950625a
+
+or
+
+    $ sdc-getmachine b6979942-7d5d-4fe6-a2ec-b812e950625a
 
 ### Example Request
 
-    GET /my/machines/75cfe125-a5ce-49e8-82ac-09aa31ffdf26 HTTP/1.1
+    GET /my/machines/b6979942-7d5d-4fe6-a2ec-b812e950625a HTTP/1.1
     Authorization: ...
     Host: api.example.com
     Accept: application/json
@@ -3534,33 +3918,47 @@ Get the details for the machine with id 75cfe125-a5ce-49e8-82ac-09aa31ffdf26:
 ### Example Response
 
     HTTP/1.1 200 OK
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST, DELETE
-    Server: SmartDataCenter
-    Connection: close
-    Date: Tue, 28 Jun 2011 23:14:34 GMT
-    Api-Version: 8.0.0
-    Request-Id: 4A8C4694-03C3-484D-80E0-ACBA9FEE6C7C
-    Response-Time: 174
     Content-Type: application/json
-    Content-Length: 261
-    Content-MD5: oDccU7ZWZrOkdl/pGZ4oNA==
+    Content-Length: 1308
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD, DELETE, PUT
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: 0q2leQEqeZCNiznbZvKhZw==
+    Date: Thu, 21 Jan 2016 10:58:11 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: db0705c0-c02d-11e5-b1b7-65fab9169f0e
+    Response-Time: 3159
 
     {
-      "id": "75cfe125-a5ce-49e8-82ac-09aa31ffdf26",
-      "name": "getting-started",
+      "id": "b6979942-7d5d-4fe6-a2ec-b812e950625a",
+      "name": "test",
       "type": "smartmachine",
-      "brand": "lx",
+      "brand": "joyent",
       "state": "running",
-      "image": "01b2c898-945f-11e1-a523-af1afbe22822",
+      "image": "2b683a82-a066-11e3-97ab-2faa44701c5a",
       "ips": [
-        "10.88.88.51"
+        "10.88.88.26",
+        "192.168.128.5"
       ],
       "memory": 128,
-      "disk": 5120,
-      "metadata": {},
-      "created": "2011-06-27T23:50:49+00:00",
-      "updated": "2011-06-28T00:09:37+00:00"
+      "disk": 12288,
+      "metadata": {
+        "root_authorized_keys": "...",
+      },
+      "tags": {},
+      "created": "2016-01-04T12:55:50.539Z",
+      "updated": "2016-01-21T08:56:59.000Z",
+      "networks": [
+        "a9c130da-e3ba-40e9-8b18-112aba2d3ba7",
+        "45607081-4cd2-45c8-baf7-79da760fffaa"
+      ],
+      "primaryIp": "10.88.88.26",
+      "firewall_enabled": false,
+      "compute_node": "564d0b8e-6099-7648-351e-877faf6c56f6",
+      "package": "sdc_128"
     }
 
 
@@ -3570,30 +3968,25 @@ Allows you to provision a machine.
 
 If you do not specify a name, CloudAPI will generate a random one for you.
 
-> **NOTE:**<br />
-CreateMachine no longer returns IP addresses as of SDC 7.0.  To obtain the IP
-address of a newly-provisioned machine, poll [ListMachines](#ListMachines) or
-[GetMachine](#GetMachine) until the machine state is `running` or a failure.
-
 Your machine will initially be not available for login (SmartDataCenter must
-provision and boot it); you can poll [GetMachine](#GetMachine) for status.
-When the `state` field is equal to `running`, you can log in. If the machine is
-a brand other than `kvm`, you can usually use any of the SSH keys managed under
-the [keys section](#keys) of CloudAPI to login as any POSIX user on the OS.
-You can add/remove keys over time, and the machine will automatically work with
-that set.
+provision and boot it); you can poll [GetMachine](#GetMachine) for its status.
+When the `state` field is equal to `running`, you can log in.  If the machine is
+a `brand` other than `kvm`, you can usually use any of the SSH keys managed
+under the [keys section](#keys) of CloudAPI to login as any POSIX user on the
+OS.  You can add/remove keys over time, and the machine will automatically work
+with that set.
 
 If the the machine has a brand `kvm`, and of a UNIX-derived OS (e.g. Linux),
 you *must* have keys uploaded before provisioning; that entire set of keys will
-be written out to `/root/.ssh/authorized_keys`, and you can SSH in using one of
-those.  Changing the keys over time under your account will not affect a
-running virtual machine in any way; those keys are statically written at
-provisioning-time only, and you will need to manually manage them on the machine
-itself.
+be written out to `/root/.ssh/authorized_keys` in the new machine, and you can
+SSH in using one of those keys.  Changing the keys over time under your account
+will not affect a running virtual machine in any way; those keys are statically
+written at provisioning-time only, and you will need to manually manage them on
+the machine itself.
 
 If the image you create a machine from is set to generate passwords for you,
 the username/password pairs will be returned in the metadata response as a
-nested object, like:
+nested object, like so:
 
     "metadata": {
       "credentials": {
@@ -3604,22 +3997,24 @@ nested object, like:
 
 You cannot overwrite the `credentials` key in CloudAPI.
 
-More generally, the metadata keys can be set either at machine-creation time
-or after the fact.  You must either pass in plain-string values, or a JSON
-encoded string.  On metadata retrieval, you will get back a JSON object.
+More generally, the metadata keys can be set either at machine-creation time or
+after the fact.  You must either pass in plain-string values, or a JSON-
+encoded string.  On metadata retrieval, you will get a JSON object back.
 
 Networks can be specified using the networks attribute. If it is absent from
 the input, the machine will default to attaching to one externally-accessible
 network (it will have one public IP), and one internally-accessible network from
-the datacenter network pools. It is possible to have a machine only attached
-to an internal network, or both public and internal, or just external.
-NB: 'internal' cannot be reached from the Internet, but all users also on the
-internal network can reach it.
+the datacenter network pools.  It is possible to have a machine attached to only
+an internal network, or both public and internal, or just external.
+
+Be aware that CreateMachine does return IP addresses.  To obtain the IP address
+of a newly-provisioned machine, poll [GetMachine](#GetMachine) until the machine
+state is `running` or a failure.
 
 Typically, SDC will allocate the new machine somewhere reasonable within the
 cloud.  You may want this machine to be placed close to, or far away from, other
 existing machines belonging to you;  if so, you can provide locality hints to
-cloudapi.  Locality hints are not guarantees, unless `strict` is set true,
+CloudAPI.  Locality hints are not guarantees, unless `strict` is set true,
 but SDC will attempt to satisfy the hints if possible. An example of a locality
 hint is:
 
@@ -3641,50 +4036,55 @@ the creation of the new machine will fail if the provided `near` and/or `far`
 cannot be met. `near` will try to place the new machine on the same server as
 the given machine UUIDs, otherwise in the same rack; it will fail if no space
 can be found in that rack. `far` will try to place the new machine in a
-different, otherwise a different server in the same rack; it will fail if space
-can only be found on the same server as the given machine UUIDs.
-
+different rack, otherwise a different server in the same rack; it will fail if
+space can only be found on the same server as the given machine UUIDs.
 
 ### Inputs
 
-||name||String||Friendly name for this machine; default is the first 8 characters of the machine id||
-||package||String||Id of the package to use on provisioning, obtained from [ListPackages](#ListPackages)||
-||image||String||The image UUID (the "id" field in [ListImages](#ListImages))||
-||networks||Array||Desired networks ids, obtained from [ListNetworks](#ListNetworks)||
-||locality||Object[String => Array]||Optionally specify which machines the new machine should be near or far from||
-||metadata.$name||String||An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata."||
-||tag.$name||String||An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag."||
-||firewall_enabled||Boolean||(Added in CloudAPI 7.0.) Completely enable or disable firewall for this machine. Default is false.||
+|| **Field** || **Type** || **Description**                                   ||
+|| name      || String   || Friendly name for this machine; default is the first 8 characters of the machine id ||
+|| package   || String   || Id of the package to use on provisioning, obtained from [ListPackages](#ListPackages) ||
+|| image     || String   || The image UUID (the "id" field in [ListImages](#ListImages)) ||
+|| networks  || Array    || Desired networks ids, obtained from [ListNetworks](#ListNetworks) ||
+|| locality  || Object[String => Array] || Optionally specify which machines the new machine should be near or far from ||
+|| metadata.$name || String || An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata." ||
+|| tag.$name || String   || An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag." ||
+|| firewall_enabled || Boolean || Completely enable or disable firewall for this machine. Default is false ||
 
 ### Returns
 
-||id||String||Unique identifier for this machine||
-||name||String||The "friendly" name for this machine||
-||type||String||(deprecated)The type of machine (virtualmachine or smartmachine)||
-||brand||String||(8.0+)The type of machine (e.g. lx)||
-||state||String||The current state of this machine (e.g. running)||
-||memory||Number||The amount of RAM this machine has (in MiB)||
-||disk||Number||The amount of disk this machine has (in MiB)||
-||ips||Array[String]||The IP addresses this machine has||
-||metadata||Object[String => String]||Any additional metadata this machine has||
-||created||Date (ISO8601)||When this machine was created||
-||updated||Date (ISO8601)||When this machine was last updated||
-||package||String||The name of the package used to create this machine||
-||image||String||The image id this machine was provisioned with||
-||docker||Boolean||Whether this machine is a Docker container, if present||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || UUID     || Unique id for this machine                      ||
+|| name        || String   || The "friendly" name for this machine            ||
+|| type        || String   || (deprecated) The type of machine (virtualmachine or smartmachine) ||
+|| brand       || String   || (v8.0+) The type of machine (e.g. lx)           ||
+|| state       || String   || The current state of this machine (e.g. running)||
+|| memory      || Number   || The amount of RAM this machine has (in MiB)     ||
+|| disk        || Number   || The amount of disk this machine has (in MiB)    ||
+|| ips         || Array[String] || The IP addresses this machine has          ||
+|| metadata    || Object[String => String] || Any additional metadata this machine has  ||
+|| package     || String   || The id or name of the package used to create this machine ||
+|| image       || String   || The image id this machine was provisioned with  ||
+|| docker      || Boolean  || Whether this machine is a Docker container, if present    ||
+|| created     || ISO8601 date || When this machine was created               ||
+|| updated     || ISO8601 date || When this machine's details was last updated          ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` does not exist||
-||InsufficientCapacity||There isn't enough capacity in this datacenter||
-||InvalidArgument||If one of the input parameters was invalid||
+|| **Error Code**       || **Description**                                    ||
+|| ResourceNotFound     || If `:login` does not exist                         ||
+|| InsufficientCapacity || There isn't enough capacity in this datacenter     ||
+|| InvalidArgument      || If one of the input parameters was invalid         ||
 
 ### CLI Command
 
-    $ sdc-createmachine --image=01b2c898-945f-11e1-a523-af1afbe22822 --package=5968a8a4-5bff-4c5e-8034-d79de962e7f6
+    $ triton instance create 2b683a82-a066-11e3-97ab-2faa44701c5a 7b17343c-94af-6266-e0e8-893a3b9993d0
+
+or
+
+    $ sdc-createmachine --image=2b683a82-a066-11e3-97ab-2faa44701c5a --package=7b17343c-94af-6266-e0e8-893a3b9993d0
 
 ### Example Request
 
@@ -3696,66 +4096,89 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Content-Type: application/x-www-form-urlencoded
     Api-Version: ~8.0
 
+    {
+      "image": "2b683a82-a066-11e3-97ab-2faa44701c5a",
+      "package": "7b17343c-94af-6266-e0e8-893a3b9993d0"
+    }
+
 ### Example Response
 
     HTTP/1.1 201 Created
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST
-    Server: Joyent
-    Connection: close
-    Date: Wed, 13 Apr 2011 23:12:39 GMT
-    Api-Version: 8.0.0
-    Request-Id: 04BF964B-C285-4BDF-84B1-762B8FDCADB1
-    Response-Time: 470
+    Location: /my/machines/e8622950-af78-486c-b682-dd147c938dc6
     Content-Type: application/json
-    Content-Length: 197
-    Content-MD5: yuUKkqnVw/ZtHXTTeoWVDQ==
+    Content-Length: 1151
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: s5ROP0dBDWlf5X1drujDvg==
+    Date: Thu, 21 Jan 2016 12:57:52 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 9283ba80-c03e-11e5-b1b7-65fab9169f0e
+    Response-Time: 4655
 
     {
-      "id": "55a366ce-6c30-4f88-a36b-53638bd0cb62",
-      "name": abcd1234",
+      "id": "e8622950-af78-486c-b682-dd147c938dc6",
+      "name": "e8622950",
       "type": "smartmachine",
       "brand": "joyent",
       "state": "provisioning",
-      "image": "01b2c898-945f-11e1-a523-af1afbe22822",
-      "memory": 128,
-      "disk": 5120,
+      "image": "2b683a82-a066-11e3-97ab-2faa44701c5a",
       "ips": [],
+      "memory": 128,
+      "disk": 12288,
+      "metadata": {
+        "root_authorized_keys": "..."
+      },
+      "tags": {},
+      "created": "2016-01-21T12:57:52.759Z",
+      "updated": "2016-01-21T12:57:52.979Z",
       "networks": [],
-      "metadata": {},
-      "created": "2011-06-03T00:02:31+00:00",
-      "updated": "2011-06-03T00:02:31+00:00",
+      "firewall_enabled": false,
+      "compute_node": null,
+      "package": "sdc_128"
     }
 
 ### More Examples
 
 Create machine with multiple nics
 
-    $ sdc-createmachine --image=01b2c898-945f-11e1-a523-af1afbe22822 --package=5968a8a4-5bff-4c5e-8034-d79de962e7f6 --networks=42325ea0-eb62-44c1-8eb6-0af3e2f83abc --networks=c8cde927-6277-49ca-82a3-741e8b23b02f
+    $ triton instance create --network=42325ea0-eb62-44c1-8eb6-0af3e2f83abc --network=c8cde927-6277-49ca-82a3-741e8b23b02f 2b683a82-a066-11e3-97ab-2faa44701c5a 7b17343c-94af-6266-e0e8-893a3b9993d0
+
+or
+
+    $ sdc-createmachine --image=2b683a82-a066-11e3-97ab-2faa44701c5a --package=7b17343c-94af-6266-e0e8-893a3b9993d0 --networks=42325ea0-eb62-44c1-8eb6-0af3e2f83abc --networks=c8cde927-6277-49ca-82a3-741e8b23b02f
 
 Create machine with tags
 
-    $ sdc-createmachine --image=01b2c898-945f-11e1-a523-af1afbe22822 --package=5968a8a4-5bff-4c5e-8034-d79de962e7f6 --networks=42325ea0-eb62-44c1-8eb6-0af3e2f83abc -t foo=bar -t group=test
+    $ triton instance create -t foo=bar -t group=test 2b683a82-a066-11e3-97ab-2faa44701c5a 7b17343c-94af-6266-e0e8-893a3b9993d0
+
+or
+
+    $ sdc-createmachine --image=2b683a82-a066-11e3-97ab-2faa44701c5a --package=7b17343c-94af-6266-e0e8-893a3b9993d0 -t foo=bar -t group=test
 
 ### User-script
 
 The special value `metadata.user-script` can be specified to provide a custom
-script which will be executed by the machine right after creation and on every
-machine reboot.  This script can be specified using the command line option
-`--script`, which should be an absolute path to the file we want to upload to
-our machine.
+script which will be executed by the machine right after creation, and on every
+machine reboot.  This script can be specified using the command-line option
+`--script`, which should be an absolute path to the file you want to upload to
+the machine.
 
 
 ## StopMachine (POST /:login/machines/:id?action=stop)
 
-Allows you to shut down a machine.  POST to the machine name with an `action` of
-`stop`.
+Allows you to shut down an instance.  POST to the machine name with an `action`
+of `stop`.
 
 You can poll on [GetMachine](#GetMachine) until the state is `stopped`.
 
 ### Inputs
 
-||action||String||Use the exact string "stop"||
+|| **Field** || **Type** || **Description**                                   ||
+|| action    || String   || Use the exact string "stop"                       ||
 
 ### Returns
 
@@ -3765,21 +4188,23 @@ You can poll on [GetMachine](#GetMachine) until the state is `stopped`.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
-||InvalidState||The machine is in the wrong state to be stopped||
-||InvalidArgument||If `action` was invalid||
-||MissingParameter||If `action` wasn't provided||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+|| InvalidState     || The machine is in the wrong state to be stopped        ||
+|| InvalidArgument  || If `action` was invalid                                ||
+|| MissingParameter || If `action` wasn't provided                            ||
 
 ### CLI Command
 
-    $ sdc-stopmachine 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+    $ triton instance stop c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
+
+    $ sdc-stopmachine c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
 
 ### Example Request
 
-    POST /my/machines/75cfe125-a5ce-49e8-82ac-09aa31ffdf26 HTTP/1.1
-    Authorization: ...
+    POST /my/machines/c2855c3a-a91d-46b8-9da6-6d7ab1bc6962 HTTP/1.1
     Host: api.example.com
+    Authorization: ...
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
@@ -3791,14 +4216,16 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
     HTTP/1.1 202 Accepted
     Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST, DELETE
-    Server: SmartDataCenter
-    Connection: close
-    Date: Wed, 13 Apr 2011 23:35:25 GMT
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD, DELETE, PUT
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Date: Thu, 21 Jan 2016 13:05:58 GMT
+    Server: Joyent SmartDataCenter 8.0.0
     Api-Version: 8.0.0
-    Request-Id: F09F3674-2151-434B-9911-29DD188057F0
-    Response-Time: 115
-    Content-Length: 0
+    Request-Id: b49ae1b0-c03f-11e5-a7d2-fdf229d32220
+    Response-Time: 3175
+    Transfer-Encoding: chunked
 
 
 ## StartMachine (POST /:login/machines/:id?action=start)
@@ -3810,7 +4237,8 @@ You can poll on [GetMachine](#GetMachine) until the state is `running`.
 
 ### Inputs
 
-||action||String||Use the exact string "start"||
+|| **Field** || **Type** || **Description**                                   ||
+|| action    || String   || Use the exact string "start"                      ||
 
 ### Returns
 
@@ -3820,21 +4248,25 @@ You can poll on [GetMachine](#GetMachine) until the state is `running`.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
-||InvalidState||The machine is in the wrong state to be started||
-||InvalidArgument||If `action` was invalid||
-||MissingParameter||If `action` wasn't provided||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+|| InvalidState     || The machine is in the wrong state to be started        ||
+|| InvalidArgument  || If `action` was invalid                                ||
+|| MissingParameter || If `action` wasn't provided                            ||
 
 ### CLI Command
 
-    $ sdc-startmachine 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+    $ triton instance start c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
+
+or
+
+    $ sdc-startmachine c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
 
 ### Example Request
 
-    POST /my/machines/75cfe125-a5ce-49e8-82ac-09aa31ffdf26 HTTP/1.1
-    Authorization: ...
+    POST /my/machines/c2855c3a-a91d-46b8-9da6-6d7ab1bc6962 HTTP/1.1
     Host: api.example.com
+    Authorization: ...
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
@@ -3846,14 +4278,16 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
     HTTP/1.1 202 Accepted
     Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST, DELETE
-    Server: SmartDataCenter
-    Connection: close
-    Date: Wed, 13 Apr 2011 23:35:25 GMT
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD, DELETE, PUT
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Date: Thu, 21 Jan 2016 13:07:24 GMT
+    Server: Joyent SmartDataCenter 8.0.0
     Api-Version: 8.0.0
-    Request-Id: F09F3674-2151-434B-9911-29DD188057F0
-    Response-Time: 115
-    Content-Length: 0
+    Request-Id: e7fda2e0-c03f-11e5-a64c-d133f917673f
+    Response-Time: 3487
+    Transfer-Encoding: chunked
 
 
 ## RebootMachine (POST /:login/machines/:id?action=reboot)
@@ -3865,7 +4299,8 @@ You can poll on [GetMachine](#GetMachine) until the state is `running`.
 
 ### Inputs
 
-||action||String||Use the exact string "reboot"||
+|| **Field** || **Type** || **Description**                                   ||
+|| action    || String   || Use the exact string "reboot"                     ||
 
 ### Returns
 
@@ -3875,21 +4310,25 @@ You can poll on [GetMachine](#GetMachine) until the state is `running`.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
-||InvalidState||The machine is in the wrong state to be stopped||
-||InvalidArgument||If `action` was invalid||
-||MissingParameter||If `action` wasn't provided||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+|| InvalidState     || The machine is in the wrong state to be stopped        ||
+|| InvalidArgument  || If `action` was invalid                                ||
+|| MissingParameter || If `action` wasn't provided                            ||
 
 ### CLI Command
 
-    $ sdc-rebootmachine 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+    $ triton instance reboot c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
+
+or
+
+    $ sdc-rebootmachine c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
 
 ### Example Request
 
-    POST /my/machines/75cfe125-a5ce-49e8-82ac-09aa31ffdf26 HTTP/1.1
-    Authorization: ...
+    POST /my/machines/c2855c3a-a91d-46b8-9da6-6d7ab1bc6962 HTTP/1.1
     Host: api.example.com
+    Authorization: ...
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
@@ -3901,14 +4340,16 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
     HTTP/1.1 202 Accepted
     Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST, DELETE
-    Server: SmartDataCenter
-    Connection: close
-    Date: Wed, 13 Apr 2011 23:35:25 GMT
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD, DELETE, PUT
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Date: Thu, 21 Jan 2016 13:09:34 GMT
+    Server: Joyent SmartDataCenter 8.0.0
     Api-Version: 8.0.0
-    Request-Id: F09F3674-2151-434B-9911-29DD188057F0
-    Response-Time: 115
-    Content-Length: 0
+    Request-Id: 35679950-c040-11e5-b1b7-65fab9169f0e
+    Response-Time: 3124
+    Transfer-Encoding: chunked
 
 
 ## ResizeMachine (POST /:login/machines/:id?action=resize)
@@ -3916,8 +4357,8 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 Resize a machine to a new [package](#packages) (a.k.a. instance type).
 
 Resizing is only supported for non-KVM machines (machines which are not
-`brand=kvm`, also known as 'zones').  KVM virtual machines (`brand=kvm`) cannot
-be resized.
+`brand=kvm`, also known as 'zones' or 'containers').  KVM virtual machines
+(`brand=kvm`) cannot be resized.
 
 Resizing is not guaranteed to work, especially when resizing upwards in
 resources. It is best-effort, and may fail. Resizing downwards will usually
@@ -3925,8 +4366,9 @@ succeed.
 
 ### Inputs
 
-||action||String||Use the exact string "resize"||
-||package||String||A package id, as returned from [ListPackages](#ListPackages)||
+|| **Field** || **Type** || **Description**                                   ||
+|| action    || String   || Use the exact string "resize"                     ||
+|| package   || String   || A package id, as returned from [ListPackages](#ListPackages) ||
 
 ### Returns
 
@@ -3936,40 +4378,41 @@ succeed.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
-||InvalidState||The machine is in the wrong state to be resized||
-||InvalidArgument||If `action` was invalid, or `package` wasn't a valid id or name||
-||MissingParameter||If `action` or `package` wasn't provided||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+|| InvalidState     || The machine is in the wrong state to be resized        ||
+|| InvalidArgument  || If `action` was invalid, or `package` wasn't a valid id or name ||
+|| MissingParameter || If `action` or `package` wasn't provided               ||
 
 ### CLI Command
 
-    $ sdc-resizemachine --package=4dad8aa6-2c7c-e20a-be26-c7f4f1925a9a 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+    $ sdc-resizemachine --package=7041ccc7-3f9e-cf1e-8c85-a9ee41b7f968 c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
 
 ### Example Request
 
-    POST /my/machines/75cfe125-a5ce-49e8-82ac-09aa31ffdf26 HTTP/1.1
-    Authorization: ...
+    POST /my/machines/c2855c3a-a91d-46b8-9da6-6d7ab1bc6962 HTTP/1.1
     Host: api.example.com
+    Authorization: ...
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
     Api-Version: ~8.0
 
-    action=resize&package=4dad8aa6-2c7c-e20a-be26-c7f4f1925a9a
+    action=resize&package=7041ccc7-3f9e-cf1e-8c85-a9ee41b7f968
 
 ### Example Response
 
     HTTP/1.1 202 Accepted
     Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST, DELETE
-    Connection: close
-    Date: Sat, 11 Jun 2011 18:31:14 GMT
-    Server: SmartDataCenter
-    api-version: 8.0.0
-    request-id: 3974ead1-0f1d-49ed-974c-1abfd13d6087
-    response-time: 161
-    Content-Length: 0
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD, DELETE, PUT
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Date: Thu, 21 Jan 2016 13:12:06 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 8fa7d8d0-c040-11e5-9100-a95edd60134e
+    Response-Time: 161
 
 
 ## RenameMachine (POST /:login/machines/:id?action=rename)
@@ -3979,8 +4422,9 @@ Allows you to rename a machine.  POST to the machine `id` with an action of
 
 ### Inputs
 
-||action||String||Use the exact string "rename"||
-||name||String||The new "friendly" name for this machine||
+|| **Field** || **Type** || **Description**                                   ||
+|| action    || String   || Use the exact string "rename"                     ||
+|| name      || String   || The new "friendly" name for this machine          ||
 
 ### Returns
 
@@ -3990,21 +4434,21 @@ Allows you to rename a machine.  POST to the machine `id` with an action of
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
-||InvalidState||The machine is in the wrong state to be stopped||
-||InvalidArgument||If `action` was invalid, or `name` wasn't a valid name||
-||MissingParameter||If `action` or `name` wasn't provided||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+|| InvalidState     || The machine is in the wrong state to be stopped        ||
+|| InvalidArgument  || If `action` was invalid, or `name` wasn't a valid name ||
+|| MissingParameter || If `action` or `name` wasn't provided                  ||
 
 ### CLI Command
 
-    $ sdc-renamemachine --name=new_friendly_name 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+    $ sdc-renamemachine --name=new_friendly_name c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
 
 ### Example Request
 
-    POST /my/machines/75cfe125-a5ce-49e8-82ac-09aa31ffdf26 HTTP/1.1
-    Authorization: ...
+    POST /my/machines/c2855c3a-a91d-46b8-9da6-6d7ab1bc6962 HTTP/1.1
     Host: api.example.com
+    Authorization: ...
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
@@ -4016,23 +4460,26 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
     HTTP/1.1 202 Accepted
     Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST, DELETE
-    Connection: close
-    Date: Sat, 11 Jun 2011 18:31:14 GMT
-    Server: SmartDataCenter
-    api-version: 8.0.0
-    request-id: 3974ead1-0f1d-49ed-974c-1abfd13d6087
-    response-time: 161
-    Content-Length: 0
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD, DELETE, PUT
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Date: Thu, 21 Jan 2016 13:14:17 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: dda360e0-c040-11e5-a64c-d133f917673f
+    Response-Time: 3768
+    Transfer-Encoding: chunked
 
 
 ## EnableMachineFirewall (POST /:login/machines/:id?action=enable_firewall)
 
-Allows you to enable firewall for a machine.
+Allows you to enable the firewall for a machine.
 
 ### Inputs
 
-||action||String||Use the exact string "enable_firewall"||
+|| **Field** || **Type** || **Description**                                   ||
+|| action    || String   || Use the exact string "enable_firewall"            ||
 
 ### Returns
 
@@ -4042,21 +4489,21 @@ Allows you to enable firewall for a machine.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
-||InvalidState||The machine is the wrong state to enable firewall||
-||InvalidArgument||If `action` was invalid||
-||MissingParameter||If `action` wasn't provided||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+|| InvalidState     || The machine is the wrong state to enable firewall      ||
+|| InvalidArgument  || If `action` was invalid                                ||
+|| MissingParameter || If `action` wasn't provided                            ||
 
 ### CLI Command
 
-    $ sdc-enablemachinefirewall 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+    $ sdc-enablemachinefirewall c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
 
 ### Example Request
 
-    POST /my/machines/75cfe125-a5ce-49e8-82ac-09aa31ffdf26 HTTP/1.1
-    Authorization: ...
+    POST /my/machines/c2855c3a-a91d-46b8-9da6-6d7ab1bc6962 HTTP/1.1
     Host: api.example.com
+    Authorization: ...
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
@@ -4068,22 +4515,26 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
     HTTP/1.1 202 Accepted
     Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST, DELETE
-    Connection: close
-    Date: Sat, 11 Jun 2011 18:31:14 GMT
-    Server: SmartDataCenter
-    api-version: 8.0.0
-    request-id: 3974ead1-0f1d-49ed-974c-1abfd13d6087
-    response-time: 161
-    Content-Length: 0
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD, DELETE, PUT
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Date: Thu, 21 Jan 2016 13:16:00 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 1b1e83a0-c041-11e5-b1b7-65fab9169f0e
+    Response-Time: 3594
+    Transfer-Encoding: chunked
+
 
 ## DisableMachineFirewall (POST /:login/machines/:id?action=disable_firewall)
 
-Allows you to completely disable firewall for a machine.
+Allows you to completely disable the firewall of a machine.
 
 ### Inputs
 
-||action||String||Use the exact string "disable_firewall"||
+|| **Field** || **Type** || **Description**                                   ||
+|| action    || String   || Use the exact string "disable_firewall"           ||
 
 ### Returns
 
@@ -4093,21 +4544,21 @@ Allows you to completely disable firewall for a machine.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
-||InvalidState||The machine is the wrong state to disable firewall||
-||InvalidArgument||If `action` was invalid||
-||MissingParameter||If `action` wasn't provided||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+|| InvalidState     || The machine is the wrong state to disable firewall     ||
+|| InvalidArgument  || If `action` was invalid                                ||
+|| MissingParameter || If `action` wasn't provided                            ||
 
 ### CLI Command
 
-    $ sdc-disablemachinefirewall 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+    $ sdc-disablemachinefirewall c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
 
 ### Example Request
 
-    POST /my/machines/75cfe125-a5ce-49e8-82ac-09aa31ffdf26 HTTP/1.1
-    Authorization: ...
+    POST /my/machines/c2855c3a-a91d-46b8-9da6-6d7ab1bc6962 HTTP/1.1
     Host: api.example.com
+    Authorization: ...
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
@@ -4119,14 +4570,16 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
     HTTP/1.1 202 Accepted
     Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST, DELETE
-    Connection: close
-    Date: Sat, 11 Jun 2011 18:31:14 GMT
-    Server: SmartDataCenter
-    api-version: 8.0.0
-    request-id: 3974ead1-0f1d-49ed-974c-1abfd13d6087
-    response-time: 161
-    Content-Length: 0
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD, DELETE, PUT
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Date: Thu, 21 Jan 2016 13:23:39 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 2c74e120-c042-11e5-9100-a95edd60134e
+    Response-Time: 4178
+    Transfer-Encoding: chunked
 
 
 ## CreateMachineSnapshot (POST /:login/machines/:id/snapshots)
@@ -4134,33 +4587,36 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 Allows you to take a snapshot of a machine.  Once you have one or more
 snapshots, you can boot the machine from a previous snapshot.
 
-Snapshots are not usable with other machines; they are a point in time snapshot
+Snapshots are not usable with other machines; they are a point-in-time snapshot
 of the current machine. Snapshots can also only be taken of machines that are
 *not* of brand 'kvm'.
 
-Since SmartMachines use a copy-on-write filesystem, snapshots take up increasing
-amounts of space as the filesystem changes over time. There is a limit to how
-much space snapshots are allowed to take. Plan your snapshots accordingly.
+Since machine instances use a copy-on-write filesystem, snapshots take up
+increasing amounts of space as the filesystem changes over time. There is a
+limit to how much space snapshots are allowed to take. Plan your snapshots
+accordingly.
 
 You can poll on [GetMachineSnapshot](#GetMachineSnapshot) until the `state` is
 `success`.
 
 ### Inputs
 
-||name||String||The name to assign to the new snapshot||
+|| **Field** || **Type** || **Description**                                   ||
+|| name      || String   || The name to assign to the new snapshot            ||
 
 ### Returns
 
-||name||String||The name of this snapshot||
-||state||String||The current state of the snapshot||
+|| **Field** || **Type** || **Description**                                   ||
+|| name      || String   || The name of this snapshot                         ||
+|| state     || String   || The current state of the snapshot                 ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
-||InvalidArgument||If `name` was invalid||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+|| InvalidArgument  || If `name` was invalid                                  ||
 
 ### CLI Command
 
@@ -4219,8 +4675,8 @@ the referenced snapshot. This is effectively a means to roll back machine state.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login`, `:id` or `:name` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login`, `:id` or `:name` does not exist           ||
 
 ### CLI Command
 
@@ -4263,15 +4719,16 @@ parameters for this API.
 
 An array of snapshots:
 
-||name||String||The name of this snapshot||
-||state||String||The current state of the snapshot||
+|| **Field** || **Type** || **Description**                                   ||
+|| name      || String   || The name of this snapshot                         ||
+|| state     || String   || The current state of the snapshot                 ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
@@ -4322,15 +4779,16 @@ Gets the state of the named snapshot.
 
 ### Returns
 
-||name||String||The name of this snapshot||
-||state||String||The current state of the snapshot (poll until it's "created")||
+|| **Field** || **Type** || **Description**                                   ||
+|| name      || String   || The name of this snapshot                         ||
+|| state     || String   || The current state of the snapshot (poll until it's "created") ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login`, `:id` or `:name` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login`, `:id` or `:name` does not exist           ||
 
 ### CLI Command
 
@@ -4385,8 +4843,8 @@ Deletes the specified snapshot of a machine.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login`, `:id` or `:name` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login`, `:id` or `:name` does not exist           ||
 
 ### CLI Command
 
@@ -4428,22 +4886,22 @@ overwritten if they do.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||$key||String||You can assign any number of metadata keys in this call; the string can be either a plain string, or a JSON-encoded object||
+|| **Field** || **Type** || **Description**                                   ||
+|| $key      || String   || You can assign any number of metadata keys in this call; the string can be either a plain string, or a JSON-encoded object ||
 
 ### Returns
 
 Returns the current set of tags.
 
-||**Field**||**Type**||**Description**||
-||$key||Object||Your value(s)||
+|| **Field** || **Type** || **Description**                                   ||
+|| $key      || Object   || Your value(s)                                     ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
@@ -4488,22 +4946,22 @@ Returns the complete set of metadata associated with this machine.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||credentials||Boolean||Whether or not to return machine credentials. Defaults to false.||
+|| **Field**   || **Type** || **Description**                                 ||
+|| credentials || Boolean  || Whether or not to return machine credentials. Defaults to false ||
 
 ### Returns
 
 Returns the current metadata object
 
-||**Field**||**Type**||**Description**||
-||$name||Object||Your metadata||
+|| **Field** || **Type** || **Description**                                   ||
+|| $name     || Object   || Your metadata                                     ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
@@ -4548,8 +5006,8 @@ Returns a single metadata entry associated with this machine.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||key||String||Name of metadata value to retrieve.||
+|| **Field** || **Type** || **Description**                                   ||
+|| key       || String   || Name of metadata value to retrieve                ||
 
 ### Returns
 
@@ -4559,8 +5017,8 @@ Returns metadata value as string.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login`, `:id` or `:key` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login`, `:id` or `:key` does not exist            ||
 
 ### CLI Command
 
@@ -4608,8 +5066,8 @@ Deletes a single metadata key from this machine.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login`, `:id` or `:key` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login`, `:id` or `:key` does not exist            ||
 
 ### CLI Command
 
@@ -4654,8 +5112,8 @@ Deletes all metadata keys from this machine.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
@@ -4698,22 +5156,22 @@ converted into tags on the machine that can be used for searching later.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||$tagName||String||You can assign any number of tags in this call||
+|| **Field** || **Type** || **Description**                                   ||
+|| $tagName  || String   || You can assign any number of tags in this call    ||
 
 ### Returns
 
 Returns the current set of tags.
 
-||**Field**||**Type**||**Description**||
-||$tagName||String||Your value||
+|| **Field** || **Type** || **Description**                                   ||
+|| $tagName  || String   || Your value                                        ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
@@ -4762,22 +5220,22 @@ converted into tags on the machine that can be used for searching later.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||$tagName||String||You can assign any number of tags in this call||
+|| **Field** || **Type** || **Description**                                   ||
+|| $tagName  || String   || You can assign any number of tags in this call    ||
 
 ### Returns
 
 Returns the current set of tags.
 
-||**Field**||**Type**||**Description**||
-||$tagName||String||Your value||
+|| **Field** || **Type** || **Description**                                   ||
+|| $tagName  || String   || Your value                                        ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
@@ -4828,15 +5286,15 @@ Returns the complete set of tags associated with this machine.
 
 Returns the current set of tags.
 
-||**Field**||**Type**||**Description**||
-||$tagName||String||Your value||
+|| **Field** || **Type** || **Description**                                   ||
+|| $tagName  || String   || Your value                                        ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
@@ -4890,8 +5348,8 @@ Returns the value of `:tag` in plain text.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login`, `:id` or `:tag` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login`, `:id` or `:tag` does not exist            ||
 
 ### CLI Command
 
@@ -4939,8 +5397,8 @@ Deletes a single tag from this machine.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login`, `:id` or `:tag` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login`, `:id` or `:tag` does not exist            ||
 
 ### CLI Command
 
@@ -4984,8 +5442,8 @@ Deletes all tags from a machine.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
@@ -5018,8 +5476,7 @@ to keep the shell from matching files in the current directory.
 
 ## DeleteMachine (DELETE /:login/machines/:id)
 
-Allows you to completely destroy a machine.  Machine must be in the `stopped`
-state first.
+Allows you to completely destroy a machine.
 
 ### Inputs
 
@@ -5033,11 +5490,15 @@ state first.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
-||InvalidState||The machine is the wrong state to be deleted||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+|| InvalidState     || The machine is the wrong state to be deleted           ||
 
 ### CLI Command
+
+    $ triton instance delete 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+
+or
 
     $ sdc-deletemachine 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
 
@@ -5076,28 +5537,34 @@ newest to oldest action.
 
 * An array of action objects, which contain:
 
-||action||String||The name of the action||
-||parameters||Object||The original set of parameters sent when the action was requested||
-||time||Date (ISO8601)||When the action finished||
-||success||String||Either "yes" or "no", depending on the action's success||
-||caller||Object||Account requesting the action||
+|| **Field**  || **Type** || **Description**                                  ||
+|| action     || String   || The name of the action                           ||
+|| parameters || Object   || The original set of parameters sent when the action was requested ||
+|| success    || String   || Either "yes" or "no", depending on the action's success ||
+|| caller     || Object   || Account requesting the action                    ||
+|| time       || Date (ISO8601) || When the action finished                   ||
 
 Depending on the account requesting the action, `caller` can have the following
 members:
 
-||type||String||Authentication type for the action request. One of "basic", "operator", "signature" or "token"||
-||user||String||When the authentication type is "basic", this member will be present and include user login||
-||ip||String||The IP addresses this from which the action was requested. Not present if type is "operator"||
-||keyId||String||When authentication type is either "signature" or "token", SSH key identifier||
+|| **Field** || **Type** || **Description**                                   ||
+|| type      || String   || Authentication type for the action request. One of "basic", "operator", "signature" or "token" ||
+|| user      || String   || When the authentication type is "basic", this member will be present and include user login  ||
+|| ip        || String   || The IP addresses this from which the action was requested. Not present if type is "operator" ||
+|| keyId     || String   || When authentication type is either "signature" or "token", SSH key identifier ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
+
+    $ triton instance audit 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
+
+or
 
     $ sdc-getmachineaudit 75cfe125-a5ce-49e8-82ac-09aa31ffdf26
 
@@ -5232,12 +5699,12 @@ used. For example, in 'modules', you'll get something like:
 
 You can use `cpu`, `memory` as module parameters to the other APIs.
 
-||**Field**||**Type**||
-||modules||Object||
-||fields||Object||
-||types||Object||
-||metrics||Object||
-||transformations||Object||
+|| **Field**      || **Type** ||
+|| modules        || Object   ||
+|| fields         || Object   ||
+|| types          || Object   ||
+|| metrics        || Object   ||
+|| transformations|| Object   ||
 
 Each of these objects is discussed below:
 
@@ -5279,13 +5746,13 @@ collected for metrics unless an instrumentation has been configured for it.
 
 Each metric has the following properties:
 
-||**Field**||**Type**||**Description**||
-||module||String||With stat, a unique metric identifier||
-||stat||String||With module, a unique metric identifier||
-||label||String||A human-readable metric description||
-||interval||String||either "interval" or "point", indicating whether the value of this metric covers activity over an *interval* of time or a snapshot of state at a particular *point* in time||
-||fields||Array||a list of fields to be used for predicates and decompositions||
-||type||String||type or unit used to display labels for values of this metric||
+|| **Field** || **Type** || **Description**                                   ||
+|| module    || String   || With stat, a unique metric identifier             ||
+|| stat      || String   || With module, a unique metric identifier           ||
+|| label     || String   || A human-readable metric description               ||
+|| interval  || String   || Either "interval" or "point", indicating whether the value of this metric covers activity over an *interval* of time or a snapshot of state at a particular *point* in time||
+|| fields    || Array    || A list of fields to be used for predicates and decompositions ||
+|| type      || String   || Type or unit used to display labels for values of this metric ||
 
 #### Fields
 
@@ -5308,9 +5775,9 @@ Fields represent metadata by which data points can be filtered or decomposed.
 
 Each field has the following properties:
 
-||**Field**||**Type**||**Description**||
-||label||String||human-readable description of the field||
-||type||String||type of the field, which determines how to label it, as well as whether the field is numeric or discrete||
+|| **Field** || **Type** || **Description**                                   ||
+|| label     || String   || Human-readable description of the field           ||
+|| type      || String   || Type of the field, which determines how to label it, as well as whether the field is numeric or discrete ||
 
 Fields are either numeric or discrete based on the "arity" of their type.
 
@@ -5361,12 +5828,12 @@ quantities.
 
 Each type has the following properties:
 
-||**Field**||**Type**||**Description**||
-||arity||String||indicates whether values of this type are "discrete" (e.g. identifiers and other strings), or "numeric" (e.g. measurements)||
-||unit||String||base unit for this type||
-||abbr||String||(optional) abbreviation for this base unit for this type||
-||base||Number||indicates that when labeled, this quantity is usually labeled with SI prefixes corresponding to powers of the specified base||
-||power||Number||this indicates that the raw values of this type are expressed in units corresponding to base raised to power||
+|| **Field** || **Type** || **Description**                                   ||
+|| arity     || String   || Indicates whether values of this type are "discrete" (e.g. identifiers and other strings), or "numeric" (e.g. measurements) ||
+|| unit      || String   || Base unit for this type                           ||
+|| abbr      || String   || (optional) abbreviation for this base unit for this type ||
+|| base      || Number   || Indicates that when labeled, this quantity is usually labeled with SI prefixes corresponding to powers of the specified base ||
+|| power     || Number   || This indicates that the raw values of this type are expressed in units corresponding to base raised to power ||
 
 #### Transformations
 
@@ -5386,9 +5853,9 @@ it's retrieved.
 
 Each transformation has the following properties:
 
-||**Field**||**Type**||**Description**||
-||label||String||Human-readable string||
-||fields||Array||List of field names that can be transformed||
+|| **Field** || **Type** || **Description**                                   ||
+|| label     || String   || Human-readable string                             ||
+|| fields    || Array    || List of field names that can be transformed       ||
 
 The above transformations transform values of the "raddr" (remote address) field
 of any metric to either an object with geolocation details, or an array of
@@ -5398,8 +5865,8 @@ reverse-DNS hostnames, respectively.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` does not exist                             ||
 
 ### CLI Command
 
@@ -5456,29 +5923,29 @@ Retrieves all currently created instrumentations.
 
 An array of instrumentations:
 
-||**Field**||**Type**||
-||module||String||
-||stat||String||
-||predicate||String||
-||decomposition||Array||
-||value-dimension||Number||
-||value-arity||String||
-||retention-time||Number||
-||granularity||Number||
-||idle-max||Number||
-||transformations||Array||
-||persist-data||Boolean||
-||crtime||Number||
-||value-scope||String||
-||id||String||
-||uris||Array||
+|| **Field**       || **Type**                                                ||
+|| module          || String                                                  ||
+|| stat            || String                                                  ||
+|| predicate       || String                                                  ||
+|| decomposition   || Array                                                   ||
+|| value-dimension || Number                                                  ||
+|| value-arity     || String                                                  ||
+|| retention-time  || Number                                                  ||
+|| granularity     || Number                                                  ||
+|| idle-max        || Number                                                  ||
+|| transformations || Array                                                   ||
+|| persist-data    || Boolean                                                 ||
+|| crtime          || Number                                                  ||
+|| value-scope     || String                                                  ||
+|| id              || String                                                  ||
+|| uris            || Array                                                   ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` does not exist                             ||
 
 ### CLI Command
 
@@ -5543,29 +6010,29 @@ Retrieves the configuration for an instrumentation.
 
 ### Returns
 
-||**Field**||**Type**||
-||module||String||
-||stat||String||
-||predicate||String||
-||decomposition||Array||
-||value-dimension||Number||
-||value-arity||String||
-||retention-time||Number||
-||granularity||Number||
-||idle-max||Number||
-||transformations||Array||
-||persist-data||Boolean||
-||crtime||Number||
-||value-scope||String||
-||id||String||
-||uris||Array||
+|| **Field**       || **Type**                                                ||
+|| module          || String                                                  ||
+|| stat            || String                                                  ||
+|| predicate       || String                                                  ||
+|| decomposition   || Array                                                   ||
+|| value-dimension || Number                                                  ||
+|| value-arity     || String                                                  ||
+|| retention-time  || Number                                                  ||
+|| granularity     || Number                                                  ||
+|| idle-max        || Number                                                  ||
+|| transformations || Array                                                   ||
+|| persist-data    || Boolean                                                 ||
+|| crtime          || Number                                                  ||
+|| value-scope     || String                                                  ||
+|| id              || String                                                  ||
+|| uris            || Array                                                   ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
@@ -5631,18 +6098,18 @@ Retrieves the data associated with an instrumentation for point(s) in time.
 
 ### Returns
 
-||**Field**||**Type**||
-||value||Object||
-||transformations||Object||
-||start_time||Number||
-||duration||Number||
+|| **Field**  || **Type**                                                     ||
+|| value      || Object                                                       ||
+|| transformations || Object                                                  ||
+|| start_time || Number                                                       ||
+|| duration   || Number                                                       ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
@@ -5695,34 +6162,34 @@ instrumentation's heatmap.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||height||Number||height of the image in pixels||
-||width||Number||width of the image in pixels||
-||ymin||Number||Y-Axis value for the bottom of the image (default: 0)||
-||ymax||Number||Y-Axis value for the top of the image (default: auto)||
-||nbuckets||Number||Number of buckets in the vertical dimension||
-||selected||Array||Array of field values to highlight, isolate or exclude||
-||isolate||Boolean||If true, only draw selected values||
-||exclude||Boolean||If true, don't draw selected values at all||
-||hues||Array||Array of colors for highlighting selected field values||
-||decompose_all||Boolean||highlight all field values (possibly reusing hues)||
+|| **Field** || **Type** || **Description**                                   ||
+|| height    || Number   || Height of the image in pixels                     ||
+|| width     || Number   || Width of the image in pixels                      ||
+|| ymin      || Number   || Y-Axis value for the bottom of the image (default: 0)  ||
+|| ymax      || Number   || Y-Axis value for the top of the image (default: auto)  ||
+|| nbuckets  || Number   || Number of buckets in the vertical dimension       ||
+|| selected  || Array    || Array of field values to highlight, isolate or exclude ||
+|| isolate   || Boolean  || If true, only draw selected values                ||
+|| exclude   || Boolean  || If true, don't draw selected values at all        ||
+|| hues      || Array    || Array of colors for highlighting selected field values ||
+|| decompose_all ||Boolean || Highlight all field values (possibly reusing hues)   ||
 
 ### Returns
 
-||**Field**||**Type**||**Description**||
-||bucket\_time||Number||time corresponding to the bucket (Unix seconds)||
-||bucket\_ymin||Number||Minimum y-axis value for the bucket||
-||bucket\_ymax||Number||Maximum y-axis value for the bucket||
-||present||Object||if the instrumentation defines a discrete decomposition, this property's value is an object whose keys are values of that field and whose values are the number of data points in that bucket for that key||
-||total||Number||The total number of data points in the bucket||
+|| **Field**   || **Type** || **Description**                                ||
+|| bucket_time || Number   || Time corresponding to the bucket (Unix seconds)||
+|| bucket_ymin || Number   || Minimum y-axis value for the bucket            ||
+|| bucket_ymax || Number   || Maximum y-axis value for the bucket            ||
+|| present     || Object   || If the instrumentation defines a discrete decomposition, this property's value is an object whose keys are values of that field and whose values are the number of data points in that bucket for that key ||
+|| total       || Number   || The total number of data points in the bucket  ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
-||InvalidArgument||If input values were incorrect||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+|| InvalidArgument  || If input values were incorrect                         ||
 
 ### CLI Command
 
@@ -5779,20 +6246,20 @@ Allows you to retrieve the bucket details for a heatmap.
 Takes all the same parameters as
 [GetInstrumentationHeatmap](#GetInstrumentationHeatmap), and additionally:
 
-||**Field**||**Type**||
-||x||Number||
-||y||Number||
+|| **Field** || **Type** ||
+|| x         || Number   ||
+|| y         || Number   ||
 
 ### Returns
 
 The returned value includes:
 
-||**Field**||**Type**||
-||bucket\_time||Number||
-||bucket\_ymin||Number||
-||bucket\_ymax||Number||
-||present||Object||
-||total||Number||
+|| **Field**   || **Type** ||
+|| bucket_time || Number   ||
+|| bucket_ymin || Number   ||
+|| bucket_ymax || Number   ||
+|| present     || Object   ||
+|| total       || Number   ||
 
 ### Errors
 
@@ -5817,44 +6284,44 @@ existing instrumentation.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||clone||Number||An existing instrumentation to duplicate (optional)||
-||module||String||The CA module||
-||stat||String||The CA stat||
-||predicate||String||Must be a JSON string||
-||decomposition||String||An array of arrays||
-||granularity||Number||Number of seconds between data points (default is 1)||
-||retention-time||Number||How long to keep this instrumentation's data for||
-||persist-data||Boolean||Whether or not to store this for historical analysis||
-||idle-max||Number||Number of seconds after which, if the instrumentation or its data has not been accessed via the API, the service may delete the instrumentation and its data||
+|| **Field**     || **Type** || **Description**                               ||
+|| clone         || Number   || An existing instrumentation to duplicate (optional) ||
+|| module        || String   || The CA module                                 ||
+|| stat          || String   || The CA stat                                   ||
+|| predicate     || String   || Must be a JSON string                         ||
+|| decomposition || String   || An array of arrays                            ||
+|| granularity   || Number   || Number of seconds between data points (default is 1) ||
+|| retention-time|| Number   || How long to keep this instrumentation's data for     ||
+|| persist-data  || Boolean  || Whether or not to store this for historical analysis ||
+|| idle-max      || Number   || Number of seconds after which, if the instrumentation or its data has not been accessed via the API, the service may delete the instrumentation and its data ||
 
 ### Returns
 
-||**Field**||**Type**||
-||module||String||
-||stat||String||
-||predicate||String||
-||decomposition||Array||
-||value-dimension||Number||
-||value-arity||String||
-||retention-time||Number||
-||granularity||Number||
-||idle-max||Number||
-||transformations||Array||
-||persist-data||Boolean||
-||crtime||Number||
-||value-scope||String||
-||id||String||
-||uris||Array||
+|| **Field**       || **Type** ||
+|| module          || String   ||
+|| stat            || String   ||
+|| predicate       || String   ||
+|| decomposition   || Array    ||
+|| value-dimension || Number   ||
+|| value-arity     || String   ||
+|| retention-time  || Number   ||
+|| granularity     || Number   ||
+|| idle-max        || Number   ||
+|| transformations || Array    ||
+|| persist-data    || Boolean  ||
+|| crtime          || Number   ||
+|| value-scope     || String   ||
+|| id              || String   ||
+|| uris            || Array    ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` does not exist||
-||InvalidArgument||If input values were incorrect||
-||MissingParameter||If parameter values were missing||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` does not exist                             ||
+|| InvalidArgument  || If input values were incorrect                         ||
+|| MissingParameter || If parameter values were missing                       ||
 
 ### CLI Command
 
@@ -5930,8 +6397,8 @@ Destroys an instrumentation.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
@@ -6019,19 +6486,19 @@ List all firewall rules for the current account.
 
 An array of firewall rule objects.  Firewall Rules are:
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique identifier for this rule||
-||enabled||Boolean||Indicates if the rule is enabled||
-||rule||String||Firewall rule text||
-||global||Boolean||Indicates if the rule is global (optional, since v7.1.1)||
-||description||String||Human-readable description for the rule (optional, since v7.1.1)||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || String   || Unique identifier for this rule                 ||
+|| enabled     || Boolean  || Indicates if the rule is enabled                ||
+|| rule        || String   || Firewall rule text                              ||
+|| global      || Boolean  || Indicates if the rule is global (optional)      ||
+|| description || String   || Human-readable description for the rule (optional) ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` does not exist                             ||
 
 ### CLI Command
 
@@ -6081,19 +6548,19 @@ Retrieves an individual firewall rule.
 
 ### Returns
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique identifier for this rule||
-||enabled||Boolean||Indicates if the rule is enabled||
-||rule||String||Firewall rule text||
-||global||Boolean||Indicates if the rule is global (optional, since v7.1.1)||
-||description||String||Human-readable description for the rule (optional, since v7.1.1)||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || String   || Unique identifier for this rule                 ||
+|| enabled     || Boolean  || Indicates if the rule is enabled                ||
+|| rule        || String   || Firewall rule text                              ||
+|| global      || Boolean  || Indicates if the rule is global (optional)      ||
+|| description || String   || Human-readable description for the rule (optional) ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` does not exist                             ||
 
 ### CLI Command
 
@@ -6135,30 +6602,30 @@ all the account's machines where it may be necessary.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||enabled||Boolean||Indicates if the rule is enabled (optional, false by default)||
-||rule||String||Firewall rule text||
-||description||String||Human-readable description for the rule (optional, since v7.1.1)||
+|| **Field**   || **Type** || **Description**                                 ||
+|| enabled     || Boolean  || Indicates if the rule is enabled (optional, false by default) ||
+|| rule        || String   || Firewall rule text                              ||
+|| description || String   || Human-readable description for the rule (optional) ||
 
 ### Returns
 
 Firewall rule object.
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique identifier for this rule||
-||enabled||Boolean||Indicates if the rule is enabled||
-||rule||String||Firewall rule text||
-||global||Boolean||Indicates if the rule is global (optional, since v7.1.1)||
-||description||String||Human-readable description for the rule (optional, since v7.1.1)||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || String   || Unique identifier for this rule                 ||
+|| enabled     || Boolean  || Indicates if the rule is enabled                ||
+|| rule        || String   || Firewall rule text                              ||
+|| global      || Boolean  || Indicates if the rule is global (optional)      ||
+|| description || String   || Human-readable description for the rule (optional) ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||InvalidArgument||If rule is invalid||
-||MissingParameter||If rule wasn't provided||
-||ResourceNotFound||If `:login` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| InvalidArgument  || If rule is invalid                                     ||
+|| MissingParameter || If rule wasn't provided                                ||
+|| ResourceNotFound || If `:login` does not exist                             ||
 
 ### CLI Command
 
@@ -6202,29 +6669,29 @@ adds/removes/updates the rule on all the required machines.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||rule||String||Firewall rule text||
-||description||String||Human-readable description for the rule (optional, since v7.1.1)||
+|| **Field**   || **Type** || **Description**                                 ||
+|| rule        || String   || Firewall rule text                              ||
+|| description || String   || Human-readable description for the rule (optional) ||
 
 ### Returns
 
 Firewall rule object.
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique identifier for this rule||
-||enabled||Boolean||Indicates if the rule is enabled||
-||rule||String||Firewall rule text||
-||global||Boolean||Indicates if the rule is global (optional, since v7.1.1)||
-||description||String||Human-readable description for the rule (optional, since v7.1.1)||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || String   || Unique identifier for this rule                 ||
+|| enabled     || Boolean  || Indicates if the rule is enabled                ||
+|| rule        || String   || Firewall rule text                              ||
+|| global      || Boolean  || Indicates if the rule is global (optional)      ||
+|| description || String   || Human-readable description for the rule (optional) ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||InvalidArgument||If rule is invalid or you are trying to modify a global rule||
-||MissingParameter||If rule wasn't present||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| InvalidArgument  || If rule is invalid, or trying to modify a global rule  ||
+|| MissingParameter || If rule wasn't present                                 ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
@@ -6273,21 +6740,21 @@ Enables the given firewall rule if it is disabled.
 
 ### Returns
 
-Firewall rule
+Firewall rule object.
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique identifier for this rule||
-||enabled||Boolean||Indicates if the rule is enabled||
-||rule||String||Firewall rule text||
-||global||Boolean||Indicates if the rule is global (optional, since v7.1.1)||
-||description||String||Human-readable description for the rule (optional, since v7.1.1)||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || String   || Unique identifier for this rule                 ||
+|| enabled     || Boolean  || Indicates if the rule is enabled                ||
+|| rule        || String   || Firewall rule text                              ||
+|| global      || Boolean  || Indicates if the rule is global (optional)      ||
+|| description || String   || Human-readable description for the rule (optional) ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
@@ -6335,21 +6802,21 @@ Disables the given firewall rule if it is enabled.
 
 ### Returns
 
-Firewall rule
+Firewall rule object.
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique identifier for this rule||
-||enabled||Boolean||Indicates if the rule is enabled||
-||rule||String||Firewall rule text||
-||global||Boolean||Indicates if the rule is global (optional, since v7.1.1)||
-||description||String||Human-readable description for the rule (optional, since v7.1.1)||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || UUID     || Unique id for this firewall rule                ||
+|| enabled     || Boolean  || Indicates if the rule is enabled                ||
+|| rule        || String   || Firewall rule text                              ||
+|| global      || Boolean  || Indicates if the rule is global (optional)      ||
+|| description || String   || Human-readable description for the rule (optional) ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
@@ -6403,8 +6870,8 @@ Removes the given firewall rule from all the required machines.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
@@ -6446,6 +6913,22 @@ given `:machine`.
 CloudAPI provides a way to create and manipulate a fabric. On the fabric you can
 create VLANs, and then under that create layer three networks.
 
+A fabric is the basis for building your own private networks that cannot be
+accessed by any other user. It represents the physical infrastructure
+that makes up a network; however, you don't have to cable or program it. Every
+account has its own unique `fabric` in every data center.
+
+On a fabric, you can create your own VLANs and layer-three IPv4 networks. You
+can create any VLAN from 0-4095, and you can create any number of IPv4 networks
+on top of the VLANs, with all of the traditional IPv4 private addresses spaces
+-- `10.0.0.0/8`, `192.168.0.0/16`, and `172.16.0.0/12` -- available for use.
+
+You can create networks on your fabrics to create most network topologies. For
+example, you could create a single isolated private network that nothing else
+could reach, or you could create a traditional configuration where you have a
+database network, a web network, and a load balancer network, each on their own
+VLAN.
+
 
 ## ListFabricVLANs (GET /:login/fabrics/default/vlans)
 
@@ -6458,17 +6941,17 @@ create VLANs, and then under that create layer three networks.
 An array of VLAN objects that exist on the fabric. Each VLAN object has the
 following properties:
 
-||*Field*||*Type*||*Description*||
-||vlan_id||Integer||A number from 0-4095 that indicates the VLAN's id||
-||name||String||A unique name to identify the VLAN||
-||description||String||An optional description of the VLAN||
+|| **Field**   || **Type** || **Description**                                 ||
+|| name        || String   || A unique name to identify the VLAN              ||
+|| vlan_id     || Integer  || A number from 0-4095 that indicates the VLAN's id ||
+|| description || String   || An optional description of the VLAN             ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If :login does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` does not exist                             ||
 
 ### CLI Command
 
@@ -6503,26 +6986,26 @@ Creates a new VLAN on the fabric.
 
 ### Inputs
 
-||*Field*||*Type*||*Description*||
-|| name || String || A unique name for this VLAN ||
-|| vlan_id || Number || The VLAN identifier, must be in the range of 0-4095 ||
-|| description || String || An optional description of the VLAN ||
+|| **Field**   || **Type** || **Description**                                 ||
+|| name        || String   || A unique name to identify the VLAN              ||
+|| vlan_id     || Integer  || A number from 0-4095 that indicates the VLAN's id ||
+|| description || String   || An optional description of the VLAN             ||
 
 ### Returns
 
 A VLAN Object.
 
-||*Field*||*Type*||*Description*||
-||vlan_id||Integer||A number from 0-4095 that indicates the VLAN's id||
-||name||String||A unique name to identify the VLAN||
-||description||String||An optional description of the VLAN||
+|| **Field**   || **Type** || **Description**                                 ||
+|| name        || String   || A unique name to identify the VLAN              ||
+|| vlan_id     || Integer  || A number from 0-4095 that indicates the VLAN's id ||
+|| description || String   || An optional description of the VLAN             ||
 
 ### Errors
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If :login does not exist||
-||MissingParameter||If you didn't send a key||
-||InvalidArgument||vlan_id or name are in use, or vlan_id is outside the valid range||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` does not exist                             ||
+|| MissingParameter || If you didn't send a required field                    ||
+|| InvalidArgument  || `vlan_id` or `name` are in use, or `vlan_id` is outside the valid range ||
 
 ### CLI Command
 
@@ -6566,17 +7049,17 @@ A VLAN Object.
 
 A VLAN Object.
 
-||*Field*||*Type*||*Description*||
-||vlan_id||Integer||A number from 0-4095 that indicates the VLAN's id||
-||name||String||A unique name to identify the VLAN||
-||description||String||An optional description of the VLAN||
+|| **Field**   || **Type** || **Description**                                 ||
+|| name        || String   || A unique name to identify the VLAN              ||
+|| vlan_id     || Integer  || A number from 0-4095 that indicates the VLAN's id ||
+|| description || String   || An optional description of the VLAN             ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:vlan_id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:vlan_id` does not exist               ||
 
 ### CLI Command
 
@@ -6610,23 +7093,23 @@ Updates a fabric VLAN.
 
 All inputs are optional.
 
-||*Field*||*Type*||*Description*||
-|| name || String || A unique name for this VLAN ||
-|| description || String || An optional description of the VLAN ||
+|| **Field**   || **Type** || **Description**                                 ||
+|| name        || String   || A unique name to identify the VLAN              ||
+|| description || String   || An optional description of the VLAN             ||
 
 ### Returns
 
 A VLAN Object.
 
-||*Field*||*Type*||*Description*||
-||vlan_id||Integer||A number from 0-4095 that indicates the VLAN's id||
-||name||String||A unique name to identify the VLAN||
-||description||String||An optional description of the VLAN||
+|| **Field**   || **Type** || **Description**                                 ||
+|| name        || String   || A unique name to identify the VLAN              ||
+|| vlan_id     || Integer  || A number from 0-4095 that indicates the VLAN's id ||
+|| description || String   || An optional description of the VLAN             ||
 
 ### Errors
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If :login or :vlan_id does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:vlan_id` does not exist               ||
 
 ### CLI Command
 
@@ -6675,9 +7158,9 @@ for the VLAN to be deleted.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:vlan_id` does not exist||
-||InUseError||The VLAN currently has active networks on it||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:vlan_id` does not exist               ||
+|| InUseError       || The VLAN currently has active networks on it           ||
 
 ### CLI Command
 
@@ -6712,26 +7195,26 @@ Lists all of the networks in a fabric on the VLAN specified by `:vlan_id`.
 Returns an array of Network Objects. Each network object has the following
 information:
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique identifier for this network||
-||name||String||The network name||
-||public||Boolean||Whether this a public or private (rfc1918) network||
-||fabric||Boolean||Whether this network is created on a fabric||
-||description||String||Description of this network (optional)||
-||subnet||String||A CIDR formatted string that describes the network||
-||provision_start_ip||String||The first IP on the network that may be assigned||
-||provision_end_ip||String||The last IP on the network that may be assigned||
-||gateway||String||Optional Gateway IP address||
-||resolvers||String||Resolver IP addresses||
-||routes||Routes Object||Optional Static routes for hosts on this network||
-||internet_nat||Boolean||Provision internet NAT zone on gateway address||
+|| **Field**    || **Type** || **Description**                                ||
+|| id           || UUID     || Unique id for this network                     ||
+|| name         || String   || The network name                               ||
+|| public       || Boolean  || Whether this a public or private (rfc1918) network   ||
+|| fabric       || Boolean  || Whether this network is created on a fabric    ||
+|| description  || String   || Description of this network (optional)         ||
+|| subnet       || String   || A CIDR formatted string that describes the network   ||
+|| provision_start_ip|| String || The first IP on the network that may be assigned  ||
+|| provision_end_ip  || String || The last IP on the network that may be assigned   ||
+|| gateway      || String   || Optional Gateway IP address                    ||
+|| resolvers    || String   || Resolver IP addresses                          ||
+|| routes       || Routes Object|| Optional Static routes for hosts on this network ||
+|| internet_nat || Boolean  || Provision internet NAT zone on gateway address ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:vlan_id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:vlan_id` does not exist               ||
 
 ### CLI Command
 
@@ -6796,41 +7279,41 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||name||String||The network name, it must be unique||
-||description||String||Description of this network (optional)||
-||subnet||String||A CIDR formatted string that describes the network||
-||provision_start_ip||String||The first IP on the network that may be assigned||
-||provision_end_ip||String||The last IP on the network that may be assigned||
-||gateway||String||Optional Gateway IP address||
-||resolvers||String||Optional Resolver IP addresses||
-||routes||Routes Object||Optional Static routes for hosts on this network||
-||internet_nat||Boolean||Provision internet NAT zone on gateway address, default is true||
+|| **Field**    || **Type** || **Description**                                ||
+|| name         || String   || The network name; must be unique               ||
+|| description  || String   || Description of this network (optional)         ||
+|| subnet       || String   || A CIDR formatted string that describes the network   ||
+|| provision_start_ip|| String || The first IP on the network that may be assigned  ||
+|| provision_end_ip  || String || The last IP on the network that may be assigned   ||
+|| gateway      || String   || Optional Gateway IP address                    ||
+|| resolvers    || String   || Optional resolver IP addresses                 ||
+|| routes       || Routes Object|| Optional Static routes for hosts on this network ||
+|| internet_nat || Boolean  || Provision internet NAT zone on gateway address, default is true ||
 
 ### Returns
 
 Network Object:
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique identifier for this network||
-||name||String||The network name||
-||public||Boolean||Whether this a public or private (rfc1918) network||
-||fabric||Boolean||Whether this network is created on a fabric||
-||description||String||Description of this network (optional)||
-||subnet||String||A CIDR formatted string that describes the network||
-||provision_start_ip||String||The first IP on the network that may be assigned||
-||provision_end_ip||String||The last IP on the network that may be assigned||
-||gateway||String||Optional Gateway IP address||
-||resolvers||String||Optional Resolver IP addresses||
-||routes||Routes Object||Optional Static routes for hosts on this network||
-||internet_nat||Boolean||Provision internet NAT zone on gateway address||
+|| **Field**    || **Type** || **Description**                                ||
+|| id           || UUID     || Unique id for this network                     ||
+|| name         || String   || The network name                               ||
+|| public       || Boolean  || Whether this a public or private (rfc1918) network   ||
+|| fabric       || Boolean  || Whether this network is created on a fabric    ||
+|| description  || String   || Description of this network (optional)         ||
+|| subnet       || String   || A CIDR formatted string that describes the network   ||
+|| provision_start_ip|| String || The first IP on the network that may be assigned  ||
+|| provision_end_ip  || String || The last IP on the network that may be assigned   ||
+|| gateway      || String   || Optional Gateway IP address                    ||
+|| resolvers    || String   || Resolver IP addresses                          ||
+|| routes       || Routes Object|| Optional Static routes for hosts on this network ||
+|| internet_nat || Boolean  || Provision internet NAT zone on gateway address ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If :login does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` does not exist                             ||
 
 ### CLI Command
 
@@ -6906,26 +7389,26 @@ Create network with no internet NAT zone
 
 The details of the network object:
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique identifier for this network||
-||name||String||The network name||
-||public||Boolean||Whether this a public or private (rfc1918) network||
-||fabric||Boolean||Whether this network is created on a fabric||
-||description||String||Description of this network (optional)||
-||subnet||String||A CIDR formatted string that describes the network||
-||provision_start_ip||String||The first IP on the network that may be assigned||
-||provision_end_ip||String||The last IP on the network that may be assigned||
-||gateway||String||Optional Gateway IP address||
-||resolvers||String||Optional Resolver IP addresses||
-||routes||Routes Object||Optional Static routes for hosts on this network||
-||internet_nat||Boolean||Provision internet NAT zone on gateway address||
+|| **Field**    || **Type** || **Description**                                ||
+|| id           || UUID     || Unique id for this network                     ||
+|| name         || String   || The network name                               ||
+|| public       || Boolean  || Whether this a public or private (rfc1918) network   ||
+|| fabric       || Boolean  || Whether this network is created on a fabric    ||
+|| description  || String   || Description of this network (optional)         ||
+|| subnet       || String   || A CIDR formatted string that describes the network   ||
+|| provision_start_ip|| String || The first IP on the network that may be assigned  ||
+|| provision_end_ip  || String || The last IP on the network that may be assigned   ||
+|| gateway      || String   || Optional Gateway IP address                    ||
+|| resolvers    || String   || Resolver IP addresses                          ||
+|| routes       || Routes Object|| Optional Static routes for hosts on this network ||
+|| internet_nat || Boolean  || Provision internet NAT zone on gateway address ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login`, `:vlan_id` or `id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login`, `:vlan_id` or `:id` does not exist        ||
 
 
 ### CLI Command
@@ -6987,9 +7470,9 @@ Network.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login`, `:vlan_id` or `id` does not exist||
-||InUseError||The VLAN currently has active networks on it||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login`, `:vlan_id` or `:id` does not exist        ||
+|| InUseError       || The VLAN currently has active networks on it           ||
 
 ### CLI Command
 
@@ -7019,20 +7502,6 @@ CloudAPI provides a way to get details on public and customer-specific networks
 in a datacenter. This also includes all of the networks available in your
 fabric.
 
-||uuid||String||Unique identifier for this network||
-||name||String||The network name||
-||public||Boolean||Whether this a public or private (rfc1918) network||
-||fabric||Boolean||Whether this network is created on a fabric||
-||description||String||Description of this network (optional)||
-||subnet||String||A CIDR formatted string that describes the network||
-||provision_start_ip||String||The first IP on the network that may be assigned||
-||provision_end_ip||String||The last IP on the network that may be assigned||
-||gateway||String||Optional Gateway IP address||
-||resolvers||String||Optional Resolver IP addresses||
-||routes||Routes Object||Optional Static routes for hosts on this network||
-||internet_nat||Boolean||Provision internet NAT zone on gateway address||
-
-
 
 ## ListNetworks (GET /:login/networks)
 
@@ -7047,31 +7516,31 @@ created on a fabric, then additional information will be shown:
 
 An array of network objects.  Networks are:
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique identifier for this network||
-||name||String||The network name||
-||public||Boolean||Whether this a public or private (rfc1918) network||
-||fabric||Boolean||Whether this network is created on a fabric||
-||description||String||Description of this network (optional)||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || UUID     || Unique id for this network                      ||
+|| name        || String   || The network name                                ||
+|| public      || Boolean  || Whether this a public or private (rfc1918) network ||
+|| fabric      || Boolean  || Whether this network is created on a fabric     ||
+|| description || String   || Description of this network (optional)          ||
 
 If the network is on a fabric, the following additional fields are included:
 
-||**Field**||**Type**||**Description**||
-||subnet||String||A CIDR formatted string that describes the network||
-||provision_start_ip||String||The first IP on the network that may be assigned||
-||provision_end_ip||String||The last IP on the network that may be assigned||
-||gateway||String||Optional Gateway IP address||
-||resolvers||String||Optional Resolver IP addresses||
-||routes||Routes Object||Optional Static routes for hosts on this network||
-||internet_nat||Boolean||Provision internet NAT zone on gateway address||
+|| **Field**    || **Type** || **Description**||
+|| subnet       ||String    || A CIDR formatted string that describes the network   ||
+|| provision_start_ip || String || The first IP on the network that may be assigned ||
+|| provision_end_ip   || String || The last IP on the network that may be assigned  ||
+|| gateway      || String  || Optional Gateway IP address                     ||
+|| resolvers    || String  || Optional Resolver IP addresses                  ||
+|| routes       || Routes Object|| Optional Static routes for hosts on this network ||
+|| internet_nat || Boolean || Provision internet NAT zone on gateway address  ||
 
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` does not exist                             ||
 
 ### CLI Command
 
@@ -7121,18 +7590,18 @@ Retrieves information about an individual network.
 
 ### Returns
 
-||**Field**||**Type**||**Description**||
-||id||String||Unique identifier for this network||
-||name||String||The network name||
-||public||Boolean||Whether this a public or private (rfc1918) network||
-||description||String||Description of this network (optional)||
+|| **Field**   || **Type** || **Description**                                 ||
+|| id          || UUID     || Unique id for this network                      ||
+|| name        || String   || The network name                                ||
+|| public      || Boolean  || Whether this a public or private (rfc1918) network ||
+|| description || String   || Description of this network (optional)          ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
 
 ### CLI Command
 
@@ -7185,21 +7654,21 @@ List all the NICs on a machine belonging to a given account.
 
 An array of NIC objects. NICs are:
 
-||**Field**||**Type**||**Description**||
-||ip ||String||NIC's IPv4 address||
-||mac||String||NIC's MAC address||
-||primary||Boolean||Whether this is the VM's primary NIC||
-||netmask||String||IPv4 netmask||
-||gateway||String||IPv4 gateway||
-||state||String||Describes the state of the NIC (e.g. provisioning, running, or stopped)||
+|| **Field** || **Type** || **Description**                                   ||
+|| ip        || String   || NIC's IPv4 address                                ||
+|| mac       || String   || NIC's MAC address                                 ||
+|| primary   || Boolean  || Whether this is the VM's primary NIC              ||
+|| netmask   || String   || IPv4 netmask                                      ||
+|| gateway   || String   || IPv4 gateway                                      ||
+|| state     || String   || Describes the state of the NIC (e.g. provisioning, running, or stopped) ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login or `:id` does not exist||
-||InvalidArgument||If `:id` isn't a UUID||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login or `:id` does not exist                     ||
+|| InvalidArgument  || If `:id` isn't a UUID                                  ||
 
 ### CLI Command
 
@@ -7259,21 +7728,21 @@ it in the request.
 
 A NIC object:
 
-||**Field**||**Type**||**Description**||
-||ip ||String||NIC's IPv4 address||
-||mac||String||NIC's MAC address||
-||primary||Boolean||Whether this is the VM's primary NIC||
-||netmask||String||IPv4 netmask||
-||gateway||String||IPv4 gateway||
-||state||String||Describes the state of the NIC (e.g. provisioning, running, or stopped)||
+|| **Field** || **Type** || **Description**                                   ||
+|| ip        || String   || NIC's IPv4 address                                ||
+|| mac       || String   || NIC's MAC address                                 ||
+|| primary   || Boolean  || Whether this is the VM's primary NIC              ||
+|| netmask   || String   || IPv4 netmask                                      ||
+|| gateway   || String   || IPv4 gateway                                      ||
+|| state     || String   || Describes the state of the NIC (e.g. provisioning, running, or stopped) ||
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login`, `:id`, or `:mac` does not exist||
-||InvalidArgument||If `:id` isn't a UUID, or `:mac` isn't a MAC address (without colons)||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login`, `:id`, or `:mac` does not exist           ||
+|| InvalidArgument  || If `:id` isn't a UUID, or `:mac` isn't a MAC address (without colons) ||
 
 ### CLI Command
 
@@ -7324,20 +7793,20 @@ Creates a new NIC on a machine belonging to a given account.
 
 ### Inputs
 
-||**Field**||**Type**||**Description**||
-||network||String||UUID of network this NIC should attach to||
+|| **Field** || **Type** || **Description**                                   ||
+|| network   || String   || UUID of network this NIC should attach to         ||
 
 ### Returns
 
 The newly-created NIC object:
 
-||**Field**||**Type**||**Description**||
-||ip ||String||NIC's IPv4 address||
-||mac||String||NIC's MAC address||
-||primary||Boolean||Whether this is the VM's primary NIC||
-||netmask||String||IPv4 netmask||
-||gateway||String||IPv4 gateway||
-||state||String||Describes the state of the NIC (most likely 'provisioning')||
+|| **Field** || **Type** || **Description**                                   ||
+|| ip        || String   || NIC's IPv4 address                                ||
+|| mac       || String   || NIC's MAC address                                 ||
+|| primary   || Boolean  || Whether this is the VM's primary NIC              ||
+|| netmask   || String   || IPv4 netmask                                      ||
+|| gateway   || String   || IPv4 gateway                                      ||
+|| state     || String   || Describes the state of the NIC (most likely 'provisioning') ||
 
 It also returns the Location in the headers where the new NIC lives in the HTTP
 API. If a NIC already exists for that network, a 302 redirect will be returned
@@ -7353,10 +7822,10 @@ start returning 404.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login` or `:id` does not exist||
-||InvalidArgument||If `:id` isn't a UUID, or the `network` argument isn't a valid UUID||
-||MissingParameter||If the `network` argument isn't present||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+|| InvalidArgument  || If `:id` isn't a UUID, or the `network` argument isn't a valid UUID ||
+|| MissingParameter || If the `network` argument isn't present                ||
 
 ### CLI Command
 
@@ -7426,9 +7895,9 @@ CloudAPI.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-||**Error Code**||**Description**||
-||ResourceNotFound||If `:login`, `:id` or `:mac` does not exist||
-||InvalidArgument||If `:id` isn't a UUID||
+|| **Error Code**   || **Description**                                        ||
+|| ResourceNotFound || If `:login`, `:id` or `:mac` does not exist            ||
+|| InvalidArgument  || If `:id` isn't a UUID                                  ||
 
 ### CLI Command
 
@@ -7469,47 +7938,35 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 The following is the state diagram for a machine:
 
 <pre>
-          POST /my/machines
-                     |
-                     |
-                     V
-          +----------------+
-          |  Provisioning  |
-          +----------------+
-                     |
-                     |
-                     V
-          +----------------+
-    +---->|     Running    |
-    |     +----------------+
-    |                |
-    |                | action=stop
-    |                V
-    |     +----------------+
-    |     |    Stopping    |
-    |     +----------------+
-    |                |
-    | action=start   |
-    |                V
-    |     +----------------+
-    +---- |     Stopped    |
-          +----------------+
-                     |
-                     | DELETE
-                     V
-          +----------------+
-          |  Deleted       |---+
-          +----------------+   |
-                               |
-                              ---
-                               -
-
+              POST /my/machines
+                      |
+                      |
+                      V
+              +----------------+                 +----------------+
+              |  Provisioning  | --------------> |  Failed        |
+              +----------------+                 +----------------+ 
+                      |                                   |
+                      |                                   |
+                      V                                   |
+              +----------------+                          |
+    +-------> |     Running    | --------+                |
+    |         +----------------+         |                |
+    |                 |                  | DELETE         |
+    | action=start    | action=stop      |                |
+    |                 V                  V                |
+    |         +----------------+    +----------------+    |
+    |         |    Stopping    |    |  Deleted       | ---+
+    |         +----------------+    +----------------+    |
+    |                 |                  ^                |
+    |                 |                  |               ---
+    |                 V                  | DELETE         _
+    |         +----------------+         |
+    +-------- |     Stopped    | --------+
+              +----------------+
 </pre>
 
 At any point the state can also be `offline`, like if there is a network or
 power event to the machine.
-
-Since version 7.0 of this API, `failed` is used to signify a failed provision.
 
 
 ## Polling machine state
@@ -8223,7 +8680,7 @@ Sample code for generating the `Authorization` header (and `Date` header):
 ||[sdc-rebootmachine](#RebootMachine)||Allows you to 'reboot' a machine.||
 ||[sdc-renamemachine](#RenameMachine)||Rename a machine.||
 ||[sdc-replacemachinetags](#ReplaceMachineTags)||Replace all tags on a machine.||
-||[sdc-resizemachine](#ResizeMachine)||Allows you to resize a SmartMachine.||
+||[sdc-resizemachine](#ResizeMachine)||Allows you to resize a container.||
 ||[sdc-role](#roles)||Add, list, update and remove roles.||
 ||[sdc-startmachine](#StartMachine)||Allows you to boot up a machine||
 ||[sdc-startmachinefromsnapshot](#StartMachineFromSnapshot)||Starts a stopped machine from the referenced snapshot.||
