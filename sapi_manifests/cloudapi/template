@@ -77,6 +77,11 @@
         }
     },
     {{/MAHI_SERVICE}}
+    {{#CNS_SERVICE}}
+    "cns": {
+        "url": "http://{{{cns_domain}}}"
+    },
+    {{/CNS_SERVICE}}
     "datacenters": {{{CLOUDAPI_DATACENTERS}}},
     {{#CLOUDAPI_SERVICES}}
     "services": {{{CLOUDAPI_SERVICES}}},
