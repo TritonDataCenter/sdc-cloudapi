@@ -5,6 +5,12 @@
     },
     "datacenter_name": "{{{datacenter_name}}}",
     "read_only": {{{CLOUDAPI_READONLY}}},
+    {{#DC_MAINT_MESSAGE}}
+    "dc_maint_message": "{{{DC_MAINT_MESSAGE}}}",
+    {{/DC_MAINT_MESSAGE}}
+    {{#DC_MAINT_ETA}}
+    "dc_maint_eta": "{{{DC_MAINT_ETA}}}",
+    {{/DC_MAINT_ETA}}
     "ufds": {
         "url": "ldaps://{{{ufds_domain}}}",
         "bindDN": "{{{ufds_ldap_root_dn}}}",
