@@ -4,6 +4,7 @@ mediaroot: ./media
 apisections: Account, Keys, Config, Datacenters, Images, Packages, Machines, Analytics, FirewallRules, Networks, Nics, Users, Roles, Policies, Services, User SSH Keys, Role Tags, Fabrics
 markdown2extras: wiki-tables, code-friendly
 ---
+
 <!--
     This Source Code Form is subject to the terms of the Mozilla Public
     License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,10 +12,8 @@ markdown2extras: wiki-tables, code-friendly
 -->
 
 <!--
-    Copyright (c) 2015, Joyent, Inc.
+    Copyright 2016, Joyent, Inc.
 -->
-
-
 
 
 # Joyent CloudAPI
@@ -197,9 +196,9 @@ To get help on a command, use the `--help` flag.  For example:
         -j, --json                JSON output.
 
 or
-  
+
     $ sdc-listdatacenters --help
-    sdc-listdatacenters [--account string] [--api-version string] [--debug boolean] [--help boolean] [--keyId string] [--url url] [--version boolean] [--verbose boolean] [--user string] [--role string] 
+    sdc-listdatacenters [--account string] [--api-version string] [--debug boolean] [--help boolean] [--keyId string] [--url url] [--version boolean] [--verbose boolean] [--user string] [--role string]
 
 You can set environment variables for the following flags so that you don't have
 to type them for each request (e.g. in your .bash_profile).  All the examples in
@@ -356,7 +355,7 @@ disk size.
 For machines which don't have a `brand` of `kvm` (see
 `triton instances -o id,brand` or `sdc-listmachines`), you can manage the SSH
 keys that allow logging into the machine via CloudAPI.  For example, to rotate
-keys: 
+keys:
 
     $ sdc-createkey --name=my-other-rsa-key ~/.ssh/my_other_rsa_key.pub
 
@@ -2966,6 +2965,11 @@ image also includes the operating system.
 ## ListImages (GET /:login/images)
 
 Provides a list of images available in this datacenter.
+
+Note: Currently, *docker* images are not included in this endpoint's responses.
+You must use `docker images` against the
+[docker](https://apidocs.joyent.com/docker) service for this data center.
+
 
 ### Inputs
 
@@ -7948,7 +7952,7 @@ The following is the state diagram for a machine:
                       V
               +----------------+                 +----------------+
               |  Provisioning  | --------------> |  Failed        |
-              +----------------+                 +----------------+ 
+              +----------------+                 +----------------+
                       |                                   |
                       |                                   |
                       V                                   |
