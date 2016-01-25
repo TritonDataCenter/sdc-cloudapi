@@ -870,6 +870,7 @@ Account object:
 || phone       || String   || ...                                                ||
 || created     || ISO8601 date || When this account was created                ||
 || updated     || ISO8601 date || When this account's details was last updated ||
+|| triton_cns_enabled || Boolean || `true` if Triton CNS is enabled for account ||
 
 ### Errors
 
@@ -942,6 +943,7 @@ Update your account details with the given parameters.
 || state       || String   || ...                                             ||
 || country     || String   || ...                                             ||
 || phone       || String   || ...                                             ||
+|| triton_cns_enabled || Boolean || Enable or disable the Triton CNS          ||
 
 ### Returns
 
@@ -962,6 +964,7 @@ Account object:
 || phone       || String   || ...                                             ||
 || created     || ISO8601 date || When this account was created                ||
 || updated     || ISO8601 date || When this account's details was last updated ||
+|| triton_cns_enabled || Boolean || `true` if Triton CNS is enabled for account ||
 
 ### Errors
 
