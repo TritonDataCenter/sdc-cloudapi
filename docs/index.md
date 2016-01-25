@@ -3722,6 +3722,7 @@ machines themselves.
 || limit       || Number   || Return a max of N machines; default is 1000 (which is also the maximum allowable result set size) ||
 || offset      || Number   || Get a `limit` number of machines starting at this `offset`    ||
 || tag.$name   || String   || An arbitrary set of tags can be used for querying, assuming they are prefixed with "tag." ||
+|| docker      || Boolean  || Whether to only list Docker instances, or only non-Docker instances, if present. Defaults to showing all instances.   ||
 || credentials || Boolean  || Whether to include the generated credentials for machines, if present. Defaults to false  ||
 
 Note that if the special input `tags=*` is provided, any other input will be
