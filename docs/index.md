@@ -8697,37 +8697,6 @@ Sample code for generating the `Authorization` header (and `Date` header):
 
 # Appendix E: SDC Changelog
 
-* Starting with version 7.0, there isn't a `default` image.  For backward
-compatibility purposes, when a request using `~6.5` is received, the latest
-version of the `smartos` image will become the default one.
-
-* Starting with version 7.0, virtual machines can also be resized, but **only
-resizing virtual machines to a higher capacity/package is supported**.
-
-* Starting with version 7.0, packages listed by GET `/:account/packages` accept
-search filters.  Additionally, the package members `vcpus`, `id` and `version`
-are included on packages, as explained in the
-[packages section](#packages-description).
-
-* Starting with version 7.0, a historical list of actions performed on machines
-is available through request `GET /:account/machines/:id/audit`.
-
-* Starting with version 7.0, customers can manage Firewall Rules through the
-`/:account/fwrules` resource, as explained in the
-[Firewall Rules section](#FirewallRules).
-
-* Starting with version 7.0, `GET /:account` exposes account details, and allows
-the modification of account properties -- with the exception of `password` and
-`login` -- through `POST /:account`.  Details are explained in the
-[Account section](#Account)
-
-* Starting with version 7.0, networks details are exposed through the
-`/:account/networks` resource, as explained in the
-[Networks section](#Networks).
-
-* Starting with version 7.0,  node-smartdc's `sdc-createmachine` accepts an
-optional `--networks|-w` argument, which can be set to the `id` of one or more
-of the networks retrieved from `/:account/networks`.
 
 * Starting with version 7.1.0, customer image management is made available,
 allowing [Machine Creation from Images](#CreateImageFromMachine),
@@ -8736,9 +8705,14 @@ allowing [Machine Creation from Images](#CreateImageFromMachine),
 
 * Version 7.1.0 now adds the listing and manipulation of NICs on VMs.
 
-* Starting with version 7.1.1, firewall rules will include information regarding
-rules being global or not, and will optionally include a human-readable
-description for the rules (which can be modified except for the global rules).
+* Version 7.1.0 adds a `files` array (containing `compression`, `sha1` and
+`size`) to image objects. In addition, there are the `owner`, `public`, `state`,
+`tags`, `eula` and `acl` attributes.
+
+* Starting with version 7.1.1, firewall rules include information regarding
+rules being global or not (`global` attribute), and will optionally include a
+human-readable `description` attribute for the rules (which can be modified
+except for global rules).
 
 * Starting with version 7.2.0, RBAC has been made available on the CloudAPI
 interface. Accounts can create users, rules can be created and combined to make
