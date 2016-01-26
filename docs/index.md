@@ -2,7 +2,7 @@
 title: Joyent CloudAPI
 mediaroot: ./media
 apisections: Account, Keys, Config, Datacenters, Images, Packages, Machines, Analytics, FirewallRules, Networks, Nics, Users, Roles, Policies, Services, User SSH Keys, Role Tags, Fabrics
-markdown2extras: wiki-tables, code-friendly
+markdown2extras: tables, code-friendly
 ---
 
 <!--
@@ -204,11 +204,12 @@ You can set environment variables for the following flags so that you don't have
 to type them for each request (e.g. in your .bash_profile).  All the examples in
 this document assume that these variables have been set:
 
-|| **CLI Flags**    || **Description**              || **Environment Variable** ||
-|| --account<br/>-a || Login name (account)         || SDC_ACCOUNT              ||
-|| --user           || Subuser name when using [Role Based Access Control](#rbac-users-roles-policies) || SDC_USER ||
-|| --keyId<br/>-k   || Fingerprint of key to use for signing || SDC_KEY_ID      ||
-|| --url<br/>-u     || URL of the CloudAPI endpoint || SDC_URL                  ||
+**CLI Flags**    | **Description**              | **Environment Variable**   
+---------------- | ---------------------------- | ------------------------ 
+--account<br/>-a | Login name (account)         | SDC_ACCOUNT                
+--user           | Subuser name when using [Role Based Access Control](#rbac-users-roles-policies) | SDC_USER 
+--keyId<br/>-k   | Fingerprint of key to use for signing | SDC_KEY_ID
+--url<br/>-u     | URL of the CloudAPI endpoint | SDC_URL
 
 
 ## Provision a new machine
@@ -781,37 +782,40 @@ With that function, you could just do:
 CloudAPI returns all response objects as `application/json` encoded HTTP bodies.
 In addition to the JSON body, all responses have the following headers:
 
-|| **Header**    || **Description**                                           ||
-|| Date          || When the response was sent (RFC 1123 format)              ||
-|| Api-Version   || The exact version of the CloudAPI server you spoke with   ||
-|| Request-Id    || A unique id for this request; you should log this         ||
-|| Response-Time || How long the server took to process your request (ms)     ||
+**Header**    | **Description**
+------------- | ---------------
+Date          | When the response was sent (RFC 1123 format)
+Api-Version   | The exact version of the CloudAPI server you spoke with
+Request-Id    | A unique id for this request; you should log this
+Response-Time | How long the server took to process your request (ms)
 
 If there is content, you can expect:
 
-|| **Header**     || **Description**                                             ||
-|| Content-Length || How much content, in bytes                                  ||
-|| Content-Type   || Formatting of the response (almost always application/json) ||
-|| Content-MD5    || An MD5 checksum of the response; you should check this      ||
+**Header**     | **Description**
+-------------- | ---------------
+Content-Length | How much content, in bytes
+Content-Type   | Formatting of the response (almost always application/json)
+Content-MD5    | An MD5 checksum of the response; you should check this
 
 ### HTTP Status Codes
 
 Your client should check for each of the following status codes from any API
 request:
 
-|| **Code** || **Description* || **Details**                                      ||
-|| 400      || Bad Request    || Invalid HTTP Request                             ||
-|| 401      || Unauthorized   || Either no Authorization header was sent, or invalid credentials were used ||
-|| 403      || Forbidden      || No permissions to the specified resource         ||
-|| 404      || Not Found      || Resource was not found                           ||
-|| 405      || Method Not Allowed || Method not supported for the given resource  ||
-|| 406      || Not Acceptable || Try sending a different Accept header            ||
-|| 409      || Conflict       || Most likely invalid or missing parameters        ||
-|| 413      || Request Entity Too Large || You sent too much data                 ||
-|| 415      || Unsupported Media Type   || Request was encoded in a format CloudAPI does not understand ||
-|| 420      || Slow Down      || You're sending too many requests too quickly     ||
-|| 449      || Retry With     || Invalid Version header; try with a different Api-Version string ||
-|| 503      || Service Unavailable || Either there's no capacity in this datacenter, or it's in a maintenance window ||
+**Code** | **Description** | **Details**
+-------- | --------------- | -----------
+400      | Bad Request     | Invalid HTTP Request
+401      | Unauthorized    | Either no Authorization header was sent, or invalid credentials were used
+403      | Forbidden       | No permissions to the specified resource
+404      | Not Found       | Resource was not found
+405      | Method Not Allowed | Method not supported for the given resource
+406      | Not Acceptable  | Try sending a different Accept header
+409      | Conflict        | Most likely invalid or missing parameters
+413      | Request Entity Too Large | You sent too much data
+415      | Unsupported Media Type   | Request was encoded in a format CloudAPI does not understand
+420      | Slow Down       | You're sending too many requests too quickly
+449      | Retry With      | Invalid Version header; try with a different Api-Version string
+503      | Service Unavailable      | Either there's no capacity in this datacenter, or it's in a maintenance window
 
 ### Error Responses
 
@@ -825,21 +829,22 @@ object in the body with the scheme:
 
 Where the code element is one of:
 
-|| **Code**           || **Description**                                       ||
-|| BadRequest         || You sent bad HTTP                                     ||
-|| InternalError      || Something went wrong in SDC                           ||
-|| InUseError         || The object is in use and cannot be operated on        ||
-|| InvalidArgument    || You sent bad arguments or a bad value for an argument ||
-|| InvalidCredentials || Authentication failed                                 ||
-|| InvalidHeader      || You sent a bad HTTP header                            ||
-|| InvalidVersion     || You sent a bad Api-Version string                     ||
-|| MissingParameter   || You didn't send a required parameter                  ||
-|| NotAuthorized      || You don't have access to the requested resource       ||
-|| RequestThrottled   || You were throttled                                    ||
-|| RequestTooLarge    || You sent too much request data                        ||
-|| RequestMoved       || HTTP Redirect                                         ||
-|| ResourceNotFound   || What you asked for wasn't found                       ||
-|| UnknownError       || Something completely unexpected happened!             ||
+**Code**           | **Description**
+------------------ | ---------------
+BadRequest         | You sent bad HTTP
+InternalError      | Something went wrong in SDC
+InUseError         | The object is in use and cannot be operated on
+InvalidArgument    | You sent bad arguments or a bad value for an argument
+InvalidCredentials | Authentication failed
+InvalidHeader      | You sent a bad HTTP header
+InvalidVersion     | You sent a bad Api-Version string
+MissingParameter   | You didn't send a required parameter
+NotAuthorized      | You don't have access to the requested resource
+RequestThrottled   | You were throttled
+RequestTooLarge    | You sent too much request data
+RequestMoved       | HTTP Redirect
+ResourceNotFound   | What you asked for wasn't found
+UnknownError       | Something completely unexpected happened!
 
 Clients are expected to check HTTP status code first, and if it's in the 4xx
 range, they can leverage the codes above.
@@ -866,29 +871,31 @@ also provide 'my' (i.e. GET /my).
 
 Account object:
 
-|| **Field**   || **Type** || **Description**                                    ||
-|| id          || UUID     || Unique id for this account                         ||
-|| login       || String   || Your login name                                    ||
-|| email       || String   || Email address                                      ||
-|| companyName || String   || ...                                                ||
-|| firstName   || String   || ...                                                ||
-|| lastName    || String   || ...                                                ||
-|| address     || String   || ...                                                ||
-|| postalCode  || String   || ...                                                ||
-|| city        || String   || ...                                                ||
-|| state       || String   || ...                                                ||
-|| country     || String   || ...                                                ||
-|| phone       || String   || ...                                                ||
-|| created     || ISO8601 date || When this account was created                ||
-|| updated     || ISO8601 date || When this account's details was last updated ||
-|| triton_cns_enabled || Boolean || `true` if Triton CNS is enabled for account ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | UUID     | Unique id for this account
+login       | String   | Your login name
+email       | String   | Email address
+companyName | String   | ...
+firstName   | String   | ...
+lastName    | String   | ...
+address     | String   | ...
+postalCode  | String   | ...
+city        | String   | ...
+state       | String   | ...
+country     | String   | ...
+phone       | String   | ...
+created     | ISO8601 date | When this account was created
+updated     | ISO8601 date | When this account's details was last updated
+triton_cns_enabled | Boolean | `true` if Triton CNS is enabled for account
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` does not exist                             ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
@@ -943,46 +950,49 @@ Update your account details with the given parameters.
 
 ### Inputs
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| email       || String   || Email address                                   ||
-|| companyName || String   || ...                                             ||
-|| firstName   || String   || ...                                             ||
-|| lastName    || String   || ...                                             ||
-|| address     || String   || ...                                             ||
-|| postalCode  || String   || ...                                             ||
-|| city        || String   || ...                                             ||
-|| state       || String   || ...                                             ||
-|| country     || String   || ...                                             ||
-|| phone       || String   || ...                                             ||
-|| triton_cns_enabled || Boolean || Enable or disable the Triton CNS          ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+email       | String   | Email address
+companyName | String   | ...
+firstName   | String   | ...
+lastName    | String   | ...
+address     | String   | ...
+postalCode  | String   | ...
+city        | String   | ...
+state       | String   | ...
+country     | String   | ...
+phone       | String   | ...
+triton_cns_enabled | Boolean | Enable or disable the Triton CNS
 
 ### Returns
 
 Account object:
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || UUID     || Unique id for this account                      ||
-|| login       || String   || Your login name                                 ||
-|| email       || String   || Email address                                   ||
-|| companyName || String   || ...                                             ||
-|| firstName   || String   || ...                                             ||
-|| lastName    || String   || ...                                             ||
-|| address     || String   || ...                                             ||
-|| postalCode  || String   || ...                                             ||
-|| city        || String   || ...                                             ||
-|| state       || String   || ...                                             ||
-|| country     || String   || ...                                             ||
-|| phone       || String   || ...                                             ||
-|| created     || ISO8601 date || When this account was created                ||
-|| updated     || ISO8601 date || When this account's details was last updated ||
-|| triton_cns_enabled || Boolean || `true` if Triton CNS is enabled for account ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | UUID     | Unique id for this account
+login       | String   | Your login name
+email       | String   | Email address
+companyName | String   | ...
+firstName   | String   | ...
+lastName    | String   | ...
+address     | String   | ...
+postalCode  | String   | ...
+city        | String   | ...
+state       | String   | ...
+country     | String   | ...
+phone       | String   | ...
+created     | ISO8601 date | When this account was created
+updated     | ISO8601 date | When this account's details was last updated
+triton_cns_enabled | Boolean | `true` if Triton CNS is enabled for account
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` does not exist                             ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
@@ -1067,17 +1077,19 @@ Lists all public keys we have on record for the specified account.
 
 Array of key objects.  Each key object has the following fields:
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| name        || String   || Name for this key                               ||
-|| fingerprint || String   || Key fingerprint                                 ||
-|| key         || String   || Public key in OpenSSH format                    ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+name        | String   | Name for this key
+fingerprint | String   | Key fingerprint
+key         | String   | Public key in OpenSSH format
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` does not exist                             ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
@@ -1131,17 +1143,19 @@ Retrieves the record for an individual key.
 
 ### Returns
 
-|| **Field**    || **Type** || **Description**                                ||
-|| name         || String   || Name for this key                              ||
-|| fingerprint  || String   || Key fingerprint                                ||
-|| key          || String   || OpenSSH formatted public key                   ||
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+name         | String   | Name for this key
+fingerprint  | String   | Key fingerprint
+key          | String   | OpenSSH formatted public key
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:key` does not exist                   ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:key` does not exist
 
 ### CLI Command
 
@@ -1189,25 +1203,28 @@ Uploads a new OpenSSH key to SmartDataCenter for use in HTTP signing and SSH.
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| name      || String   || Name for this key (optional)                      ||
-|| key       || String   || OpenSSH formatted public key                      ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+name      | String   | Name for this key (optional)
+key       | String   | OpenSSH formatted public key
 
 ### Returns
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| name        || String   || Name for this key                               ||
-|| fingerprint || String   || Key fingerprint                                 ||
-|| key         || String   || OpenSSH formatted public key                    ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+name        | String   | Name for this key
+fingerprint | String   | Key fingerprint
+key         | String   | OpenSSH formatted public key
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| InvalidArgument  || If name or key is invalid (usually key)                ||
-|| MissingParameter || If you didn't send a key                               ||
-|| ResourceNotFound || If `:login` does not exist                             ||
+**Error Code**   | **Description**
+---------------- | ---------------
+InvalidArgument  | If name or key is invalid (usually key)
+MissingParameter | If you didn't send a key
+ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
@@ -1273,8 +1290,9 @@ Deletes a single SSH key, by name or fingerprint.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:key` does not exist                   ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:key` does not exist
 
 ### CLI Command
 
@@ -1329,26 +1347,28 @@ main [account](#account) object.
 
 Array of user objects.  Each user object has the following fields:
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || UUID     || Unique id for this user                         ||
-|| login       || String   || Sub-user login name                             ||
-|| email       || String   || Email address                                   ||
-|| companyName || String   || ...                                             ||
-|| firstName   || String   || ...                                             ||
-|| lastName    || String   || ...                                             ||
-|| address     || String   || ...                                             ||
-|| postalCode  || String   || ...                                             ||
-|| city        || String   || ...                                             ||
-|| state       || String   || ...                                             ||
-|| country     || String   || ...                                             ||
-|| phone       || String   || ...                                             ||
-|| created     || ISO8601 date || When this user was created                  ||
-|| updated     || ISO8601 date || When this user's details was last updated   ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | UUID     | Unique id for this user
+login       | String   | Sub-user login name
+email       | String   | Email address
+companyName | String   | ...
+firstName   | String   | ...
+lastName    | String   | ...
+address     | String   | ...
+postalCode  | String   | ...
+city        | String   | ...
+state       | String   | ...
+country     | String   | ...
+phone       | String   | ...
+created     | ISO8601 date | When this user was created
+updated     | ISO8601 date | When this user's details was last updated
 
 ### Errors
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:account` does not exist                           ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:account` does not exist
 
 ### CLI Command:
 
@@ -1411,35 +1431,38 @@ Get one user fo an account.
 
 ### Inputs
 
-|| **Field**  || **Type** || **Description**                                  ||
-|| membership || Boolean  || When given, the user roles will also be returned ||
+**Field**  | **Type** | **Description**
+---------- | -------- | ---------------
+membership | Boolean  | When given, the user roles will also be returned
 
 ### Returns
 
 An array of user objects.  Each user object has the following fields:
 
-|| **Field**     || **Type** || **Description**                               ||
-|| id            || UUID     || Unique id for this user                       ||
-|| login         || String   || Sub-user login name                           ||
-|| email         || String   || Email address                                 ||
-|| companyName   || String   || ...                                           ||
-|| firstName     || String   || ...                                           ||
-|| lastName      || String   || ...                                           ||
-|| address       || String   || ...                                           ||
-|| postalCode    || String   || ...                                           ||
-|| city          || String   || ...                                           ||
-|| state         || String   || ...                                           ||
-|| country       || String   || ...                                           ||
-|| phone         || String   || ...                                           ||
-|| roles         || Array    || User role names (only when `membership` option is present in request) ||
-|| default_roles || Array    || User active role names (only when `membership` option is present in request) ||
-|| created       || ISO8601 date || When this user was created                ||
-|| updated       || ISO8601 date || When this user's details was last updated ||
+**Field**     | **Type** | **Description**
+------------- | -------- | ---------------
+id            | UUID     | Unique id for this user
+login         | String   | Sub-user login name
+email         | String   | Email address
+companyName   | String   | ...
+firstName     | String   | ...
+lastName      | String   | ...
+address       | String   | ...
+postalCode    | String   | ...
+city          | String   | ...
+state         | String   | ...
+country       | String   | ...
+phone         | String   | ...
+roles         | Array    | User role names (only when `membership` option is present in request)
+default_roles | Array    | User active role names (only when `membership` option is present in request)
+created       | ISO8601 date | When this user was created
+updated       | ISO8601 date | When this user's details was last updated
 
 ### Errors
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || When `:account` or `:user` do not exist                ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | When `:account` or `:user` do not exist
 
 ### CLI Command:
 
@@ -1489,48 +1512,51 @@ Creates a new user under an account.
 
 ### Inputs
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| email       || String   || (Required) Email address                        ||
-|| login       || String   || (Required) Login                                ||
-|| password    || String   || (Required) Password                             ||
-|| companyName || String   || ...                                             ||
-|| firstName   || String   || ...                                             ||
-|| lastName    || String   || ...                                             ||
-|| address     || String   || ...                                             ||
-|| postalCode  || String   || ...                                             ||
-|| city        || String   || ...                                             ||
-|| state       || String   || ...                                             ||
-|| country     || String   || ...                                             ||
-|| phone       || String   || ...                                             ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+email       | String   | (Required) Email address
+login       | String   | (Required) Login
+password    | String   | (Required) Password
+companyName | String   | ...
+firstName   | String   | ...
+lastName    | String   | ...
+address     | String   | ...
+postalCode  | String   | ...
+city        | String   | ...
+state       | String   | ...
+country     | String   | ...
+phone       | String   | ...
 
 ### Returns
 
 User object:
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || UUID     || Unique id for this user                         ||
-|| login       || String   || Sub-user `login` name                           ||
-|| email       || String   || Email address                                   ||
-|| companyName || String   || ...                                             ||
-|| firstName   || String   || ...                                             ||
-|| lastName    || String   || ...                                             ||
-|| address     || String   || ...                                             ||
-|| postalCode  || String   || ...                                             ||
-|| city        || String   || ...                                             ||
-|| state       || String   || ...                                             ||
-|| country     || String   || ...                                             ||
-|| phone       || String   || ...                                             ||
-|| created     || ISO8601 date || When this user was created                  ||
-|| updated     || ISO8601 date || When this user's details was last updated   ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | UUID     | Unique id for this user
+login       | String   | Sub-user `login` name
+email       | String   | Email address
+companyName | String   | ...
+firstName   | String   | ...
+lastName    | String   | ...
+address     | String   | ...
+postalCode  | String   | ...
+city        | String   | ...
+state       | String   | ...
+country     | String   | ...
+phone       | String   | ...
+created     | ISO8601 date | When this user was created
+updated     | ISO8601 date | When this user's details was last updated
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| InvalidArgument  || If any of the parameters are invalid, e.g. you try to add a login name already taken by another user of your account ||
-|| MissingParameter || If you didn't send a `login`, `email` or `password`    ||
-|| ResourceNotFound || If `:account` does not exist                           ||
+**Error Code**   | **Description**
+---------------- | ---------------
+InvalidArgument  | If any of the parameters are invalid, e.g. you try to add a login name already taken by another user of your account
+MissingParameter | If you didn't send a `login`, `email` or `password`
+ResourceNotFound | If `:account` does not exist
 
 ### CLI Command:
 
@@ -1592,47 +1618,50 @@ changes so it can be selectively allowed/disallowed for users using policies.
 
 ### Inputs
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| login       || String   ||                                                 ||
-|| email       || String   ||                                                 ||
-|| companyName || String   ||                                                 ||
-|| firstName   || String   ||                                                 ||
-|| lastName    || String   ||                                                 ||
-|| address     || String   ||                                                 ||
-|| postalCode  || String   ||                                                 ||
-|| city        || String   ||                                                 ||
-|| state       || String   ||                                                 ||
-|| country     || String   ||                                                 ||
-|| phone       || String   ||                                                 ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+login       | String   |
+email       | String   |
+companyName | String   |
+firstName   | String   |
+lastName    | String   |
+address     | String   |
+postalCode  | String   |
+city        | String   |
+state       | String   |
+country     | String   |
+phone       | String   |
 
 ### Returns
 
 User object:
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || UUID     || Unique id for this user                         ||
-|| login       || String   || User login name                                 ||
-|| email       || String   || Email address                                   ||
-|| companyName || String   || ...                                             ||
-|| firstName   || String   || ...                                             ||
-|| lastName    || String   || ...                                             ||
-|| address     || String   || ...                                             ||
-|| postalCode  || String   || ...                                             ||
-|| city        || String   || ...                                             ||
-|| state       || String   || ...                                             ||
-|| country     || String   || ...                                             ||
-|| phone       || String   || ...                                             ||
-|| created     || ISO8601 date || When this user was created                  ||
-|| updated     || ISO8601 date || When this user's details was last updated   ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | UUID     | Unique id for this user
+login       | String   | User login name
+email       | String   | Email address
+companyName | String   | ...
+firstName   | String   | ...
+lastName    | String   | ...
+address     | String   | ...
+postalCode  | String   | ...
+city        | String   | ...
+state       | String   | ...
+country     | String   | ...
+phone       | String   | ...
+created     | ISO8601 date | When this user was created
+updated     | ISO8601 date | When this user's details was last updated
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**  || **Description**                                         ||
-|| InvalidArgument || If any of the parameters are invalid, e.g. you try to add a `login` name already taken by another user of your account                                 ||
-|| MissingParameter|| If you didn't send a `login` or `email`                 ||
-|| ResourceNotFound|| If `:account` or `:user` do not exist                   ||
+**Error Code**   | **Description**
+---------------- | ---------------
+InvalidArgument  | If any of the parameters are invalid, e.g. you try to add a `login` name already taken by another user of your account
+MissingParameter | If you didn't send a `login` or `email`
+ResourceNotFound | If `:account` or `:user` do not exist
 
 ### CLI Command:
 
@@ -1687,38 +1716,41 @@ for an user trying to modify other data, or only their own password.
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| password  || String   || ...                                               ||
-|| password_confirmation || String || string must match `password`            ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+password  | String   | ...
+password_confirmation | String | string must match `password`
 
 ### Returns
 
 User object:
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || UUID     || Unique id for the user                          ||
-|| login       || String   || User login name                                 ||
-|| email       || String   || Email address                                   ||
-|| companyName || String   || ...                                             ||
-|| firstName   || String   || ...                                             ||
-|| lastName    || String   || ...                                             ||
-|| address     || String   || ...                                             ||
-|| postalCode  || String   || ...                                             ||
-|| city        || String   || ...                                             ||
-|| state       || String   || ...                                             ||
-|| country     || String   || ...                                             ||
-|| phone       || String   || ...                                             ||
-|| created     || Date (ISO8601) || When this user was created                ||
-|| updated     || Date (ISO8601) || When this user's details was last updated ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | UUID     | Unique id for the user
+login       | String   | User login name
+email       | String   | Email address
+companyName | String   | ...
+firstName   | String   | ...
+lastName    | String   | ...
+address     | String   | ...
+postalCode  | String   | ...
+city        | String   | ...
+state       | String   | ...
+country     | String   | ...
+phone       | String   | ...
+created     | Date (ISO8601) | When this user was created
+updated     | Date (ISO8601) | When this user's details was last updated
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| InvalidArgument  || The provided `password` and `password\_confirmation` didn't match    ||
-|| MissingParameter || Either `password` or `password\_confirmation` parameters are missing ||
-|| ResourceNotFound || If `:account` or `:user` do not exist                  ||
+**Error Code**   | **Description**
+---------------- | ---------------
+InvalidArgument  | The provided `password` and `password\_confirmation` didn't match
+MissingParameter | Either `password` or `password\_confirmation` parameters are missing
+ResourceNotFound | If `:account` or `:user` do not exist
 
 ### CLI Command:
 
@@ -1781,8 +1813,9 @@ Remove a user. They will no longer be able to use this API.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description** ||
-|| ResourceNotFound || If `:account` does not exist or there isn't a user with either the `login` or `id` given as `:user` value||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:account` does not exist or there isn't a user with either the `login` or `id` given as `:user` value
 
 ### CLI Command:
 
@@ -1831,17 +1864,19 @@ Returns an array of account roles.
 
 Array of role objects.  Each role object has the following fields:
 
-|| **Field** || **Type** || **Description**                                   ||
-|| id        || UUID     || Unique id for this role                           ||
-|| name      || String   || The role name                                     ||
-|| policies  || Array    || This account's policies which this role obeys (Optional)   ||
-|| members   || Array    || This account's user logins this role applies to (Optional) ||
-|| default_members|| Array || This account's user logins this role applies to by default (Optional) ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+id        | UUID     | Unique id for this role
+name      | String   | The role name
+policies  | Array    | This account's policies which this role obeys (Optional)
+members   | Array    | This account's user logins this role applies to (Optional)
+default_members | Array | This account's user logins this role applies to by default (Optional)
 
 ### Errors
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:account` does not exist                           ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:account` does not exist
 
 ### CLI Command:
 
@@ -1900,17 +1935,19 @@ Get an account role (`:role`) by `id` or `name`.
 
 ### Returns
 
-|| **Field** || **Type** || **Description**                                   ||
-|| id        || UUID     || Unique id for this role                           ||
-|| name      || String   || The role name                                     ||
-|| policies  || Array    || This account's policies which this role obeys (Optional)   ||
-|| members   || Array    || This account's user logins this role applies to (Optional) ||
-|| default_members|| Array || This account's user logins this role applies to by default (Optional) ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+id        | UUID     | Unique id for this role
+name      | String   | The role name
+policies  | Array    | This account's policies which this role obeys (Optional)
+members   | Array    | This account's user logins this role applies to (Optional)
+default_members| Array | This account's user logins this role applies to by default (Optional)
 
 ### Errors
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:account` or `:role` do not exist                  ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:account` or `:role` do not exist
 
 ### CLI Command:
 
@@ -1963,31 +2000,34 @@ Create a new role for your account.
 
 ### Inputs
 
-|| **Field** || **Type** ||**Description**                                    ||
-|| name      || String   || The role's name                                   ||
-|| policies  || Array    || This account's policies to be given to this role (Optional)    ||
-|| members   || Array    || This account's user logins to be added to this role (Optional) ||
-|| default_members || Array || This account's user logins to be added to this role and have it enabled by default (Optional) ||
+**Field** | **Type** |**Description**
+--------- | -------- | --------------
+name      | String   | The role's name
+policies  | Array    | This account's policies to be given to this role (Optional)
+members   | Array    | This account's user logins to be added to this role (Optional)
+default_members | Array | This account's user logins to be added to this role and have it enabled by default (Optional)
 
 ### Returns
 
 Account role.
 
-|| **Field** || **Type** || **Description**                                   ||
-|| id        || UUID     || Unique id for this role                           ||
-|| name      || String   || The role name                                     ||
-|| policies  || Array    || This account's policies which this role obeys (Optional)   ||
-|| members   || Array    || This account's user logins this role applies to (Optional) ||
-|| default_members|| Array || This account's user logins this role applies to by default (Optional) ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+id        | UUID     | Unique id for this role
+name      | String   | The role name
+policies  | Array    | This account's policies which this role obeys (Optional)
+members   | Array    | This account's user logins this role applies to (Optional)
+default_members| Array | This account's user logins this role applies to by default (Optional)
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| InvalidArgument  || If member or policies are invalid, e.g. you try to add a non-existent user ||
-|| MissingParameter || If you didn't send a `name`                            ||
-|| ResourceNotFound || If `:account` does not exist                           ||
+**Error Code**   | **Description**
+---------------- | ---------------
+InvalidArgument  | If member or policies are invalid, e.g. you try to add a non-existent user
+MissingParameter | If you didn't send a `name`
+ResourceNotFound | If `:account` does not exist
 
 ### CLI Command:
 
@@ -2056,31 +2096,34 @@ Modifies an account role.  Anything but `id` can be modified.
 
 ### Inputs
 
-|| **Field** || **Type** ||**Description**                                    ||
-|| name      || String   || The role's name                                   ||
-|| policies  || Array    || This account's policies to be given to this role (Optional)    ||
-|| members   || Array    || This account's user logins to be added to this role (Optional) ||
-|| default_members || Array || This account's user logins to be added to this role and have it enabled by default (Optional) ||
+**Field** | **Type** |**Description**
+--------- | -------- | --------------
+name      | String   | The role's name
+policies  | Array    | This account's policies to be given to this role (Optional)
+members   | Array    | This account's user logins to be added to this role (Optional)
+default_members | Array | This account's user logins to be added to this role and have it enabled by default (Optional)
 
 ### Returns
 
 Account role
 
-|| **Field** || **Type** || **Description**                                   ||
-|| id        || UUID     || Unique id for this role                           ||
-|| name      || String   || The role name                                     ||
-|| policies  || Array    || This account's policies which this role obeys (Optional)   ||
-|| members   || Array    || This account's user logins this role applies to (Optional) ||
-|| default_members|| Array || This account's user logins this role applies to by default (Optional) ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+id        | UUID     | Unique id for this role
+name      | String   | The role name
+policies  | Array    | This account's policies which this role obeys (Optional)
+members   | Array    | This account's user logins this role applies to (Optional)
+default_members| Array | This account's user logins this role applies to by default (Optional)
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| InvalidArgument  || If member or policies are invalid, e.g. you tried to add an non-existent user ||
-|| MissingParameter || If you didn't send a `name`                            ||
-|| ResourceNotFound || If `:account` does not exist                           ||
+**Error Code**   | **Description**
+---------------- | ---------------
+InvalidArgument  | If member or policies are invalid, e.g. you tried to add an non-existent user
+MissingParameter | If you didn't send a `name`
+ResourceNotFound | If `:account` does not exist
 
 ### CLI Command:
 
@@ -2149,8 +2192,9 @@ Remove a role. `:role` must be the role `id` (a UUID).
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:account` or `:role` do not exist                  ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:account` or `:role` do not exist
 
 ### CLI Command:
 
@@ -2201,24 +2245,27 @@ or just for a given machine using
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| role-tag  || Array    || The list role-tags to be added to this resource   ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+role-tag  | Array    | The list role-tags to be added to this resource
 
 ### Returns
 
 Resource role tags
 
-|| **Field** || **Type** || **Description**                                   ||
-|| name      || String   || Path to the resource                              ||
-|| role-tag  || Array    || The list of role tags assigned to this resource   ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+name      | String   | Path to the resource
+role-tag  | Array    | The list of role tags assigned to this resource
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| InvalidArgument  || The provided resource path is not valid                ||
-|| ResourceNotFound || If `:resource_path` does not exist                     ||
+**Error Code**   | **Description**
+---------------- | ---------------
+InvalidArgument  | The provided resource path is not valid
+ResourceNotFound | If `:resource_path` does not exist
 
 ### CLI Command:
 
@@ -2285,16 +2332,18 @@ Retrieves a list of account policies.
 
 Array of policy objects.  Each policy object has the following fields:
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || UUID     || Unique id for this policy                       ||
-|| name        || String   || The policy name                                 ||
-|| rules       || Array    || One or more Aperture sentences applying to the policy ||
-|| description || String   || A description for this policy                   ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | UUID     | Unique id for this policy
+name        | String   | The policy name
+rules       | Array    | One or more Aperture sentences applying to the policy
+description | String   | A description for this policy
 
 ### Errors
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:account` does not exist                           ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:account` does not exist
 
 ### CLI Command:
 
@@ -2347,16 +2396,18 @@ Get an account policy (`:policy`) by `id`.
 
 ### Returns
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || UUID     || Unique id for this policy                       ||
-|| name        || String   || The policy name                                 ||
-|| rules       || Array    || One or more Aperture sentences applying to the policy ||
-|| description || String   || A description for this policy                   ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | UUID     | Unique id for this policy
+name        | String   | The policy name
+rules       | Array    | One or more Aperture sentences applying to the policy
+description | String   | A description for this policy
 
 ### Errors
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:account` or `:role` do not exist                  ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:account` or `:role` do not exist
 
 
 ### CLI Command:
@@ -2404,23 +2455,26 @@ Creates a new account policy.
 
 ### Inputs
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| name        || String   || The policy name                                 ||
-|| rules       || Array    || One or more Aperture sentences to be added to the current policy ||
-|| description || String   || A description for this policy (Optional)        ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+name        | String   | The policy name
+rules       | Array    | One or more Aperture sentences to be added to the current policy
+description | String   | A description for this policy (Optional)
 
 ### Returns
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || UUID     || Unique id for this policy                       ||
-|| name        || String   || The policy name                                 ||
-|| rules       || Array    || One or more Aperture sentences applying to the policy ||
-|| description || String   || A description for this policy                   ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | UUID     | Unique id for this policy
+name        | String   | The policy name
+rules       | Array    | One or more Aperture sentences applying to the policy
+description | String   | A description for this policy
 
 ### Errors
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:account` or `:role` do not exist                  ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:account` or `:role` do not exist
 
 ### CLI Command:
 
@@ -2476,23 +2530,26 @@ Upgrades an existing account policy.  Everything but id can be modified.
 
 ### Inputs
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| name        || String   || The policy name                                 ||
-|| rules       || Array    || One or more Aperture sentences to be added to the current policy ||
-|| description || String   || A description for this policy (Optional)        ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+name        | String   | The policy name
+rules       | Array    | One or more Aperture sentences to be added to the current policy
+description | String   | A description for this policy (Optional)
 
 ### Returns
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || UUID     || Unique id for this policy                       ||
-|| name        || String   || The policy name                                 ||
-|| rules       || Array    || One or more Aperture sentences applying to the policy ||
-|| description || String   || A description for this policy                   ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | UUID     | Unique id for this policy
+name        | String   | The policy name
+rules       | Array    | One or more Aperture sentences applying to the policy
+description | String   | A description for this policy
 
 ### Errors
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:account` or `:role` do not exist                  ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:account` or `:role` do not exist
 
 ### CLI Command:
 
@@ -2555,8 +2612,9 @@ Delete an RBAC policy. `:policy` must be the policy `id` (a UUID).
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:account` or `:policy` do not exist                ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:account` or `:policy` do not exist
 
 ### CLI Command:
 
@@ -2702,8 +2760,9 @@ Updates configuration values for your account.
 
 ### Inputs
 
-|| **Field**       || **Type** || **Description** ||
-|| default_network || String   || ID of the network used for provisioning docker containers ||
+**Field**       | **Type** | **Description**
+--------------- | -------- | ---------------
+default_network | String   | ID of the network used for provisioning docker containers
 
 ### Returns
 
@@ -2768,15 +2827,17 @@ Provides a list of all datacenters this cloud is aware of.
 An object where the keys are the datacenter name, and the value is the URL
 endpoint of that datacenter's CloudAPI.
 
-|| **Field**       || **Type** || **Description**                             ||
-|| $datacentername || URL      || location of the datacenter                  ||
+**Field**       | **Type** | **Description**
+--------------- | -------- | ---------------
+$datacentername | URL      | location of the datacenter
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` does not exist                             ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
@@ -2835,8 +2896,9 @@ URL itself.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` does not exist or `:name` does not exist   ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist or `:name` does not exist
 
 ### CLI Command
 
@@ -2892,15 +2954,17 @@ service name to URL endpoint.
 An object where the keys are the service name, and the value is the URL
 endpoint.
 
-|| **Field**    || **Type** || **Description**                                ||
-|| $serviceName || URL      || URL endpoint of that service                   ||
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+$serviceName | URL      | URL endpoint of that service
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` does not exist                             ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
@@ -2962,41 +3026,43 @@ You must use `docker images` against the
 The following optional query parameters are available to filter the list of
 images:
 
-|| **Field** || **Type** || **Description**                                   ||
-|| name      || String   || The "friendly" name for this image                ||
-|| os        || String   || The underlying operating system for this image    ||
-|| version   || String   || The version for this image                        ||
-|| public    || Boolean  || Filter public/private images                      ||
-|| state     || String   || Filter on image [state](https://images.joyent.com/docs/#manifest-state). By default only active images are shown. Use `?state=all` to list all images ||
-|| owner     || String   || Filter on owner UUID                              ||
-|| type      || String   || Filter on image type. The types changed in v8.0.0 ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+name      | String   | The "friendly" name for this image
+os        | String   | The underlying operating system for this image
+version   | String   | The version for this image
+public    | Boolean  | Filter public/private images
+state     | String   | Filter on image [state](https://images.joyent.com/docs/#manifest-state). By default only active images are shown. Use `?state=all` to list all images
+owner     | String   | Filter on owner UUID
+type      | String   | Filter on image type. The types changed in v8.0.0
 
 ### Returns
 
 An array of images.  Image objects include the following fields:
 
-|| **Field**    || **Type** || **Description**                                ||
-|| id           || UUID     || Unique id for this image                       ||
-|| name         || String   || The "friendly" name for this image             ||
-|| os           || String   || The underlying operating system for this image ||
-|| version      || String   || The version for this image                     ||
-|| type         || String   || What kind of image this is. The values differ after v8.0.0+ ||
-|| requirements || Object   || Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided ||
-|| homepage     || String   || The URL for a web page with more detailed information for this image ||
-|| files        || Array    || An array of image files that make up each image. Currently only a single file per image is supported ||
-|| files[0].compression || String || The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none' ||
-|| files[0].sha1        || String || SHA-1 hex digest of the file content. Used for corruption checking ||
-|| files[0].size        || Number || File size in bytes                       ||
-|| published_at || ISO8859 date || The time this image has been made publicly available ||
-|| owner        || String   || The UUID of the user who owns this image       ||
-|| public       || Boolean  || Indicates if this image is publicly available  ||
-|| state        || String   || The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed' ||
-|| tags         || Object   || An object of key/value pairs that allows clients to categorize images by any given criteria ||
-|| eula         || String   || URL of the End User License Agreement (EULA) for the image ||
-|| acl          || Array    || Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
-|| error        || Object   || If `state=="failed"`, resulting from [CreateImageFromMachine](#CreateImageFromMachine) failure, then there may be an error object of the form `{"code": "<string error code>", "message": "<string desc>"}` ||
-|| error.code   || String   || A CamelCase string code for this error, e.g. "PrepareImageDidNotRun". See [GetImage](#GetImage) docs for a table of error.code values ||
-|| error.message|| String   || A short description of the image creation failure ||
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+id           | UUID     | Unique id for this image
+name         | String   | The "friendly" name for this image
+os           | String   | The underlying operating system for this image
+version      | String   | The version for this image
+type         | String   | What kind of image this is. The values differ after v8.0.0+
+requirements | Object   | Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided
+homepage     | String   | The URL for a web page with more detailed information for this image
+files        | Array    | An array of image files that make up each image. Currently only a single file per image is supported
+files[0].compression | String | The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'
+files[0].sha1        | String | SHA-1 hex digest of the file content. Used for corruption checking
+files[0].size        | Number | File size in bytes
+published_at | ISO8859 date | The time this image has been made publicly available
+owner        | String   | The UUID of the user who owns this image
+public       | Boolean  | Indicates if this image is publicly available
+state        | String   | The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed'
+tags         | Object   | An object of key/value pairs that allows clients to categorize images by any given criteria
+eula         | String   | URL of the End User License Agreement (EULA) for the image
+acl          | Array    | Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.
+error        | Object   | If `state=="failed"`, resulting from [CreateImageFromMachine](#CreateImageFromMachine) failure, then there may be an error object of the form `{"code": "<string error code>", "message": "<string desc>"}`
+error.code   | String   | A CamelCase string code for this error, e.g. "PrepareImageDidNotRun". See [GetImage](#GetImage) docs for a table of error.code values
+error.message| String   | A short description of the image creation failure
 
 <!-- TODO: list possible error.code values, link to troubleshooting docs -->
 
@@ -3004,8 +3070,9 @@ An array of images.  Image objects include the following fields:
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `login` does not exist                              ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `login` does not exist
 
 ### CLI Command
 
@@ -3080,36 +3147,38 @@ None
 
 ### Returns
 
-|| **Field**    || **Type** || **Description**                                ||
-|| id           || UUID     || Unique id for this image                       ||
-|| name         || String   || The "friendly" name for this image             ||
-|| os           || String   || The underlying operating system for this image ||
-|| version      || String   || The version for this image                     ||
-|| type         || String   || What kind of image this is. The values differ after v8.0.0+ ||
-|| requirements || Object   || Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided ||
-|| homepage     || String   || The URL for a web page with more detailed information for this image ||
-|| files        || Array    || An array of image files that make up each image. Currently only a single file per image is supported ||
-|| files[0].compression || String || The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none' ||
-|| files[0].sha1        || String || SHA-1 hex digest of the file content. Used for corruption checking ||
-|| files[0].size        || Number || File size in bytes                       ||
-|| published_at || ISO8859 date || The time this image has been made publicly available ||
-|| owner        || String   || The UUID of the user who owns this image       ||
-|| public       || Boolean  || Indicates if this image is publicly available  ||
-|| state        || String   || The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed' ||
-|| tags         || Object   || An object of key/value pairs that allows clients to categorize images by any given criteria ||
-|| eula         || String   || URL of the End User License Agreement (EULA) for the image ||
-|| acl          || Array    || Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.||
-|| error        || Object   || If `state=="failed"`, resulting from [CreateImageFromMachine](#CreateImageFromMachine) failure, then there may be an error object of the form `{"code": "<string error code>", "message": "<string desc>"}` ||
-|| error.code   || String   || A CamelCase string code for this error, e.g. "PrepareImageDidNotRun". See [GetImage](#GetImage) docs for a table of error.code values ||
-|| error.message|| String   || A short description of the image creation failure ||
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+id           | UUID     | Unique id for this image
+name         | String   | The "friendly" name for this image
+os           | String   | The underlying operating system for this image
+version      | String   | The version for this image
+type         | String   | What kind of image this is. The values differ after v8.0.0+
+requirements | Object   | Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided
+homepage     | String   | The URL for a web page with more detailed information for this image
+files        | Array    | An array of image files that make up each image. Currently only a single file per image is supported
+files[0].compression | String | The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'
+files[0].sha1        | String | SHA-1 hex digest of the file content. Used for corruption checking
+files[0].size        | Number | File size in bytes
+published_at | ISO8859 date | The time this image has been made publicly available
+owner        | String   | The UUID of the user who owns this image
+public       | Boolean  | Indicates if this image is publicly available
+state        | String   | The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed'
+tags         | Object   | An object of key/value pairs that allows clients to categorize images by any given criteria
+eula         | String   | URL of the End User License Agreement (EULA) for the image
+acl          | Array    | Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.
+error        | Object   | If `state=="failed"`, resulting from [CreateImageFromMachine](#CreateImageFromMachine) failure, then there may be an error object of the form `{"code": "<string error code>", "message": "<string desc>"}`
+error.code   | String   | A CamelCase string code for this error, e.g. "PrepareImageDidNotRun". See [GetImage](#GetImage) docs for a table of error.code values
+error.message| String   | A short description of the image creation failure
 
 Possible `error.code` values:
 
-|| **error.code** || **Details**                                              ||
-|| PrepareImageDidNotRun || This typically means that the target KVM machine (e.g. Linux) has old guest tools that pre-date the image creation feature. Guest tools can be upgraded with installers at <https://download.joyent.com/pub/guest-tools/>. Other possibilities are: a boot time greater than the five-minute timeout, or a bug or crash in the image-preparation script ||
-|| VmHasNoOrigin  || Origin image data could not be found for the machine. Typically this is for a machine *migrated* before image creation support was added ||
-|| NotSupported   || Indicates an error due to functionality that isn't currently supported. One example is that custom image creation of a VM based on a custom image isn't currently supported ||
-|| InternalError  || A catch-all error for unexpected or internal errors      ||
+**error.code** | **Details**
+-------------- | -----------
+PrepareImageDidNotRun | This typically means that the target KVM machine (e.g. Linux) has old guest tools that pre-date the image creation feature. Guest tools can be upgraded with installers at <https://download.joyent.com/pub/guest-tools/>. Other possibilities are: a boot time greater than the five-minute timeout, or a bug or crash in the image-preparation script
+VmHasNoOrigin  | Origin image data could not be found for the machine. Typically this is for a machine *migrated* before image creation support was added
+NotSupported   | Indicates an error due to functionality that isn't currently supported. One example is that custom image creation of a VM based on a custom image isn't currently supported
+InternalError  | A catch-all error for unexpected or internal errors
 
 ### Errors
 
@@ -3191,8 +3260,9 @@ Responds with HTTP 204 'No Content'.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -3251,8 +3321,9 @@ the following shows how to export foo-1.0.0 with a custom name:
 
 ### Inputs
 
-|| **Field**  || **Type** || **Description**                                  ||
-|| manta_path || String   || Manta path prefix used when exporting the image  ||
+**Field**  | **Type** | **Description**
+---------- | -------- | ---------------
+manta_path | String   | Manta path prefix used when exporting the image
 
 ### Returns
 
@@ -3264,8 +3335,9 @@ image_path, manifest_path.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -3318,46 +3390,49 @@ All inputs except `machine` are image manifest fields as defined by
 [the IMGAPI docs](https://images.joyent.com/docs/#image-manifests).  Note that
 not all fields listed there can be specified here.
 
-|| **Field**   || **Type** || **Required?** || **Description**                ||
-|| machine     || UUID     || Yes || The prepared and stopped machine UUID from which the image is to be created ||
-|| name        || String   || Yes || The name of the custom image, e.g. "my-image". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-name) for details    ||
-|| version     || String   || Yes || The version of the custom image, e.g. "1.0.0". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-version) for details ||
-|| description || String   || No  || The image [description](https://images.joyent.com/docs/#manifest-description) ||
-|| homepage    || String   || No  || The image [homepage](https://images.joyent.com/docs/#manifest-homepage) ||
-|| eula        || String   || No  || The image [eula](https://images.joyent.com/docs/#manifest-eula) ||
-|| acl         || String   || No  || The image [acl](https://images.joyent.com/docs/#manifest-acl)   ||
-|| tags        || String   || No  || The image [tags](https://images.joyent.com/docs/#manifest-tags) ||
+**Field**   | **Type** | **Required?** | **Description**
+----------- | -------- | ------------- | ---------------
+machine     | UUID     | Yes | The prepared and stopped machine UUID from which the image is to be created
+name        | String   | Yes | The name of the custom image, e.g. "my-image". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-name) for details
+version     | String   | Yes | The version of the custom image, e.g. "1.0.0". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-version) for details
+description | String   | No  | The image [description](https://images.joyent.com/docs/#manifest-description)
+homepage    | String   | No  | The image [homepage](https://images.joyent.com/docs/#manifest-homepage)
+eula        | String   | No  | The image [eula](https://images.joyent.com/docs/#manifest-eula)
+acl         | String   | No  | The image [acl](https://images.joyent.com/docs/#manifest-acl)
+tags        | String   | No  | The image [tags](https://images.joyent.com/docs/#manifest-tags)
 
 ### Returns
 
-|| **Field**    || **Type** || **Description**                                ||
-|| id           || UUID     || Unique id for this image                       ||
-|| name         || String   || The "friendly" name for this image             ||
-|| os           || String   || The underlying operating system for this image ||
-|| version      || String   || The version for this image                     ||
-|| type         || String   || What kind of image this is. The values differ after v8.0.0+ ||
-|| requirements || Object   || Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided ||
-|| homepage     || String   || The URL for a web page with more detailed information for this image ||
-|| files        || Array    || An array of image files that make up each image. Currently only a single file per image is supported ||
-|| files[0].compression || String ||The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none' ||
-|| files[0].sha1        || String || SHA-1 hex digest of the file content. Used for corruption checking ||
-|| files[0].size        || Number || File size in bytes                       ||
-|| published_at || ISO8859 date || The time this image has been made publicly available ||
-|| owner        || String   || The UUID of the user who owns this image       ||
-|| public       || Boolean  || Indicates if this image is publicly available  ||
-|| state        || String   || The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed' ||
-|| tags         || Object   || An object of key/value pairs that allows clients to categorize images by any given criteria ||
-|| eula         || String   || URL of the End User License Agreement (EULA) for the image ||
-|| acl          || Array    || Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images ||
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+id           | UUID     | Unique id for this image
+name         | String   | The "friendly" name for this image
+os           | String   | The underlying operating system for this image
+version      | String   | The version for this image
+type         | String   | What kind of image this is. The values differ after v8.0.0+
+requirements | Object   | Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided
+homepage     | String   | The URL for a web page with more detailed information for this image
+files        | Array    | An array of image files that make up each image. Currently only a single file per image is supported
+files[0].compression | String |The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'
+files[0].sha1        | String | SHA-1 hex digest of the file content. Used for corruption checking
+files[0].size        | Number | File size in bytes
+published_at | ISO8859 date | The time this image has been made publicly available
+owner        | String   | The UUID of the user who owns this image
+public       | Boolean  | Indicates if this image is publicly available
+state        | String   | The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed'
+tags         | Object   | An object of key/value pairs that allows clients to categorize images by any given criteria
+eula         | String   | URL of the End User License Agreement (EULA) for the image
+acl          | Array    | Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images
 
 ### Errors
 
 For general errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 Some typical and specific errors for this endpoint:
 
-|| **Error Code** || **Description**                                          ||
-|| InsufficientServerVersionError || The `machine` given is running on a server that is too old ||
-|| NotAvailable   || Typically this indicates that image creation is not supported for the OS of the given VM ||
+**Error Code** | **Description**
+-------------- | ---------------
+InsufficientServerVersionError | The `machine` given is running on a server that is too old
+NotAvailable   | Typically this indicates that image creation is not supported for the OS of the given VM
 
 <!-- TODO: integrate these errors into the general table above -->
 
@@ -3417,46 +3492,49 @@ Updates metadata about an image.
 
 Only the image attributes listed below can be updated.
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| name        || String   || The name of the custom image, e.g. "my-image". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-name) for details    ||
-|| version     || String   || The version of the custom image, e.g. "1.0.0". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-version) for details ||
-|| description || String   || The image [description](https://images.joyent.com/docs/#manifest-description) ||
-|| homepage    || String   || The image [homepage](https://images.joyent.com/docs/#manifest-homepage) ||
-|| eula        || String   || The image [eula](https://images.joyent.com/docs/#manifest-eula) ||
-|| acl         || String   || The image [acl](https://images.joyent.com/docs/#manifest-acl)   ||
-|| tags        || String   || The image [tags](https://images.joyent.com/docs/#manifest-tags) ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+name        | String   | The name of the custom image, e.g. "my-image". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-name) for details
+version     | String   | The version of the custom image, e.g. "1.0.0". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-version) for details
+description | String   | The image [description](https://images.joyent.com/docs/#manifest-description)
+homepage    | String   | The image [homepage](https://images.joyent.com/docs/#manifest-homepage)
+eula        | String   | The image [eula](https://images.joyent.com/docs/#manifest-eula)
+acl         | String   | The image [acl](https://images.joyent.com/docs/#manifest-acl)
+tags        | String   | The image [tags](https://images.joyent.com/docs/#manifest-tags)
 
 ### Returns
 
 An updated image object.
 
-|| **Field**    || **Type** || **Description**                                ||
-|| id           || UUID     || Unique id for this image                       ||
-|| name         || String   || The "friendly" name for this image             ||
-|| os           || String   || The underlying operating system for this image ||
-|| version      || String   || The version for this image                     ||
-|| type         || String   || What kind of image this is. The values differ after v8.0.0+ ||
-|| requirements || Object   || Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided ||
-|| homepage     || String   || The URL for a web page with more detailed information for this image ||
-|| files        || Array    || An array of image files that make up each image. Currently only a single file per image is supported ||
-|| files[0].compression || String ||The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none' ||
-|| files[0].sha1        || String || SHA-1 hex digest of the file content. Used for corruption checking ||
-|| files[0].size        || Number || File size in bytes                       ||
-|| published_at || ISO8859 date || The time this image has been made publicly available ||
-|| owner        || String   || The UUID of the user who owns this image       ||
-|| public       || Boolean  || Indicates if this image is publicly available  ||
-|| state        || String   || The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed' ||
-|| tags         || Object   || An object of key/value pairs that allows clients to categorize images by any given criteria ||
-|| eula         || String   || URL of the End User License Agreement (EULA) for the image ||
-|| acl          || Array    || Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images ||
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+id           | UUID     | Unique id for this image
+name         | String   | The "friendly" name for this image
+os           | String   | The underlying operating system for this image
+version      | String   | The version for this image
+type         | String   | What kind of image this is. The values differ after v8.0.0+
+requirements | Object   | Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided
+homepage     | String   | The URL for a web page with more detailed information for this image
+files        | Array    | An array of image files that make up each image. Currently only a single file per image is supported
+files[0].compression | String |The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'
+files[0].sha1        | String | SHA-1 hex digest of the file content. Used for corruption checking
+files[0].size        | Number | File size in bytes
+published_at | ISO8859 date | The time this image has been made publicly available
+owner        | String   | The UUID of the user who owns this image
+public       | Boolean  | Indicates if this image is publicly available
+state        | String   | The current state of the image. One of 'active', 'unactivated', 'disabled', 'creating', 'failed'
+tags         | Object   | An object of key/value pairs that allows clients to categorize images by any given criteria
+eula         | String   | URL of the End User License Agreement (EULA) for the image
+acl          | Array    | Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images
 
 ### Errors
 
 For general errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 Some typical and specific errors for this endpoint:
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### Example CLI Command
 
@@ -3522,15 +3600,16 @@ Provides a list of packages available in this datacenter.
 
 * The following are all optional inputs:
 
-|| **Field**  || **Type** || **Description**                                  ||
-|| name       || String   || The "friendly" name for this package             ||
-|| memory     || Number   || How much memory will by available (in MiB)       ||
-|| disk       || Number   || How much disk space will be available (in MiB)   ||
-|| swap       || Number   || How much swap space will be available (in MiB)   ||
-|| lwps       || Number   || Maximum number of light-weight processes (threads) allowed ||
-|| vcpus      || Number   || Number of vCPUs for this package                 ||
-|| version    || String   || The version of this package                      ||
-|| group      || String   || The group this package belongs to                ||
+**Field**  | **Type** | **Description**
+---------- | -------- | ---------------
+name       | String   | The "friendly" name for this package
+memory     | Number   | How much memory will by available (in MiB)
+disk       | Number   | How much disk space will be available (in MiB)
+swap       | Number   | How much swap space will be available (in MiB)
+lwps       | Number   | Maximum number of light-weight processes (threads) allowed
+vcpus      | Number   | Number of vCPUs for this package
+version    | String   | The version of this package
+group      | String   | The group this package belongs to
 
 When any values are provided for one or more of the aforementioned inputs, the
 retrieved packages will match all of them.
@@ -3539,25 +3618,27 @@ retrieved packages will match all of them.
 
 An array of objects, of the form:
 
-|| **Field**  || **Type** || **Description**                                  ||
-|| id         || UUID     || Unique id for this package                       ||
-|| name       || String   || The "friendly" name for this package             ||
-|| memory     || Number   || How much memory will by available (in MiB)       ||
-|| disk       || Number   || How much disk space will be available (in MiB)   ||
-|| swap       || Number   || How much swap space will be available (in MiB)   ||
-|| lwps       || Number   || Maximum number of light-weight processes (threads) allowed ||
-|| vcpus      || Number   || Number of vCPUs for this package                 ||
-|| version    || String   || The version of this package                      ||
-|| group      || String   || The group this package belongs to                ||
-|| description || String  || A human-friendly description about this package  ||
-|| default    || Boolean  || (deprecated) Whether this is the default package in this datacenter ||
+**Field**  | **Type** | **Description**
+---------- | -------- | ---------------
+id         | UUID     | Unique id for this package
+name       | String   | The "friendly" name for this package
+memory     | Number   | How much memory will by available (in MiB)
+disk       | Number   | How much disk space will be available (in MiB)
+swap       | Number   | How much swap space will be available (in MiB)
+lwps       | Number   | Maximum number of light-weight processes (threads) allowed
+vcpus      | Number   | Number of vCPUs for this package
+version    | String   | The version of this package
+group      | String   | The group this package belongs to
+description | String  | A human-friendly description about this package
+default    | Boolean  | (deprecated) Whether this is the default package in this datacenter
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` does not exist                             ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
@@ -3618,25 +3699,27 @@ Gets a package by `name` or `id`.
 
 ### Returns
 
-|| **Field**  || **Type** || **Description**                                  ||
-|| id         || UUID     || Unique id for this package                       ||
-|| name       || String   || The "friendly" name for this package             ||
-|| memory     || Number   || How much memory will by available (in MiB)       ||
-|| disk       || Number   || How much disk space will be available (in MiB)   ||
-|| swap       || Number   || How much swap space will be available (in MiB)   ||
-|| lwps       || Number   || Maximum number of light-weight processes (threads) allowed ||
-|| vcpus      || Number   || Number of vCPUs for this package                 ||
-|| version    || String   || The version of this package                      ||
-|| group      || String   || The group this package belongs to                ||
-|| description || String  || A human-friendly description about this package  ||
-|| default    || Boolean  || (deprecated) Whether this is the default package in this datacenter ||
+**Field**  | **Type** | **Description**
+---------- | -------- | ---------------
+id         | UUID     | Unique id for this package
+name       | String   | The "friendly" name for this package
+memory     | Number   | How much memory will by available (in MiB)
+disk       | Number   | How much disk space will be available (in MiB)
+swap       | Number   | How much swap space will be available (in MiB)
+lwps       | Number   | Maximum number of light-weight processes (threads) allowed
+vcpus      | Number   | Number of vCPUs for this package
+version    | String   | The version of this package
+group      | String   | The group this package belongs to
+description | String  | A human-friendly description about this package
+default    | Boolean  | (deprecated) Whether this is the default package in this datacenter
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -3704,19 +3787,20 @@ machines themselves.
 
 ### Inputs
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| type        || String   || (deprecated) The type of machine (virtualmachine or smartmachine) ||
-|| brand       || String   || (v8.0+) The type of machine (e.g. lx)           ||
-|| name        || String   || Machine name to find (will make your list size 1, or 0 if nothing found) ||
-|| image       || String   || Image id; returns machines provisioned with that image        ||
-|| state       || String   || The current state of the machine (e.g. running) ||
-|| memory      || Number   || The current size of the RAM deployed for the machine (in MiB) ||
-|| tombstone   || Number   || Include machines destroyed in the last N minutes              ||
-|| limit       || Number   || Return a max of N machines; default is 1000 (which is also the maximum allowable result set size) ||
-|| offset      || Number   || Get a `limit` number of machines starting at this `offset`    ||
-|| tag.$name   || String   || An arbitrary set of tags can be used for querying, assuming they are prefixed with "tag." ||
-|| docker      || Boolean  || Whether to only list Docker instances, or only non-Docker instances, if present. Defaults to showing all instances.   ||
-|| credentials || Boolean  || Whether to include the generated credentials for machines, if present. Defaults to false  ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+type        | String   | (deprecated) The type of machine (virtualmachine or smartmachine)
+brand       | String   | (v8.0+) The type of machine (e.g. lx)
+name        | String   | Machine name to find (will make your list size 1, or 0 if nothing found)
+image       | String   | Image id; returns machines provisioned with that image
+state       | String   | The current state of the machine (e.g. running)
+memory      | Number   | The current size of the RAM deployed for the machine (in MiB)
+tombstone   | Number   | Include machines destroyed in the last N minutes
+limit       | Number   | Return a max of N machines; default is 1000 (which is also the maximum allowable result set size)
+offset      | Number   | Get a `limit` number of machines starting at this `offset`
+tag.$name   | String   | An arbitrary set of tags can be used for querying, assuming they are prefixed with "tag."
+docker      | Boolean  | Whether to only list Docker instances, or only non-Docker instances, if present. Defaults to showing all instances.
+credentials | Boolean  | Whether to include the generated credentials for machines, if present. Defaults to false
 
 Note that if the special input `tags=*` is provided, any other input will be
 completely ignored and the response will return all machines with any tag.
@@ -3725,29 +3809,31 @@ completely ignored and the response will return all machines with any tag.
 
 An array of machine objects, which contain:
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || UUID     || Unique id for this machine                      ||
-|| name        || String   || The "friendly" name for this machine            ||
-|| type        || String   || (deprecated) The type of machine (virtualmachine or smartmachine) ||
-|| brand       || String   || (v8.0+) The type of machine (e.g. lx)           ||
-|| state       || String   || The current state of this machine (e.g. running)||
-|| memory      || Number   || The amount of RAM this machine has (in MiB)     ||
-|| disk        || Number   || The amount of disk this machine has (in MiB)    ||
-|| ips         || Array[String] || The IP addresses this machine has          ||
-|| metadata    || Object[String => String] || Any additional metadata this machine has  ||
-|| package     || String   || The id or name of the package used to create this machine ||
-|| image       || String   || The image id this machine was provisioned with  ||
-|| docker      || Boolean  || Whether this machine is a Docker container, if present    ||
-|| created     || ISO8601 date || When this machine was created               ||
-|| updated     || ISO8601 date || When this machine's details was last updated          ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | UUID     | Unique id for this machine
+name        | String   | The "friendly" name for this machine
+type        | String   | (deprecated) The type of machine (virtualmachine or smartmachine)
+brand       | String   | (v8.0+) The type of machine (e.g. lx)
+state       | String   | The current state of this machine (e.g. running)
+memory      | Number   | The amount of RAM this machine has (in MiB)
+disk        | Number   | The amount of disk this machine has (in MiB)
+ips         | Array[String] | The IP addresses this machine has
+metadata    | Object[String => String] | Any additional metadata this machine has
+package     | String   | The id or name of the package used to create this machine
+image       | String   | The image id this machine was provisioned with
+docker      | Boolean  | Whether this machine is a Docker container, if present
+created     | ISO8601 date | When this machine was created
+updated     | ISO8601 date | When this machine's details was last updated
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` does not exist                             ||
-|| InvalidArgument  || If one of the input parameters was invalid             ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
+InvalidArgument  | If one of the input parameters was invalid
 
 ### CLI Command
 
@@ -3868,28 +3954,30 @@ Gets the details for an individual machine.
 
 ### Returns
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || UUID     || Unique id for this machine                      ||
-|| name        || String   || The "friendly" name for this machine            ||
-|| type        || String   || (deprecated) The type of machine (virtualmachine or smartmachine) ||
-|| brand       || String   || (v8.0+) The type of machine (e.g. lx)           ||
-|| state       || String   || The current state of this machine (e.g. running)||
-|| memory      || Number   || The amount of RAM this machine has (in MiB)     ||
-|| disk        || Number   || The amount of disk this machine has (in MiB)    ||
-|| ips         || Array[String] || The IP addresses this machine has          ||
-|| metadata    || Object[String => String] || Any additional metadata this machine has  ||
-|| package     || String   || The id or name of the package used to create this machine ||
-|| image       || String   || The image id this machine was provisioned with  ||
-|| docker      || Boolean  || Whether this machine is a Docker container, if present    ||
-|| created     || ISO8601 date || When this machine was created               ||
-|| updated     || ISO8601 date || When this machine's details was last updated          ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | UUID     | Unique id for this machine
+name        | String   | The "friendly" name for this machine
+type        | String   | (deprecated) The type of machine (virtualmachine or smartmachine)
+brand       | String   | (v8.0+) The type of machine (e.g. lx)
+state       | String   | The current state of this machine (e.g. running)
+memory      | Number   | The amount of RAM this machine has (in MiB)
+disk        | Number   | The amount of disk this machine has (in MiB)
+ips         | Array[String] | The IP addresses this machine has
+metadata    | Object[String => String] | Any additional metadata this machine has
+package     | String   | The id or name of the package used to create this machine
+image       | String   | The image id this machine was provisioned with
+docker      | Boolean  | Whether this machine is a Docker container, if present
+created     | ISO8601 date | When this machine was created
+updated     | ISO8601 date | When this machine's details was last updated
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -4035,42 +4123,45 @@ space can only be found on the same server as the given machine UUIDs.
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| name      || String   || Friendly name for this machine; default is the first 8 characters of the machine id ||
-|| package   || String   || Id of the package to use on provisioning, obtained from [ListPackages](#ListPackages) ||
-|| image     || String   || The image UUID (the "id" field in [ListImages](#ListImages)) ||
-|| networks  || Array    || Desired networks ids, obtained from [ListNetworks](#ListNetworks) ||
-|| locality  || Object[String => Array] || Optionally specify which machines the new machine should be near or far from ||
-|| metadata.$name || String || An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata." ||
-|| tag.$name || String   || An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag." ||
-|| firewall_enabled || Boolean || Completely enable or disable firewall for this machine. Default is false ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+name      | String   | Friendly name for this machine; default is the first 8 characters of the machine id
+package   | String   | Id of the package to use on provisioning, obtained from [ListPackages](#ListPackages)
+image     | String   | The image UUID (the "id" field in [ListImages](#ListImages))
+networks  | Array    | Desired networks ids, obtained from [ListNetworks](#ListNetworks)
+locality  | Object[String => Array] | Optionally specify which machines the new machine should be near or far from
+metadata.$name | String | An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata."
+tag.$name | String   | An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag."
+firewall_enabled | Boolean | Completely enable or disable firewall for this machine. Default is false
 
 ### Returns
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || UUID     || Unique id for this machine                      ||
-|| name        || String   || The "friendly" name for this machine            ||
-|| type        || String   || (deprecated) The type of machine (virtualmachine or smartmachine) ||
-|| brand       || String   || (v8.0+) The type of machine (e.g. lx)           ||
-|| state       || String   || The current state of this machine (e.g. running)||
-|| memory      || Number   || The amount of RAM this machine has (in MiB)     ||
-|| disk        || Number   || The amount of disk this machine has (in MiB)    ||
-|| ips         || Array[String] || The IP addresses this machine has          ||
-|| metadata    || Object[String => String] || Any additional metadata this machine has  ||
-|| package     || String   || The id or name of the package used to create this machine ||
-|| image       || String   || The image id this machine was provisioned with  ||
-|| docker      || Boolean  || Whether this machine is a Docker container, if present    ||
-|| created     || ISO8601 date || When this machine was created               ||
-|| updated     || ISO8601 date || When this machine's details was last updated          ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | UUID     | Unique id for this machine
+name        | String   | The "friendly" name for this machine
+type        | String   | (deprecated) The type of machine (virtualmachine or smartmachine)
+brand       | String   | (v8.0+) The type of machine (e.g. lx)
+state       | String   | The current state of this machine (e.g. running)
+memory      | Number   | The amount of RAM this machine has (in MiB)
+disk        | Number   | The amount of disk this machine has (in MiB)
+ips         | Array[String] | The IP addresses this machine has
+metadata    | Object[String => String] | Any additional metadata this machine has
+package     | String   | The id or name of the package used to create this machine
+image       | String   | The image id this machine was provisioned with
+docker      | Boolean  | Whether this machine is a Docker container, if present
+created     | ISO8601 date | When this machine was created
+updated     | ISO8601 date | When this machine's details was last updated
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**       || **Description**                                    ||
-|| ResourceNotFound     || If `:login` does not exist                         ||
-|| InsufficientCapacity || There isn't enough capacity in this datacenter     ||
-|| InvalidArgument      || If one of the input parameters was invalid         ||
+**Error Code**       | **Description**
+-------------------- | ---------------
+ResourceNotFound     | If `:login` does not exist
+InsufficientCapacity | There isn't enough capacity in this datacenter
+InvalidArgument      | If one of the input parameters was invalid
 
 ### CLI Command
 
@@ -4171,8 +4262,9 @@ You can poll on [GetMachine](#GetMachine) until the state is `stopped`.
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| action    || String   || Use the exact string "stop"                       ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+action    | String   | Use the exact string "stop"
 
 ### Returns
 
@@ -4182,11 +4274,12 @@ You can poll on [GetMachine](#GetMachine) until the state is `stopped`.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
-|| InvalidState     || The machine is in the wrong state to be stopped        ||
-|| InvalidArgument  || If `action` was invalid                                ||
-|| MissingParameter || If `action` wasn't provided                            ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
+InvalidState     | The machine is in the wrong state to be stopped
+InvalidArgument  | If `action` was invalid
+MissingParameter | If `action` wasn't provided
 
 ### CLI Command
 
@@ -4233,8 +4326,9 @@ You can poll on [GetMachine](#GetMachine) until the state is `running`.
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| action    || String   || Use the exact string "start"                      ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+action    | String   | Use the exact string "start"
 
 ### Returns
 
@@ -4244,11 +4338,12 @@ You can poll on [GetMachine](#GetMachine) until the state is `running`.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
-|| InvalidState     || The machine is in the wrong state to be started        ||
-|| InvalidArgument  || If `action` was invalid                                ||
-|| MissingParameter || If `action` wasn't provided                            ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
+InvalidState     | The machine is in the wrong state to be started
+InvalidArgument  | If `action` was invalid
+MissingParameter | If `action` wasn't provided
 
 ### CLI Command
 
@@ -4295,8 +4390,9 @@ You can poll on [GetMachine](#GetMachine) until the state is `running`.
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| action    || String   || Use the exact string "reboot"                     ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+action    | String   | Use the exact string "reboot"
 
 ### Returns
 
@@ -4306,11 +4402,12 @@ You can poll on [GetMachine](#GetMachine) until the state is `running`.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
-|| InvalidState     || The machine is in the wrong state to be stopped        ||
-|| InvalidArgument  || If `action` was invalid                                ||
-|| MissingParameter || If `action` wasn't provided                            ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
+InvalidState     | The machine is in the wrong state to be stopped
+InvalidArgument  | If `action` was invalid
+MissingParameter | If `action` wasn't provided
 
 ### CLI Command
 
@@ -4362,9 +4459,10 @@ succeed.
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| action    || String   || Use the exact string "resize"                     ||
-|| package   || String   || A package id, as returned from [ListPackages](#ListPackages) ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+action    | String   | Use the exact string "resize"
+package   | String   | A package id, as returned from [ListPackages](#ListPackages)
 
 ### Returns
 
@@ -4374,11 +4472,12 @@ succeed.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
-|| InvalidState     || The machine is in the wrong state to be resized        ||
-|| InvalidArgument  || If `action` was invalid, or `package` wasn't a valid id or name ||
-|| MissingParameter || If `action` or `package` wasn't provided               ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
+InvalidState     | The machine is in the wrong state to be resized
+InvalidArgument  | If `action` was invalid, or `package` wasn't a valid id or name
+MissingParameter | If `action` or `package` wasn't provided
 
 ### CLI Command
 
@@ -4418,9 +4517,10 @@ Allows you to rename a machine.  POST to the machine `id` with an action of
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| action    || String   || Use the exact string "rename"                     ||
-|| name      || String   || The new "friendly" name for this machine          ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+action    | String   | Use the exact string "rename"
+name      | String   | The new "friendly" name for this machine
 
 ### Returns
 
@@ -4430,11 +4530,12 @@ Allows you to rename a machine.  POST to the machine `id` with an action of
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
-|| InvalidState     || The machine is in the wrong state to be stopped        ||
-|| InvalidArgument  || If `action` was invalid, or `name` wasn't a valid name ||
-|| MissingParameter || If `action` or `name` wasn't provided                  ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
+InvalidState     | The machine is in the wrong state to be stopped
+InvalidArgument  | If `action` was invalid, or `name` wasn't a valid name
+MissingParameter | If `action` or `name` wasn't provided
 
 ### CLI Command
 
@@ -4474,8 +4575,9 @@ Allows you to enable the firewall for a machine.
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| action    || String   || Use the exact string "enable_firewall"            ||
+**Field** | **Type** | **Description**
+--------- |--------- | ---------------
+action    | String   | Use the exact string "enable_firewall"
 
 ### Returns
 
@@ -4485,11 +4587,12 @@ Allows you to enable the firewall for a machine.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
-|| InvalidState     || The machine is the wrong state to enable firewall      ||
-|| InvalidArgument  || If `action` was invalid                                ||
-|| MissingParameter || If `action` wasn't provided                            ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
+InvalidState     | The machine is the wrong state to enable firewall
+InvalidArgument  | If `action` was invalid
+MissingParameter | If `action` wasn't provided
 
 ### CLI Command
 
@@ -4529,8 +4632,9 @@ Allows you to completely disable the firewall of a machine.
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| action    || String   || Use the exact string "disable_firewall"           ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+action    | String   | Use the exact string "disable_firewall"
 
 ### Returns
 
@@ -4540,11 +4644,12 @@ Allows you to completely disable the firewall of a machine.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
-|| InvalidState     || The machine is the wrong state to disable firewall     ||
-|| InvalidArgument  || If `action` was invalid                                ||
-|| MissingParameter || If `action` wasn't provided                            ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
+InvalidState     | The machine is the wrong state to disable firewall
+InvalidArgument  | If `action` was invalid
+MissingParameter | If `action` wasn't provided
 
 ### CLI Command
 
@@ -4597,22 +4702,25 @@ You can poll on [GetMachineSnapshot](#GetMachineSnapshot) until the `state` is
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| name      || String   || The name to assign to the new snapshot            ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+name      | String   | The name to assign to the new snapshot
 
 ### Returns
 
-|| **Field** || **Type** || **Description**                                   ||
-|| name      || String   || The name of this snapshot                         ||
-|| state     || String   || The current state of the snapshot                 ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+name      | String   | The name of this snapshot
+state     | String   | The current state of the snapshot
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
-|| InvalidArgument  || If `name` was invalid                                  ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
+InvalidArgument  | If `name` was invalid
 
 ### CLI Command
 
@@ -4671,8 +4779,9 @@ the referenced snapshot. This is effectively a means to roll back machine state.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login`, `:id` or `:name` does not exist           ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:id` or `:name` does not exist
 
 ### CLI Command
 
@@ -4715,16 +4824,18 @@ parameters for this API.
 
 An array of snapshots:
 
-|| **Field** || **Type** || **Description**                                   ||
-|| name      || String   || The name of this snapshot                         ||
-|| state     || String   || The current state of the snapshot                 ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+name      | String   | The name of this snapshot
+state     | String   | The current state of the snapshot
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -4775,16 +4886,18 @@ Gets the state of the named snapshot.
 
 ### Returns
 
-|| **Field** || **Type** || **Description**                                   ||
-|| name      || String   || The name of this snapshot                         ||
-|| state     || String   || The current state of the snapshot (poll until it's "created") ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+name      | String   | The name of this snapshot
+state     | String   | The current state of the snapshot (poll until it's "created")
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login`, `:id` or `:name` does not exist           ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:id` or `:name` does not exist
 
 ### CLI Command
 
@@ -4839,8 +4952,9 @@ Deletes the specified snapshot of a machine.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login`, `:id` or `:name` does not exist           ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:id` or `:name` does not exist
 
 ### CLI Command
 
@@ -4882,22 +4996,25 @@ overwritten if they do.
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| $key      || String   || You can assign any number of metadata keys in this call; the string can be either a plain string, or a JSON-encoded object ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+$key      | String   | You can assign any number of metadata keys in this call; the string can be either a plain string, or a JSON-encoded object
 
 ### Returns
 
 Returns the current set of tags.
 
-|| **Field** || **Type** || **Description**                                   ||
-|| $key      || Object   || Your value(s)                                     ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+$key      | Object   | Your value(s)
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -4942,22 +5059,25 @@ Returns the complete set of metadata associated with this machine.
 
 ### Inputs
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| credentials || Boolean  || Whether or not to return machine credentials. Defaults to false ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+credentials | Boolean  | Whether or not to return machine credentials. Defaults to false
 
 ### Returns
 
 Returns the current metadata object
 
-|| **Field** || **Type** || **Description**                                   ||
-|| $name     || Object   || Your metadata                                     ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+$name     | Object   | Your metadata
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -5002,8 +5122,9 @@ Returns a single metadata entry associated with this machine.
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| key       || String   || Name of metadata value to retrieve                ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+key       | String   | Name of metadata value to retrieve
 
 ### Returns
 
@@ -5013,8 +5134,9 @@ Returns metadata value as string.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login`, `:id` or `:key` does not exist            ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:id` or `:key` does not exist
 
 ### CLI Command
 
@@ -5062,8 +5184,9 @@ Deletes a single metadata key from this machine.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login`, `:id` or `:key` does not exist            ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:id` or `:key` does not exist
 
 ### CLI Command
 
@@ -5108,8 +5231,9 @@ Deletes all metadata keys from this machine.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -5152,22 +5276,25 @@ converted into tags on the machine that can be used for searching later.
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| $tagName  || String   || You can assign any number of tags in this call    ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+$tagName  | String   | You can assign any number of tags in this call
 
 ### Returns
 
 Returns the current set of tags.
 
-|| **Field** || **Type** || **Description**                                   ||
-|| $tagName  || String   || Your value                                        ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+$tagName  | String   | Your value
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -5216,22 +5343,25 @@ converted into tags on the machine that can be used for searching later.
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| $tagName  || String   || You can assign any number of tags in this call    ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+$tagName  | String   | You can assign any number of tags in this call
 
 ### Returns
 
 Returns the current set of tags.
 
-|| **Field** || **Type** || **Description**                                   ||
-|| $tagName  || String   || Your value                                        ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+$tagName  | String   | Your value
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -5282,15 +5412,17 @@ Returns the complete set of tags associated with this machine.
 
 Returns the current set of tags.
 
-|| **Field** || **Type** || **Description**                                   ||
-|| $tagName  || String   || Your value                                        ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+$tagName  | String   | Your value
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -5344,8 +5476,9 @@ Returns the value of `:tag` in plain text.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login`, `:id` or `:tag` does not exist            ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:id` or `:tag` does not exist
 
 ### CLI Command
 
@@ -5393,8 +5526,9 @@ Deletes a single tag from this machine.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login`, `:id` or `:tag` does not exist            ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:id` or `:tag` does not exist
 
 ### CLI Command
 
@@ -5438,8 +5572,9 @@ Deletes all tags from a machine.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -5486,9 +5621,10 @@ Allows you to completely destroy a machine.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
-|| InvalidState     || The machine is the wrong state to be deleted           ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
+InvalidState     | The machine is the wrong state to be deleted
 
 ### CLI Command
 
@@ -5533,28 +5669,31 @@ newest to oldest action.
 
 * An array of action objects, which contain:
 
-|| **Field**  || **Type** || **Description**                                  ||
-|| action     || String   || The name of the action                           ||
-|| parameters || Object   || The original set of parameters sent when the action was requested ||
-|| success    || String   || Either "yes" or "no", depending on the action's success ||
-|| caller     || Object   || Account requesting the action                    ||
-|| time       || Date (ISO8601) || When the action finished                   ||
+**Field**  | **Type** | **Description**
+---------- | -------- | ---------------
+action     | String   | The name of the action
+parameters | Object   | The original set of parameters sent when the action was requested
+success    | String   | Either "yes" or "no", depending on the action's success
+caller     | Object   | Account requesting the action
+time       | Date (ISO8601) | When the action finished
 
 Depending on the account requesting the action, `caller` can have the following
 members:
 
-|| **Field** || **Type** || **Description**                                   ||
-|| type      || String   || Authentication type for the action request. One of "basic", "operator", "signature" or "token" ||
-|| user      || String   || When the authentication type is "basic", this member will be present and include user login  ||
-|| ip        || String   || The IP addresses this from which the action was requested. Not present if type is "operator" ||
-|| keyId     || String   || When authentication type is either "signature" or "token", SSH key identifier ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+type      | String   | Authentication type for the action request. One of "basic", "operator", "signature" or "token"
+user      | String   | When the authentication type is "basic", this member will be present and include user login
+ip        | String   | The IP addresses this from which the action was requested. Not present if type is "operator"
+keyId     | String   | When authentication type is either "signature" or "token", SSH key identifier
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -5695,12 +5834,13 @@ used. For example, in 'modules', you'll get something like:
 
 You can use `cpu`, `memory` as module parameters to the other APIs.
 
-|| **Field**      || **Type** ||
-|| modules        || Object   ||
-|| fields         || Object   ||
-|| types          || Object   ||
-|| metrics        || Object   ||
-|| transformations|| Object   ||
+**Field**       | **Type**
+--------------- | --------
+modules         | Object
+fields          | Object
+types           | Object
+metrics         | Object
+transformations | Object
 
 Each of these objects is discussed below:
 
@@ -5742,13 +5882,14 @@ collected for metrics unless an instrumentation has been configured for it.
 
 Each metric has the following properties:
 
-|| **Field** || **Type** || **Description**                                   ||
-|| module    || String   || With stat, a unique metric identifier             ||
-|| stat      || String   || With module, a unique metric identifier           ||
-|| label     || String   || A human-readable metric description               ||
-|| interval  || String   || Either "interval" or "point", indicating whether the value of this metric covers activity over an *interval* of time or a snapshot of state at a particular *point* in time||
-|| fields    || Array    || A list of fields to be used for predicates and decompositions ||
-|| type      || String   || Type or unit used to display labels for values of this metric ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+module    | String   | With stat, a unique metric identifier
+stat      | String   | With module, a unique metric identifier
+label     | String   | A human-readable metric description
+interval  | String   | Either "interval" or "point", indicating whether the value of this metric covers activity over an *interval* of time or a snapshot of state at a particular *point* in time
+fields    | Array    | A list of fields to be used for predicates and decompositions
+type      | String   | Type or unit used to display labels for values of this metric
 
 #### Fields
 
@@ -5771,9 +5912,10 @@ Fields represent metadata by which data points can be filtered or decomposed.
 
 Each field has the following properties:
 
-|| **Field** || **Type** || **Description**                                   ||
-|| label     || String   || Human-readable description of the field           ||
-|| type      || String   || Type of the field, which determines how to label it, as well as whether the field is numeric or discrete ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+label     | String   | Human-readable description of the field
+type      | String   | Type of the field, which determines how to label it, as well as whether the field is numeric or discrete
 
 Fields are either numeric or discrete based on the "arity" of their type.
 
@@ -5824,12 +5966,13 @@ quantities.
 
 Each type has the following properties:
 
-|| **Field** || **Type** || **Description**                                   ||
-|| arity     || String   || Indicates whether values of this type are "discrete" (e.g. identifiers and other strings), or "numeric" (e.g. measurements) ||
-|| unit      || String   || Base unit for this type                           ||
-|| abbr      || String   || (optional) abbreviation for this base unit for this type ||
-|| base      || Number   || Indicates that when labeled, this quantity is usually labeled with SI prefixes corresponding to powers of the specified base ||
-|| power     || Number   || This indicates that the raw values of this type are expressed in units corresponding to base raised to power ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+arity     | String   | Indicates whether values of this type are "discrete" (e.g. identifiers and other strings), or "numeric" (e.g. measurements)
+unit      | String   | Base unit for this type
+abbr      | String   | (optional) abbreviation for this base unit for this type
+base      | Number   | Indicates that when labeled, this quantity is usually labeled with SI prefixes corresponding to powers of the specified base
+power     | Number   | This indicates that the raw values of this type are expressed in units corresponding to base raised to power
 
 #### Transformations
 
@@ -5849,9 +5992,10 @@ it's retrieved.
 
 Each transformation has the following properties:
 
-|| **Field** || **Type** || **Description**                                   ||
-|| label     || String   || Human-readable string                             ||
-|| fields    || Array    || List of field names that can be transformed       ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+label     | String   | Human-readable string
+fields    | Array    | List of field names that can be transformed
 
 The above transformations transform values of the "raddr" (remote address) field
 of any metric to either an object with geolocation details, or an array of
@@ -5861,8 +6005,9 @@ reverse-DNS hostnames, respectively.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` does not exist                             ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
@@ -5919,29 +6064,31 @@ Retrieves all currently created instrumentations.
 
 An array of instrumentations:
 
-|| **Field**       || **Type**                                                ||
-|| module          || String                                                  ||
-|| stat            || String                                                  ||
-|| predicate       || String                                                  ||
-|| decomposition   || Array                                                   ||
-|| value-dimension || Number                                                  ||
-|| value-arity     || String                                                  ||
-|| retention-time  || Number                                                  ||
-|| granularity     || Number                                                  ||
-|| idle-max        || Number                                                  ||
-|| transformations || Array                                                   ||
-|| persist-data    || Boolean                                                 ||
-|| crtime          || Number                                                  ||
-|| value-scope     || String                                                  ||
-|| id              || String                                                  ||
-|| uris            || Array                                                   ||
+**Field**       | **Type**
+--------------- | --------
+module          | String
+stat            | String
+predicate       | String
+decomposition   | Array
+value-dimension | Number
+value-arity     | String
+retention-time  | Number
+granularity     | Number
+idle-max        | Number
+transformations | Array
+persist-data    | Boolean
+crtime          | Number
+value-scope     | String
+id              | String
+uris            | Array
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` does not exist                             ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
@@ -6006,29 +6153,31 @@ Retrieves the configuration for an instrumentation.
 
 ### Returns
 
-|| **Field**       || **Type**                                                ||
-|| module          || String                                                  ||
-|| stat            || String                                                  ||
-|| predicate       || String                                                  ||
-|| decomposition   || Array                                                   ||
-|| value-dimension || Number                                                  ||
-|| value-arity     || String                                                  ||
-|| retention-time  || Number                                                  ||
-|| granularity     || Number                                                  ||
-|| idle-max        || Number                                                  ||
-|| transformations || Array                                                   ||
-|| persist-data    || Boolean                                                 ||
-|| crtime          || Number                                                  ||
-|| value-scope     || String                                                  ||
-|| id              || String                                                  ||
-|| uris            || Array                                                   ||
+**Field**       | **Type**
+--------------- | --------
+module          | String
+stat            | String
+predicate       | String
+decomposition   | Array
+value-dimension | Number
+value-arity     | String
+retention-time  | Number
+granularity     | Number
+idle-max        | Number
+transformations | Array
+persist-data    | Boolean
+crtime          | Number
+value-scope     | String
+id              | String
+uris            | Array
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -6094,18 +6243,20 @@ Retrieves the data associated with an instrumentation for point(s) in time.
 
 ### Returns
 
-|| **Field**  || **Type**                                                     ||
-|| value      || Object                                                       ||
-|| transformations || Object                                                  ||
-|| start_time || Number                                                       ||
-|| duration   || Number                                                       ||
+**Field**  | **Type**
+---------- | --------
+value      | Object
+transformations | Object
+start_time | Number
+duration   | Number
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -6158,34 +6309,37 @@ instrumentation's heatmap.
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| height    || Number   || Height of the image in pixels                     ||
-|| width     || Number   || Width of the image in pixels                      ||
-|| ymin      || Number   || Y-Axis value for the bottom of the image (default: 0)  ||
-|| ymax      || Number   || Y-Axis value for the top of the image (default: auto)  ||
-|| nbuckets  || Number   || Number of buckets in the vertical dimension       ||
-|| selected  || Array    || Array of field values to highlight, isolate or exclude ||
-|| isolate   || Boolean  || If true, only draw selected values                ||
-|| exclude   || Boolean  || If true, don't draw selected values at all        ||
-|| hues      || Array    || Array of colors for highlighting selected field values ||
-|| decompose_all ||Boolean || Highlight all field values (possibly reusing hues)   ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+height    | Number   | Height of the image in pixels
+width     | Number   | Width of the image in pixels
+ymin      | Number   | Y-Axis value for the bottom of the image (default: 0)
+ymax      | Number   | Y-Axis value for the top of the image (default: auto)
+nbuckets  | Number   | Number of buckets in the vertical dimension
+selected  | Array    | Array of field values to highlight, isolate or exclude
+isolate   | Boolean  | If true, only draw selected values
+exclude   | Boolean  | If true, don't draw selected values at all
+hues      | Array    | Array of colors for highlighting selected field values
+decompose_all |Boolean | Highlight all field values (possibly reusing hues)
 
 ### Returns
 
-|| **Field**   || **Type** || **Description**                                ||
-|| bucket_time || Number   || Time corresponding to the bucket (Unix seconds)||
-|| bucket_ymin || Number   || Minimum y-axis value for the bucket            ||
-|| bucket_ymax || Number   || Maximum y-axis value for the bucket            ||
-|| present     || Object   || If the instrumentation defines a discrete decomposition, this property's value is an object whose keys are values of that field and whose values are the number of data points in that bucket for that key ||
-|| total       || Number   || The total number of data points in the bucket  ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+bucket_time | Number   | Time corresponding to the bucket (Unix seconds)
+bucket_ymin | Number   | Minimum y-axis value for the bucket
+bucket_ymax | Number   | Maximum y-axis value for the bucket
+present     | Object   | If the instrumentation defines a discrete decomposition, this property's value is an object whose keys are values of that field and whose values are the number of data points in that bucket for that key
+total       | Number   | The total number of data points in the bucket
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
-|| InvalidArgument  || If input values were incorrect                         ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
+InvalidArgument  | If input values were incorrect
 
 ### CLI Command
 
@@ -6242,20 +6396,22 @@ Allows you to retrieve the bucket details for a heatmap.
 Takes all the same parameters as
 [GetInstrumentationHeatmap](#GetInstrumentationHeatmap), and additionally:
 
-|| **Field** || **Type** ||
-|| x         || Number   ||
-|| y         || Number   ||
+**Field** | **Type**
+--------- | --------
+x         | Number
+y         | Number
 
 ### Returns
 
 The returned value includes:
 
-|| **Field**   || **Type** ||
-|| bucket_time || Number   ||
-|| bucket_ymin || Number   ||
-|| bucket_ymax || Number   ||
-|| present     || Object   ||
-|| total       || Number   ||
+**Field**   | **Type**
+----------- | --------
+bucket_time | Number
+bucket_ymin | Number
+bucket_ymax | Number
+present     | Object
+total       | Number
 
 ### Errors
 
@@ -6280,44 +6436,47 @@ existing instrumentation.
 
 ### Inputs
 
-|| **Field**     || **Type** || **Description**                               ||
-|| clone         || Number   || An existing instrumentation to duplicate (optional) ||
-|| module        || String   || The CA module                                 ||
-|| stat          || String   || The CA stat                                   ||
-|| predicate     || String   || Must be a JSON string                         ||
-|| decomposition || String   || An array of arrays                            ||
-|| granularity   || Number   || Number of seconds between data points (default is 1) ||
-|| retention-time|| Number   || How long to keep this instrumentation's data for     ||
-|| persist-data  || Boolean  || Whether or not to store this for historical analysis ||
-|| idle-max      || Number   || Number of seconds after which, if the instrumentation or its data has not been accessed via the API, the service may delete the instrumentation and its data ||
+**Field**     | **Type** | **Description**
+------------- | -------- | ---------------
+clone         | Number   | An existing instrumentation to duplicate (optional)
+module        | String   | The CA module
+stat          | String   | The CA stat
+predicate     | String   | Must be a JSON string
+decomposition | String   | An array of arrays
+granularity   | Number   | Number of seconds between data points (default is 1)
+retention-time| Number   | How long to keep this instrumentation's data for
+persist-data  | Boolean  | Whether or not to store this for historical analysis
+idle-max      | Number   | Number of seconds after which, if the instrumentation or its data has not been accessed via the API, the service may delete the instrumentation and its data
 
 ### Returns
 
-|| **Field**       || **Type** ||
-|| module          || String   ||
-|| stat            || String   ||
-|| predicate       || String   ||
-|| decomposition   || Array    ||
-|| value-dimension || Number   ||
-|| value-arity     || String   ||
-|| retention-time  || Number   ||
-|| granularity     || Number   ||
-|| idle-max        || Number   ||
-|| transformations || Array    ||
-|| persist-data    || Boolean  ||
-|| crtime          || Number   ||
-|| value-scope     || String   ||
-|| id              || String   ||
-|| uris            || Array    ||
+**Field**       | **Type**
+--------------- | --------
+module          | String
+stat            | String
+predicate       | String
+decomposition   | Array
+value-dimension | Number
+value-arity     | String
+retention-time  | Number
+granularity     | Number
+idle-max        | Number
+transformations | Array
+persist-data    | Boolean
+crtime          | Number
+value-scope     | String
+id              | String
+uris            | Array
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` does not exist                             ||
-|| InvalidArgument  || If input values were incorrect                         ||
-|| MissingParameter || If parameter values were missing                       ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
+InvalidArgument  | If input values were incorrect
+MissingParameter | If parameter values were missing
 
 ### CLI Command
 
@@ -6393,8 +6552,9 @@ Destroys an instrumentation.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -6482,19 +6642,21 @@ List all firewall rules for the current account.
 
 An array of firewall rule objects.  Firewall Rules are:
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || String   || Unique identifier for this rule                 ||
-|| enabled     || Boolean  || Indicates if the rule is enabled                ||
-|| rule        || String   || Firewall rule text                              ||
-|| global      || Boolean  || Indicates if the rule is global (optional)      ||
-|| description || String   || Human-readable description for the rule (optional) ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | String   | Unique identifier for this rule
+enabled     | Boolean  | Indicates if the rule is enabled
+rule        | String   | Firewall rule text
+global      | Boolean  | Indicates if the rule is global (optional)
+description | String   | Human-readable description for the rule (optional)
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` does not exist                             ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
@@ -6544,19 +6706,21 @@ Retrieves an individual firewall rule.
 
 ### Returns
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || String   || Unique identifier for this rule                 ||
-|| enabled     || Boolean  || Indicates if the rule is enabled                ||
-|| rule        || String   || Firewall rule text                              ||
-|| global      || Boolean  || Indicates if the rule is global (optional)      ||
-|| description || String   || Human-readable description for the rule (optional) ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | String   | Unique identifier for this rule
+enabled     | Boolean  | Indicates if the rule is enabled
+rule        | String   | Firewall rule text
+global      | Boolean  | Indicates if the rule is global (optional)
+description | String   | Human-readable description for the rule (optional)
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` does not exist                             ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
@@ -6598,30 +6762,33 @@ all the account's machines where it may be necessary.
 
 ### Inputs
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| enabled     || Boolean  || Indicates if the rule is enabled (optional, false by default) ||
-|| rule        || String   || Firewall rule text                              ||
-|| description || String   || Human-readable description for the rule (optional) ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+enabled     | Boolean  | Indicates if the rule is enabled (optional, false by default)
+rule        | String   | Firewall rule text
+description | String   | Human-readable description for the rule (optional)
 
 ### Returns
 
 Firewall rule object.
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || String   || Unique identifier for this rule                 ||
-|| enabled     || Boolean  || Indicates if the rule is enabled                ||
-|| rule        || String   || Firewall rule text                              ||
-|| global      || Boolean  || Indicates if the rule is global (optional)      ||
-|| description || String   || Human-readable description for the rule (optional) ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | String   | Unique identifier for this rule
+enabled     | Boolean  | Indicates if the rule is enabled
+rule        | String   | Firewall rule text
+global      | Boolean  | Indicates if the rule is global (optional)
+description | String   | Human-readable description for the rule (optional)
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| InvalidArgument  || If rule is invalid                                     ||
-|| MissingParameter || If rule wasn't provided                                ||
-|| ResourceNotFound || If `:login` does not exist                             ||
+**Error Code**   | **Description**
+---------------- | ---------------
+InvalidArgument  | If rule is invalid
+MissingParameter | If rule wasn't provided
+ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
@@ -6665,29 +6832,32 @@ adds/removes/updates the rule on all the required machines.
 
 ### Inputs
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| rule        || String   || Firewall rule text                              ||
-|| description || String   || Human-readable description for the rule (optional) ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+rule        | String   | Firewall rule text
+description | String   | Human-readable description for the rule (optional)
 
 ### Returns
 
 Firewall rule object.
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || String   || Unique identifier for this rule                 ||
-|| enabled     || Boolean  || Indicates if the rule is enabled                ||
-|| rule        || String   || Firewall rule text                              ||
-|| global      || Boolean  || Indicates if the rule is global (optional)      ||
-|| description || String   || Human-readable description for the rule (optional) ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | String   | Unique identifier for this rule
+enabled     | Boolean  | Indicates if the rule is enabled
+rule        | String   | Firewall rule text
+global      | Boolean  | Indicates if the rule is global (optional)
+description | String   | Human-readable description for the rule (optional)
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| InvalidArgument  || If rule is invalid, or trying to modify a global rule  ||
-|| MissingParameter || If rule wasn't present                                 ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+InvalidArgument  | If rule is invalid, or trying to modify a global rule
+MissingParameter | If rule wasn't present
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -6738,19 +6908,21 @@ Enables the given firewall rule if it is disabled.
 
 Firewall rule object.
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || String   || Unique identifier for this rule                 ||
-|| enabled     || Boolean  || Indicates if the rule is enabled                ||
-|| rule        || String   || Firewall rule text                              ||
-|| global      || Boolean  || Indicates if the rule is global (optional)      ||
-|| description || String   || Human-readable description for the rule (optional) ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | String   | Unique identifier for this rule
+enabled     | Boolean  | Indicates if the rule is enabled
+rule        | String   | Firewall rule text
+global      | Boolean  | Indicates if the rule is global (optional)
+description | String   | Human-readable description for the rule (optional)
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -6800,19 +6972,21 @@ Disables the given firewall rule if it is enabled.
 
 Firewall rule object.
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || UUID     || Unique id for this firewall rule                ||
-|| enabled     || Boolean  || Indicates if the rule is enabled                ||
-|| rule        || String   || Firewall rule text                              ||
-|| global      || Boolean  || Indicates if the rule is global (optional)      ||
-|| description || String   || Human-readable description for the rule (optional) ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | UUID     | Unique id for this firewall rule
+enabled     | Boolean  | Indicates if the rule is enabled
+rule        | String   | Firewall rule text
+global      | Boolean  | Indicates if the rule is global (optional)
+description | String   | Human-readable description for the rule (optional)
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -6866,8 +7040,9 @@ Removes the given firewall rule from all the required machines.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -6937,17 +7112,19 @@ VLAN.
 An array of VLAN objects that exist on the fabric. Each VLAN object has the
 following properties:
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| name        || String   || A unique name to identify the VLAN              ||
-|| vlan_id     || Integer  || A number from 0-4095 that indicates the VLAN's id ||
-|| description || String   || An optional description of the VLAN             ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+name        | String   | A unique name to identify the VLAN
+vlan_id     | Integer  | A number from 0-4095 that indicates the VLAN's id
+description | String   | An optional description of the VLAN
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` does not exist                             ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
@@ -6982,26 +7159,29 @@ Creates a new VLAN on the fabric.
 
 ### Inputs
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| name        || String   || A unique name to identify the VLAN              ||
-|| vlan_id     || Integer  || A number from 0-4095 that indicates the VLAN's id ||
-|| description || String   || An optional description of the VLAN             ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+name        | String   | A unique name to identify the VLAN
+vlan_id     | Integer  | A number from 0-4095 that indicates the VLAN's id
+description | String   | An optional description of the VLAN
 
 ### Returns
 
 A VLAN Object.
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| name        || String   || A unique name to identify the VLAN              ||
-|| vlan_id     || Integer  || A number from 0-4095 that indicates the VLAN's id ||
-|| description || String   || An optional description of the VLAN             ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+name        | String   | A unique name to identify the VLAN
+vlan_id     | Integer  | A number from 0-4095 that indicates the VLAN's id
+description | String   | An optional description of the VLAN
 
 ### Errors
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` does not exist                             ||
-|| MissingParameter || If you didn't send a required field                    ||
-|| InvalidArgument  || `vlan_id` or `name` are in use, or `vlan_id` is outside the valid range ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
+MissingParameter | If you didn't send a required field
+InvalidArgument  | `vlan_id` or `name` are in use, or `vlan_id` is outside the valid range
 
 ### CLI Command
 
@@ -7045,17 +7225,19 @@ A VLAN Object.
 
 A VLAN Object.
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| name        || String   || A unique name to identify the VLAN              ||
-|| vlan_id     || Integer  || A number from 0-4095 that indicates the VLAN's id ||
-|| description || String   || An optional description of the VLAN             ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+name        | String   | A unique name to identify the VLAN
+vlan_id     | Integer  | A number from 0-4095 that indicates the VLAN's id
+description | String   | An optional description of the VLAN
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:vlan_id` does not exist               ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:vlan_id` does not exist
 
 ### CLI Command
 
@@ -7089,23 +7271,26 @@ Updates a fabric VLAN.
 
 All inputs are optional.
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| name        || String   || A unique name to identify the VLAN              ||
-|| description || String   || An optional description of the VLAN             ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+name        | String   | A unique name to identify the VLAN
+description | String   | An optional description of the VLAN
 
 ### Returns
 
 A VLAN Object.
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| name        || String   || A unique name to identify the VLAN              ||
-|| vlan_id     || Integer  || A number from 0-4095 that indicates the VLAN's id ||
-|| description || String   || An optional description of the VLAN             ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+name        | String   | A unique name to identify the VLAN
+vlan_id     | Integer  | A number from 0-4095 that indicates the VLAN's id
+description | String   | An optional description of the VLAN
 
 ### Errors
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:vlan_id` does not exist               ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:vlan_id` does not exist
 
 ### CLI Command
 
@@ -7154,9 +7339,10 @@ for the VLAN to be deleted.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:vlan_id` does not exist               ||
-|| InUseError       || The VLAN currently has active networks on it           ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:vlan_id` does not exist
+InUseError       | The VLAN currently has active networks on it
 
 ### CLI Command
 
@@ -7191,26 +7377,28 @@ Lists all of the networks in a fabric on the VLAN specified by `:vlan_id`.
 Returns an array of Network Objects. Each network object has the following
 information:
 
-|| **Field**    || **Type** || **Description**                                ||
-|| id           || UUID     || Unique id for this network                     ||
-|| name         || String   || The network name                               ||
-|| public       || Boolean  || Whether this a public or private (rfc1918) network   ||
-|| fabric       || Boolean  || Whether this network is created on a fabric    ||
-|| description  || String   || Description of this network (optional)         ||
-|| subnet       || String   || A CIDR formatted string that describes the network   ||
-|| provision_start_ip|| String || The first IP on the network that may be assigned  ||
-|| provision_end_ip  || String || The last IP on the network that may be assigned   ||
-|| gateway      || String   || Optional Gateway IP address                    ||
-|| resolvers    || String   || Resolver IP addresses                          ||
-|| routes       || Routes Object|| Optional Static routes for hosts on this network ||
-|| internet_nat || Boolean  || Provision internet NAT zone on gateway address ||
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+id           | UUID     | Unique id for this network
+name         | String   | The network name
+public       | Boolean  | Whether this a public or private (rfc1918) network
+fabric       | Boolean  | Whether this network is created on a fabric
+description  | String   | Description of this network (optional)
+subnet       | String   | A CIDR formatted string that describes the network
+provision_start_ip| String | The first IP on the network that may be assigned
+provision_end_ip  | String | The last IP on the network that may be assigned
+gateway      | String   | Optional Gateway IP address
+resolvers    | String   | Resolver IP addresses
+routes       | Routes Object| Optional Static routes for hosts on this network
+internet_nat | Boolean  | Provision internet NAT zone on gateway address
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:vlan_id` does not exist               ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:vlan_id` does not exist
 
 ### CLI Command
 
@@ -7275,41 +7463,44 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### Inputs
 
-|| **Field**    || **Type** || **Description**                                ||
-|| name         || String   || The network name; must be unique               ||
-|| description  || String   || Description of this network (optional)         ||
-|| subnet       || String   || A CIDR formatted string that describes the network   ||
-|| provision_start_ip|| String || The first IP on the network that may be assigned  ||
-|| provision_end_ip  || String || The last IP on the network that may be assigned   ||
-|| gateway      || String   || Optional Gateway IP address                    ||
-|| resolvers    || String   || Optional resolver IP addresses                 ||
-|| routes       || Routes Object|| Optional Static routes for hosts on this network ||
-|| internet_nat || Boolean  || Provision internet NAT zone on gateway address, default is true ||
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+name         | String   | The network name; must be unique
+description  | String   | Description of this network (optional)
+subnet       | String   | A CIDR formatted string that describes the network
+provision_start_ip| String | The first IP on the network that may be assigned
+provision_end_ip  | String | The last IP on the network that may be assigned
+gateway      | String   | Optional Gateway IP address
+resolvers    | String   | Optional resolver IP addresses
+routes       | Routes Object| Optional Static routes for hosts on this network
+internet_nat | Boolean  | Provision internet NAT zone on gateway address, default is true
 
 ### Returns
 
 Network Object:
 
-|| **Field**    || **Type** || **Description**                                ||
-|| id           || UUID     || Unique id for this network                     ||
-|| name         || String   || The network name                               ||
-|| public       || Boolean  || Whether this a public or private (rfc1918) network   ||
-|| fabric       || Boolean  || Whether this network is created on a fabric    ||
-|| description  || String   || Description of this network (optional)         ||
-|| subnet       || String   || A CIDR formatted string that describes the network   ||
-|| provision_start_ip|| String || The first IP on the network that may be assigned  ||
-|| provision_end_ip  || String || The last IP on the network that may be assigned   ||
-|| gateway      || String   || Optional Gateway IP address                    ||
-|| resolvers    || String   || Resolver IP addresses                          ||
-|| routes       || Routes Object|| Optional Static routes for hosts on this network ||
-|| internet_nat || Boolean  || Provision internet NAT zone on gateway address ||
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+id           | UUID     | Unique id for this network
+name         | String   | The network name
+public       | Boolean  | Whether this a public or private (rfc1918) network
+fabric       | Boolean  | Whether this network is created on a fabric
+description  | String   | Description of this network (optional)
+subnet       | String   | A CIDR formatted string that describes the network
+provision_start_ip| String | The first IP on the network that may be assigned
+provision_end_ip  | String | The last IP on the network that may be assigned
+gateway      | String   | Optional Gateway IP address
+resolvers    | String   | Resolver IP addresses
+routes       | Routes Object| Optional Static routes for hosts on this network
+internet_nat | Boolean  | Provision internet NAT zone on gateway address
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` does not exist                             ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
@@ -7385,26 +7576,28 @@ Create network with no internet NAT zone
 
 The details of the network object:
 
-|| **Field**    || **Type** || **Description**                                ||
-|| id           || UUID     || Unique id for this network                     ||
-|| name         || String   || The network name                               ||
-|| public       || Boolean  || Whether this a public or private (rfc1918) network   ||
-|| fabric       || Boolean  || Whether this network is created on a fabric    ||
-|| description  || String   || Description of this network (optional)         ||
-|| subnet       || String   || A CIDR formatted string that describes the network   ||
-|| provision_start_ip|| String || The first IP on the network that may be assigned  ||
-|| provision_end_ip  || String || The last IP on the network that may be assigned   ||
-|| gateway      || String   || Optional Gateway IP address                    ||
-|| resolvers    || String   || Resolver IP addresses                          ||
-|| routes       || Routes Object|| Optional Static routes for hosts on this network ||
-|| internet_nat || Boolean  || Provision internet NAT zone on gateway address ||
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+id           | UUID     | Unique id for this network
+name         | String   | The network name
+public       | Boolean  | Whether this a public or private (rfc1918) network
+fabric       | Boolean  | Whether this network is created on a fabric
+description  | String   | Description of this network (optional)
+subnet       | String   | A CIDR formatted string that describes the network
+provision_start_ip| String | The first IP on the network that may be assigned
+provision_end_ip  | String | The last IP on the network that may be assigned
+gateway      | String   | Optional Gateway IP address
+resolvers    | String   | Resolver IP addresses
+routes       | Routes Object| Optional Static routes for hosts on this network
+internet_nat | Boolean  | Provision internet NAT zone on gateway address
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login`, `:vlan_id` or `:id` does not exist        ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:vlan_id` or `:id` does not exist
 
 
 ### CLI Command
@@ -7466,9 +7659,10 @@ Network.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login`, `:vlan_id` or `:id` does not exist        ||
-|| InUseError       || The VLAN currently has active networks on it           ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:vlan_id` or `:id` does not exist
+InUseError       | The VLAN currently has active networks on it
 
 ### CLI Command
 
@@ -7512,31 +7706,34 @@ created on a fabric, then additional information will be shown:
 
 An array of network objects.  Networks are:
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || UUID     || Unique id for this network                      ||
-|| name        || String   || The network name                                ||
-|| public      || Boolean  || Whether this a public or private (rfc1918) network ||
-|| fabric      || Boolean  || Whether this network is created on a fabric     ||
-|| description || String   || Description of this network (optional)          ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | UUID     | Unique id for this network
+name        | String   | The network name
+public      | Boolean  | Whether this a public or private (rfc1918) network
+fabric      | Boolean  | Whether this network is created on a fabric
+description | String   | Description of this network (optional)
 
 If the network is on a fabric, the following additional fields are included:
 
-|| **Field**    || **Type** || **Description**||
-|| subnet       ||String    || A CIDR formatted string that describes the network   ||
-|| provision_start_ip || String || The first IP on the network that may be assigned ||
-|| provision_end_ip   || String || The last IP on the network that may be assigned  ||
-|| gateway      || String  || Optional Gateway IP address                     ||
-|| resolvers    || String  || Optional Resolver IP addresses                  ||
-|| routes       || Routes Object|| Optional Static routes for hosts on this network ||
-|| internet_nat || Boolean || Provision internet NAT zone on gateway address  ||
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+subnet       | String   | A CIDR formatted string that describes the network
+provision_start_ip | String | The first IP on the network that may be assigned
+provision_end_ip   | String | The last IP on the network that may be assigned
+gateway      | String  | Optional Gateway IP address
+resolvers    | String  | Optional Resolver IP addresses
+routes       | Routes Object| Optional Static routes for hosts on this network
+internet_nat | Boolean | Provision internet NAT zone on gateway address
 
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` does not exist                             ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
@@ -7586,18 +7783,20 @@ Retrieves information about an individual network.
 
 ### Returns
 
-|| **Field**   || **Type** || **Description**                                 ||
-|| id          || UUID     || Unique id for this network                      ||
-|| name        || String   || The network name                                ||
-|| public      || Boolean  || Whether this a public or private (rfc1918) network ||
-|| description || String   || Description of this network (optional)          ||
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | UUID     | Unique id for this network
+name        | String   | The network name
+public      | Boolean  | Whether this a public or private (rfc1918) network
+description | String   | Description of this network (optional)
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
@@ -7650,21 +7849,23 @@ List all the NICs on a machine belonging to a given account.
 
 An array of NIC objects. NICs are:
 
-|| **Field** || **Type** || **Description**                                   ||
-|| ip        || String   || NIC's IPv4 address                                ||
-|| mac       || String   || NIC's MAC address                                 ||
-|| primary   || Boolean  || Whether this is the VM's primary NIC              ||
-|| netmask   || String   || IPv4 netmask                                      ||
-|| gateway   || String   || IPv4 gateway                                      ||
-|| state     || String   || Describes the state of the NIC (e.g. provisioning, running, or stopped) ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+ip        | String   | NIC's IPv4 address
+mac       | String   | NIC's MAC address
+primary   | Boolean  | Whether this is the VM's primary NIC
+netmask   | String   | IPv4 netmask
+gateway   | String   | IPv4 gateway
+state     | String   | Describes the state of the NIC (e.g. provisioning, running, or stopped)
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login or `:id` does not exist                     ||
-|| InvalidArgument  || If `:id` isn't a UUID                                  ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login or `:id` does not exist
+InvalidArgument  | If `:id` isn't a UUID
 
 ### CLI Command
 
@@ -7724,21 +7925,23 @@ it in the request.
 
 A NIC object:
 
-|| **Field** || **Type** || **Description**                                   ||
-|| ip        || String   || NIC's IPv4 address                                ||
-|| mac       || String   || NIC's MAC address                                 ||
-|| primary   || Boolean  || Whether this is the VM's primary NIC              ||
-|| netmask   || String   || IPv4 netmask                                      ||
-|| gateway   || String   || IPv4 gateway                                      ||
-|| state     || String   || Describes the state of the NIC (e.g. provisioning, running, or stopped) ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+ip        | String   | NIC's IPv4 address
+mac       | String   | NIC's MAC address
+primary   | Boolean  | Whether this is the VM's primary NIC
+netmask   | String   | IPv4 netmask
+gateway   | String   | IPv4 gateway
+state     | String   | Describes the state of the NIC (e.g. provisioning, running, or stopped)
 
 ### Errors
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login`, `:id`, or `:mac` does not exist           ||
-|| InvalidArgument  || If `:id` isn't a UUID, or `:mac` isn't a MAC address (without colons) ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:id`, or `:mac` does not exist
+InvalidArgument  | If `:id` isn't a UUID, or `:mac` isn't a MAC address (without colons)
 
 ### CLI Command
 
@@ -7789,20 +7992,22 @@ Creates a new NIC on a machine belonging to a given account.
 
 ### Inputs
 
-|| **Field** || **Type** || **Description**                                   ||
-|| network   || String   || UUID of network this NIC should attach to         ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+network   | String   | UUID of network this NIC should attach to
 
 ### Returns
 
 The newly-created NIC object:
 
-|| **Field** || **Type** || **Description**                                   ||
-|| ip        || String   || NIC's IPv4 address                                ||
-|| mac       || String   || NIC's MAC address                                 ||
-|| primary   || Boolean  || Whether this is the VM's primary NIC              ||
-|| netmask   || String   || IPv4 netmask                                      ||
-|| gateway   || String   || IPv4 gateway                                      ||
-|| state     || String   || Describes the state of the NIC (most likely 'provisioning') ||
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+ip        | String   | NIC's IPv4 address
+mac       | String   | NIC's MAC address
+primary   | Boolean  | Whether this is the VM's primary NIC
+netmask   | String   | IPv4 netmask
+gateway   | String   | IPv4 gateway
+state     | String   | Describes the state of the NIC (most likely 'provisioning')
 
 It also returns the Location in the headers where the new NIC lives in the HTTP
 API. If a NIC already exists for that network, a 302 redirect will be returned
@@ -7818,10 +8023,11 @@ start returning 404.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login` or `:id` does not exist                    ||
-|| InvalidArgument  || If `:id` isn't a UUID, or the `network` argument isn't a valid UUID ||
-|| MissingParameter || If the `network` argument isn't present                ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
+InvalidArgument  | If `:id` isn't a UUID, or the `network` argument isn't a valid UUID
+MissingParameter | If the `network` argument isn't present
 
 ### CLI Command
 
@@ -7891,9 +8097,10 @@ CloudAPI.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-|| **Error Code**   || **Description**                                        ||
-|| ResourceNotFound || If `:login`, `:id` or `:mac` does not exist            ||
-|| InvalidArgument  || If `:id` isn't a UUID                                  ||
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:id` or `:mac` does not exist
+InvalidArgument  | If `:id` isn't a UUID
 
 ### CLI Command
 
@@ -7983,7 +8190,7 @@ failed.  Consider the following code using
                 return callback(err);
             }
 
-            if ((machine.state === 'deleted' && state !== 'deleted') ||
+            if ((machine.state === 'deleted' && state !== 'deleted')
                 machine.state === 'failed') {
                 return callback(new Error('Provisioning Job failed'));
             }
@@ -8623,69 +8830,70 @@ Sample code for generating the `Authorization` header (and `Date` header):
 
 # Appendix D: CloudAPI CLI Commands
 
-||**Command**||**Description**||
-||[sdc-addmachinetags](#AddMachineTags)||Allows you to add additional tags, other than those set at provisioning time.||
-||[sdc-chmod](#SetRoleTags)||Add role tags to CloudAPI resources.||
-||[sdc-createfirewallrule](#CreateFirewallRule)||Add a new firewall rule.||
-||[sdc-createimagefrommachine](#CreateImageFromMachine)||Create a new custom image from a machine.||
-||[sdc-createinstrumentation](#CreateInstrumentation)||Creates an instrumentation.||
-||[sdc-createkey](#CreateKey)||Uploads a new OpenSSH key to SmartDataCenter.||
-||[sdc-createmachine](#CreateMachine)||Allows you to provision a machine.||
-||[sdc-createmachinesnapshot](#CreateMachineSnapshot)||Allows you to take a snapshot of a machine.||
-||[sdc-deletefirewallrule](#DeleteFirewallRule)||Removes a given firewall rule.||
-||[sdc-deleteimage](#DeleteImage)||Delete a private image.||
-||[sdc-deleteinstrumentation](#DeleteInstrumentation)||Destroys an instrumentation.||
-||[sdc-deletekey](#DeleteKey)||Deletes an SSH key by name.||
-||[sdc-deletemachine](#DeleteMachine)||Allows you to completely destroy a machine.||
-||[sdc-deletemachinemetadata](#DeleteMachineMetadata)||Deletes a single metadata key from this machine.||
-||[sdc-deletemachinesnapshot](#DeleteMachineSnapshot)||Deletes the specified snapshot of a machine.||
-||[sdc-deletemachinetag](#DeleteMachineTag)||Deletes a single tag from this machine.||
-||[sdc-describeanalytics](#DescribeAnalytics)||Retrieves the "schema" for instrumentations that can be created using the analytics endpoint.||
-||[sdc-disablefirewallrule](#DisableFirewallRule)||Disable an enabled firewall rule.||
-||[sdc-disablemachinefirewall](#DisableMachineFirewall)||Completely disable the firewall on a machine.||
-||[sdc-enablefirewallrule](#EnableFirewallRule)||Enable a disabled firewall rule.||
-||[sdc-enablemachinefirewall](#EnableMachineFirewall)||Enable the firewall on a machine.||
-||[sdc-exportimage](#ExportImage)||Export an image to Manta.||
-||[sdc-fabric](#fabrics)||Administer fabric networks and VLANs.||
-||[sdc-getaccount ](#GetAccount)||Gets details about your account.||
-||[sdc-getfirewallrule](#GetFirewallRule)||Get details about a specific firewall rule.||
-||[sdc-getimage](#GetImage)||Gets an individual image by id.||
-||[sdc-getinstrumentation](#GetInstrumentation)||Retrieves the configuration for an instrumentation.||
-||[sdc-getkey](#GetKey)||Retrieves an individual key record.||
-||[sdc-getmachine](#GetMachine)||Gets the details for an individual machine.||
-||[sdc-getmachineaudit](#MachineAudit)||Get a historical list of actions performed on a machine.||
-||[sdc-getmachinemetadata](#GetMachineMetadata)||Returns the complete set of metadata associated with this machine.||
-||[sdc-getmachinesnapshot](#GetMachineSnapshot)||Gets the state of the named snapshot.||
-||[sdc-getmachinetag](#GetMachineTag)||Returns the value for a single tag on this machine.||
-||[sdc-getnetwork](#GetNetwork)||Gets a network by the given id.||
-||[sdc-getpackage](#GetPackage)||Gets a package by name.||
-||[sdc-info](#SetRoleTags)||List of role-tags assigned to a given resource.||
-||[sdc-listdatacenters](#ListDatacenters)||Provides a list of all datacenters this cloud is aware of.||
-||[sdc-listfirewallrules](#ListFirewallRules)||List all firewall rules applying to this account.||
-||[sdc-listimages](#ListImages)||Provides a list of images available in this datacenter.||
-||[sdc-listinstrumentations](#ListInstrumentations)||Retrieves all currently created instrumentations.||
-||[sdc-listkeys](#ListKeys)||Lists all public keys we have on record for the specified account.||
-||[sdc-listmachinefirewallrules](#ListMachineFirewallRules)||List firewall rules applying to a specific machine.||
-||[sdc-listmachines](#ListMachines)||Lists all machines on an account.||
-||[sdc-listmachinesnapshots](#ListMachineSnapshots)||Lists all snapshots taken for a given machine.||
-||[sdc-listmachinetags](#ListMachineTags)||Returns the complete set of tags associated with this machine.||
-||[sdc-listnetworks](#ListNetworks)||Provides a list of networks available to the user in this datacenter.||
-||[sdc-listpackages](#ListPackages)||Provides a list of packages available in this datacenter.||
-||[sdc-nics](#nics)||List, add and remove NICs attached to a machine.||
-||[sdc-policy](#policies)||Add, list, update and remove policies.||
-||[sdc-rebootmachine](#RebootMachine)||Allows you to 'reboot' a machine.||
-||[sdc-renamemachine](#RenameMachine)||Rename a machine.||
-||[sdc-replacemachinetags](#ReplaceMachineTags)||Replace all tags on a machine.||
-||[sdc-resizemachine](#ResizeMachine)||Allows you to resize a container.||
-||[sdc-role](#roles)||Add, list, update and remove roles.||
-||[sdc-startmachine](#StartMachine)||Allows you to boot up a machine||
-||[sdc-startmachinefromsnapshot](#StartMachineFromSnapshot)||Starts a stopped machine from the referenced snapshot.||
-||[sdc-stopmachine](#StopMachine)||Allows you to shut down a machine.||
-||[sdc-updateaccount](#UpdateAccount)||Change details of the current account.||
-||[sdc-updatefirewallrule](#UpdateFirewallRule)||Change a firewall rule.||
-||[sdc-updateimage](#UpdateImage)||Update metadata about an image.||
-||[sdc-updatemachinemetadata](#UpdateMachineMetadata)||Allows you to update the metadata for a given machine.||
-||[sdc-user](#users)||Add, update and remove account users and their keys.||
+**Command** | **Description**
+----------- | ---------------
+[sdc-addmachinetags](#AddMachineTags)|Allows you to add additional tags, other than those set at provisioning time.
+[sdc-chmod](#SetRoleTags)|Add role tags to CloudAPI resources.
+[sdc-createfirewallrule](#CreateFirewallRule)|Add a new firewall rule.
+[sdc-createimagefrommachine](#CreateImageFromMachine)|Create a new custom image from a machine.
+[sdc-createinstrumentation](#CreateInstrumentation)|Creates an instrumentation.
+[sdc-createkey](#CreateKey)|Uploads a new OpenSSH key to SmartDataCenter.
+[sdc-createmachine](#CreateMachine)|Allows you to provision a machine.
+[sdc-createmachinesnapshot](#CreateMachineSnapshot)|Allows you to take a snapshot of a machine.
+[sdc-deletefirewallrule](#DeleteFirewallRule)|Removes a given firewall rule.
+[sdc-deleteimage](#DeleteImage)|Delete a private image.
+[sdc-deleteinstrumentation](#DeleteInstrumentation)|Destroys an instrumentation.
+[sdc-deletekey](#DeleteKey)|Deletes an SSH key by name.
+[sdc-deletemachine](#DeleteMachine)|Allows you to completely destroy a machine.
+[sdc-deletemachinemetadata](#DeleteMachineMetadata)|Deletes a single metadata key from this machine.
+[sdc-deletemachinesnapshot](#DeleteMachineSnapshot)|Deletes the specified snapshot of a machine.
+[sdc-deletemachinetag](#DeleteMachineTag)|Deletes a single tag from this machine.
+[sdc-describeanalytics](#DescribeAnalytics)|Retrieves the "schema" for instrumentations that can be created using the analytics endpoint.
+[sdc-disablefirewallrule](#DisableFirewallRule)|Disable an enabled firewall rule.
+[sdc-disablemachinefirewall](#DisableMachineFirewall)|Completely disable the firewall on a machine.
+[sdc-enablefirewallrule](#EnableFirewallRule)|Enable a disabled firewall rule.
+[sdc-enablemachinefirewall](#EnableMachineFirewall)|Enable the firewall on a machine.
+[sdc-exportimage](#ExportImage)|Export an image to Manta.
+[sdc-fabric](#fabrics)|Administer fabric networks and VLANs.
+[sdc-getaccount ](#GetAccount)|Gets details about your account.
+[sdc-getfirewallrule](#GetFirewallRule)|Get details about a specific firewall rule.
+[sdc-getimage](#GetImage)|Gets an individual image by id.
+[sdc-getinstrumentation](#GetInstrumentation)|Retrieves the configuration for an instrumentation.
+[sdc-getkey](#GetKey)|Retrieves an individual key record.
+[sdc-getmachine](#GetMachine)|Gets the details for an individual machine.
+[sdc-getmachineaudit](#MachineAudit)|Get a historical list of actions performed on a machine.
+[sdc-getmachinemetadata](#GetMachineMetadata)|Returns the complete set of metadata associated with this machine.
+[sdc-getmachinesnapshot](#GetMachineSnapshot)|Gets the state of the named snapshot.
+[sdc-getmachinetag](#GetMachineTag)|Returns the value for a single tag on this machine.
+[sdc-getnetwork](#GetNetwork)|Gets a network by the given id.
+[sdc-getpackage](#GetPackage)|Gets a package by name.
+[sdc-info](#SetRoleTags)|List of role-tags assigned to a given resource.
+[sdc-listdatacenters](#ListDatacenters)|Provides a list of all datacenters this cloud is aware of.
+[sdc-listfirewallrules](#ListFirewallRules)|List all firewall rules applying to this account.
+[sdc-listimages](#ListImages)|Provides a list of images available in this datacenter.
+[sdc-listinstrumentations](#ListInstrumentations)|Retrieves all currently created instrumentations.
+[sdc-listkeys](#ListKeys)|Lists all public keys we have on record for the specified account.
+[sdc-listmachinefirewallrules](#ListMachineFirewallRules)|List firewall rules applying to a specific machine.
+[sdc-listmachines](#ListMachines)|Lists all machines on an account.
+[sdc-listmachinesnapshots](#ListMachineSnapshots)|Lists all snapshots taken for a given machine.
+[sdc-listmachinetags](#ListMachineTags)|Returns the complete set of tags associated with this machine.
+[sdc-listnetworks](#ListNetworks)|Provides a list of networks available to the user in this datacenter.
+[sdc-listpackages](#ListPackages)|Provides a list of packages available in this datacenter.
+[sdc-nics](#nics)|List, add and remove NICs attached to a machine.
+[sdc-policy](#policies)|Add, list, update and remove policies.
+[sdc-rebootmachine](#RebootMachine)|Allows you to 'reboot' a machine.
+[sdc-renamemachine](#RenameMachine)|Rename a machine.
+[sdc-replacemachinetags](#ReplaceMachineTags)|Replace all tags on a machine.
+[sdc-resizemachine](#ResizeMachine)|Allows you to resize a container.
+[sdc-role](#roles)|Add, list, update and remove roles.
+[sdc-startmachine](#StartMachine)|Allows you to boot up a machine
+[sdc-startmachinefromsnapshot](#StartMachineFromSnapshot)|Starts a stopped machine from the referenced snapshot.
+[sdc-stopmachine](#StopMachine)|Allows you to shut down a machine.
+[sdc-updateaccount](#UpdateAccount)|Change details of the current account.
+[sdc-updatefirewallrule](#UpdateFirewallRule)|Change a firewall rule.
+[sdc-updateimage](#UpdateImage)|Update metadata about an image.
+[sdc-updatemachinemetadata](#UpdateMachineMetadata)|Allows you to update the metadata for a given machine.
+[sdc-user](#users)|Add, update and remove account users and their keys.
 
 
 
