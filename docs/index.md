@@ -218,18 +218,18 @@ package you want to use as the base for your machine.
 
 An image is a snapshot of a filesystem and its software (for some types of
 container), or a disk image (for virtual machines).  You can get the list of
-available images using the `triton images` or `sdc-listimages` commands; see the
-[ListImages](#ListImages) section below for a detailed explanation of these
+available images using the `triton image list` or `sdc-listimages` commands; see
+the [ListImages](#ListImages) section below for a detailed explanation of these
 commands.
 
 A package is a set of dimensions for the new machine, such as RAM and disk size.
-You can get the list of available packages using the `triton packages` or
+You can get the list of available packages using the `triton package list` or
 `sdc-listpackages` commands; see the [ListPackages](#ListPackages) section below
 for a detailed explanation of these commands.
 
 Once you have the package and image ids, to provision a new machine:
 
-    $ triton create-instance $image $package
+    $ triton instance create $image $package
 
 or
 
@@ -237,7 +237,7 @@ or
 
 For example:
 
-    $ triton create-instance 2b683a82-a066-11e3-97ab-2faa44701c5a 64e23114-d502-c171-967f-b0e0cfb2009a
+    $ triton instance create 2b683a82-a066-11e3-97ab-2faa44701c5a 64e23114-d502-c171-967f-b0e0cfb2009a
     Creating instance 61dc8be (9205af5b-f2c0-ef07-e1f3-94bf1ff8fb93, base@13.4.0, test_128)
 
 You can use the `--name` flag to name your machine; if you do not specify a
@@ -291,7 +291,7 @@ and booted; the `state` attribute will reflect this.  Once the `state` attribute
 machine), with the following:
 
     $ ssh-add ~/.ssh/<key file>
-    $ ssh -A admin@<new machine IP address>
+    $ ssh -A root@<new machine IP address>
 
 These two commands set up your SSH agent (which has some magical properties,
 so you need to handle your SSH keys less often), and logs you in as the `admin`
@@ -314,7 +314,7 @@ By default, SmartOS images should be available to your for use.  Your
 SmartDataCenter cloud may have other images available as well, such as Linux or
 Windows images.  The list of available images can be obtained with:
 
-    $ triton images
+    $ triton image list
 
 or
 
@@ -322,7 +322,7 @@ or
 
 For example:
 
-    $ triton images
+    $ triton image list
     SHORTID   NAME  VERSION  STATE   FLAGS  OS       PUBDATE
     2b683a82  base  13.4.0   active  P      smartos  2014-02-28
 
@@ -332,7 +332,7 @@ For example:
 
 You can list packages available in your cloud with:
 
-    $ triton packages
+    $ triton package list
 
 or
 
@@ -340,9 +340,9 @@ or
 
 For example:
 
-    $  ./triton packages
-    SHORTID   NAME      DEFAULT  MEMORY  SWAP  DISK
-    64e23114  test_128  false      128M  256M   12G
+    $  ./triton package list
+    SHORTID   NAME      DEFAULT  MEMORY  SWAP  DISK  VCPUS
+    64e23114  test_128  false      128M  256M   12G      1
 
 Packages are the SmartDataCenter name for the dimensions of a machine (how much
 CPU will be available, how much RAM, disk and swap, and so forth).  Packages are
@@ -353,9 +353,13 @@ disk size.
 ## Managing SSH keys
 
 For machines which don't have a `brand` of `kvm` (see
-`triton instances -o id,brand` or `sdc-listmachines`), you can manage the SSH
-keys that allow logging into the machine via CloudAPI.  For example, to rotate
-keys:
+`triton instance list -o id,brand` or `sdc-listmachines`), you can manage the
+SSH keys that allow logging into the machine via CloudAPI.  For example, to
+rotate keys:
+
+    $ triton key add --name=my-other-rsa-key ~/.ssh/my_other_rsa_key.pub
+
+or
 
     $ sdc-createkey --name=my-other-rsa-key ~/.ssh/my_other_rsa_key.pub
 
@@ -466,7 +470,7 @@ created:
 
 To clean up a machine, you can use either:
 
-    $ triton delete-instance $machine_id
+    $ triton instance delete $machine_id
 
 or
 
@@ -474,13 +478,17 @@ or
 
 For example:
 
-    $ triton delete-instance 9205af5b
+    $ triton instance delete 9205af5b
     Delete (async) instance 9205af5b (9205af5b-f2c0-ef07-e1f3-94bf1ff8fb93)
 
 ### Deleting keys
 
 Finally, you probably have one or two SSH keys uploaded to SmartDataCenter after
 going through the guide, so to delete the one we setup:
+
+    $ triton key delete id_rsa
+
+or
 
     $ sdc-deletekey id_rsa
 
@@ -646,6 +654,10 @@ Alternatively, there is the more stable and feature-complete node-smartdc:
 
     $ npm install smartdc
 
+Although node-triton has fewer features -- for now -- it will continue to
+receive the most development effort and future support. node-smartdc is in
+maintenance.
+
 The rest of this document will show all APIs in terms of both the raw HTTP
 specification, the CLI commands, and sometimes the node-smartdc SDK.
 
@@ -734,10 +746,10 @@ to use, with the additional twist that your client can specify ranges of
 versions it supports.  For details on how to specify ranges, check
 [node-semver](https://github.com/isaacs/node-semver).  A couple examples:
 
-    Api-Version: ~8.0
+    Api-Version: ~8
     Api-Version: >=7.0.0
 
-Joyent recommends you set the Api-Version header to `~8.0`; each service
+Joyent recommends you set the Api-Version header to `~8`; each service
 release of SmartDataCenter will increment the `patch` version; any major
 releases of SmartDataCenter will increment either the `minor` or `major`
 version.
@@ -752,7 +764,7 @@ communicating with CloudAPI:
       local now=`date -u "+%a, %d %h %Y %H:%M:%S GMT"`;
       local signature=`echo ${now} | tr -d '\n' | openssl dgst -sha256 -sign ~/.ssh/id_rsa | openssl enc -e -a | tr -d '\n'`;
 
-      curl -i -H "Accept: application/json" -H "api-version: ~8.0" -H "Date: ${now}" -H "Authorization: Signature keyId=\"/$SDC_ACCOUNT/keys/id_rsa\",algorithm=\"rsa-sha256\" ${signature}" --url $SDC_URL$@;
+      curl -i -H "Accept: application/json" -H "api-version: ~8" -H "Date: ${now}" -H "Authorization: Signature keyId=\"/$SDC_ACCOUNT/keys/id_rsa\",algorithm=\"rsa-sha256\" ${signature}" --url $SDC_URL$@;
       echo "";
     }
 
@@ -880,7 +892,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ triton account
+    $ triton account get 
 
 or
 
@@ -891,7 +903,7 @@ or
     GET /my HTTP/1.1
     authorization: Signature keyId="..."
     accept: application/json
-    accept-version: ~8.0
+    accept-version: ~8
     host: api.example.com
 
 ### Example Response
@@ -982,7 +994,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     authorization: Signature keyId="...
     accept: application/json
     content-type: application/json
-    accept-version: ~8.0
+    accept-version: ~8
     content-length: 48
     content-md5: 6kCHdE651hsI9N82TUkU/g==
     host: api.example.com
@@ -1069,7 +1081,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ triton keys
+    $ triton key list
 
     or
 
@@ -1081,7 +1093,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Host: api.example.com
     Authorization: ...
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -1133,6 +1145,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
+    $ triton key get barbar
+
+or
+
     $ sdc-getkey barbar
 
 ### Example Request
@@ -1141,7 +1157,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -1195,7 +1211,11 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ sdc-createkey -n barbardos ~/.ssh/id_rsa.pub
+    $ triton key add --nams=barbardos ~/.ssh/id_rsa.pub
+
+or
+
+    $ sdc-createkey --name=barbardos ~/.ssh/id_rsa.pub
 
 ### Example Request
 
@@ -1205,7 +1225,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 455
     Content-Type: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
     {
       "name": "barbardos",
@@ -1258,6 +1278,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
+    $ triton key delete barbados
+
+or
+
     $ sdc-deletekey barbados
 
 #### Example Request
@@ -1265,7 +1289,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     DELETE /my/keys/barbardos HTTP/1.1
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
     Content-Length: 0
 
 #### Example Response
@@ -1328,10 +1352,6 @@ Array of user objects.  Each user object has the following fields:
 
 ### CLI Command:
 
-    $ triton rbac users
-
-    or
-
     $ sdc-user list
 
 ### Example Request
@@ -1339,7 +1359,7 @@ Array of user objects.  Each user object has the following fields:
     GET /my/users HTTP/1.1
     Accept: application/json
     Host: api.example.com
-    Api-Version: ~8.0
+    Api-Version: ~8
     Authorization: Signature keyId...
 
 ### Example Response
@@ -1825,10 +1845,6 @@ Array of role objects.  Each role object has the following fields:
 
 ### CLI Command:
 
-    $ triton rbac roles
-
-or
-
     $ sdc-role list
 
 ### Example Request
@@ -1897,10 +1913,6 @@ Get an account role (`:role`) by `id` or `name`.
 || ResourceNotFound || If `:account` or `:role` do not exist                  ||
 
 ### CLI Command:
-
-    $ triton rbac role e53b8fec-e661-4ded-a21e-959c9ba08cb2
-
-or
 
     $ sdc-role get e53b8fec-e661-4ded-a21e-959c9ba08cb2
 
@@ -2142,10 +2154,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command:
 
-    $ triton rbac role e53b8fec-e661-4ded-a21e-959c9ba08cb2 --delete
-
-or
-
     $ sdc-role delete e53b8fec-e661-4ded-a21e-959c9ba08cb2
 
 #### Example Request
@@ -2290,10 +2298,6 @@ Array of policy objects.  Each policy object has the following fields:
 
 ### CLI Command:
 
-    $ triton rbac policies
-
-or
-
     $ sdc-policy list
 
 ### Example Request
@@ -2356,10 +2360,6 @@ Get an account policy (`:policy`) by `id`.
 
 
 ### CLI Command:
-
-    $ triton rbac policy 95ca7b25-5c8f-4c1b-92da-4276f23807f3
-
-or
 
     $ sdc-policy get 95ca7b25-5c8f-4c1b-92da-4276f23807f3
 
@@ -2496,8 +2496,6 @@ Upgrades an existing account policy.  Everything but id can be modified.
 
 ### CLI Command:
 
-    $ triton rbac policy 8700e959-4cb3-4337-8afa-fb0a53b5366e --edit
-
     $ sdc-policy update 8700e959-4cb3-4337-8afa-fb0a53b5366e --rules='CAN rebootmachine, createmachine AND getmachine' --rules='CAN listkeys AND listuserkeys' --rules='CAN stopmachine, startmachine, renamemachine, enablemachinefirewall AND disablemachinefirewall'
 
 ### Example Request
@@ -2562,8 +2560,6 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command:
 
-    $ triton rbac policy 95ca7b25-5c8f-4c1b-92da-4276f23807f3 --delete
-
     $ sdc-policy delete 8700e959-4cb3-4337-8afa-fb0a53b5366e
 
 #### Example Request
@@ -2605,10 +2601,6 @@ See [ListKeys](#ListKeys).
 
 ### CLI Command:
 
-    $ triton rbac keys dd71f8bb-f310-4746-8e36-afd7c6dd2895
-
-or
-
     $ sdc-user keys dd71f8bb-f310-4746-8e36-afd7c6dd2895
 
 
@@ -2619,8 +2611,6 @@ See [GetKey](#GetKey).
 
 ### CLI Command:
 
-    $ triton rbac key dd71f8bb-f310-4746-8e36-afd7c6dd2895 0b:56:ae:c5:d1:7b:7a:98:09:58:1a:a2:0c:22:63:9f
-
     $ sdc-user key dd71f8bb-f310-4746-8e36-afd7c6dd2895 '0b:56:ae:c5:d1:7b:7a:98:09:58:1a:a2:0c:22:63:9f'
 
 
@@ -2630,8 +2620,6 @@ Creates a new key record.  See [CreateKey](#CreateKey).
 
 ### CLI Command:
 
-    $ triton rbac key --add -n test 93c3d419-a927-6195-b6fc-b3a4af541aa3 ~/.ssh/id_rsa.pub
-
     $ sdc-user upload-key -n test 93c3d419-a927-6195-b6fc-b3a4af541aa3 ~/.ssh/id_rsa.pub
 
 
@@ -2640,8 +2628,6 @@ Creates a new key record.  See [CreateKey](#CreateKey).
 Removes a key.  See [GetKey](#GetKey).
 
 ### CLI Command:
-
-    $ triton rbac key --delete dd71f8bb-f310-4746-8e36-afd7c6dd2895 0b:56:ae:c5:d1:7b:7a:98:09:58:1a:a2:0c:22:63:9f
 
     $ sdc-user delete-key dd71f8bb-f310-4746-8e36-afd7c6dd2895 '0b:56:ae:c5:d1:7b:7a:98:09:58:1a:a2:0c:22:63:9f'
 
@@ -2806,7 +2792,7 @@ or
     Host: api.example.com
     Accept: application/json
     Authorization: Signature keyId...
-    Api-Version: ~8.0
+    Api-Version: ~8
     Content-Length: 0
 
 #### Example Response
@@ -2862,7 +2848,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Host: api.example.com
     Authorization: Signature keyId...
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -2926,7 +2912,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Host: api.example.com
     Authorization: Signature keyId...
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
     Content-Length: 0
 
 #### Example Response
@@ -3023,7 +3009,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ triton images
+    $ triton image list
 
 or
 
@@ -3035,7 +3021,7 @@ or
     Host: api.example.com
     Authorization: Signature keyId...
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -3218,7 +3204,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 #### Example Response
 
@@ -3291,7 +3277,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 #### Example Response
 
@@ -3385,7 +3371,7 @@ Some typical and specific errors for this endpoint:
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
     {
       "machine": "a44f2b9b-e7af-f548-b0ba-4d9270423f1a",
@@ -3482,7 +3468,7 @@ Some typical and specific errors for this endpoint:
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
     {
       "name": "my-renamed-image",
@@ -3575,7 +3561,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 ### CLI Command
 
-    $ triton packages
+    $ triton package list
 
 or
 
@@ -3587,7 +3573,7 @@ or
     Host: api.example.com
     Authorization: ...
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -3666,7 +3652,7 @@ or
     Host: api.example.com
     Authorization: ...
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -3767,7 +3753,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 Get all machines:
 
-    $ triton instances
+    $ triton instance list
 
 or
 
@@ -3775,7 +3761,7 @@ or
 
 Get all LX machines:
 
-    $ triton instances brand=lx
+    $ triton instance list brand=lx
 
 or
 
@@ -3783,7 +3769,7 @@ or
 
 Get all LX machines that are currently running:
 
-    $ triton instances brand=lx state=running
+    $ triton instance list brand=lx state=running
 
 or
 
@@ -3791,7 +3777,7 @@ or
 
 Get all LX machines that are currently running, and have 256 MiB of memory:
 
-    $ triton instances brand=lx state=running memory=256
+    $ triton instance list brand=lx state=running memory=256
 
 or
 
@@ -3810,8 +3796,8 @@ Beware that depending on your shell you may need to escape the asterisk
 character. E.g. Bash requires it escaped.
 
 The CLI has parameters that let you filter on most things in the API, and you
-can combine them.  Run `triton instances --help` or `sdc-listmachines --help` to
-see all the options.
+can combine them.  Run `triton instance list --help` or
+`sdc-listmachines --help` to see all the options.
 
 ### Example Request
 
@@ -3819,7 +3805,7 @@ see all the options.
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -3921,7 +3907,7 @@ or
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -4102,7 +4088,7 @@ or
     Accept: application/json
     Content-Length: 455
     Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8.0
+    Api-Version: ~8
 
     {
       "image": "2b683a82-a066-11e3-97ab-2faa44701c5a",
@@ -4206,6 +4192,8 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
     $ triton instance stop c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
 
+or
+
     $ sdc-stopmachine c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
 
 ### Example Request
@@ -4216,7 +4204,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8.0
+    Api-Version: ~8
 
     action=stop
 
@@ -4278,7 +4266,7 @@ or
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8.0
+    Api-Version: ~8
 
     action=start
 
@@ -4340,7 +4328,7 @@ or
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8.0
+    Api-Version: ~8
 
     action=reboot
 
@@ -4404,7 +4392,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8.0
+    Api-Version: ~8
 
     action=resize&package=7041ccc7-3f9e-cf1e-8c85-a9ee41b7f968
 
@@ -4460,7 +4448,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8.0
+    Api-Version: ~8
 
     action=rename&name=new_friendly_name
 
@@ -4515,7 +4503,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8.0
+    Api-Version: ~8
 
     action=enable_firewall
 
@@ -4570,7 +4558,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8.0
+    Api-Version: ~8
 
     action=disable_firewall
 
@@ -4638,7 +4626,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8.0
+    Api-Version: ~8
 
     name=just-booted
 
@@ -4698,7 +4686,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 0
     Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -4750,7 +4738,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 0
     Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -4810,7 +4798,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 0
     Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -4866,7 +4854,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 0
     Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -4923,7 +4911,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8.0
+    Api-Version: ~8
 
     foo=bar&group=test
 
@@ -4981,7 +4969,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -5038,7 +5026,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -5087,7 +5075,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -5136,7 +5124,7 @@ to keep the shell from matching files in the current directory.
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -5193,7 +5181,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8.0
+    Api-Version: ~8
 
     foo=bar&group=test
 
@@ -5257,7 +5245,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Accept: application/json
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8.0
+    Api-Version: ~8
 
     foo=bar&group=test
 
@@ -5314,7 +5302,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -5369,7 +5357,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: text/plain
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -5418,7 +5406,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: text/plain
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -5466,7 +5454,7 @@ to keep the shell from matching files in the current directory.
     Authorization: ...
     Host: api.example.com
     Accept: text/plain
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -5516,7 +5504,7 @@ or
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 #### Example Response
 
@@ -5582,7 +5570,7 @@ or
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 #### Example Response
 
@@ -5886,7 +5874,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -5965,7 +5953,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -6052,7 +6040,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -6129,7 +6117,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Host: api.example.com
     Authorization: ...
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -6209,7 +6197,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 ### Example Response
 
@@ -6341,7 +6329,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
     Content-Length: 12
     Content-Type: application/x-www-form-urlencoded
 
@@ -6418,7 +6406,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 #### Example Response
 
@@ -6517,7 +6505,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     GET /login/fwrules HTTP/1.1
     authorization: Signature keyId="...
     accept: application/json
-    accept-version: ~8.0
+    accept-version: ~8
     host: api.example.com
     connection: keep-alive
 
@@ -6579,7 +6567,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     GET /login/fwrules/38de17c4-39e8-48c7-a168-0f58083de860 HTTP/1.1
     authorization: Signature keyId="...
     accept: application/json
-    accept-version: ~8.0
+    accept-version: ~8
     host: api.example.com
 
 #### Example Response
@@ -6645,7 +6633,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     authorization: Signature keyId="...
     accept: application/json
     content-type: application/json
-    accept-version: ~8.0
+    accept-version: ~8
     content-length: 112
     host: api.example.com
 
@@ -6711,7 +6699,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     authorization: Signature keyId="...
     accept: application/json
     content-type: application/json
-    accept-version: ~8.0
+    accept-version: ~8
     content-length: 111
     host: api.example.com
 
@@ -6774,7 +6762,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     authorization: Signature keyId="...
     accept: application/json
     content-type: application/json
-    accept-version: ~8.0
+    accept-version: ~8
     content-length: 2
     host: api.example.com
 
@@ -6836,7 +6824,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     authorization: Signature keyId="...
     accept: application/json
     content-type: application/json
-    accept-version: ~8.0
+    accept-version: ~8
     content-length: 2
     host: api.example.com
 
@@ -6890,7 +6878,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     DELETE /login/fwrules/38de17c4-39e8-48c7-a168-0f58083de860 HTTP/1.1
     authorization: Signature keyId="...
     accept: application/json
-    accept-version: ~8.0
+    accept-version: ~8
     host: api.example.com
 
 #### Example Response
@@ -7559,7 +7547,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     GET /login/networks HTTP/1.1
     authorization: Signature keyId="...
     accept: application/json
-    accept-version: ~8.0
+    accept-version: ~8
     host: api.example.com
     connection: keep-alive
 
@@ -7620,7 +7608,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     GET /login/networks/daeb93a2-532e-4bd4-8788-b6b30f10ac17 HTTP/1.1
     authorization: Signature keyId="...
     accept: application/json
-    accept-version: ~8.0
+    accept-version: ~8
     host: api.example.com
 
 #### Example Response
@@ -8531,7 +8519,7 @@ account, called 'rsa-1', the following request is what you would send for a
     Date: Sat, 11 Jun 2011 23:56:29 GMT
     Authorization: Signature keyId="/demo/keys/rsa-1",algorithm="rsa-sha256" <Base64(rsa(sha256($Date)))>
     Accept: application/json
-    Api-Version: ~8.0
+    Api-Version: ~8
 
 Where the signature is attached with the
 `Base64(rsa(sha256(Sat, 11 Jun 2011 23:56:29 GMT)))` output.  Note that the
@@ -8612,7 +8600,7 @@ Sample code for generating the `Authorization` header (and `Date` header):
       host: 'api.example.com',
       path: '/my/machines',
       headers: {
-        'api-version': '~8.0',
+        'api-version': '~8',
         'Date': date,
         'Authorization': authz
       }
