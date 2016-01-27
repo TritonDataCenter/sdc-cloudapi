@@ -3816,15 +3816,20 @@ name        | String   | The "friendly" name for this machine
 type        | String   | (deprecated) The type of machine (virtualmachine or smartmachine)
 brand       | String   | (v8.0+) The type of machine (e.g. lx)
 state       | String   | The current state of this machine (e.g. running)
+image       | String   | The image id this machine was provisioned with
 memory      | Number   | The amount of RAM this machine has (in MiB)
 disk        | Number   | The amount of disk this machine has (in MiB)
-ips         | Array[String] | The IP addresses this machine has
 metadata    | Object[String => String] | Any additional metadata this machine has
-package     | String   | The id or name of the package used to create this machine
-image       | String   | The image id this machine was provisioned with
-docker      | Boolean  | Whether this machine is a Docker container, if present
+tags        | Object[String => String] | Any tags this machine has
 created     | ISO8601 date | When this machine was created
 updated     | ISO8601 date | When this machine's details was last updated
+docker      | Boolean  | Whether this machine is a Docker container, if present
+ips         | Array[String] | The IP addresses this machine has
+networks    | Array[String] | The network UUIDs of the nics this machine has
+primaryIp   | String   | IP address of the primary nic of this machine
+firewall_enabled | Boolean  | Whether firewall rules are enforced on this machine
+compute_node | String  | UUID of the server on which the machine is located
+package     | String   | The id or name of the package used to create this machine
 
 ### Errors
 
@@ -3961,15 +3966,21 @@ name        | String   | The "friendly" name for this machine
 type        | String   | (deprecated) The type of machine (virtualmachine or smartmachine)
 brand       | String   | (v8.0+) The type of machine (e.g. lx)
 state       | String   | The current state of this machine (e.g. running)
+image       | String   | The image id this machine was provisioned with
 memory      | Number   | The amount of RAM this machine has (in MiB)
 disk        | Number   | The amount of disk this machine has (in MiB)
-ips         | Array[String] | The IP addresses this machine has
 metadata    | Object[String => String] | Any additional metadata this machine has
-package     | String   | The id or name of the package used to create this machine
-image       | String   | The image id this machine was provisioned with
-docker      | Boolean  | Whether this machine is a Docker container, if present
+tags        | Object[String => String] | Any tags this machine has
 created     | ISO8601 date | When this machine was created
 updated     | ISO8601 date | When this machine's details was last updated
+docker      | Boolean  | Whether this machine is a Docker container, if present
+ips         | Array[String] | The IP addresses this machine has
+networks    | Array[String] | The network UUIDs of the nics this machine has
+primaryIp   | String   | IP address of the primary nic of this machine
+firewall_enabled | Boolean  | Whether firewall rules are enforced on this machine
+compute_node | String  | UUID of the server on which the machine is located
+package     | String   | The id or name of the package used to create this machine
+dns_names   | Array[String] | DNS names of the machine
 
 ### Errors
 
