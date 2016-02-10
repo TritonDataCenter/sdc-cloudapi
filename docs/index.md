@@ -7088,6 +7088,113 @@ This has exactly the same input and output format as
 given `:machine`.
 
 
+## ListFirewallRuleMachines (GET /:login/fwrules/:id/machines)
+
+Lists all machines a firewall rule is applied to, in the same format as
+[List Machines](#ListMachines).
+
+### Inputs
+
+* None
+
+### Returns
+
+An array of machine objects, which contain:
+
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+id          | UUID     | Unique id for this machine
+name        | String   | The "friendly" name for this machine
+type        | String   | (deprecated) The type of machine (virtualmachine or smartmachine)
+brand       | String   | (v8.0+) The type of machine (e.g. lx)
+state       | String   | The current state of this machine (e.g. running)
+image       | String   | The image id this machine was provisioned with
+memory      | Number   | The amount of RAM this machine has (in MiB)
+disk        | Number   | The amount of disk this machine has (in MiB)
+metadata    | Object[String => String] | Any additional metadata this machine has
+tags        | Object[String => String] | Any tags this machine has
+created     | ISO8601 date | When this machine was created
+updated     | ISO8601 date | When this machine's details was last updated
+docker      | Boolean  | Whether this machine is a Docker container, if present
+ips         | Array[String] | The IP addresses this machine has
+networks    | Array[String] | The network UUIDs of the nics this machine has
+primaryIp   | String   | IP address of the primary nic of this machine
+firewall_enabled | Boolean  | Whether firewall rules are enforced on this machine
+compute_node | String  | UUID of the server on which the machine is located
+package     | String   | The id or name of the package used to create this machine
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
+InvalidArgument  | If one of the input parameters was invalid
+
+### CLI Command
+
+    $ sdc-listfirewallrulemachines 38de17c4-39e8-48c7-a168-0f58083de860
+
+### Example Request
+
+    GET /my/fwrules/38de17c4-39e8-48c7-a168-0f58083de860/machines HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Api-Version: ~8
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    x-query-limit: 1000
+    x-resource-count: 1
+    Content-Type: application/json
+    Content-Length: 1310
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: w5wJLKlhDzPpC6zKjtqaCw==
+    Date: Thu, 21 Jan 2016 10:55:25 GMT
+    Server: Joyent SmartDataCenter 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 779b5cc0-c02d-11e5-a7d2-fdf229d32220
+    Response-Time: 3444
+
+    [
+      {
+        "id": "b6979942-7d5d-4fe6-a2ec-b812e950625a",
+        "name": "test",
+        "type": "smartmachine",
+        "brand": "joyent",
+        "state": "running",
+        "image": "2b683a82-a066-11e3-97ab-2faa44701c5a",
+        "ips": [
+          "10.88.88.26",
+          "192.168.128.5"
+        ],
+        "memory": 128,
+        "disk": 12288,
+        "metadata": {
+          "root_authorized_keys": "..."
+        },
+        "tags": {},
+        "created": "2016-01-04T12:55:50.539Z",
+        "updated": "2016-01-21T08:56:59.000Z",
+        "networks": [
+          "a9c130da-e3ba-40e9-8b18-112aba2d3ba7",
+          "45607081-4cd2-45c8-baf7-79da760fffaa"
+        ],
+        "primaryIp": "10.88.88.26",
+        "firewall_enabled": false,
+        "compute_node": "564d0b8e-6099-7648-351e-877faf6c56f6",
+        "package": "sdc_128"
+      }
+    ]
+
+
 
 
 # Fabrics
