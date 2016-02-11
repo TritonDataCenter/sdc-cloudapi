@@ -204,10 +204,10 @@ You can set environment variables for the following flags so that you don't have
 to type them for each request (e.g. in your .bash_profile).  All the examples in
 this document assume that these variables have been set:
 
-**CLI Flags**    | **Description**              | **Environment Variable**   
----------------- | ---------------------------- | ------------------------ 
---account<br/>-a | Login name (account)         | SDC_ACCOUNT                
---user           | Subuser name when using [Role Based Access Control](#rbac-users-roles-policies) | SDC_USER 
+**CLI Flags**    | **Description**              | **Environment Variable**
+---------------- | ---------------------------- | ------------------------
+--account<br/>-a | Login name (account)         | SDC_ACCOUNT
+--user           | Subuser name when using [Role Based Access Control](#rbac-users-roles-policies) | SDC_USER
 --keyId<br/>-k   | Fingerprint of key to use for signing | SDC_KEY_ID
 --url<br/>-u     | URL of the CloudAPI endpoint | SDC_URL
 
@@ -899,7 +899,7 @@ ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
-    $ triton account get 
+    $ triton account get
 
 or
 
@@ -5279,25 +5279,22 @@ to keep the shell from matching files in the current directory.
 
 ## AddMachineTags (POST /:login/machines/:id/tags)
 
-Allows you to add additional tags, other than those set at provisioning time.
-This API lets you *append* new tags, not overwrite existing tags.
+Set tags on the given machine. A pre-existing tag with the same name as
+one given will be overwritten.
 
-This call allows you to send any number of parameters; all of these will be
-converted into tags on the machine that can be used for searching later.
+Note: This action is asynchronous. You can poll on `ListMachineTags` to wait for
+the update to be complete (the `triton instance tag set -w,--wait` option does
+this).
 
 ### Inputs
 
-**Field** | **Type** | **Description**
---------- | -------- | ---------------
-$tagName  | String   | You can assign any number of tags in this call
+Tag name/value pairs. Input data is typically as a application/json POST body.
+However, query params or `application/x-www-form-urlencoded`-encoded body also
+works. Tag values may be strings, numbers or booleans.
 
 ### Returns
 
-Returns the current set of tags.
-
-**Field** | **Type** | **Description**
---------- | -------- | ---------------
-$tagName  | String   | Your value
+Returns the resultant set of tags as a JSON object.
 
 ### Errors
 
@@ -5308,63 +5305,59 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
+
+Using node-triton:
+
+    $ triton instance tag set -w 5e42cd1e foo=bar group=test
+
+Using node-smartdc:
 
     $ sdc-addmachinetags --tag='foo=bar' --tag='group=test' 5e42cd1e-34bb-402f-8796-bf5a2cae47db
 
 ### Example Request
 
     POST /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/tags HTTP/1.1
-    Authorization: ...
-    Host: api.example.com
-    Accept: application/json
-    Content-Length: 12
-    Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8
+    Host: us-east-3b.api.joyent.com
+    date: Thu, 11 Feb 2016 18:03:46 GMT
+    authorization: ...
+    accept: application/json
+    content-type: application/json
+    accept-version: ~8||~7
+    content-length: 28
 
-    foo=bar&group=test
+    {"foo":"bar","group":"test"}
 
 ### Example Response
 
-    HTTP/1.1 200 Ok
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST, PUT
-    Connection: close
-    Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: SmartDataCenter
-    Api-Version: 8.0.0
-    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    Response-Time: 754
-    Content-Type: application/json
-    Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
-    Content-Length: 116
+    HTTP/1.1 200 OK
+    server: Joyent SmartDataCenter 8.0.0
+    request-id: cb65c530-d0e9-11e5-ac0c-090497b36c30
+    date: Thu, 11 Feb 2016 18:03:46 GMT
+    response-time: 91
+    ...
+    api-version: 8.0.0
+    content-length: 48
 
-    {
-      "foo": "bar",
-      "group": "test"
-    }
+    {"foo":"bar","group":"test","preexiting":"blah"}
 
 
 ## ReplaceMachineTags (PUT /:login/machines/:id/tags)
 
-Allows you to replace all machine tags. This API lets you *overwrite* existing
-tags, not append to existing tags.
+Fully replace all tags on a machine with the given tags.
 
-This call allows you to send any number of parameters; all of these will be
-converted into tags on the machine that can be used for searching later.
+Note: This action is asynchronous. You can poll on `ListMachineTags` to wait for
+the update to be complete (the `triton instance tag replace-all -w,--wait`
+option does this).
 
 ### Inputs
 
-**Field** | **Type** | **Description**
---------- | -------- | ---------------
-$tagName  | String   | You can assign any number of tags in this call
+Input data is typically as a application/json POST body. However, query params
+or `application/x-www-form-urlencoded`-encoded body also works. Tag values
+may be strings, numbers or booleans.
 
 ### Returns
 
-Returns the current set of tags.
-
-**Field** | **Type** | **Description**
---------- | -------- | ---------------
-$tagName  | String   | Your value
+Returns the resultant set of tags as a JSON object.
 
 ### Errors
 
@@ -5376,39 +5369,39 @@ ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
+Using node-triton:
+
+    $ triton instance tag replace-all -w 5e42cd1e foo=bar group=test
+
+Using node-smartdc:
+
     $ sdc-replacemachinetags --tag='foo=bar' --tag='group=test' 5e42cd1e-34bb-402f-8796-bf5a2cae47db
 
 ### Example Request
 
-    PUT /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/tags HTTP/1.1
-    Authorization: ...
-    Host: api.example.com
-    Accept: application/json
-    Content-Length: 12
-    Content-Type: application/x-www-form-urlencoded
-    Api-Version: ~8
+    POST /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/tags HTTP/1.1
+    Host: us-east-3b.api.joyent.com
+    date: Thu, 11 Feb 2016 18:03:46 GMT
+    authorization: ...
+    accept: application/json
+    content-type: application/json
+    accept-version: ~8||~7
+    content-length: 28
 
-    foo=bar&group=test
+    {"foo":"bar","group":"test"}
 
 ### Example Response
 
-    HTTP/1.1 200 Ok
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST, PUT
-    Connection: close
-    Date: Tue, 05 Jul 2012 17:19:26 GMT
-    Server: SmartDataCenter
-    Api-Version: 8.0.0
-    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    Response-Time: 754
-    Content-Type: application/json
-    Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
-    Content-Length: 116
+    HTTP/1.1 200 OK
+    server: Joyent SmartDataCenter 8.0.0
+    request-id: cb65c530-d0e9-11e5-ac0c-090497b36c30
+    date: Thu, 11 Feb 2016 18:03:46 GMT
+    response-time: 91
+    ...
+    api-version: 8.0.0
+    content-length: 28
 
-    {
-      "foo": "bar",
-      "group": "test"
-    }
+    {"foo":"bar","group":"test"}
 
 
 ## ListMachineTags (GET /:login/machines/:id/tags)
@@ -5417,15 +5410,11 @@ Returns the complete set of tags associated with this machine.
 
 ### Inputs
 
-* None
+None.
 
 ### Returns
 
-Returns the current set of tags.
-
-**Field** | **Type** | **Description**
---------- | -------- | ---------------
-$tagName  | String   | Your value
+Returns the current set of tags as a JSON object.
 
 ### Errors
 
@@ -5437,51 +5426,60 @@ ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
+Using node-triton:
+
+    $ triton instance tag ls 5e42cd1e
+    {
+        "foo": "bar",
+        "group": "test"
+    }
+    $ triton instance tags 5e42cd1e    # shortcut
+    {
+        "foo": "bar",
+        "group": "test"
+    }
+
+Using node-smartdc:
+
     $ sdc-listmachinetags 5e42cd1e-34bb-402f-8796-bf5a2cae47db
 
 ### Example Request
 
     GET /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/tags HTTP/1.1
-    Authorization: ...
     Host: api.example.com
-    Accept: application/json
-    Api-Version: ~8
+    authorization: ...
+    accept: application/json
+    accept-version: ~8||~7
 
 ### Example Response
 
-    HTTP/1.1 200 Ok
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST, PUT
-    Connection: close
-    Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: SmartDataCenter
-    Api-Version: 8.0.0
-    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    Response-Time: 754
-    Content-Type: application/json
-    Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
-    Content-Length: 116
+    HTTP/1.1 200 OK
+    server: Joyent SmartDataCenter 8.0.0
+    request-id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    date: Thu, 11 Feb 2016 18:03:46 GMT
+    response-time: 91
+    ...
+    api-version: 8.0.0
+    content-length: 28
 
-    {
-      "foo": "bar",
-      "group": "test"
-    }
+    {"foo":"bar","group":"test"}
 
 
 ## GetMachineTag (GET /:login/machines/:id/tags/:tag)
 
 Returns the value for a single tag on this machine.
 
-Note that this API is "special", as it returns content in `text/plain`; this
-also means you must set the `Accept` header to `text/plain`.
+Typically one calls CloudAPI endpoints with `Accept: application/json`. This
+endpoint can be called that way, or alternatively with `Accept: text/plain`
+to get the non-JSON value in the response.
 
 ### Inputs
 
-* None
+None.
 
 ### Returns
 
-Returns the value of `:tag` in plain text.
+The tag value.
 
 ### Errors
 
@@ -5493,30 +5491,51 @@ ResourceNotFound | If `:login`, `:id` or `:tag` does not exist
 
 ### CLI Command
 
-    $ sdc-getmachinetag --tag=foo 5e42cd1e-34bb-402f-8796-bf5a2cae47db
+Using node-triton:
 
-### Example Request
+    $ triton instance tag get 5e42cd1e foo
+    bar
+    $ triton instance tag get --json 5e42cd1e foo   # encoded as JSON
+    "bar"
+
+Using node-smartdc:
+
+    $ sdc-getmachinetag --tag=foo 5e42cd1e-34bb-402f-8796-bf5a2cae47db
+    bar
+
+### Example Request/Response
+
+Using `application/json`, the request:
 
     GET /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/tags/foo HTTP/1.1
-    Authorization: ...
     Host: api.example.com
-    Accept: text/plain
-    Api-Version: ~8
+    authorization: ...
+    accept: application/json
+    accept-version: ~8||~7
 
-### Example Response
+the response:
 
-    HTTP/1.1 200 Ok
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST
-    Connection: close
-    Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: SmartDataCenter
-    Api-Version: 8.0.0
-    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    Response-Time: 754
-    Content-Type: text/plain
-    Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
-    Content-Length: 3
+    HTTP/1.1 200 OK
+    ...
+    content-type: application/json
+    content-length: 5
+
+    "bar"
+
+Using `text/plain`, the request:
+
+    GET /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/tags/foo HTTP/1.1
+    Host: api.example.com
+    authorization: ...
+    accept: text/plain
+    accept-version: ~8||~7
+
+the response:
+
+    HTTP/1.1 200 OK
+    ...
+    content-type: text/plain
+    content-length: 3
 
     bar
 
@@ -5525,6 +5544,10 @@ ResourceNotFound | If `:login`, `:id` or `:tag` does not exist
 
 Deletes a single tag from this machine.
 
+Note: This action is asynchronous. You can poll on `ListMachineTags` to wait for
+the update to be complete (the `triton instance tag delete -w,--wait` option
+does this).
+
 ### Inputs
 
 * None
@@ -5543,33 +5566,35 @@ ResourceNotFound | If `:login`, `:id` or `:tag` does not exist
 
 ### CLI Command
 
+Using node-triton:
+
+    $ triton instance tag delete -w 5e42cd1e foo
+
+Using node-smartdc:
+
     $ sdc-deletemachinetag --tag=foo 5e42cd1e-34bb-402f-8796-bf5a2cae47db
 
 ### Example Request
 
     DELETE /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/tags/foo HTTP/1.1
-    Authorization: ...
     Host: api.example.com
-    Accept: text/plain
-    Api-Version: ~8
+    authorization: ...
+    accept: text/plain
+    accept-version: ~8||~7
 
 ### Example Response
 
     HTTP/1.1 204 No Content
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST, DELETE
-    Connection: close
-    Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: SmartDataCenter
-    Api-Version: 8.0.0
-    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    Response-Time: 754
-    Content-Length: 0
+    ...
 
 
 ## DeleteMachineTags (DELETE /:login/machines/:id/tags)
 
 Deletes all tags from a machine.
+
+Note: This action is asynchronous. You can poll on `ListMachineTags` to wait for
+the update to be complete (the `triton instance tag delete -w,--wait` option
+does this).
 
 ### Inputs
 
@@ -5589,31 +5614,27 @@ ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
-    $ sdc-deletemachinetag --tag='*'' 5e42cd1e-34bb-402f-8796-bf5a2cae47db
+Using node-triton:
 
-If you're running in a Unix-like environment, you may need to quote the wildcard
-to keep the shell from matching files in the current directory.
+    $ triton instance tag delete -w --all 5e42cd1e
+
+Using node-smartdc:
+
+    # Remember to quote the `*` to avoid shell expansion.
+    $ sdc-deletemachinetag --tag='*' 5e42cd1e-34bb-402f-8796-bf5a2cae47db
 
 ### Example Request
 
     DELETE /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/tags HTTP/1.1
-    Authorization: ...
     Host: api.example.com
-    Accept: text/plain
-    Api-Version: ~8
+    authorization: ...
+    accept: text/plain
+    accept-version: ~8||~7
 
 ### Example Response
 
     HTTP/1.1 204 No Content
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Methods: GET, POST, DELETE
-    Connection: close
-    Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: SmartDataCenter
-    Api-Version: 8.0.0
-    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
-    Response-Time: 754
-    Content-Length: 0
+    ...
 
 
 ## DeleteMachine (DELETE /:login/machines/:id)
