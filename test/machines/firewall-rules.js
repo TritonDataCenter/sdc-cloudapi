@@ -125,7 +125,6 @@ module.exports = function (suite, client, other, machine, callback) {
             client.get(p, function (err, req, res, body) {
                 t.ifError(err, 'Error');
                 t.equal(200, res.statusCode, 'Status Code');
-                console.log(util.inspect(body, false, 8, true));
                 t.ok(Array.isArray(body), 'isArray(machines)');
                 t.ok(body.length, 'machines length');
                 body.forEach(function (m) {

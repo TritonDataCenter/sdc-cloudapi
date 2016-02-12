@@ -5,21 +5,22 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright 2016, Joyent, Inc.
  */
 
+var assert = require('assert-plus');
 var vasync = require('vasync');
+
 var common = require('../common');
 var machinesCommon = require('./common');
+
+
+// --- Globals
 
 var checkHeaders = common.checkHeaders;
 var checkNotFound = common.checkNotFound;
 var checkMachine = machinesCommon.checkMachine;
 var waitForJob = machinesCommon.waitForJob;
-
-
-// --- Globals
-
 
 var TAG_KEY = 'role';
 var TAG_VAL = 'unitTest';
@@ -143,19 +144,23 @@ module.exports = function (suite, client, other, machine, callback) {
     });
 
 
-    suite.test('AddTag - bad tags', function (t) {
+    suite.test('AddMachineTags/ReplaceMachineTags - bad tags', function (t) {
         var path = '/my/machines/' + machine + '/tags';
 
         function call(method, tags, expectedErr, next) {
             client[method](path, tags, function (err, req, res, body) {
                 t.ok(err);
                 t.equal(err.restCode, 'ValidationFailed');
-                t.equal(err.message, 'Invalid Metadata parameters');
+                var verb = (method === 'post' ? 'adding' : 'replacing');
+                t.equal(err.message,
+                    'error ' + verb + ' tags: Invalid Metadata parameters');
+
                 t.equal(res.statusCode, 409);
 
                 t.deepEqual(body, {
                     code: 'ValidationFailed',
-                    message: 'Invalid Metadata parameters',
+                    message: 'error ' + verb
+                        + ' tags: Invalid Metadata parameters',
                     errors: [ {
                         field: 'tags',
                         code: 'Invalid',

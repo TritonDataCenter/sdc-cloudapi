@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright 2016, Joyent, Inc.
  */
 
 var util = require('util');
@@ -1119,12 +1119,12 @@ test('Check cannot update Docker machine tag', function (t) {
     }, function (err, req, res, body) {
         t.ok(err);
         t.equal(err.restCode, 'ValidationFailed');
-        t.equal(err.message, 'Invalid Metadata parameters');
+        t.equal(err.message, 'error adding tags: Invalid Metadata parameters');
         t.equal(res.statusCode, 409);
 
         t.deepEqual(body, {
             code: 'ValidationFailed',
-            message: 'Invalid Metadata parameters',
+            message: 'error adding tags: Invalid Metadata parameters',
             errors: [ {
                 field: 'tags',
                 code: 'Invalid',
@@ -1142,7 +1142,7 @@ test('Check cannot replace tags containing Docker machine tag', function (t) {
     CLIENT.put('/my/machines/' + MACHINE_UUID + '/tags', {
         foo: 'bar'
     }, function (err, req, res, body) {
-        checkValidationError(t, err, req, res, body);
+        checkTagReplaceValidationError(t, err, req, res, body);
         t.end();
     });
 });
@@ -1189,7 +1189,7 @@ test('Check cannot delete Docker machine tag', function (t) {
     CLIENT.del('/my/machines/' + MACHINE_UUID + '/tags/docker%3Alabel%3A' +
         'com.docker.blah',
     function (err, req, res, body) {
-        checkValidationError(t, err, req, res, body);
+        checkTagDeleteValidationError(t, err, req, res, body);
         t.end();
     });
 });
@@ -1199,7 +1199,7 @@ test('Check cannot delete all tags when containing Docker machine tag',
 function (t) {
     CLIENT.del('/my/machines/' + MACHINE_UUID + '/tags',
             function (err, req, res, body) {
-        checkValidationError(t, err, req, res, body);
+        checkTagDeleteAllValidationError(t, err, req, res, body);
         t.end();
     });
 });
@@ -1296,15 +1296,52 @@ function searchAndCheckOther(query, t, checkAttr) {
 }
 
 
-function checkValidationError(t, err, req, res, body) {
+function checkTagDeleteValidationError(t, err, req, res, body) {
     t.ok(err);
     t.equal(err.restCode, 'ValidationFailed');
-    t.equal(err.message, 'Invalid Metadata parameters');
+    t.equal(err.message, 'error deleting tag: Invalid Metadata parameters');
     t.equal(res.statusCode, 409);
 
     t.deepEqual(body, {
         code: 'ValidationFailed',
-        message: 'Invalid Metadata parameters',
+        message: 'error deleting tag: Invalid Metadata parameters',
+        errors: [ {
+            field: 'tags',
+            code: 'Invalid',
+            message: 'Special tag "docker:label:com.docker.blah" may not be ' +
+                    'deleted'
+        } ]
+    });
+}
+
+function checkTagDeleteAllValidationError(t, err, req, res, body) {
+    t.ok(err);
+    t.equal(err.restCode, 'ValidationFailed');
+    t.equal(err.message,
+        'error deleting all tags: Invalid Metadata parameters');
+    t.equal(res.statusCode, 409);
+
+    t.deepEqual(body, {
+        code: 'ValidationFailed',
+        message: 'error deleting all tags: Invalid Metadata parameters',
+        errors: [ {
+            field: 'tags',
+            code: 'Invalid',
+            message: 'Special tag "docker:label:com.docker.blah" may not be ' +
+                    'deleted'
+        } ]
+    });
+}
+
+function checkTagReplaceValidationError(t, err, req, res, body) {
+    t.ok(err);
+    t.equal(err.restCode, 'ValidationFailed');
+    t.equal(err.message, 'error replacing tags: Invalid Metadata parameters');
+    t.equal(res.statusCode, 409);
+
+    t.deepEqual(body, {
+        code: 'ValidationFailed',
+        message: 'error replacing tags: Invalid Metadata parameters',
         errors: [ {
             field: 'tags',
             code: 'Invalid',
