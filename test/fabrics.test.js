@@ -864,7 +864,6 @@ test('create fabric network: invalid', TEST_OPTS, function (t) {
         [addParams({provision_end_ip: 'a'}), ipMsg('provision_end_ip')],
 
         // resolvers
-        [delParam('resolvers'), missingMsg('resolvers')],
         [addParams({resolvers: 'a'}),
             typeMsg('resolvers', 'string', 'array')],
         [addParams({resolvers: ['a']}), ipMsg('resolvers[0]')],
