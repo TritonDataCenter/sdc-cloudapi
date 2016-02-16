@@ -4709,7 +4709,7 @@ limit to how much space snapshots are allowed to take. Plan your snapshots
 accordingly.
 
 You can poll on [GetMachineSnapshot](#GetMachineSnapshot) until the `state` is
-`success`.
+`created`.
 
 ### Inputs
 
