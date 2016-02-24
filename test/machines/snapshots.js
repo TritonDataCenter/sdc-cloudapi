@@ -254,6 +254,27 @@ module.exports = function (suite, client, other, machine, callback) {
         }
     });
 
+
+    suite.test('Check deleted snapshot returns 404', function (t) {
+        if (snapshot) {
+            t.ok(snapshot.name, 'Snapshot name OK');
+            var url = '/my/machines/' + machine + '/snapshots/' + snapshot.name;
+
+            client.del(url, function (err, req, res, body) {
+                t.ok(err);
+                t.equal(res.statusCode, 404);
+                t.deepEqual(body, {
+                    code: 'ResourceNotFound',
+                    message: snapshot.name + ' not found'
+                });
+                t.end();
+            });
+        } else {
+            t.end();
+        }
+    });
+
+
     return callback();
 
 };
