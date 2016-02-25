@@ -256,7 +256,7 @@ or
 
 For example:
 
-    $ triton instance 9205af5b-f2c0-ef07-e1f3-94bf1ff8fb93
+    $ triton instance get 9205af5b-f2c0-ef07-e1f3-94bf1ff8fb93
     {
         "id": "9205af5b-f2c0-ef07-e1f3-94bf1ff8fb93",
         "name": "61dc8be",
@@ -7996,6 +7996,7 @@ primary   | Boolean  | Whether this is the VM's primary NIC
 netmask   | String   | IPv4 netmask
 gateway   | String   | IPv4 gateway
 state     | String   | Describes the state of the NIC (e.g. provisioning, running, or stopped)
+network   | UUID     | The NIC's network id (see [ListNetworks](#ListNetworks))
 
 ### Errors
 
@@ -8044,7 +8045,8 @@ InvalidArgument  | If `:id` isn't a UUID
             "ip": "10.88.88.137",
             "netmask": "255.255.255.0",
             "gateway": "10.88.88.2",
-            "state": "running"
+            "state": "running",
+            "network": "6b3229b6-c535-11e5-8cf9-c3a24fa96e35"
         }
     ]
 
@@ -8072,6 +8074,7 @@ primary   | Boolean  | Whether this is the VM's primary NIC
 netmask   | String   | IPv4 netmask
 gateway   | String   | IPv4 gateway
 state     | String   | Describes the state of the NIC (e.g. provisioning, running, or stopped)
+network   | UUID     | The NIC's network id (see [ListNetworks](#ListNetworks))
 
 ### Errors
 
@@ -8119,7 +8122,8 @@ InvalidArgument  | If `:id` isn't a UUID, or `:mac` isn't a MAC address (without
         "ip": "10.88.88.137",
         "netmask": "255.255.255.0",
         "gateway": "10.88.88.2",
-        "state": "running"
+        "state": "running",
+        "network": "6b3229b6-c535-11e5-8cf9-c3a24fa96e35"
     }
 
 
@@ -8133,7 +8137,7 @@ Creates a new NIC on a machine belonging to a given account.
 
 **Field** | **Type** | **Description**
 --------- | -------- | ---------------
-network   | String   | UUID of network this NIC should attach to
+network   | UUID     | ID of network this NIC should attach to
 
 ### Returns
 
