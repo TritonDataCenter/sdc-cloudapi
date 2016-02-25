@@ -95,9 +95,9 @@ function checkMachine(t, m) {
     // t.ok(m.disk, 'checkMachine disk ok');
     // t.ok(m.created, 'checkMachine created ok');
     // t.ok(m.updated, 'checkMachine updated ok');
-    t.ok(typeof (m.disk) !== 'undefined', 'Machine disk');
-    t.ok(typeof (m.created) !== 'undefined', 'Machine created');
-    t.ok(typeof (m.updated) !== 'undefined', 'Machine updated');
+    t.ok(typeof (m.disk) !== 'undefined', 'checkMachine disk');
+    t.ok(typeof (m.created) !== 'undefined', 'checkMachine created');
+    t.ok(typeof (m.updated) !== 'undefined', 'checkMachine updated');
 }
 
 
@@ -173,19 +173,16 @@ function createMachine(t, client, obj, cb) {
     obj['tag.' + TAG_KEY] = TAG_VAL;
 
     client.post('/my/machines', obj, function (err, req, res, body) {
-        t.ifError(err, 'POST /my/machines error');
-        t.equal(res.statusCode, 201, 'POST /my/machines status');
+        t.ifError(err, 'createMachine');
+        t.equal(res.statusCode, 201, 'createMachine 201 statusCode');
         t.equal(res.headers.location,
-            sprintf('/%s/machines/%s', client.login, body.id));
-        t.ok(body, 'POST /my/machines body');
-
+            sprintf('/%s/machines/%s', client.login, body.id),
+            'createMachine Location header');
+        t.ok(body, 'createMachine body' + (body ? ': '+body.id : ''));
         common.checkHeaders(t, res.headers);
         checkMachine(t, body);
 
-        // Handy to output this to stdout in order to poke around COAL:
-        console.log('Requested provision of machine: %s', body.id);
-
-        cb(null, body.id);
+        cb(null, body && body.id);
     });
 }
 

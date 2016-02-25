@@ -56,7 +56,7 @@ function checkForbidden(t, err, req, res, body) {
 
 
 test('setup', function (t) {
-    common.setup('~7.1', function (_, clients, server) {
+    common.setup({clientApiVersion: '~7.1'}, function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
         OTHER   = clients.other;

@@ -92,7 +92,7 @@ function getInaccessibleImage(client) {
 
 
 test('setup', function (t) {
-    common.setup('~7.0', function (_, clients, server) {
+    common.setup({clientApiVersion: '~7.0'}, function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
         SERVER  = server;

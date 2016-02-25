@@ -38,7 +38,7 @@ var SERVER;
 
 
 test('setup', function (t) {
-    common.setup('~7.0', function (_, clients, server) {
+    common.setup({clientApiVersion: '~7.0'}, function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
         OTHER   = clients.other;
@@ -59,7 +59,7 @@ test('Get Headnode', function (t) {
 
 
 test('Get base image', function (t) {
-    common.getBaseImage(CLIENT, function (err, img) {
+    common.getTestImage(CLIENT, function (err, img) {
         t.ifError(err);
         IMAGE_UUID = img.id;
         t.end();

@@ -69,7 +69,7 @@ function checkImageViewable(t, img, client) {
 
 
 test('setup', function (t) {
-    common.setup('~8.0', function (_, clients, server) {
+    common.setup({clientApiVersion: '~8.0'}, function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
         SERVER  = server;

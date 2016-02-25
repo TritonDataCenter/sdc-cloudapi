@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright 2016 Joyent, Inc.
  */
 
 /*
@@ -13,10 +13,10 @@
  * preparation for every test suite.
  */
 
-var assert = require('assert');
+var assert = require('assert-plus');
 var crypto = require('crypto');
 var path = require('path');
-var Logger = require('bunyan');
+var bunyan = require('bunyan');
 var restify = require('restify');
 var libuuid = require('libuuid');
 var util = require('util');
@@ -37,7 +37,6 @@ var apertureConfig = require('aperture-config').config;
 
 // --- Globals
 
-
 var SDC_128_PACKAGE = {
     uuid: '897779dc-9ce7-4042-8879-a4adccc94353',
     name: 'sdc_128_ok',
@@ -57,9 +56,9 @@ var SDC_128_PACKAGE = {
 var PASSWD = 'secret123';
 var DEFAULT_CFG = path.join(__dirname, '..', '/etc/cloudapi.cfg');
 
-var LOG = new Logger({
+var LOG = new bunyan.createLogger({
     level: process.env.LOG_LEVEL || 'info',
-    name: 'cloudapi_unit_test',
+    name: 'sdccloudapitest',
     stream: process.stderr,
     serializers: restify.bunyan.serializers
 });
@@ -334,11 +333,6 @@ function addUser(client, keyPath, parentAccount, cb) {
 
 
 function setupClient(version, serverUrl, user, keyId, keyPath, parentAcc, cb) {
-    if (typeof (version) === 'function') {
-        cb = version;
-        version = '*';
-    }
-
     var client = restify.createJsonClient({
         url: serverUrl,
         version: version,
@@ -512,11 +506,25 @@ function withTemporaryUser(ufdsClient, userOpts, bodyCb, cb) {
 }
 
 
-function setup(version, cb) {
-    if (typeof (version) === 'function') {
-        cb = version;
-        version = '*';
+/*
+ * Setup a cloudapi test run: test account, subuser, "other" user (for
+ * visibility/privacy tests), package, etc.
+ *
+ * @param opts {Object} Optional.
+ *      - opts.clientApiVersion {String} A 'version' to use for the cloudapi
+ *        clients. Defaults to '*' (i.e. the latest cloudapi API version).
+ * @param cb {Function}
+ */
+function setup(opts, cb) {
+    if (cb === undefined) {
+        cb = opts;
+        opts = {};
     }
+    assert.object(opts, 'opts');
+    assert.func(cb, 'cb');
+    assert.optionalString(opts.clientApiVersion, 'opts.clientApiVersion');
+    var clientApiVersion = opts.clientApiVersion || '*';
+
     assert.ok(cb);
 
     var user = 'a' + uuid().substr(0, 7) + '.test@joyent.com';
@@ -546,14 +554,14 @@ function setup(version, cb) {
             });
         },
         function setupUserClient(_, next) {
-            setupClient(version, server.url, user, userKeyId, userKeyPath,
-                        null, function (err, client) {
+            setupClient(clientApiVersion, server.url, user, userKeyId,
+                    userKeyPath, null, function (err, client) {
                 userClient = client;
                 next(err);
             });
         },
         function setupSubUserClient(_, next) {
-            setupClient(version, server.url, subUser, subUserKeyId,
+            setupClient(clientApiVersion, server.url, subUser, subUserKeyId,
                         subUserKeyPath, userClient.account,
                         function (err, client) {
                 subUserClient = client;
@@ -561,7 +569,7 @@ function setup(version, cb) {
             });
         },
         function setupOtherClient(_, next) {
-            setupClient(version, server.url, otherUser, otherUserKeyId,
+            setupClient(clientApiVersion, server.url, otherUser, otherUserKeyId,
                         otherUserKeyPath, null, function (err, client) {
                 otherUserClient = client;
                 next(err);
@@ -581,10 +589,10 @@ function setup(version, cb) {
             throw err;
         }
 
-        assert(userClient);
-        assert(subUserClient);
-        assert(otherUserClient);
-        assert(server);
+        assert.object(userClient);
+        assert.object(subUserClient);
+        assert.object(otherUserClient);
+        assert.object(server);
 
         var clients = {
             user: userClient,
@@ -598,9 +606,9 @@ function setup(version, cb) {
 
 
 function teardown(clients, server, cb) {
-    assert(clients);
-    assert(server);
-    assert(cb);
+    assert.object(clients);
+    assert.object(server);
+    assert.func(cb);
 
     var userClient      = clients.user;
     var subUserClient   = clients.subuser;
@@ -609,6 +617,7 @@ function teardown(clients, server, cb) {
     var ufds    = userClient.ufds;
     var accUuid = userClient.account.uuid;
 
+    // XXX No! Don't ignore errors. Fix this to handle errors.
     // ignore all errors; try to clean up as much as possible
     ufds.deleteRole(accUuid, userClient.role.uuid, function () {
         ufds.deletePolicy(accUuid, userClient.policy.uuid, function () {
@@ -693,17 +702,18 @@ function getHeadnode(client, cb) {
 }
 
 
-function getBaseImage(client, cb) {
-    client.get('/my/images?name=base', function (err, req, res, body) {
+function getTestImage(client, cb) {
+    // Note: Keep this image name@version in sync with tools/coal-setup.sh.
+    client.get('/my/images?name=minimal-64-lts',
+            function (err, req, res, body) {
         if (err) {
-            return cb(err);
+            cb(err);
+            return;
         }
-
-        var dataset = body.filter(function (d) {
-            return d.version && d.version === '13.4.0';
+        var image = body.filter(function (d) {
+            return d.version && d.version === '15.4.0';
         })[0];
-
-        return cb(null, dataset);
+        cb(null, image);
     });
 }
 
@@ -750,6 +760,79 @@ function checkInvalidArgument(t, err, req, res, body) {
 }
 
 
+// --- some NAPI client conveniences
+
+/*
+ * Delete the given network by name. It is not an error if the name doesn't
+ * exist.
+ */
+function napiDeleteNetworkByName(opts, cb) {
+    assert.object(opts.napi, 'opts.napi');
+    assert.string(opts.name, 'opts.name');
+
+    opts.napi.listNetworks({name: opts.name}, function (err, nets) {
+        if (err) {
+            cb(err);
+        } else if (nets.length > 1) {
+            cb(new Error(util.format(
+                'unexpectedly more than one network named "%s": %j',
+                opts.name, nets)));
+        } else if (nets.length === 1) {
+            opts.napi.deleteNetwork(nets[0].uuid, cb);
+        } else {
+            cb();
+        }
+    });
+}
+
+
+/*
+ * Delete the given network pool name. It is not an error if it doesn't exist.
+ */
+function napiDeletePoolByName(opts, cb) {
+    assert.object(opts.napi, 'opts.napi');
+    assert.string(opts.name, 'opts.name');
+
+    // Can't use `ListNetworkPools?name=name` (see NAPI-344).
+    opts.napi.listNetworkPools(function (err, pools) {
+        if (err) {
+            cb(err);
+            return;
+        }
+
+        var matches = pools.filter(
+            function (pool) { return pool.name === opts.name; });
+        if (matches.length > 1) {
+            cb(new Error(util.format(
+                'unexpectedly more than one network pool named "%s": %j',
+                opts.name, matches)));
+        } else if (matches.length === 1) {
+            opts.napi.deleteNetworkPool(matches[0].uuid, cb);
+        } else {
+            cb();
+        }
+    });
+}
+
+/*
+ * Delete the given nic tag. It is not an error if it doesn't exist.
+ */
+function napiDeleteNicTagByName(opts, cb) {
+    assert.object(opts.napi, 'opts.napi');
+    assert.string(opts.name, 'opts.name');
+
+    opts.napi.getNicTag(opts.name, function (err, nicTag) {
+        if (!err) {
+            opts.napi.deleteNicTag(opts.name, cb);
+        } else if (err.statusCode === 404) {
+            cb();
+        } else {
+            cb(err);
+        }
+    });
+}
+
+
 // --- Library
 
 
@@ -763,13 +846,21 @@ module.exports = {
     checkNotAuthorized: checkNotAuthorized,
     checkNotFound: checkNotFound,
     checkInvalidArgument: checkInvalidArgument,
+
     waitForMahiCache: waitForMahiCache,
     withTemporaryUser: withTemporaryUser,
+
+    // XXX `uuid` export should die. Don't want randomness in the test cases.
     uuid: uuid,
     addPackage: addPackage,
     deletePackage: deletePackage,
     getHeadnode: getHeadnode,
-    getBaseImage: getBaseImage,
+    getTestImage: getTestImage,
+
+    // Some NAPI client conveniences
+    napiDeleteNicTagByName: napiDeleteNicTagByName,
+    napiDeleteNetworkByName: napiDeleteNetworkByName,
+    napiDeletePoolByName: napiDeletePoolByName,
 
     sdc_128_package: SDC_128_PACKAGE,
 

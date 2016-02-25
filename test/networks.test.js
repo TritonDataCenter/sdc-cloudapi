@@ -5,112 +5,170 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright 2016, Joyent, Inc.
  */
 
+var assert = require('assert-plus');
+var format = require('util').format;
 var test = require('tape').test;
-var util = require('util');
-var common = require('./common');
 var vasync = require('vasync');
 
-var checkNotFound = common.checkNotFound;
+var common = require('./common');
 
 
 // --- Globals
-
 
 var CLIENTS;
 var CLIENT;
 var SERVER;
 
-var NET_UUID;
-var NIC_TAG;
-var NETWORK1;
-var NETWORK2;
-var POOL;
-var VIEWABLE_NETWORKS;
+// Fixture names
+var NIC_TAG = 'sdccloudapitest_networks_nictag';
+var NETWORK1_NAME = 'sdccloudapitest_networks_network1';
+var NETWORK2_NAME = 'sdccloudapitest_networks_network2';
+var POOL1_NAME = 'sdccloudapitest_networks_pool1';
 
 
 // --- Helpers
 
+// Delete all test data (fixtures) for this test file.
+function deleteFixtures(t, cb) {
+    vasync.pipeline({funcs: [
+        function deletePool1(_, next) {
+            common.napiDeletePoolByName({
+                napi: CLIENT.napi,
+                name: POOL1_NAME
+            }, function (err) {
+                t.ifError(err, 'deletePool1');
+                next();
+            });
+        },
+        function deleteNetwork1(_, next) {
+            common.napiDeleteNetworkByName({
+                napi: CLIENT.napi,
+                name: NETWORK1_NAME
+            }, function (err) {
+                t.ifError(err, 'deleteNetwork1');
+                next();
+            });
+        },
+        function deleteNetwork2(_, next) {
+            common.napiDeleteNetworkByName({
+                napi: CLIENT.napi,
+                name: NETWORK2_NAME
+            }, function (err) {
+                t.ifError(err, 'deleteNetwork2');
+                next();
+            });
+        },
+        function deleteNicTag(_, next) {
+            common.napiDeleteNicTagByName({
+                napi: CLIENT.napi,
+                name: NIC_TAG
+            }, function (err) {
+                t.ifError(err, 'deleteNicTag');
+                next();
+            });
+        }
+    ]}, cb);
+}
 
-function createTestNicTag(cb) {
-    NIC_TAG =  'nictag_test_' +  process.pid;
+/*
+ * Create fixtures and pass them back.
+ *
+ * @param t
+ * @param cb {Function} `function (err, fixtures)`
+ */
+function createFixtures(t, cb) {
+    var fixtures = {};
+    vasync.pipeline({funcs: [
+        function mkTestNicTag(_, next) {
+            CLIENT.napi.createNicTag(NIC_TAG, function (err, nicTag) {
+                t.ifError(err, 'createFixtures: ' + NIC_TAG);
+                t.ok(nicTag, 'createFixtures: nicTag');
+                fixtures.nicTag = nicTag;
+                next(err);
+            });
+        },
+        function mkTestNetwork1(_, next) {
+            createTestNetwork(NETWORK1_NAME, 90, function (err, net) {
+                t.ifError(err, 'createFixtures: ' + NETWORK1_NAME);
+                t.ok(net, 'createFixtures: network1');
+                fixtures.network1 = net;
+                next(err);
+            });
+        },
+        function mkTestNetwork2(_, next) {
+            createTestNetwork(NETWORK2_NAME, 91, function (err, net) {
+                t.ifError(err, 'createFixtures: ' + NETWORK2_NAME);
+                t.ok(net, 'createFixtures: network2');
+                fixtures.network2 = net;
+                next(err);
+            });
+        },
+        function mkTestPool1(_, next) {
+            var params = {
+                name: POOL1_NAME,
+                networks: [ fixtures.network1.uuid ]
+            };
+            CLIENT.napi.createNetworkPool(params.name, params,
+                    function (err, pool) {
+                t.ifError(err, 'createFixtures: ' + params.name);
+                t.ok(pool, 'createFixtures: pool');
+                fixtures.pool1 = pool;
+                next(err);
+            });
+        },
+        function getViewableNetworks(_, next) {
+            CLIENT.napi.listNetworks({
+                provisionable_by: CLIENT.account.uuid
+            }, function (err, nets) {
+                t.ifError(err, 'createFixtures: viewable networks');
+                if (err) {
+                    next(err);
+                    return;
+                }
 
-    CLIENT.napi.createNicTag(NIC_TAG, cb);
+                CLIENT.napi.listNetworkPools({
+                    provisionable_by: CLIENT.account.uuid
+                }, function (err2, pools) {
+                    t.ifError(err2, 'createFixtures: viewable pools');
+                    if (err2) {
+                        next(err2);
+                        return;
+                    }
+                    fixtures.viewableNetworks = nets.concat(pools);
+                    next();
+                });
+            });
+        }
+    ]}, function (err) {
+        t.ifError(err, 'createFixtures');
+        cb(err, fixtures);
+    });
 }
 
 
-function deleteTestNicTag(cb) {
-    CLIENT.napi.deleteNicTag(NIC_TAG, cb);
-}
-
-
-function createTestNetwork(id, octet, cb) {
+function createTestNetwork(name, octet, cb) {
     var params = {
-        name: 'network-test-' + id,
+        name: name,
         vlan_id: 59,
         subnet: '10.99.' + octet + '.0/24',
         provision_start_ip: '10.99.' + octet + '.5',
         provision_end_ip: '10.99.' + octet + '.250',
         nic_tag: NIC_TAG
     };
-
     CLIENT.napi.createNetwork(params, cb);
-}
-
-
-function deleteTestNetwork(net, cb) {
-    CLIENT.napi.deleteNetwork(net.uuid, { force: true }, cb);
-}
-
-
-function createTestPool(cb) {
-    var params = {
-        name: 'network_pool' + process.pid,
-        networks: [ NETWORK1.uuid ]
-    };
-
-    CLIENT.napi.createNetworkPool(params.name, params, function (err, res) {
-        if (err) {
-            return cb(err);
-        } else {
-            POOL = res;
-            return cb(null, res);
-        }
-    });
-}
-
-
-function deleteTestPool(cb) {
-    CLIENT.napi.deleteNetworkPool(POOL.uuid, function (err) {
-        return cb(err);
-    });
-}
-
-
-function getViewableNetworks(cb) {
-    CLIENT.napi.listNetworks({ provisionable_by: CLIENT.account.uuid },
-            function (err, nets) {
-        if (err) {
-            return cb(err);
-        }
-
-        return CLIENT.napi.listNetworkPools(function (err2, pools) {
-            if (err2) {
-                return cb(err2);
-            }
-
-            return cb(null, nets.concat(pools));
-        });
-    });
 }
 
 
 function getViewableUuids(t, nets, accountUuid) {
     var viewableUuids = nets.filter(function (net) {
         if (net.owner_uuids && net.owner_uuids.indexOf(accountUuid) === -1) {
-            t.ok(false, 'napi listing contains networks it should not');
+            t.ok(false, format('NAPI ListNetworks and/or ListNetworkPools '
+                + 'included networks owned by '
+                + 'someone else: accountUuid=%s, unexpected network=%j',
+                accountUuid, net));
             return false;
         }
         return true;
@@ -120,7 +178,6 @@ function getViewableUuids(t, nets, accountUuid) {
 
     return viewableUuids;
 }
-
 
 function checkNetwork(t, net) {
     t.ok(net, 'Network OK');
@@ -132,149 +189,145 @@ function checkNetwork(t, net) {
 
 // --- Tests
 
+test('networks', function (tt) {
+    var fixtures;
+    var firstNetId;
 
-test('setup', function (t) {
-    common.setup(function (err, clients, server) {
-        CLIENTS = clients;
-        CLIENT  = clients.user;
-        SERVER  = server;
-
-        vasync.pipeline({ funcs: [
-            function createTag(_, next) {
-                createTestNicTag(next);
-            },
-            function createNetwork1(_, next) {
-                createTestNetwork(process.pid, 90, function (err2, net1) {
-                    NETWORK1 = net1;
-                    next(err2);
+    tt.test('  setup', function (t) {
+        vasync.pipeline({funcs: [
+            function commonSetup(_, next) {
+                common.setup(function (err, clients, server) {
+                    t.ifError(err, 'commonSetup err');
+                    t.ok(clients, 'commonSetup clients');
+                    CLIENTS = clients;
+                    CLIENT = clients.user;
+                    SERVER = server;
+                    next();
                 });
             },
-            function createNetwork2(_, next) {
-                createTestNetwork(process.pid + 1, 91, function (err2, net2) {
-                    NETWORK2 = net2;
-                    next(err2);
-                });
+            function cleanStart(_, next) {
+                deleteFixtures(t, next);
             },
-            function createPool(_, next) {
-                createTestPool(next);
-            },
-            function getViewableNets(_, next) {
-                getViewableNetworks(function (err2, nets) {
-                    VIEWABLE_NETWORKS = nets;
-                    next(err2, nets);
+            function setupFixtures(_, next) {
+                createFixtures(t, function (err, fixtures_) {
+                    if (err) {
+                        next(err);
+                        return;
+                    }
+                    fixtures = fixtures_;
+                    t.ok(fixtures, 'fixtures');
+                    next();
                 });
             }
-        ] }, function (err2) {
-            t.ifError(err2);
+        ]}, function (err) {
+            t.ifError(err, 'setup');
             t.end();
         });
     });
-});
 
 
-test('list networks', function (t) {
-    var poolFound = false;
-    var netFound  = false;
+    tt.test('  list networks', function (t) {
+        var poolFound = false;
+        var netFound  = false;
 
-    CLIENT.get('/my/networks', function (err, req, res, body) {
-        t.ifError(err, 'GET /my/networks error');
-        t.equal(res.statusCode, 200, 'GET /my/networks status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/networks body');
-        t.ok(Array.isArray(body), 'GET /my/networks body is an array');
+        CLIENT.get('/my/networks', function (err, req, res, body) {
+            t.ifError(err, 'GET /my/networks error');
+            t.equal(res.statusCode, 200, 'GET /my/networks status');
+            common.checkHeaders(t, res.headers);
+            t.ok(body, 'GET /my/networks body');
+            t.ok(Array.isArray(body), 'GET /my/networks body is an array');
 
-        if (!Array.isArray(body)) {
+            if (!Array.isArray(body)) {
+                return t.end();
+            }
+
+            t.ok(body.length, 'GET /my/networks body array has elements');
+
+            var viewableUuids = getViewableUuids(t, fixtures.viewableNetworks,
+                CLIENT.account.uuid);
+
+            body.forEach(function (n) {
+                t.notEqual(viewableUuids.indexOf(n.id), -1);
+                t.ok(n.id !== fixtures.network1.uuid,
+                    'should not list network in pool');
+
+                checkNetwork(t, n);
+
+                if (n.id === fixtures.pool1.uuid) {
+                    poolFound = true;
+                }
+                if (n.id === fixtures.network2.uuid) {
+                    netFound = true;
+                }
+            });
+
+            t.ok(poolFound, format('pool1 (%s, name=%s) in /my/networks',
+                fixtures.pool1.uuid, POOL1_NAME)
+                + (poolFound ? '' : format(': %j', body)));
+            t.ok(netFound, format('network2 (%s, name=%s) in /my/networks',
+                fixtures.network2.uuid, NETWORK2_NAME)
+                + (netFound ? '' : format(': %j', body)));
+
+            // This will likely be our default setup external network
+            firstNetId = body[0].id;
             return t.end();
-        }
-
-        t.ok(body.length, 'GET /my/networks body array has elements');
-
-        var accountUuid = CLIENT.account.uuid;
-        var viewableUuids = getViewableUuids(t, VIEWABLE_NETWORKS, accountUuid);
-
-        body.forEach(function (n) {
-            t.notEqual(viewableUuids.indexOf(n.id), -1);
-            t.ok(n.id !== NETWORK1.uuid, 'should not list network in pool');
-
-            checkNetwork(t, n);
-
-            if (n.id === POOL.uuid) {
-                poolFound = true;
-            }
-            if (n.id === NETWORK2.uuid) {
-                netFound = true;
-            }
         });
-
-        t.ok(poolFound);
-        t.ok(netFound);
-
-        // This will likely be our default setup external network
-        NET_UUID = body[0].id;
-        return t.end();
     });
-});
 
 
-test('get network', function (t) {
-    CLIENT.get('/my/networks/' + NET_UUID, function (err, req, res, body) {
-        t.ifError(err, 'GET /my/networks/' + NET_UUID + ' error');
-        t.equal(res.statusCode, 200, 'GET /my/networks/:uuid status');
-        common.checkHeaders(t, res.headers);
-        t.ok(body, 'GET /my/networks/:uuid body');
-        checkNetwork(t, body);
-        t.end();
-    });
-});
-
-
-test('get network - no permission', function (t) {
-    var accountUuid = CLIENT.account.uuid;
-
-    CLIENT.napi.listNetworks(function (err, nets) {
-        t.ifError(err);
-
-        var network = nets.filter(function (net) {
-            var owners = net.owner_uuids;
-            return owners && owners.indexOf(accountUuid) === -1;
-        })[0];
-
-        var path = '/my/networks/' + network.uuid;
-        return CLIENT.get(path, function (err2, req, res, body) {
-            checkNotFound(t, err2, req, res, body);
+    tt.test('  get network', function (t) {
+        CLIENT.get('/my/networks/' + firstNetId,
+                function (err, req, res, body) {
+            t.ifError(err, 'GET /my/networks/' + firstNetId + ' error');
+            t.equal(res.statusCode, 200, 'GET /my/networks/:uuid status');
+            common.checkHeaders(t, res.headers);
+            t.ok(body, 'GET /my/networks/:uuid body');
+            checkNetwork(t, body);
             t.end();
         });
     });
-});
 
 
-test('get network (404)', function (t) {
-    CLIENT.get('/my/networks/' + common.uuid(), function (err, req, res, body) {
-        checkNotFound(t, err, req, res, body);
-        t.end();
+    tt.test('  get network - no permission', function (t) {
+        CLIENT.napi.listNetworks(function (err, nets) {
+            t.ifError(err);
+
+            var network = nets.filter(function (net) {
+                var owners = net.owner_uuids;
+                return owners && owners.indexOf(CLIENT.account.uuid) === -1;
+            })[0];
+
+            var path = '/my/networks/' + network.uuid;
+            return CLIENT.get(path, function (err2, req, res, body) {
+                common.checkNotFound(t, err2, req, res, body);
+                t.end();
+            });
+        });
     });
-});
 
 
-test('teardown', function (t) {
-    vasync.pipeline({ funcs: [
-        function deletePool(_, next) {
-            deleteTestPool(next);
-        },
-        function deleteNetwork1(_, next) {
-            deleteTestNetwork(NETWORK1, next);
-        },
-        function deleteNetwork2(_, next) {
-            deleteTestNetwork(NETWORK2, next);
-        },
-        function deleteTag(_, next) {
-            deleteTestNicTag(next);
-        }
-    ] }, function (err) {
-        t.ifError(err);
-
-        common.teardown(CLIENTS, SERVER, function () {
+    tt.test('  get network (404)', function (t) {
+        var NO_SUCH_NETWORK_UUID = 'deaddead-c626-11e5-b674-334e7e514480';
+        CLIENT.get('/my/networks/' + NO_SUCH_NETWORK_UUID,
+                function (err, req, res, body) {
+            common.checkNotFound(t, err, req, res, body);
             t.end();
         });
     });
+
+
+    tt.test('  teardown', function (t) {
+        vasync.pipeline({ funcs: [
+            function teardownFixtures(_, next) {
+                deleteFixtures(t, next);
+            },
+            function commonTeardown(_, next) {
+                common.teardown(CLIENTS, SERVER, next);
+            }
+        ]}, function (err) {
+            t.ifError(err);
+            t.end();
+        });
+    });
+
 });
