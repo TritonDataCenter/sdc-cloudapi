@@ -153,6 +153,8 @@ function waitForRunningMachine(client, machineUuid, cb) {
 }
 
 
+// TODO: This sucks. The first network here might NOT be provisionable: It
+// might be junk from an earlier failed test.
 function getProvisionableNetwork(client, cb) {
     client.get('/my/networks', function (err, req, res, body) {
         if (err) {

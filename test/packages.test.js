@@ -228,7 +228,7 @@ test('GetPackage by name OK', function (t) {
 });
 
 
-test('GetPackage by name not OK - no permission', function (t) {
+test('GetPackage by name failure - no permission', function (t) {
     var path = '/my/packages/' + SDC_512_NO_PERMISSION.name;
     CLIENT.get(path, function (err, req, res, body) {
         checkNotFound(t, err, req, res, body);
@@ -260,7 +260,7 @@ test('GetPackage by id OK', function (t) {
 });
 
 
-test('GetPackage by id not OK - no permission', function (t) {
+test('GetPackage by id failure - no permission', function (t) {
     var path = '/my/packages/' + SDC_512_NO_PERMISSION.uuid;
     CLIENT.get(path, function (err, req, res, body) {
         checkNotFound(t, err, req, res, body);

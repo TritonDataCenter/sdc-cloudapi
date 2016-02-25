@@ -57,9 +57,10 @@ test('Get Headnode', function (t) {
 });
 
 
-test('Get base image', function (t) {
+test('Get test image', function (t) {
     common.getTestImage(CLIENT, function (err, img) {
-        t.ifError(err);
+        t.ifError(err, 'getTestImage');
+        t.ok(img.id, 'img.id: ' + img.id);
         IMAGE_UUID = img.id;
         t.end();
     });

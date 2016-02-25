@@ -1092,18 +1092,23 @@ test('nics', function (tt) {
         var args = { network: fixtures.networks[0].network.uuid };
 
         CLIENT.post(path, args, function (err, req, res, nic) {
-            t.ifError(err);
-            t.equal(res.statusCode, 201);
+            t.ifError(err, 'POST ' + path);
+            t.equal(res.statusCode, 201, 'CreateNic 201 statusCode');
 
-            t.ok(nic.mac.match(MAC_RE));
-            t.ok(nic.ip.match(IP_RE));
-            t.equal(nic.primary, false);
-            t.equal(nic.state, 'provisioning');
+            t.ok(nic.mac.match(MAC_RE), format('nic.mac, %j, matches %s',
+                nic.mac, MAC_RE));
+            t.ok(nic.ip.match(IP_RE), format('nic.ip, %j, matches %s',
+                nic.ip, IP_RE));
+            t.equal(nic.primary, false, 'nic is not primary');
+            t.equal(nic.state, 'provisioning',
+                'nic.state === "provisioning":' + nic.state);
 
             var nicFront = nic.ip.split('.').slice(0, 3).join('.');
             var netFront = fixtures.networks[0].network.subnet
                 .split('.').slice(0, 3).join('.');
-            t.equal(nicFront, netFront);
+            t.equal(nicFront, netFront,
+                format('NIC IP prefix, %j, matches network subnet prefix, %j',
+                    nicFront, netFront));
 
             t.ifError(nic.gateway);
             t.ifError(nic.resolvers);
