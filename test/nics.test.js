@@ -1095,6 +1095,7 @@ test('nics', function (tt) {
             t.ifError(err, 'POST ' + path);
             t.equal(res.statusCode, 201, 'CreateNic 201 statusCode');
 
+            t.ok(nic, format('nic: %j', nic));
             t.ok(nic.mac.match(MAC_RE), format('nic.mac, %j, matches %s',
                 nic.mac, MAC_RE));
             t.ok(nic.ip.match(IP_RE), format('nic.ip, %j, matches %s',
@@ -1110,14 +1111,30 @@ test('nics', function (tt) {
                 format('NIC IP prefix, %j, matches network subnet prefix, %j',
                     nicFront, netFront));
 
-            t.ifError(nic.gateway);
-            t.ifError(nic.resolvers);
-            t.ifError(nic.owner_uuid);
-            t.ifError(nic.network_uuid);
-            t.ifError(nic.nic_tag);
-            t.ifError(nic.belongs_to_type);
-            t.ifError(nic.belongs_to_uuid);
+            // PUBAPI-1229: added nic.network field in cloudapi v8.0.1
+            t.equal(nic.network, fixtures.networks[0].network.uuid,
+                'nic.network: ' + nic.network);
 
+            // Should explicitly only have these fields:
+            var requiredFromNicField = {
+                mac: true,
+                ip: true,
+                primary: true,
+                netmask: true,
+                state: true,
+                network: true,
+                gateway: false
+            };
+            var nicCopy = common.objCopy(nic);
+            Object.keys(requiredFromNicField).forEach(function (field) {
+                var required = requiredFromNicField[field];
+                if (required && !nicCopy.hasOwnProperty(field)) {
+                    t.fail('nic is missing field: ' + field);
+                }
+                delete nicCopy[field];
+            });
+            t.equal(Object.keys(nicCopy).length, 0,
+                format('unexpected extra fields on nic: %j', nicCopy));
 
             var location = res.headers.location;
             t.ok(location);

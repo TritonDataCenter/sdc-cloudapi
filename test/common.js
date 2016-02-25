@@ -506,6 +506,18 @@ function withTemporaryUser(ufdsClient, userOpts, bodyCb, cb) {
 }
 
 
+function objCopy(obj, target) {
+    if (!target) {
+        target = {};
+    }
+    Object.keys(obj).forEach(function (k) {
+        target[k] = obj[k];
+    });
+    return target;
+}
+
+
+
 /*
  * Setup a cloudapi test run: test account, subuser, "other" user (for
  * visibility/privacy tests), package, etc.
@@ -849,6 +861,7 @@ module.exports = {
 
     waitForMahiCache: waitForMahiCache,
     withTemporaryUser: withTemporaryUser,
+    objCopy: objCopy,
 
     // XXX `uuid` export should die. Don't want randomness in the test cases.
     uuid: uuid,
