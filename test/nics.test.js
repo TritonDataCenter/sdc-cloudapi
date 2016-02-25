@@ -1506,7 +1506,10 @@ test('nics', function (tt) {
     tt.test('  teardown', function (t) {
         deleteFixtures(t, fixtures, function (err) {
             t.ifError(err, 'deleteFixtures');
-            t.end();
+
+            common.teardown(CLIENTS, CLOUDAPI_SERVER, function () {
+                t.end();
+            });
         });
     });
 });
