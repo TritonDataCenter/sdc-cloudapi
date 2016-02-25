@@ -45,7 +45,6 @@ module.exports = function (suite, client, other, machine, callback) {
     var RULE_UUID;
     var RULES_URL = '/my/fwrules';
     var RULE_URL = RULES_URL + '/%s';
-    var OTHER_RULE_UUID;
 
     function checkRule(t, rule) {
         t.ok(rule.id, 'rule id ok');
@@ -112,8 +111,14 @@ module.exports = function (suite, client, other, machine, callback) {
             rule: 'FROM vm ' + machine +
                 ' TO subnet 10.99.99.0/23 ALLOW tcp port 80'
         }, function (err, req, res, body) {
-            t.ifError(err);
-            OTHER_RULE_UUID = body.id;
+            t.ok(err);
+
+            t.deepEqual(body, {
+                code: 'InvalidParameters',
+                message: 'Invalid parameters',
+                errors: []
+            });
+
             t.end();
         });
     });
@@ -152,36 +157,29 @@ module.exports = function (suite, client, other, machine, callback) {
     });
 
 
-    suite.test('List Rule Machines (not empty set) - other 2', function (t) {
-        if (OTHER_RULE_UUID) {
-            var p = sprintf(RULE_URL, OTHER_RULE_UUID) + '/machines';
-            other.get(p, function (err, req, res, body) {
-                t.ifError(err);
-                t.deepEqual(body, []);
-                t.end();
-            });
-        } else {
-            t.end();
-        }
-    });
-
-
     suite.test('List Machine Rules (not empty set)', function (t) {
         var u = '/my/machines/' + machine + '/fwrules';
         client.get(u, function (err, req, res, body) {
             t.ifError(err, 'Error');
             t.equal(200, res.statusCode, 'Status Code');
             t.ok(Array.isArray(body), 'isArray(rules)');
-            t.equal(body.length, 2, 'rules length');
+            t.equal(body.length, 3, 'rules length');
+
             checkRule(t, body[0]);
             checkRule(t, body[1]);
+            checkRule(t, body[2]);
 
-            if (body[0].id === RULE_UUID) {
-                t.equal(body[1].description, 'allow pings to all VMs');
-            } else {
-                t.equal(body[0].description, 'allow pings to all VMs');
-                t.equal(body[1].id, RULE_UUID);
-            }
+            t.equal(body.filter(function (rule) {
+                return rule.description === 'allow all ICMPv4 types';
+            }).length, 1);
+
+            t.equal(body.filter(function (rule) {
+                return rule.description === 'allow all ICMPv6 types';
+            }).length, 1);
+
+            t.equal(body.filter(function (rule) {
+                return rule.id === RULE_UUID;
+            }).length, 1);
 
             t.end();
         });
