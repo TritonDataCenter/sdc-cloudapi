@@ -140,7 +140,7 @@ if [[ "$(sdc-napi /networks?name=sdc_underlay | json -H)" == "[]" ]]; then
 EOM
 fi
 
-if [[ "$(sdc-napi /network_pools?name=sdc_nat | json -H)" == "[]" ]]; then
+if [[ "$(sdc-napi /network_pools | json -Hc 'name==="sdc_nat"')" == "[]" ]]; then
     sdc-napi /network_pools -X POST -d@- <<EOM
 {
     "name": "sdc_nat",
@@ -155,7 +155,7 @@ if [[ -z "$fabric_cfg" ]]; then
 {
     "default_underlay_mtu": 1500,
     "default_overlay_mtu": 1400,
-    "sdc_nat_pool": "$(sdc-napi /network_pools?name=sdc_nat | json -H 0.uuid)",
+    "sdc_nat_pool": "$(sdc-napi /network_pools | json -Hc 'name==="sdc_nat"' 0.uuid)",
     "sdc_underlay_assignment": "manual",
     "sdc_underlay_tag": "sdc_underlay"
 }
