@@ -26,7 +26,7 @@
         "semver": "2.2.1",
         "nodemailer": "0.3.29",
         "clone": "0.1.5",
-        "assert-plus": "0.1.5",
+        "assert-plus": "1.0.0",
         "asn1": "0.1.11",
         "ctype": "0.5.2",
         "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#f382a4",
