@@ -6868,6 +6868,7 @@ adds/removes/updates the rule on all the required machines.
 ----------- | -------- | ---------------
 rule        | String   | Firewall rule text
 description | String   | Human-readable description for the rule (optional)
+enabled     | Boolean  | Indicates if the rule is enabled (optional)
 
 ### Returns
 
