@@ -73,8 +73,7 @@ the Global Zone:
     /zones/`vmadm lookup -1 alias=cloudapi0`/root/opt/smartdc/cloudapi/tools/coal-setup.sh
 
 This script will hack DAPI for Headnode provisioning, update imgapi to allow
-local custom images and install `base-13.4.0` and `smartos-1.6.3` images
-required for testing.
+local custom images and install some images required for testing.
 
 Once you've completed this process you can run:
 
