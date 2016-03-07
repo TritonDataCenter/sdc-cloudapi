@@ -14,37 +14,29 @@ This repository is part of the Joyent SmartDataCenter project (SDC).  For
 contribution guidelines, issues, and general documentation, visit the main
 [SDC](http://github.com/joyent/sdc) project page.
 
-CloudAPI is the HTTP API that customers use to interact with SmartDataCenter
-product.
+CloudAPI is the HTTP API that customers use to interact with SmartDataCenter.
 
-## Adding CloudAPI to SDC 7.0
+
+## Adding CloudAPI to SDC
 
 `cloudapi` is not created by default during SDC setup. You can create it
-by running:
+by running in the root global zone (either inside COAL or on an SDC headnode
+server):
 
-    ./tools/add-cloudapi-zone.sh <ssh hostname>
-
-from your development machine. For example, assuming you have an entry into
-your computer's SSH config file for COAL's headnode with `Host` set to
-`headnode`, the command above would become:
-
-    ./tools/add-cloudapi-zone.sh headnode
-
-NOTE: If this scripts finishes properly and "really fast for being creating a
-VM", you'd rather take a look and make sure SAPI is not in proto mode. If
-that's the case, you can always set it to full mode from the GZ before you
-retry: `sdc-sapi /mode?mode=full -X POST`.
+    sdcadm post-setup cloudapi
 
 
 ## Development
 
-To run the CloudAPI server:
+A CloudAPI server should be running in a cloudapi zone after running the
+sdcadm command above. Alternatively, a more manual approach is:
 
     git clone git@github.com:joyent/sdc-cloudapi.git
     cd cloudapi
     git submodule update --init
     make all
-    node main.js -f ./etc/cloudapi.config.json 2>&1 | bunyan
+    node main.js -f ./etc/cloudapi.config.json
+
 
 ## Configuration file.
 
@@ -52,28 +44,28 @@ The configuration file `./etc/cloudapi.cfg` needs to be created before
 the CloudAPI server can run. Consequently, **this file is also required in
 order to run the test suite**.
 
-There is an example `cloudapi.coal.cfg` file checked into the repository, with
-the default values every required variable should take if we were running the
-tests into our development machine, which has access to a COAL setup.
+There is an example `cloudapi.coal.cfg` file in the repository, with the
+default values every required variable should take if we were running the
+tests on our development machine, which has access to a COAL setup.
 
-Please, remember that if you're trying to modify this file within a cloudapi
-zone, the config file is created - and automatically updated - by the
-`config-agent` service using the `template` file checked into this repo
+Please remember that if you're trying to modify this file within an actual
+cloudapi zone, the config file is created - and automatically updated - by the
+`config-agent` service using the `template` file also in this repo
 (`sapi_manifests/cloudapi/template`) and the SAPI configuration values.
 
 
 ## Testing
 
-Before testing, you need to import base image and create some packages into the
-headnode you're using for tests. Assuming that you'll be testing using COAL's
-Headnode and that you've already created `cloudapi0` zone into such HN, the
-easier way to prepare the Headnode for CloudAPI testing will be running, from
-the Global Zone:
+Before testing, you need to create an environment the tests can operate in,
+on the headnode you're using for tests. Assuming that you'll be testing using
+COAL's Headnode, and that you've already created a cloudapi zone on that
+headnode, the easiest way to prepare the headnode for CloudAPI testing will be
+running the following from the global zone:
 
     /zones/`vmadm lookup -1 alias=cloudapi0`/root/opt/smartdc/cloudapi/tools/coal-setup.sh
 
-This script will hack DAPI for Headnode provisioning, update imgapi to allow
-local custom images and install some images required for testing.
+This script will hack DAPI for headnode provisioning, update imgapi to allow
+local custom images, and install some images required for testing.
 
 Once you've completed this process you can run:
 
@@ -82,17 +74,19 @@ Once you've completed this process you can run:
 or, individually:
 
     make account_test
+    make analytics_test
     make auth_test
     make datacenters_test
     make datasets_test
+    make fabrics_test
+    make images_test
     make keys_test
     make machines_test
     make networks_test
+    make nics_test
     make packages_test
-
-Optimistic, isn't it?. Reality is that, while it may works, that command
-includes a set of assumptions which may or not be satisfied by the environment
-you are trying to run tests into.
+    make services_test
+    make users_test
 
 There are some requirements to run the test suites, in the form of environment
 variables. The following is a list of these variables and their default values:
@@ -103,40 +97,21 @@ variables. The following is a list of these variables and their default values:
 - `SDC_SETUP_TESTS`: The tests are running versus an existing SDC setup. (No
 need to boot a server instance, since there's one already running).
 
-Also, the contents of the aforementioned `./etc/cloudapi.cfg` file
-should have been properly set.
+Also, the contents of the aforementioned `./etc/cloudapi.cfg` file should have
+been properly set.
 
-## COAL headnode provisionability
-
-For testing changes on a COAL headnode-only configuration you will need to
-set the `SERVER_UUID` environment variable in the SMF manifest for the cloudapi
-service. This should be the UUID of the headnode which can be found through
-
-    sysinfo | json UUID
-
-this should be placed in the `method_environment` subsection of the start
-method in the SMF manifest. For instance:
-
-    <envvar name='SERVER_UUID' value='564dafc4-73fa-b009-ce16-c93e487fbaa6'/>
-
-To edit the SMF manifest:
-
-    svccfg export cloudapi > cloudapi.xml
-    ... edit service ...
-    svccfg import cloudapi.xml
-    svcadm restart cloudapi
 
 ## Image management
 
 If you want to test image management using COAL, the faster approach is to run
-the aforementioned coal-setup.sh script from the global zone. Among others, local
-image management setup will be completed.
+the aforementioned coal-setup.sh script from the global zone. Amongst other
+things, local image management setup will be completed.
 
 
 ## Testing RBAC
 
 This section assumes your setup includes a reasonably recent version of
-UFDS and MAHI. If you're not sure, please, update both to latest.
+UFDS and Mahi. If you're not sure, please update both to latest.
 
 There's an utility script intented to speed up ENV setup for RBAC testing
 in your local setup. Assuming you want to test RBAC in COAL, you'll need to:
@@ -148,11 +123,11 @@ in your local setup. Assuming you want to test RBAC in COAL, you'll need to:
 
     ./tools/create-account.sh headnode
 
-- Clone v7.3 branch of node-smartdc from https://github.com/joyent/node-smartdc/tree/v7.3
-- Assuming you want to test in COAL, you should have the following ENV
-vars setup to operate as the account owner:
+- Clone v7.3 or later branch of node-smartdc from https://github.com/joyent/node-smartdc
+- Assuming you want to test in COAL, you should have the following ENV vars
+  setup to operate as the account owner:
 
-        SDC_URL=https://10.99.99.38
+        SDC_URL=https://<IP of cloudapi zone>
         SDC_TESTING=true
         SDC_ACCOUNT=account
         SDC_KEY_ID=`ssh-keygen -l -f ~/.ssh/id_rsa.pub | awk '{print $2}' | tr -d '\n'`
@@ -175,7 +150,6 @@ the [Access Control User Guide][acuguide].
 
 [cloudapi]: https://apidocs.joyent.com/cloudapi/
 [acuguide]: https://docs.joyent.com/jpc/rbac
-
 
 
 ## How CloudAPI Auth works using RBAC
