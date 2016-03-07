@@ -16,6 +16,12 @@ var checkMachine = require('./common').checkMachine;
 var checkNotFound = require('../common').checkNotFound;
 
 
+// --- Globals
+
+
+var NEW_RULE = '';
+
+
 // --- Helpers
 
 
@@ -234,14 +240,35 @@ module.exports = function (suite, client, other, machine, callback) {
     });
 
 
-    suite.test('UpdateRule', function (t) {
+    suite.test('UpdateRule - with rule', function (t) {
+        NEW_RULE = 'FROM vm ' + machine +
+            ' TO subnet 10.99.99.0/24 ALLOW tcp (PORT 80 AND PORT 443)';
+
         if (RULE_UUID) {
             client.post(sprintf(RULE_URL, RULE_UUID), {
-                rule: 'FROM vm ' + machine +
-                    ' TO subnet 10.99.99.0/24 ALLOW tcp (port 80 AND port 443)'
+                rule: NEW_RULE
             }, function (err, req, res, body) {
                 t.ifError(err);
                 t.equal(200, res.statusCode);
+                t.equal(body.rule, NEW_RULE);
+                t.equal(body.enabled, false);
+                t.end();
+            });
+        } else {
+            t.end();
+        }
+    });
+
+
+    suite.test('UpdateRule - without rule', function (t) {
+        if (RULE_UUID) {
+            client.post(sprintf(RULE_URL, RULE_UUID), {
+                enabled: true
+            }, function (err, req, res, body) {
+                t.ifError(err);
+                t.equal(200, res.statusCode);
+                t.equal(body.rule, NEW_RULE);
+                t.equal(body.enabled, true);
                 t.end();
             });
         } else {

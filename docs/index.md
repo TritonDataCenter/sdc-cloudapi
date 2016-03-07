@@ -6866,7 +6866,7 @@ adds/removes/updates the rule on all the required machines.
 
 **Field**   | **Type** | **Description**
 ----------- | -------- | ---------------
-rule        | String   | Firewall rule text
+rule        | String   | Firewall rule text (optional)
 description | String   | Human-readable description for the rule (optional)
 enabled     | Boolean  | Indicates if the rule is enabled (optional)
 
