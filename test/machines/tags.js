@@ -153,14 +153,14 @@ module.exports = function (suite, client, other, machine, callback) {
                 t.equal(err.restCode, 'ValidationFailed');
                 var verb = (method === 'post' ? 'adding' : 'replacing');
                 t.equal(err.message,
-                    'error ' + verb + ' tags: Invalid Metadata parameters');
+                    'error ' + verb + ' tags: Invalid tag parameters');
 
                 t.equal(res.statusCode, 409);
 
                 t.deepEqual(body, {
                     code: 'ValidationFailed',
                     message: 'error ' + verb
-                        + ' tags: Invalid Metadata parameters',
+                        + ' tags: Invalid tag parameters',
                     errors: [ {
                         field: 'tags',
                         code: 'Invalid',

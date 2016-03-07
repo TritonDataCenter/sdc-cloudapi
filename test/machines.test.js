@@ -1119,12 +1119,12 @@ test('Check cannot update Docker machine tag', function (t) {
     }, function (err, req, res, body) {
         t.ok(err);
         t.equal(err.restCode, 'ValidationFailed');
-        t.equal(err.message, 'error adding tags: Invalid Metadata parameters');
+        t.equal(err.message, 'error adding tags: Invalid tag parameters');
         t.equal(res.statusCode, 409);
 
         t.deepEqual(body, {
             code: 'ValidationFailed',
-            message: 'error adding tags: Invalid Metadata parameters',
+            message: 'error adding tags: Invalid tag parameters',
             errors: [ {
                 field: 'tags',
                 code: 'Invalid',
@@ -1299,12 +1299,12 @@ function searchAndCheckOther(query, t, checkAttr) {
 function checkTagDeleteValidationError(t, err, req, res, body) {
     t.ok(err);
     t.equal(err.restCode, 'ValidationFailed');
-    t.equal(err.message, 'error deleting tag: Invalid Metadata parameters');
+    t.equal(err.message, 'error deleting tag: Invalid tag parameters');
     t.equal(res.statusCode, 409);
 
     t.deepEqual(body, {
         code: 'ValidationFailed',
-        message: 'error deleting tag: Invalid Metadata parameters',
+        message: 'error deleting tag: Invalid tag parameters',
         errors: [ {
             field: 'tags',
             code: 'Invalid',
@@ -1318,12 +1318,12 @@ function checkTagDeleteAllValidationError(t, err, req, res, body) {
     t.ok(err);
     t.equal(err.restCode, 'ValidationFailed');
     t.equal(err.message,
-        'error deleting all tags: Invalid Metadata parameters');
+        'error deleting all tags: Invalid tag parameters');
     t.equal(res.statusCode, 409);
 
     t.deepEqual(body, {
         code: 'ValidationFailed',
-        message: 'error deleting all tags: Invalid Metadata parameters',
+        message: 'error deleting all tags: Invalid tag parameters',
         errors: [ {
             field: 'tags',
             code: 'Invalid',
@@ -1336,12 +1336,12 @@ function checkTagDeleteAllValidationError(t, err, req, res, body) {
 function checkTagReplaceValidationError(t, err, req, res, body) {
     t.ok(err);
     t.equal(err.restCode, 'ValidationFailed');
-    t.equal(err.message, 'error replacing tags: Invalid Metadata parameters');
+    t.equal(err.message, 'error replacing tags: Invalid tag parameters');
     t.equal(res.statusCode, 409);
 
     t.deepEqual(body, {
         code: 'ValidationFailed',
-        message: 'error replacing tags: Invalid Metadata parameters',
+        message: 'error replacing tags: Invalid tag parameters',
         errors: [ {
             field: 'tags',
             code: 'Invalid',
