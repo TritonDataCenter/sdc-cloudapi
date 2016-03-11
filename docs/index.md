@@ -9077,6 +9077,8 @@ ListDatasets/GetDataset have been removed. The deprecated 6.5 API support, and
 most related 6.5-isms, have been removed. The `default` attribute on packages is
 deprecated, since it only had meaning in 6.5.
 
+* Version 8.0.2 removes the ability to filter ListMachines with a package name.
+This was never documented or officially supported.
 
 
 <p style="min-height: 31px; margin-top: 60px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0">

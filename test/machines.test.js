@@ -579,15 +579,6 @@ test('ListMachines (filter by memory) - other', function (t) {
 });
 
 
-test('ListMachines (filter by package)', function (t) {
-    var pkgName = SDC_256.name;
-
-    searchAndCheck('package=' + pkgName, t, function (m) {
-        t.equal(m['package'], pkgName);
-    });
-});
-
-
 test('ListMachines (filter by package) - other', function (t) {
     searchAndCheckOther('package=' + SDC_256.name, t);
 });
