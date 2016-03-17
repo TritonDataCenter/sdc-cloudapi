@@ -116,9 +116,9 @@ sdc-papi /packages -X POST -d '{
 }' | json -H
 
 # Current the cloudapi test suite assumes the following image is installed:
-#   minimal-64-lts@15.4.0
+#   minimal-64-lts (latest version)
 # Note: Keep in sync with test/common.js#getBaseImage().
-image_uuid=`joyent-imgadm list name=minimal-64-lts version=15.4.0 -o uuid|tail -1`
+image_uuid=`joyent-imgadm list name=minimal-64-lts -o uuid|tail -1`
 install_image ${image_uuid}
 
 # setup fabrics

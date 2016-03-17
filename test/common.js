@@ -716,15 +716,18 @@ function getHeadnode(client, cb) {
 
 function getTestImage(client, cb) {
     // Note: Keep this image name@version in sync with tools/coal-setup.sh.
-    client.get('/my/images?name=minimal-64-lts',
-            function (err, req, res, body) {
+    var testImageName = 'minimal-64-lts';
+    client.get('/my/images?name=' + testImageName,
+            function (err, req, res, images) {
         if (err) {
             cb(err);
             return;
+        } else if (images.length < 1) {
+            cb(new Error('no "' + testImageName + '" image was found'));
+            return;
         }
-        var image = body.filter(function (d) {
-            return d.version && d.version === '15.4.0';
-        })[0];
+
+        var image = images[images.length - 1];
         cb(null, image);
     });
 }
