@@ -123,7 +123,7 @@ can install it like this:
 
 In all cases above, the `-g` switch installs the tools globally, usually in
 `/usr/local/bin`, so that you can use them easily from the command line.  Omit
-this switch if you'd rather the tools be installed in your home hierachy, but
+this switch if you'd rather the tools be installed in your home hierarchy, but
 you'll need to set your PATH appropriately.
 
 
@@ -297,7 +297,7 @@ machine), with the following:
 These two commands set up your SSH agent (which has some magical properties,
 so you need to handle your SSH keys less often), and logs you in as the `admin`
 user on a machine.  Note that the `admin` user has password-less sudo
-capabilities, so you may want to set up some less priviledged users.  The SSH
+capabilities, so you may want to set up some less privileged users.  The SSH
 keys on your account will allow you to login as `root` or `admin` on your new
 machine.
 
@@ -726,7 +726,7 @@ header would look like:
     Authorization: Signature keyId=/demo/keys/foo,algorithm="rsa-sha256" ${Base64(sign($Date))}
 
 The default value to sign for CloudAPI requests is simply the value of the HTTP
-`Date` header.  For more informaton on the Date header value, see
+`Date` header.  For more information on the Date header value, see
 [RFC 2616](http://tools.ietf.org/html/rfc2616#section-14.18).  All requests to
 CloudAPI using the Signature authentication scheme *must* send a Date header.
 Note that clock skew will be enforced to within 300 seconds (positive or
@@ -1427,7 +1427,7 @@ ResourceNotFound | If `:account` does not exist
 
 ## GetUser (GET /:account/users/:user)
 
-Get one user fo an account.
+Get one user for an account.
 
 ### Inputs
 
@@ -3018,7 +3018,7 @@ Provides a list of images available in this datacenter.
 
 Note: Currently, *docker* images are not included in this endpoint's responses.
 You must use `docker images` against the
-[docker](https://apidocs.joyent.com/docker) service for this data center.
+[docker](https://apidocs.joyent.com/docker) service for this datacenter.
 
 
 ### Inputs
@@ -7227,7 +7227,7 @@ create VLANs, and then under that create layer three networks.
 A fabric is the basis for building your own private networks that cannot be
 accessed by any other user. It represents the physical infrastructure
 that makes up a network; however, you don't have to cable or program it. Every
-account has its own unique `fabric` in every data center.
+account has its own unique `fabric` in every datacenter.
 
 On a fabric, you can create your own VLANs and layer-three IPv4 networks. You
 can create any VLAN from 0-4095, and you can create any number of IPv4 networks
@@ -9067,7 +9067,7 @@ policies, policies and users can be associated together using roles, and role
 tags can be applied to CloudAPI resources.
 
 * Version 7.3.0 adds support for network fabrics (software-defined networking).
-This allows the creation of virtuan LANs and layer-three networks.
+This allows the creation of virtual LANs and layer-three networks.
 
 * Version 8.0.0 adds a `brand` attribute to VMs, which is more granular than the
 existing `type` (now deprecated), and a `docker` boolean attribute as well,
