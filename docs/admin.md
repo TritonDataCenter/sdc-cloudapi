@@ -839,7 +839,7 @@ global limits will be applied. ("os": "any" or "image": "any").
 a customer, which will be applied to the current image/os, the global limit
 will not be applied.
 
-These rules are intented to allow things like:
+These rules are intended to allow things like:
 
 - Define a global limits for all customers, for example, restrict globally to
 either 2 machines or 2048GiB of RAM.
