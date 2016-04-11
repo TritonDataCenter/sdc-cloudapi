@@ -248,7 +248,7 @@ the package to use to set machine dimensions.
 
 Retrieve the status of your new machine by:
 
-    $ triton instance $instance_id
+    $ triton instance get $instance_id
 
 or
 
@@ -324,8 +324,8 @@ or
 For example:
 
     $ triton image list
-    SHORTID   NAME  VERSION  STATE   FLAGS  OS       PUBDATE
-    2b683a82  base  13.4.0   active  P      smartos  2014-02-28
+    SHORTID   NAME            VERSION  FLAGS  OS       TYPE          PUBDATE
+    e1faace4  minimal-64-lts  15.4.1   P      smartos  zone-dataset  2016-03-03
 
 
 <a name="packages-description"></a>
@@ -995,6 +995,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
+
+    $ triton account update postalCode=12345 phone='1 (234) 567 890'
+
+or
 
     $ sdc-updateaccount --postal-code=12345 --phone='1 (234) 567 890'
 
@@ -3266,6 +3270,10 @@ ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
+    $ triton image delete 2b683a82-a066-11e3-97ab-2faa44701c5a
+
+or
+
     $ sdc-deleteimage 2b683a82-a066-11e3-97ab-2faa44701c5a
 
 #### Example Request
@@ -3437,6 +3445,10 @@ NotAvailable   | Typically this indicates that image creation is not supported f
 <!-- TODO: integrate these errors into the general table above -->
 
 ### Example CLI Command
+
+    $ triton image create a44f2b9b-e7af-f548-b0ba-4d9270423f1a my-custom-image 1.0.0
+
+or
 
     $ sdc-createimagefrommachine --machine=a44f2b9b-e7af-f548-b0ba-4d9270423f1a --name=my-custom-image --imageVersion=1.0.0
 
@@ -4607,6 +4619,10 @@ MissingParameter | If `action` wasn't provided
 
 ### CLI Command
 
+    $ triton instance enable-firewall c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
+
+or
+
     $ sdc-enablemachinefirewall c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
 
 ### Example Request
@@ -4663,6 +4679,10 @@ InvalidArgument  | If `action` was invalid
 MissingParameter | If `action` wasn't provided
 
 ### CLI Command
+
+    $ triton instance disable-firewall c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
+
+or
 
     $ sdc-disablemachinefirewall c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
 
@@ -4735,6 +4755,10 @@ InvalidArgument  | If `name` was invalid
 
 ### CLI Command
 
+    $ triton instance snapshot create 5e42cd1e-34bb-402f-8796-bf5a2cae47db
+
+or
+
     $ sdc-createmachinesnapshot --name=just-booted 5e42cd1e-34bb-402f-8796-bf5a2cae47db
 
 ### Example Request
@@ -4796,6 +4820,10 @@ ResourceNotFound | If `:login`, `:id` or `:name` does not exist
 
 ### CLI Command
 
+    $ triton instance start --snapshot=just-booted 5e42cd1e-34bb-402f-8796-bf5a2cae47db
+
+or
+
     $ sdc-startmachinefromsnapshot --snapshot=just-booted 5e42cd1e-34bb-402f-8796-bf5a2cae47db
 
 ### Example Request
@@ -4849,6 +4877,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
+
+    $ triton instance snapshot list 5e42cd1e-34bb-402f-8796-bf5a2cae47db
+
+or
 
     $ sdc-listmachinesnapshots 5e42cd1e-34bb-402f-8796-bf5a2cae47db
 
@@ -4912,6 +4944,10 @@ ResourceNotFound | If `:login`, `:id` or `:name` does not exist
 
 ### CLI Command
 
+    $ triton instance snapshot get 5e42cd1e-34bb-402f-8796-bf5a2cae47db just-booted
+
+or
+
     $ sdc-getmachinesnapshot --snapshot=just-booted 5e42cd1e-34bb-402f-8796-bf5a2cae47db
 
 ### Example Request
@@ -4968,6 +5004,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ResourceNotFound | If `:login`, `:id` or `:name` does not exist
 
 ### CLI Command
+
+    $ triton instance snapshot delete 5e42cd1e-34bb-402f-8796-bf5a2cae47db just-booted
+
+or
 
     $ sdc-deletemachinesnapshot --snapshot=just-booted 5e42cd1e-34bb-402f-8796-bf5a2cae47db
 
@@ -5428,7 +5468,7 @@ ResourceNotFound | If `:login` or `:id` does not exist
 
 Using node-triton:
 
-    $ triton instance tag ls 5e42cd1e
+    $ triton instance tag list 5e42cd1e
     {
         "foo": "bar",
         "group": "test"
@@ -6692,6 +6732,10 @@ ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
+    $ triton fwrule list
+
+or
+
     $ sdc-listfirewallrules
 
 #### Example Request
@@ -6755,6 +6799,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
+
+    $ triton fwrule get 38de17c4-39e8-48c7-a168-0f58083de860
+
+or
 
     $ sdc-getfirewallrule 38de17c4-39e8-48c7-a168-0f58083de860
 
@@ -6823,6 +6871,10 @@ MissingParameter | If rule wasn't provided
 ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
+
+    $ triton fwrule create '...'
+
+or
 
     $ sdc-createfirewallrule --rule='...' --enabled=true
 
@@ -6894,6 +6946,10 @@ ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
+    $ triton fwrule update 38de17c4-39e8-48c7-a168-0f58083de860 rule='...'
+
+or
+
     $ sdc-updatefirewallrule --rule='...' 38de17c4-39e8-48c7-a168-0f58083de860
 
 #### Example Request
@@ -6959,6 +7015,10 @@ ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
+    $ triton fwrule enable 38de17c4-39e8-48c7-a168-0f58083de860
+
+or
+
     $ sdc-enablefirewallrule 38de17c4-39e8-48c7-a168-0f58083de860
 
 #### Example Request
@@ -7023,6 +7083,10 @@ ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
+    $ triton fwrule disable 38de17c4-39e8-48c7-a168-0f58083de860
+
+or
+
     $ sdc-disablefirewallrule 38de17c4-39e8-48c7-a168-0f58083de860
 
 #### Example Request
@@ -7078,6 +7142,10 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
+
+    $ triton fwrule delete 38de17c4-39e8-48c7-a168-0f58083de860
+
+or
 
     $ sdc-deletefirewallrule 38de17c4-39e8-48c7-a168-0f58083de860
 
@@ -7155,6 +7223,10 @@ ResourceNotFound | If `:login` does not exist
 InvalidArgument  | If one of the input parameters was invalid
 
 ### CLI Command
+
+    $ triton fwrule instances 38de17c4-39e8-48c7-a168-0f58083de860
+
+or
 
     $ sdc-listfirewallrulemachines 38de17c4-39e8-48c7-a168-0f58083de860
 
@@ -7877,11 +7949,15 @@ ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
+    $ triton network list
+
+or
+
     $ sdc-listnetworks
 
 #### Example Request
 
-    GET /login/networks HTTP/1.1
+    GET /my/networks HTTP/1.1
     authorization: Signature keyId="...
     accept: application/json
     accept-version: ~8
@@ -7940,11 +8016,15 @@ ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
+    $ triton network get daeb93a2-532e-4bd4-8788-b6b30f10ac17
+
+or
+
     $ sdc-getnetwork daeb93a2-532e-4bd4-8788-b6b30f10ac17
 
 #### Example Request
 
-    GET /login/networks/daeb93a2-532e-4bd4-8788-b6b30f10ac17 HTTP/1.1
+    GET /my/networks/daeb93a2-532e-4bd4-8788-b6b30f10ac17 HTTP/1.1
     authorization: Signature keyId="...
     accept: application/json
     accept-version: ~8
