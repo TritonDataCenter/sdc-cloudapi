@@ -3786,7 +3786,9 @@ or
 ## ListMachines (GET /:login/machines)
 
 Lists all machines we have on record for your account.  If you have a large
-number of machines, you can filter using the input parameters listed below.
+number of machines, you can filter using the input parameters listed below. The
+input parameters should be sent to the API as query parameters as part of the
+GET request.
 
 You can paginate this API by passing in `offset` and `limit`.  HTTP responses
 will contain the additional headers `x-resource-count` and `x-query-limit`.  If
