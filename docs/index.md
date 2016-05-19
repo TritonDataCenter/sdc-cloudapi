@@ -1,7 +1,7 @@
 ---
 title: Joyent CloudAPI
 mediaroot: ./media
-apisections: Account, Keys, Config, Datacenters, Images, Packages, Machines, Analytics, FirewallRules, Networks, Nics, Users, Roles, Policies, Services, User SSH Keys, Role Tags, Fabrics
+apisections: Account, Keys, Config, Datacenters, Images, Packages, Instances, Analytics, FirewallRules, Networks, Nics, Users, Roles, Policies, Services, User SSH Keys, Role Tags, Fabrics
 markdown2extras: tables, code-friendly
 ---
 
@@ -18,21 +18,20 @@ markdown2extras: tables, code-friendly
 
 # Joyent CloudAPI
 
-CloudAPI is one of the public APIs for a SmartDataCenter (SDC) cloud: it
-allows end users of the cloud to manage their accounts, instances, networks,
-images, and to inquire about other relevant details.  CloudAPI provides a single
-view of docker containers, infrastructure containers and hardware virtual
-machines owned by the user.
+CloudAPI is one of the public APIs for a Triton cloud: it allows end users of
+the cloud to manage their accounts, instances, networks, images, and to
+inquire about other relevant details.  CloudAPI provides a single view of
+docker containers, infrastructure containers and hardware virtual machines
+owned by the user.
 
 This is the reference documentation for the CloudAPI that is part of Joyent's
-SDC stack.  This guide provides descriptions of the APIs available, as well as
-supporting information -- such as how to use the software developer kits (SDK),
-command line interface (CLI), and where to find more information.
+Triton stack.  This guide provides descriptions of the APIs available, as well
+as supporting information -- such as how to use the software developer kits
+(SDK), command line interface (CLI), and where to find more information.
 
-SDC also provides a Docker API, which Docker clients can use, but this
-documentation does not cover. For more information about SDC visit
-[Joyent Triton](https://www.joyent.com/private-cloud). Triton can be treated as
-another name for SDC.
+Triton also provides a Docker API, which Docker clients can use, but this
+documentation does not cover. For more information about Triton visit
+[Joyent Triton](https://www.joyent.com/private-cloud).
 
 
 ## Conventions
@@ -53,10 +52,10 @@ All other examples and information are formatted like so:
 
 ## What is CloudAPI?
 
-CloudAPI is one of the two public APIs you can use to interact with SDC.  Using
-CloudAPI, you can:
+CloudAPI is one of the two public APIs you can use to interact with Triton.
+Using CloudAPI, you can:
 
-* Create and manage containers and virtual machines (sometimes collectively known as instances)
+* Create and manage containers and hardware virtual machines (collectively known as instances)
 * Manage your account credentials
 * Create custom analytics for monitoring your infrastructure
 * Create and modify virtual private networks for your instances
@@ -66,7 +65,7 @@ CloudAPI, you can:
 
 While CloudAPI provides visibility into Docker containers, the regular
 [Docker CLI](https://docs.docker.com/installation/#installation) should be used
-for provisioning and managing Docker containers; SDC provides an endpoint
+for provisioning and managing Docker containers; Triton provides an endpoint
 that represents the entire datacenter as a single `DOCKER_HOST`, which Docker
 clients can communicate with.  Refer to Joyent's
 [Docker documentation](https://apidocs.joyent.com/docker) for more information.
@@ -150,14 +149,14 @@ You need to set the following environment variables information in order to
 interact with CloudAPI using either node-triton or node-smartdc:
 
 * `SDC_URL`: The URL of the CloudAPI endpoint.
-* `SDC_KEY_ID`: Fingerprint for the key you uploaded to SDC.
-* `SDC_ACCOUNT`: Your username; the login you use for SDC.
+* `SDC_KEY_ID`: Fingerprint for the key you uploaded to Triton.
+* `SDC_ACCOUNT`: Your username; the login you use for Triton.
 * `SDC_USER`: If authenticating as a subuser, the username of the subuser.
   See [Role Based Access Control](#rbac-users-roles-policies).
 
 An example for `SDC_URL` is `https://us-west-1.api.joyentcloud.com`.  Each
 datacenter in a cloud has its own CloudAPI endpoint; a different cloud that uses
-SDC would have a different URL.
+Triton would have a different URL.
 
 In this document, we'll use `api.example.com` as the `SDC_URL` endpoint; please
 replace it with the URL of your datacenter(s).  Note that CloudAPI always uses
@@ -212,23 +211,24 @@ this document assume that these variables have been set:
 --url<br/>-u     | URL of the CloudAPI endpoint | SDC_URL
 
 
-## Provision a new machine
+## Provision a new instance
 
-To provision a new machine, you first need to get the `id`s for the image and
-package you want to use as the base for your machine.
+To provision a new instance, you first need to get the `id`s for the image and
+package you want to use as the base for your instance.
 
 An image is a snapshot of a filesystem and its software (for some types of
-container), or a disk image (for virtual machines).  You can get the list of
-available images using the `triton image list` or `sdc-listimages` commands; see
-the [ListImages](#ListImages) section below for a detailed explanation of these
+container), or a disk image (for hardware virtual machines).  You can get the
+list of available images using the `triton image list` or `sdc-listimages`
+commands; see the [ListImages](#ListImages) section below for a detailed
+explanation of these commands.
+
+A package is a set of dimensions for the new instance, such as RAM and disk
+size.  You can get the list of available packages using the
+`triton package list` or `sdc-listpackages` commands; see the
+[ListPackages](#ListPackages) section below for a detailed explanation of these
 commands.
 
-A package is a set of dimensions for the new machine, such as RAM and disk size.
-You can get the list of available packages using the `triton package list` or
-`sdc-listpackages` commands; see the [ListPackages](#ListPackages) section below
-for a detailed explanation of these commands.
-
-Once you have the package and image ids, to provision a new machine:
+Once you have the package and image ids, to provision a new instance:
 
     $ triton instance create $image $package
 
@@ -241,12 +241,12 @@ For example:
     $ triton instance create 2b683a82-a066-11e3-97ab-2faa44701c5a 64e23114-d502-c171-967f-b0e0cfb2009a
     Creating instance 61dc8be (9205af5b-f2c0-ef07-e1f3-94bf1ff8fb93, base@13.4.0, test_128)
 
-You can use the `--name` flag to name your machine; if you do not specify a
-name, SmartDataCenter will generate one for you.  `--image` is the `id` of the
-image you'd like to use as the new machine's base.  `--package` is the `id` of
-the package to use to set machine dimensions.
+You can use the `--name` flag to name your instance; if you do not specify a
+name,  Triton will generate one for you.  `--image` is the `id` of the image
+you'd like to use as the new instance's base.  `--package` is the `id` of the
+package to use to set instance dimensions.
 
-Retrieve the status of your new machine by:
+Retrieve the status of your new instance by:
 
     $ triton instance get $instance_id
 
@@ -286,34 +286,35 @@ For example:
         "package": "test_128"
     }
 
-When you provision a new machine, the machine will take time to be initialized
+When you provision a new instance, the instance will take time to be initialized
 and booted; the `state` attribute will reflect this.  Once the `state` attribute
-"running", you can login to your new machine (assuming it's a Unix-based
-machine), with the following:
+"running", you can login to your new instance (assuming it's a Unix-based
+instance), with the following:
 
     $ ssh-add ~/.ssh/<key file>
-    $ ssh -A root@<new machine IP address>
+    $ ssh -A root@<new instance IP address>
 
 These two commands set up your SSH agent (which has some magical properties,
 so you need to handle your SSH keys less often), and logs you in as the `admin`
-user on a machine.  Note that the `admin` user has password-less sudo
+user on an instance.  Note that the `admin` user has password-less sudo
 capabilities, so you may want to set up some less privileged users.  The SSH
 keys on your account will allow you to login as `root` or `admin` on your new
-machine.
+instance.
 
 An alternative of using SSH directly is:
 
-    $ triton ssh <name of machine>
+    $ triton ssh <name of instance>
 
-Now that we've done some basics with a machine, let's introduce a few concepts:
+Now that we've done some basics with an instance, let's introduce a few
+concepts:
 
 
 <a name="image-description"></a>
 ### Images
 
-By default, SmartOS images should be available to your for use.  Your
-SmartDataCenter cloud may have other images available as well, such as Linux or
-Windows images.  The list of available images can be obtained with:
+By default, SmartOS images should be available to your for use.  Your Triton
+cloud may have other images available as well, such as Linux or Windows images.
+The list of available images can be obtained with:
 
     $ triton image list
 
@@ -345,17 +346,16 @@ For example:
     SHORTID   NAME      DEFAULT  MEMORY  SWAP  DISK  VCPUS
     64e23114  test_128  false      128M  256M   12G      1
 
-Packages are the SmartDataCenter name for the dimensions of a machine (how much
-CPU will be available, how much RAM, disk and swap, and so forth).  Packages are
-provided so that you do not need to select individual settings, such as RAM or
-disk size.
+Packages are the Triton name for the dimensions of an instance (how much CPU will
+be available, how much RAM, disk and swap, and so forth).  Packages are provided
+so that you do not need to select individual settings, such as RAM or disk size.
 
 
 ## Managing SSH keys
 
-For machines which don't have a `brand` of `kvm` (see
+For instance which don't have a `brand` of `kvm` (see
 `triton instance list -o id,brand` or `sdc-listmachines`), you can manage the
-SSH keys that allow logging into the machine via CloudAPI.  For example, to
+SSH keys that allow logging into the instance via CloudAPI.  For example, to
 rotate keys:
 
     $ triton key add --name=my-other-rsa-key ~/.ssh/my_other_rsa_key.pub
@@ -374,9 +374,9 @@ To use the new key, you will need to update the environment variables:
 At this point you could delete your other key from the system; see
 [Cleaning Up](#cleaning-up) for a quick example.
 
-You cannot manage the SSH keys of machines with a `brand` of `kvm`. Virtual
-Machines are static, and whatever keys were in your account at machine creation
-time are used, provided the OS inside KVM is a *nix.
+You cannot manage the SSH keys of instances with a `brand` of `kvm`. Hardware
+virtual machines are static, and whatever keys were in your account at instance
+creation time are used, provided the OS inside KVM is a *nix.
 
 
 ## Creating Analytics
@@ -384,7 +384,7 @@ time are used, provided the OS inside KVM is a *nix.
 Now that you have a container up and running, and you logged in and did
 whatever it is you thought was awesome, let's create an instrumentation to
 monitor performance.  Analytics are one of the more powerful features of
-SmartDataCenter, so for more information, be sure to read
+Triton, so for more information, be sure to read
 [Appendix B: Cloud Analytics](#appendix-b-cloud-analytics).
 
 To get started, let's create an instrumentation on our network bytes:
@@ -415,7 +415,7 @@ To get started, let's create an instrumentation on our network bytes:
       ]
     }
 
-Great, now ssh back into your machine, and do something silly like:
+Great, now ssh back into your instance, and do something silly like:
 
     $ wget joyent.com
     $ ping -I 1 joyent.com
@@ -457,25 +457,25 @@ point, for a full discussion of analytics, be sure to read
 ## Cleaning up
 
 After going through this `Getting Started` section, you should now have at least
-one SSH key, one machine and one instrumentation.  The rest of the commands
+one SSH key, one instance and one instrumentation.  The rest of the commands
 assume you have [json](https://www.npmjs.org/package/json) installed.
 
 ### Deleting Instrumentations
 
-Before cleaning up your machines, let's get rid of the instrumentation we
+Before cleaning up your instances, let's get rid of the instrumentation we
 created:
 
     $ sdc-deleteinstrumentation 1
 
 ### Deleting Machines
 
-To clean up a machine, you can use either:
+To clean up an instance, you can use either:
 
-    $ triton instance delete $machine_id
+    $ triton instance delete $instance_id
 
 or
 
-    $ sdc-deletemachine $machine_id
+    $ sdc-deletemachine $instance_id
 
 For example:
 
@@ -484,8 +484,8 @@ For example:
 
 ### Deleting keys
 
-Finally, you probably have one or two SSH keys uploaded to SmartDataCenter after
-going through the guide, so to delete the one we setup:
+Finally, you probably have one or two SSH keys uploaded to Triton after going
+through the guide, so to delete the one we setup:
 
     $ triton key delete id_rsa
 
@@ -539,7 +539,7 @@ These account users can additionally be organized using [Roles](#roles):
 Each role can have an arbitrary set of [Policies](#policies):
 
     {
-      "name": "restart machines",
+      "name": "restart instances",
       "id": "e8bdd555-eef0-4c1c-83be-93c443b59e3e",
       "rules": [
         "CAN rebootmachine if requesttime::time > 07:30:00 and requesttime::time < 18:30:00 and requesttime::day in (Mon, Tue, Wed, THu, Fri)",
@@ -574,7 +574,7 @@ This section will only cover a limited set strictly related to CloudAPI's usage.
 
 In the case of CloudAPI, `<principal>` will be always the user performing the
 HTTP request. Likewise, `<resource>` will always be the URL of such request,
-for example `/:account/machines/:machine_id`.
+for example `/:account/machines/:instance_id`.
 
 We add one or more roles to a resource to explicitly define the active roles a
 user trying to access a given resource must have. Therefore, we don't need to
@@ -596,13 +596,13 @@ to access a given resource, unless:
 
 For example, a user with an active role `read`, which includes a policy rule
 like `CAN listmachines and getmachines` will not get access to resources like
-`/:account/machines` or `/:account/machines/:machine_id` unless these resources
+`/:account/machines` or `/:account/machines/:instance_id` unless these resources
 are *role-tagged* with the role `read` too.
 
 Additionally, given that the `<actions>` included in the policy rule are just
-`listmachines` and `getmachine`, the user will be able to retrieve a machine's
+`listmachines` and `getmachine`, the user will be able to retrieve an instance's
 details provided by the [GetMachine](#GetMachine) action, but will not be able
-to perform any other machine actions (like [StopMachine](#StopMachine)).
+to perform any other instance actions (like [StopMachine](#StopMachine)).
 However, if the role has a rule including that `<action>` (like StopMachine), or
 the user has an additional role which includes that rule, then the user can
 invoke that action too.
@@ -719,8 +719,8 @@ supports only one Authentication mechanism due to PCI compliance restrictions:
 
 In order to leverage HTTP Signature Authentication, only RSA signing mechanisms
 are supported, and your keyId must be equal to the path returned from a
-[ListKeys](#ListKeys) API call.  For example, if your SmartDataCenter login is
-`demo`, and you've uploaded an RSA SSH key with the name `foo`, an Authorization
+[ListKeys](#ListKeys) API call.  For example, if your Triton login is `demo`,
+and you've uploaded an RSA SSH key with the name `foo`, an Authorization
 header would look like:
 
     Authorization: Signature keyId=/demo/keys/foo,algorithm="rsa-sha256" ${Base64(sign($Date))}
@@ -750,10 +750,9 @@ versions it supports.  For details on how to specify ranges, check
     Api-Version: ~8
     Api-Version: >=7.0.0
 
-Joyent recommends you set the Api-Version header to `~8`; each service
-release of SmartDataCenter will increment the `patch` version; any major
-releases of SmartDataCenter will increment either the `minor` or `major`
-version.
+Joyent recommends you set the Api-Version header to `~8`; each service release
+of Triton will increment the `patch` version; any major releases of Triton will
+increment either the `minor` or `major` version.
 
 ### Using cURL with CloudAPI
 
@@ -770,7 +769,7 @@ communicating with CloudAPI:
     }
 
 You may need to alter the path to your SSH key in the above function, as well as
-the path its public-key is saved under in SDC.
+the path its public-key is saved under in Triton.
 
 With that function, you could just do:
 
@@ -832,7 +831,7 @@ Where the code element is one of:
 **Code**           | **Description**
 ------------------ | ---------------
 BadRequest         | You sent bad HTTP
-InternalError      | Something went wrong in SDC
+InternalError      | Something went wrong in Triton
 InUseError         | The object is in use and cannot be operated on
 InvalidArgument    | You sent bad arguments or a bad value for an argument
 InvalidCredentials | Authentication failed
@@ -925,7 +924,7 @@ or
     Connection: Keep-Alive
     Content-MD5: Sz+3BJ3EKDxL3MLQQumPgg==
     Date: Tue, 22 Dec 2015 05:06:33 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: c3d496f0-a869-11e5-8662-47ccf5717dbf
     Response-Time: 2122
@@ -1028,7 +1027,7 @@ or
     Connection: Keep-Alive
     Content-MD5: xxJ5ppNDrEyAf5VIlt4GZw==
     Date: Tue, 22 Dec 2015 12:16:37 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: d8db9e90-a8a5-11e5-90c9-4dcf4848c834
     Response-Time: 1244
@@ -1052,7 +1051,7 @@ or
 # Keys
 
 This part of the API is the means by which you operate on your SSH/signing keys.
-These keys are needed in order to login to machines over SSH, as well as signing
+These keys are needed in order to login to instances over SSH, as well as signing
 requests to this API (see the HTTP Signature Authentication Scheme outlined in
 [Appendix C](#Appendix-C) for more details).
 
@@ -1123,7 +1122,7 @@ ResourceNotFound | If `:login` does not exist
     Connection: Keep-Alive
     Content-MD5: u4xmk+MgKzzIvrRt09k4sg==
     Date: Tue, 22 Dec 2015 12:23:12 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: c44e2000-a8a6-11e5-9030-479dc847c4b2
     Response-Time: 1041
@@ -1189,7 +1188,7 @@ or
     Connection: Keep-Alive
     Content-MD5: p8gjrCZqMiZbD15TA9ymEQ==
     Date: Tue, 22 Dec 2015 13:26:17 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 94423be0-a8af-11e5-a95f-e74285cfeb5b
     Response-Time: 999
@@ -1203,7 +1202,7 @@ or
 
 ## CreateKey (POST /:login/keys)
 
-Uploads a new OpenSSH key to SmartDataCenter for use in HTTP signing and SSH.
+Uploads a new OpenSSH key to Triton for use in HTTP signing and SSH.
 
 ### Inputs
 
@@ -1266,7 +1265,7 @@ or
     Connection: Keep-Alive
     Content-MD5: p8gjrCZqMiZbD15TA9ymEQ==
     Date: Tue, 22 Dec 2015 13:26:17 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 94423be0-a8af-11e5-a95f-e74285cfeb5b
     Response-Time: 999
@@ -1323,7 +1322,7 @@ or
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Tue, 22 Dec 2015 13:31:43 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 5677a420-a8b0-11e5-8702-0daf2c627de5
     Response-Time: 829
@@ -1398,7 +1397,7 @@ ResourceNotFound | If `:account` does not exist
     Connection: Keep-Alive
     Content-MD5: 6csVzj9aNZWB5/ZW9JsD8w==
     Date: Wed, 23 Dec 2015 06:42:20 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 50182970-a940-11e5-af28-0b661ec813b9
     Response-Time: 1051
@@ -1492,7 +1491,7 @@ ResourceNotFound | When `:account` or `:user` do not exist
     Connection: Keep-Alive
     Content-MD5: p4/N2pQwLkNuvKTjaKJPOw==
     Date: Wed, 23 Dec 2015 07:07:44 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: dc761fa0-a943-11e5-842f-87950f2a2edd
     Response-Time: 961
@@ -1597,7 +1596,7 @@ ResourceNotFound | If `:account` does not exist
     Connection: Keep-Alive
     Content-MD5: qC9LnijSqZ1I+zea5GQXvQ==
     Date: Wed, 23 Dec 2015 09:42:36 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 7f1193b0-a959-11e5-9cdd-eb0b10bce309
     Response-Time: 1229
@@ -1699,7 +1698,7 @@ ResourceNotFound | If `:account` or `:user` do not exist
     Connection: Keep-Alive
     Content-MD5: 4Sn7xQHfoc1+LvLkA2KbNA==
     Date: Thu, 24 Dec 2015 10:30:45 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 63a27380-aa29-11e5-ace8-d79496f2469d
     Response-Time: 1148
@@ -1787,7 +1786,7 @@ ResourceNotFound | If `:account` or `:user` do not exist
     Connection: Keep-Alive
     Content-MD5: qU6CaBlWpuehWaj0IdtPCw==
     Date: Thu, 24 Dec 2015 10:34:51 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: f6338220-aa29-11e5-8484-a9b10ef4e687
     Response-Time: 1297
@@ -1842,7 +1841,7 @@ ResourceNotFound | If `:account` does not exist or there isn't a user with eithe
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 24 Dec 2015 10:36:18 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 29bcb710-aa2a-11e5-b9f6-05ee86f81e61
     Response-Time: 997
@@ -1907,7 +1906,7 @@ ResourceNotFound | If `:account` does not exist
     Connection: Keep-Alive
     Content-MD5: cxF+Tamx+GkSloXKYHvX/Q==
     Date: Tue, 19 Jan 2016 10:54:05 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: f2a9bf40-be9a-11e5-820f-3bf7c01a78db
     Response-Time: 4086
@@ -1923,7 +1922,7 @@ ResourceNotFound | If `:account` does not exist
           "foo"
         ],
         "policies": [
-          "readmachine"
+          "readinstance"
         ]
       }
     ]
@@ -1978,7 +1977,7 @@ ResourceNotFound | If `:account` or `:role` do not exist
     Connection: Keep-Alive
     Content-MD5: Sr2lbN/2Jhl7q1VsGV63xg==
     Date: Tue, 19 Jan 2016 11:00:08 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: cd193de0-be9b-11e5-b9fe-8768cab09198
     Response-Time: 1268
@@ -1993,7 +1992,7 @@ ResourceNotFound | If `:account` or `:role` do not exist
         "foo"
       ],
       "policies": [
-        "readmachine"
+        "readinstance"
       ]
     }
 
@@ -2035,14 +2034,14 @@ ResourceNotFound | If `:account` does not exist
 
 ### CLI Command:
 
-    $ sdc-role create --name=readable --members=foo --default-members=foo --policies=readmachine
+    $ sdc-role create --name=readable --members=foo --default-members=foo --policies=readinstance
 
 Possible alternate formats to pass in multiple items; in `sdc-role`, CSV and
 JSON are also acceptable formats for `--members`, `--default-members` and
 `--policies`:
 
-    $ sdc-role create --name=readable --members=bob,fred --default-members=foo --policies=readmachine
-    $ sdc-role create --name=readable --members='["bob","fred"]' --default-members=foo --policies=readmachine
+    $ sdc-role create --name=readable --members=bob,fred --default-members=foo --policies=readinstance
+    $ sdc-role create --name=readable --members='["bob","fred"]' --default-members=foo --policies=readinstance
 
 ### Example Request
 
@@ -2058,7 +2057,7 @@ JSON are also acceptable formats for `--members`, `--default-members` and
         "name": "readable",
         "members": ["foo"],
         "default_members": ["foo"],
-        "policies": ["readmachine"]
+        "policies": ["readinstance"]
     }
 
 ### Example Response
@@ -2074,7 +2073,7 @@ JSON are also acceptable formats for `--members`, `--default-members` and
     Connection: Keep-Alive
     Content-MD5: JC584Ys8XLt9OsqeKzFGRA==
     Date: Tue, 19 Jan 2016 11:49:25 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: af9adf10-bea2-11e5-820f-3bf7c01a78db
     Response-Time: 1017
@@ -2089,7 +2088,7 @@ JSON are also acceptable formats for `--members`, `--default-members` and
         "foo"
       ],
       "policies": [
-        "readmachine"
+        "readinstance"
       ]
     }
 
@@ -2159,7 +2158,7 @@ ResourceNotFound | If `:account` does not exist
     Connection: Keep-Alive
     Content-MD5: Sr2lbN/2Jhl7q1VsGV63xg==
     Date: Tue, 19 Jan 2016 13:31:13 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: e8534140-beb0-11e5-b819-3f29fab5fc3a
     Response-Time: 1310
@@ -2175,7 +2174,7 @@ ResourceNotFound | If `:account` does not exist
         "foo"
       ],
       "policies": [
-        "readmachine"
+        "readinstance"
       ]
     }
 
@@ -2221,7 +2220,7 @@ ResourceNotFound | If `:account` or `:role` do not exist
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Tue, 19 Jan 2016 13:33:33 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 3b6aec20-beb1-11e5-820f-3bf7c01a78db
     Response-Time: 1095
@@ -2236,16 +2235,16 @@ ResourceNotFound | If `:account` or `:role` do not exist
 Sets the given role tags to the provided resource path. `resource_path`
 can be the path to any of the CloudAPI resources described in this document:
 account, keys, users, roles, policies, user's ssh keys, datacenters, images,
-packages, machines, analytics, instrumentations, firewall rules and networks.
+packages, instances, analytics, instrumentations, firewall rules and networks.
 
 For each of these you can set role tags either for an individual resource or
-for the whole group; i.e., you can set role tags for all the machines using:
+for the whole group; i.e., you can set role tags for all the instances using:
 
     PUT /:account/machines
 
-or just for a given machine using
+or just for a given instance using
 
-    PUT /:account/machines/:machine_id
+    PUT /:account/machines/:instance_id
 
 ### Inputs
 
@@ -2307,7 +2306,7 @@ command line with `sdc-info /:resource_path`. E.g.:
     Connection: Keep-Alive
     Content-MD5: glSyrrDK7km8e0oHkK8MFQ==
     Date: Tue, 19 Jan 2016 13:31:01 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: e0ec6b20-beb0-11e5-bb37-b3b95e8d52c8
     Response-Time: 1108
@@ -2374,14 +2373,14 @@ ResourceNotFound | If `:account` does not exist
     Connection: Keep-Alive
     Content-MD5: KIok0p7Vj1ywnmKotC0dxw==
     Date: Wed, 20 Jan 2016 10:27:01 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 56d4a410-bf60-11e5-8d8f-d9c2edd19b69
     Response-Time: 1539
 
     [
       {
-        "name": "readmachine",
+        "name": "readinstance",
         "id": "95ca7b25-5c8f-4c1b-92da-4276f23807f3",
         "rules": [
           "can listmachine and getmachine"
@@ -2439,13 +2438,13 @@ ResourceNotFound | If `:account` or `:role` do not exist
     Connection: Keep-Alive
     Content-MD5: aJlIu8bZIl2QvcSBk/OjxQ==
     Date: Wed, 20 Jan 2016 10:27:41 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 6f6517d0-bf60-11e5-9252-e35f55471f16
     Response-Time: 684
 
     {
-      "name": "readmachine",
+      "name": "readinstance",
       "id": "95ca7b25-5c8f-4c1b-92da-4276f23807f3",
       "rules": [
         "can listmachine and getmachine"
@@ -2497,7 +2496,7 @@ ResourceNotFound | If `:account` or `:role` do not exist
     {
         "name": "test-policy",
         "rules": ["can rebootMachine"],
-        "description": "can reboot any machine"
+        "description": "can reboot any instance"
     }
 
 ### Example Response
@@ -2513,7 +2512,7 @@ ResourceNotFound | If `:account` or `:role` do not exist
     Connection: Keep-Alive
     Content-MD5: U9aAcBqQD9i80axNg4aK9A==
     Date: Wed, 20 Jan 2016 10:34:44 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 6b01c840-bf61-11e5-9252-e35f55471f16
     Response-Time: 1116
@@ -2524,7 +2523,7 @@ ResourceNotFound | If `:account` or `:role` do not exist
       "rules": [
         "can rebootMachine"
       ],
-      "description": "can reboot any machine"
+      "description": "can reboot any instance"
     }
 
 
@@ -2570,7 +2569,7 @@ ResourceNotFound | If `:account` or `:role` do not exist
 
 
     {
-        "description": "Restart any machine, no matter which origin IP"
+        "description": "Restart any instance, no matter which origin IP"
     }
 
 ### Example Response
@@ -2585,7 +2584,7 @@ ResourceNotFound | If `:account` or `:role` do not exist
     Connection: Keep-Alive
     Content-MD5: V0Ud8w9ChirsRyEm341wQg==
     Date: Wed, 20 Jan 2016 11:02:55 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 5b10fbf0-bf65-11e5-8d2c-33d19d9c4408
     Response-Time: 1091
@@ -2596,7 +2595,7 @@ ResourceNotFound | If `:account` or `:role` do not exist
       "rules": [
         "can rebootMachine"
       ],
-      "description": "Restart any machine, no matter which origin IP"
+      "description": "Restart any instance, no matter which origin IP"
     }
 
 
@@ -2642,7 +2641,7 @@ ResourceNotFound | If `:account` or `:policy` do not exist
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Wed, 20 Jan 2016 11:04:11 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 8887ee40-bf65-11e5-a1c5-412a81a23b66
     Response-Time: 872
@@ -2748,7 +2747,7 @@ command uses this endpoint to retrieve it.
     Connection: Keep-Alive
     Content-MD5: 0ZhWHGmb65TwGb3V1+XFlA==
     Date: Thu, 21 Jan 2016 05:23:10 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 0faa8fb0-bfff-11e5-a42d-41bc4fcc136a
     Response-Time: 379
@@ -2804,7 +2803,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Connection: Keep-Alive
     Content-MD5: g7ZJ7pMsDmGHEbxBpH0gug==
     Date: Thu, 21 Jan 2016 05:24:58 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 4ed86b80-bfff-11e5-bf5e-35b3b5208a80
     Response-Time: 1643
@@ -2872,7 +2871,7 @@ or
     Connection: Keep-Alive
     Content-MD5: Ju6/xjora7HcwoGG8a8CyA==
     Date: Thu, 21 Jan 2016 05:29:22 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: ec8bd1a0-bfff-11e5-acb9-49a3959d8bb3
     Response-Time: 958
@@ -2929,7 +2928,7 @@ ResourceNotFound | If `:login` does not exist or `:name` does not exist
     Connection: Keep-Alive
     Content-MD5: LWs/o6eHtZLqPJPJEcN46A==
     Date: Thu, 21 Jan 2016 05:31:51 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 45769340-c000-11e5-a6b9-4349e525b06c
     Response-Time: 830
@@ -2995,7 +2994,7 @@ ResourceNotFound | If `:login` does not exist
     Connection: Keep-Alive
     Content-MD5: jzCseheYDALjhInUqjTbDg==
     Date: Thu, 21 Jan 2016 05:39:52 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 645d8920-c001-11e5-a42d-41bc4fcc136a
     Response-Time: 882
@@ -3012,15 +3011,15 @@ ResourceNotFound | If `:login` does not exist
 # Images
 
 An [image](#image-description) contains the software packages that will be
-available on newly-provisioned machines.  In the case of virtual machines, the
-image also includes the operating system.
+available on newly-provisioned instance.  In the case of hardware virtual
+machines, the image also includes the operating system.
 
 
 ## ListImages (GET /:login/images)
 
 Provides a list of images available in this datacenter.
 
-Note: Currently, *docker* images are not included in this endpoint's responses.
+Note: Currently, *Docker* images are not included in this endpoint's responses.
 You must use `docker images` against the
 [docker](https://apidocs.joyent.com/docker) service for this datacenter.
 
@@ -3051,7 +3050,7 @@ name         | String   | The "friendly" name for this image
 os           | String   | The underlying operating system for this image
 version      | String   | The version for this image
 type         | String   | What kind of image this is. The values differ after v8.0.0+
-requirements | Object   | Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided
+requirements | Object   | Contains a grouping of various minimum requirements for provisioning an instance with this image. For example 'password' indicates that a password must be provided
 homepage     | String   | The URL for a web page with more detailed information for this image
 files        | Array    | An array of image files that make up each image. Currently only a single file per image is supported
 files[0].compression | String | The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'
@@ -3106,7 +3105,7 @@ or
     Connection: Keep-Alive
     Content-MD5: 9eDxMdIxc+3aED7Z3qyL8w==
     Date: Thu, 21 Jan 2016 07:57:59 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: af34a510-c014-11e5-9c73-6767e338bf5d
     Response-Time: 1506
@@ -3158,7 +3157,7 @@ name         | String   | The "friendly" name for this image
 os           | String   | The underlying operating system for this image
 version      | String   | The version for this image
 type         | String   | What kind of image this is. The values differ after v8.0.0+
-requirements | Object   | Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided
+requirements | Object   | Contains a grouping of various minimum requirements for provisioning an instance with this image. For example 'password' indicates that a password must be provided
 homepage     | String   | The URL for a web page with more detailed information for this image
 files        | Array    | An array of image files that make up each image. Currently only a single file per image is supported
 files[0].compression | String | The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'
@@ -3179,9 +3178,9 @@ Possible `error.code` values:
 
 **error.code** | **Details**
 -------------- | -----------
-PrepareImageDidNotRun | This typically means that the target KVM machine (e.g. Linux) has old guest tools that pre-date the image creation feature. Guest tools can be upgraded with installers at <https://download.joyent.com/pub/guest-tools/>. Other possibilities are: a boot time greater than the five-minute timeout, or a bug or crash in the image-preparation script
-VmHasNoOrigin  | Origin image data could not be found for the machine. Typically this is for a machine *migrated* before image creation support was added
-NotSupported   | Indicates an error due to functionality that isn't currently supported. One example is that custom image creation of a VM based on a custom image isn't currently supported
+PrepareImageDidNotRun | This typically means that the target harware virtual machine (e.g. Linux) has old guest tools that pre-date the image creation feature. Guest tools can be upgraded with installers at <https://download.joyent.com/pub/guest-tools/>. Other possibilities are: a boot time greater than the five-minute timeout, or a bug or crash in the image-preparation script
+VmHasNoOrigin  | Origin image data could not be found for the instance. Typically this is for an instance *migrated* before image creation support was added
+NotSupported   | Indicates an error due to functionality that isn't currently supported. One example is that custom image creation of an instance based on a custom image isn't currently supported
 InternalError  | A catch-all error for unexpected or internal errors
 
 ### Errors
@@ -3216,7 +3215,7 @@ or
     Connection: Keep-Alive
     Content-MD5: 42n5PWY5xZP0lnjdMb7Omg==
     Date: Thu, 21 Jan 2016 08:00:09 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: fd5679d0-c014-11e5-a8f8-951890fd520a
     Response-Time: 876
@@ -3295,7 +3294,7 @@ or
     Connection: Keep-Alive
     Content-MD5: 83MuHssrpOMWvPXLB9stgg==
     Date: Thu, 21 Jan 2016 08:02:08 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 440f5590-c015-11e5-b5f9-2b49303f7fc4
     Response-Time: 1262
@@ -3371,7 +3370,7 @@ ResourceNotFound | If `:login` or `:id` does not exist
     Connection: Keep-Alive
     Content-MD5: qSUhN+dwdJKEFlcyrUdBiw==
     Date: Thu, 21 Jan 2016 08:00:09 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 8180ad80-14ef-11e3-a62d-89e8106c294e
     Response-Time: 670
@@ -3385,9 +3384,9 @@ ResourceNotFound | If `:login` or `:id` does not exist
 
 ## CreateImageFromMachine (POST /:login/images)
 
-Create a new custom image from a machine.  The typical process is:
+Create a new custom image from an instance.  The typical process is:
 
-1. Customize a machine the way you want it.
+1. Customize an instance the way you want it.
 2. Call this endpoint (CreateImageFromMachine) to create a new image.
 3. Repeat from step 1 if more customizations are desired with different images.
 4. Use the new image(s) for provisioning via [CreateMachine](#CreateMachine).
@@ -3400,7 +3399,7 @@ not all fields listed there can be specified here.
 
 **Field**   | **Type** | **Required?** | **Description**
 ----------- | -------- | ------------- | ---------------
-machine     | UUID     | Yes | The prepared and stopped machine UUID from which the image is to be created
+machine     | UUID     | Yes | The prepared and stopped instance UUID from which the image is to be created
 name        | String   | Yes | The name of the custom image, e.g. "my-image". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-name) for details
 version     | String   | Yes | The version of the custom image, e.g. "1.0.0". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-version) for details
 description | String   | No  | The image [description](https://images.joyent.com/docs/#manifest-description)
@@ -3418,7 +3417,7 @@ name         | String   | The "friendly" name for this image
 os           | String   | The underlying operating system for this image
 version      | String   | The version for this image
 type         | String   | What kind of image this is. The values differ after v8.0.0+
-requirements | Object   | Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided
+requirements | Object   | Contains a grouping of various minimum requirements for provisioning an instance with this image. For example 'password' indicates that a password must be provided
 homepage     | String   | The URL for a web page with more detailed information for this image
 files        | Array    | An array of image files that make up each image. Currently only a single file per image is supported
 files[0].compression | String |The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'
@@ -3440,7 +3439,7 @@ Some typical and specific errors for this endpoint:
 **Error Code** | **Description**
 -------------- | ---------------
 InsufficientServerVersionError | The `machine` given is running on a server that is too old
-NotAvailable   | Typically this indicates that image creation is not supported for the OS of the given VM
+NotAvailable   | Typically this indicates that image creation is not supported for the OS of the given hardware virtual machine
 
 <!-- TODO: integrate these errors into the general table above -->
 
@@ -3480,7 +3479,7 @@ or
     Connection: Keep-Alive
     Content-MD5: 2sEZ45LmhRiretMPn5sqVA==
     Date: Thu, 21 Jan 2016 08:00:09 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 88af23b0-f952-11e2-8f2c-fff0ec35f4ce
     Response-Time: 160
@@ -3525,7 +3524,7 @@ name         | String   | The "friendly" name for this image
 os           | String   | The underlying operating system for this image
 version      | String   | The version for this image
 type         | String   | What kind of image this is. The values differ after v8.0.0+
-requirements | Object   | Contains a grouping of various minimum requirements for provisioning a machine with this image. For example 'password' indicates that a password must be provided
+requirements | Object   | Contains a grouping of various minimum requirements for provisioning an instance with this image. For example 'password' indicates that a password must be provided
 homepage     | String   | The URL for a web page with more detailed information for this image
 files        | Array    | An array of image files that make up each image. Currently only a single file per image is supported
 files[0].compression | String |The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'
@@ -3576,7 +3575,7 @@ ResourceNotFound | If `:login` or `:id` does not exist
     Connection: Keep-Alive
     Content-MD5: 2sEZ45LmhRiretMPn5sqVA==
     Date: Thu, 21 Jan 2016 08:00:09 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: b8e43c60-b904-11e3-93b7-1f685001b0c3
     Response-Time: 135
@@ -3600,9 +3599,9 @@ ResourceNotFound | If `:login` or `:id` does not exist
 # Packages
 
 [Packages](#packages-description) are named collections of resources that are
-used to describe the dimensions of either a container or a virtual machine.
-These resources include (but are not limited to) RAM size, CPUs, CPU caps,
-lightweight threads, disk space, swap size, and logical networks.
+used to describe the dimensions of either a container or a hardware virtual
+machine.  These resources include (but are not limited to) RAM size, CPUs, CPU
+caps, lightweight threads, disk space, swap size, and logical networks.
 
 ## ListPackages (GET /:login/packages)
 
@@ -3680,7 +3679,7 @@ or
     Connection: Keep-Alive
     Content-MD5: u0+0E3G28WL4Y4K8p6+pIg==
     Date: Thu, 21 Jan 2016 08:33:52 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: b24219e0-c019-11e5-99e1-8339f3270a9f
     Response-Time: 1992
@@ -3761,7 +3760,7 @@ or
     Connection: Keep-Alive
     Content-MD5: MEUpS89GsEaHBykatBp5rg==
     Date: Thu, 21 Jan 2016 08:37:04 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 253dd4c0-c01a-11e5-b5f9-2b49303f7fc4
     Response-Time: 1482
@@ -3781,67 +3780,78 @@ or
 
 
 
-# Machines
+# Instances
+
+Triton supports three different types of instances:
+
+* Docker containers. OS-virtualized instances managed through the Docker client.
+* Infrastructure containers. More traditional OS-virtualized instances running SmartOS or more Linux distributions.
+* Hardware-virtualized machines. Hardware-virtualized instances (KVM) for running legacy or special-purpose operating systems.
+
+Infrastructure and Docker containers are lightweight, offering the most
+performance, observability and operational flexibility. Harware-virtualized
+machines are useful for non-SmartOS or non-Linux stacks.
+
 
 ## ListMachines (GET /:login/machines)
 
-Lists all machines we have on record for your account.  If you have a large
-number of machines, you can filter using the input parameters listed below.
+Lists all instances we have on record for your account.  If you have a large
+number of instances, you can filter using the input parameters listed below.
 
 You can paginate this API by passing in `offset` and `limit`.  HTTP responses
 will contain the additional headers `x-resource-count` and `x-query-limit`.  If
 `x-resource-count` is less than `x-query-limit`, you're done, otherwise call the
-API again with `offset` set to `offset` + `limit` to fetch additional machines.
+API again with `offset` set to `offset` + `limit` to fetch additional instances.
 
 Note that there is a `HEAD /:login/machines` form of this API, so you can
-retrieve the number of machines without retrieving a JSON describing the
-machines themselves.
+retrieve the number of instances without retrieving a JSON describing the
+instances themselves.
 
 ### Inputs
 
 **Field**   | **Type** | **Description**
 ----------- | -------- | ---------------
-type        | String   | (deprecated) The type of machine (virtualmachine or smartmachine)
-brand       | String   | (v8.0+) The type of machine (e.g. lx)
+type        | String   | (deprecated) The type of instance (virtualmachine or smartmachine)
+brand       | String   | (v8.0+) The type of instance (e.g. lx)
 name        | String   | Machine name to find (will make your list size 1, or 0 if nothing found)
-image       | String   | Image id; returns machines provisioned with that image
-state       | String   | The current state of the machine (e.g. running)
-memory      | Number   | The current size of the RAM deployed for the machine (in MiB)
-tombstone   | Number   | Include machines destroyed in the last N minutes
-limit       | Number   | Return a max of N machines; default is 1000 (which is also the maximum allowable result set size)
-offset      | Number   | Get a `limit` number of machines starting at this `offset`
+image       | String   | Image id; returns instances provisioned with that image
+state       | String   | The current state of the instance (e.g. running)
+memory      | Number   | The current size of the RAM deployed for the instance (in MiB)
+tombstone   | Number   | Include instances destroyed in the last N minutes
+limit       | Number   | Return a max of N instances; default is 1000 (which is also the maximum allowable result set size)
+offset      | Number   | Get a `limit` number of instances starting at this `offset`
 tag.$name   | String   | An arbitrary set of tags can be used for querying, assuming they are prefixed with "tag."
 docker      | Boolean  | Whether to only list Docker instances, or only non-Docker instances, if present. Defaults to showing all instances.
-credentials | Boolean  | Whether to include the generated credentials for machines, if present. Defaults to false
+credentials | Boolean  | Whether to include the generated credentials for instances, if present. Defaults to false
 
 Note that if the special input `tags=*` is provided, any other input will be
-completely ignored and the response will return all machines with any tag.
+completely ignored and the response will return all instances with any tag.
 
 ### Returns
 
-An array of machine objects, which contain:
+An array of instance objects, which contain:
 
 **Field**   | **Type** | **Description**
 ----------- | -------- | ---------------
-id          | UUID     | Unique id for this machine
-name        | String   | The "friendly" name for this machine
-type        | String   | (deprecated) The type of machine (virtualmachine or smartmachine)
-brand       | String   | (v8.0+) The type of machine (e.g. lx)
-state       | String   | The current state of this machine (e.g. running)
-image       | String   | The image id this machine was provisioned with
-memory      | Number   | The amount of RAM this machine has (in MiB)
-disk        | Number   | The amount of disk this machine has (in MiB)
-metadata    | Object[String => String] | Any additional metadata this machine has
-tags        | Object[String => String] | Any tags this machine has
-created     | ISO8601 date | When this machine was created
-updated     | ISO8601 date | When this machine's details was last updated
-docker      | Boolean  | Whether this machine is a Docker container, if present
-ips         | Array[String] | The IP addresses this machine has
-networks    | Array[String] | The network UUIDs of the nics this machine has
-primaryIp   | String   | IP address of the primary nic of this machine
-firewall_enabled | Boolean  | Whether firewall rules are enforced on this machine
-compute_node | String  | UUID of the server on which the machine is located
-package     | String   | The id or name of the package used to create this machine
+id          | UUID     | Unique id for this instance
+name        | String   | The "friendly" name for this instance
+type        | String   | (deprecated) The type of instance (virtualmachine or smartmachine)
+brand       | String   | (v8.0+) The type of instance (e.g. lx)
+state       | String   | The current state of this instance (e.g. running)
+image       | String   | The image id this instance was provisioned with
+memory      | Number   | The amount of RAM this instance has (in MiB)
+disk        | Number   | The amount of disk this instance has (in MiB)
+metadata    | Object[String => String] | Any additional metadata this instance has
+tags        | Object[String => String] | Any tags this instance has
+created     | ISO8601 date | When this instance was created
+updated     | ISO8601 date | When this instance's details was last updated
+docker      | Boolean  | Whether this instance is a Docker container, if present
+ips         | Array[String] | The IP addresses this instance has
+networks    | Array[String] | The network UUIDs of the nics this instance has
+primaryIp   | String   | IP address of the primary nic of this instance
+firewall_enabled | Boolean  | Whether firewall rules are enforced on this instance
+compute_node | String  | UUID of the server on which the instance is located
+package     | String   | The id or name of the package used to create this instance
 
 ### Errors
 
@@ -3854,7 +3864,7 @@ InvalidArgument  | If one of the input parameters was invalid
 
 ### CLI Command
 
-Get all machines:
+Get all instance:
 
     $ triton instance list
 
@@ -3862,7 +3872,7 @@ or
 
     $ sdc-listmachines
 
-Get all LX machines:
+Get all LX instance:
 
     $ triton instance list brand=lx
 
@@ -3878,7 +3888,7 @@ or
 
     $ sdc-listmachines --brand lx --state running
 
-Get all LX machines that are currently running, and have 256 MiB of memory:
+Get all LX instances that are currently running, and have 256 MiB of memory:
 
     $ triton instance list brand=lx state=running memory=256
 
@@ -3886,12 +3896,12 @@ or
 
     $ sdc-listmachines --brand lx --state running --memory 256
 
-Get all LX machines that are currently running, with 256 MiB of RAM, tagged as
+Get all LX instances that are currently running, with 256 MiB of RAM, tagged as
 'test':
 
     $ sdc-listmachines --brand lx --state running --memory 256 --tag group=test
 
-Get all tagged machines:
+Get all tagged instances:
 
     $ sdc-listmachines --tag \*
 
@@ -3924,7 +3934,7 @@ can combine them.  Run `triton instance list --help` or
     Connection: Keep-Alive
     Content-MD5: w5wJLKlhDzPpC6zKjtqaCw==
     Date: Thu, 21 Jan 2016 10:55:25 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 779b5cc0-c02d-11e5-a7d2-fdf229d32220
     Response-Time: 3444
@@ -3963,7 +3973,7 @@ can combine them.  Run `triton instance list --help` or
 
 ## GetMachine (GET /:login/machines/:id)
 
-Gets the details for an individual machine.
+Gets the details for an individual instance.
 
 ### Inputs
 
@@ -3973,26 +3983,26 @@ Gets the details for an individual machine.
 
 **Field**   | **Type** | **Description**
 ----------- | -------- | ---------------
-id          | UUID     | Unique id for this machine
-name        | String   | The "friendly" name for this machine
-type        | String   | (deprecated) The type of machine (virtualmachine or smartmachine)
-brand       | String   | (v8.0+) The type of machine (e.g. lx)
-state       | String   | The current state of this machine (e.g. running)
-image       | String   | The image id this machine was provisioned with
-memory      | Number   | The amount of RAM this machine has (in MiB)
-disk        | Number   | The amount of disk this machine has (in MiB)
-metadata    | Object[String => String] | Any additional metadata this machine has
-tags        | Object[String => String] | Any tags this machine has
-created     | ISO8601 date | When this machine was created
-updated     | ISO8601 date | When this machine's details was last updated
-docker      | Boolean  | Whether this machine is a Docker container, if present
-ips         | Array[String] | The IP addresses this machine has
-networks    | Array[String] | The network UUIDs of the nics this machine has
-primaryIp   | String   | IP address of the primary nic of this machine
-firewall_enabled | Boolean  | Whether firewall rules are enforced on this machine
-compute_node | String  | UUID of the server on which the machine is located
-package     | String   | The id or name of the package used to create this machine
-dns_names   | Array[String] | DNS names of the machine
+id          | UUID     | Unique id for this instance 
+name        | String   | The "friendly" name for this instance
+type        | String   | (deprecated) The type of instance (virtualmachine or smartmachine)
+brand       | String   | (v8.0+) The type of instance (e.g. lx)
+state       | String   | The current state of this instance (e.g. running)
+image       | String   | The image id this instance was provisioned with
+memory      | Number   | The amount of RAM this instance has (in MiB)
+disk        | Number   | The amount of disk this instance has (in MiB)
+metadata    | Object[String => String] | Any additional metadata this instance has
+tags        | Object[String => String] | Any tags this instance has
+created     | ISO8601 date | When this instance was created
+updated     | ISO8601 date | When this instance's details was last updated
+docker      | Boolean  | Whether this instance is a Docker container, if present
+ips         | Array[String] | The IP addresses this instance has
+networks    | Array[String] | The network UUIDs of the nics this instance has
+primaryIp   | String   | IP address of the primary nic of this instance 
+firewall_enabled | Boolean  | Whether firewall rules are enforced on this instance 
+compute_node | String  | UUID of the server on which the instance is located
+package     | String   | The id or name of the package used to create this instance 
+dns_names   | Array[String] | DNS names of the instance
 
 ### Errors
 
@@ -4004,7 +4014,7 @@ ResourceNotFound | If `:login` or `:id` does not exist
 
 ### CLI Command
 
-Get the details for the machine with id 75cfe125-a5ce-49e8-82ac-09aa31ffdf26:
+Get the details for the instance with id 75cfe125-a5ce-49e8-82ac-09aa31ffdf26:
 
     $ triton instance get b6979942-7d5d-4fe6-a2ec-b812e950625a
 
@@ -4032,7 +4042,7 @@ or
     Connection: Keep-Alive
     Content-MD5: 0q2leQEqeZCNiznbZvKhZw==
     Date: Thu, 21 Jan 2016 10:58:11 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: db0705c0-c02d-11e5-b1b7-65fab9169f0e
     Response-Time: 3159
@@ -4069,27 +4079,27 @@ or
 
 ## CreateMachine (POST /:login/machines)
 
-Allows you to provision a machine.
+Allows you to provision an instance.
 
 If you do not specify a name, CloudAPI will generate a random one for you.
 
-Your machine will initially be not available for login (SmartDataCenter must
-provision and boot it); you can poll [GetMachine](#GetMachine) for its status.
-When the `state` field is equal to `running`, you can log in.  If the machine is
-a `brand` other than `kvm`, you can usually use any of the SSH keys managed
+Your instance will initially be not available for login (Triton must provision
+and boot it); you can poll [GetMachine](#GetMachine) for its status.  When the
+`state` field is equal to `running`, you can log in.  If the instance is a
+`brand` other than `kvm`, you can usually use any of the SSH keys managed
 under the [keys section](#keys) of CloudAPI to login as any POSIX user on the
-OS.  You can add/remove keys over time, and the machine will automatically work
+OS.  You can add/remove keys over time, and the instance will automatically work
 with that set.
 
-If the the machine has a brand `kvm`, and of a UNIX-derived OS (e.g. Linux),
+If the the instance has a brand `kvm`, and of a UNIX-derived OS (e.g. Linux),
 you *must* have keys uploaded before provisioning; that entire set of keys will
-be written out to `/root/.ssh/authorized_keys` in the new machine, and you can
+be written out to `/root/.ssh/authorized_keys` in the new instance, and you can
 SSH in using one of those keys.  Changing the keys over time under your account
-will not affect a running virtual machine in any way; those keys are statically
-written at provisioning-time only, and you will need to manually manage them on
-the machine itself.
+will not affect a running hardware virtual machine in any way; those keys are
+statically written at provisioning-time only, and you will need to manually
+manage them on the instance itself.
 
-If the image you create a machine from is set to generate passwords for you,
+If the image you create an instance from is set to generate passwords for you,
 the username/password pairs will be returned in the metadata response as a
 nested object, like so:
 
@@ -4102,26 +4112,26 @@ nested object, like so:
 
 You cannot overwrite the `credentials` key in CloudAPI.
 
-More generally, the metadata keys can be set either at machine-creation time or
-after the fact.  You must either pass in plain-string values, or a JSON-
-encoded string.  On metadata retrieval, you will get a JSON object back.
+More generally, the metadata keys can be set either at the time of instance
+creation, or after the fact.  You must either pass in plain-string values, or a
+JSON-encoded string.  On metadata retrieval, you will get a JSON object back.
 
 Networks can be specified using the networks attribute. If it is absent from
-the input, the machine will default to attaching to one externally-accessible
+the input, the instance will default to attaching to one externally-accessible
 network (it will have one public IP), and one internally-accessible network from
-the datacenter network pools.  It is possible to have a machine attached to only
-an internal network, or both public and internal, or just external.
+the datacenter network pools.  It is possible to have an instance attached to
+only an internal network, or both public and internal, or just external.
 
 Be aware that CreateMachine does return IP addresses.  To obtain the IP address
-of a newly-provisioned machine, poll [GetMachine](#GetMachine) until the machine
-state is `running` or a failure.
+of a newly-provisioned instance, poll [GetMachine](#GetMachine) until the
+instance state is `running` or a failure.
 
-Typically, SDC will allocate the new machine somewhere reasonable within the
-cloud.  You may want this machine to be placed close to, or far away from, other
-existing machines belonging to you;  if so, you can provide locality hints to
-CloudAPI.  Locality hints are not guarantees, unless `strict` is set true,
-but SDC will attempt to satisfy the hints if possible. An example of a locality
-hint is:
+Typically, Triton will allocate the new instance somewhere reasonable within the
+cloud.  You may want this instance to be placed close to, or far away from,
+other existing instances belonging to you;  if so, you can provide locality
+hints to CloudAPI.  Locality hints are not guarantees, unless `strict` is set
+true, but Triton will attempt to satisfy the hints if possible. An example of a
+locality hint is:
 
     "locality": {
       "strict": false,
@@ -4129,7 +4139,7 @@ hint is:
       "far": ["da568166-9d93-42c8-b9b2-bce9a6bb7e0a", "d45eb2f5-c80b-4fea-854f-32e4a9441e53"]
     }
 
-UUIDs provided should be the ids of machines belonging to you.
+UUIDs provided should be the ids of instances belonging to you.
 
 Locality hints are optional. Both `near`, `far`, and `strict` are also optional;
 you can provide just one if desired. Lastly, if there's only a single UUID entry
@@ -4137,44 +4147,44 @@ in an array, you can omit the array and provide the UUID string directly as the
 value to a near/far key.
 
 `strict` defaults to false if not provided. If `strict` is provided and is true,
-the creation of the new machine will fail if the provided `near` and/or `far`
-cannot be met. `near` will try to place the new machine on the same server as
-the given machine UUIDs, otherwise in the same rack; it will fail if no space
-can be found in that rack. `far` will try to place the new machine in a
+the creation of the new instance will fail if the provided `near` and/or `far`
+cannot be met. `near` will try to place the new instance on the same server as
+the given instance UUIDs, otherwise in the same rack; it will fail if no space
+can be found in that rack. `far` will try to place the new instance in a
 different rack, otherwise a different server in the same rack; it will fail if
-space can only be found on the same server as the given machine UUIDs.
+space can only be found on the same server as the given instance UUIDs.
 
 ### Inputs
 
 **Field** | **Type** | **Description**
 --------- | -------- | ---------------
-name      | String   | Friendly name for this machine; default is the first 8 characters of the machine id
+name      | String   | Friendly name for this instance; default is the first 8 characters of the machine id
 package   | String   | Id of the package to use on provisioning, obtained from [ListPackages](#ListPackages)
 image     | String   | The image UUID (the "id" field in [ListImages](#ListImages))
 networks  | Array    | Desired networks ids, obtained from [ListNetworks](#ListNetworks)
-locality  | Object[String => Array] | Optionally specify which machines the new machine should be near or far from
+locality  | Object[String => Array] | Optionally specify which instances the new instance should be near or far from
 metadata.$name | String | An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata."
 tag.$name | String   | An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag."
-firewall_enabled | Boolean | Completely enable or disable firewall for this machine. Default is false
+firewall_enabled | Boolean | Completely enable or disable firewall for this instance. Default is false
 
 ### Returns
 
 **Field**   | **Type** | **Description**
 ----------- | -------- | ---------------
-id          | UUID     | Unique id for this machine
-name        | String   | The "friendly" name for this machine
-type        | String   | (deprecated) The type of machine (virtualmachine or smartmachine)
-brand       | String   | (v8.0+) The type of machine (e.g. lx)
-state       | String   | The current state of this machine (e.g. running)
-memory      | Number   | The amount of RAM this machine has (in MiB)
-disk        | Number   | The amount of disk this machine has (in MiB)
-ips         | Array[String] | The IP addresses this machine has
-metadata    | Object[String => String] | Any additional metadata this machine has
-package     | String   | The id or name of the package used to create this machine
-image       | String   | The image id this machine was provisioned with
-docker      | Boolean  | Whether this machine is a Docker container, if present
-created     | ISO8601 date | When this machine was created
-updated     | ISO8601 date | When this machine's details was last updated
+id          | UUID     | Unique id for this instance 
+name        | String   | The "friendly" name for this instance
+type        | String   | (deprecated) The type of instance (virtualmachine or smartmachine)
+brand       | String   | (v8.0+) The type of instance (e.g. lx)
+state       | String   | The current state of this instance (e.g. running)
+memory      | Number   | The amount of RAM this instance has (in MiB)
+disk        | Number   | The amount of disk this instance has (in MiB)
+ips         | Array[String] | The IP addresses this instance has
+metadata    | Object[String => String] | Any additional metadata this instance has
+package     | String   | The id or name of the package used to create this instance
+image       | String   | The image id this instance was provisioned with
+docker      | Boolean  | Whether this instance is a Docker container, if present
+created     | ISO8601 date | When this instance was created
+updated     | ISO8601 date | When this instance's details was last updated
 
 ### Errors
 
@@ -4222,7 +4232,7 @@ or
     Connection: Keep-Alive
     Content-MD5: s5ROP0dBDWlf5X1drujDvg==
     Date: Thu, 21 Jan 2016 12:57:52 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 9283ba80-c03e-11e5-b1b7-65fab9169f0e
     Response-Time: 4655
@@ -4251,7 +4261,7 @@ or
 
 ### More Examples
 
-Create machine with multiple nics
+Create instance with multiple nics
 
     $ triton instance create --network=42325ea0-eb62-44c1-8eb6-0af3e2f83abc --network=c8cde927-6277-49ca-82a3-741e8b23b02f 2b683a82-a066-11e3-97ab-2faa44701c5a 7b17343c-94af-6266-e0e8-893a3b9993d0
 
@@ -4259,7 +4269,7 @@ or
 
     $ sdc-createmachine --image=2b683a82-a066-11e3-97ab-2faa44701c5a --package=7b17343c-94af-6266-e0e8-893a3b9993d0 --networks=42325ea0-eb62-44c1-8eb6-0af3e2f83abc --networks=c8cde927-6277-49ca-82a3-741e8b23b02f
 
-Create machine with tags
+Create instance with tags
 
     $ triton instance create -t foo=bar -t group=test 2b683a82-a066-11e3-97ab-2faa44701c5a 7b17343c-94af-6266-e0e8-893a3b9993d0
 
@@ -4270,15 +4280,15 @@ or
 ### User-script
 
 The special value `metadata.user-script` can be specified to provide a custom
-script which will be executed by the machine right after creation, and on every
-machine reboot.  This script can be specified using the command-line option
+script which will be executed by the instance right after creation, and on every
+instance reboot.  This script can be specified using the command-line option
 `--script`, which should be an absolute path to the file you want to upload to
-the machine.
+the instance.
 
 
 ## StopMachine (POST /:login/machines/:id?action=stop)
 
-Allows you to shut down an instance.  POST to the machine name with an `action`
+Allows you to shut down an instance.  POST to the instance name with an `action`
 of `stop`.
 
 You can poll on [GetMachine](#GetMachine) until the state is `stopped`.
@@ -4300,7 +4310,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 **Error Code**   | **Description**
 ---------------- | ---------------
 ResourceNotFound | If `:login` or `:id` does not exist
-InvalidState     | The machine is in the wrong state to be stopped
+InvalidState     | The instance is in the wrong state to be stopped
 InvalidArgument  | If `action` was invalid
 MissingParameter | If `action` wasn't provided
 
@@ -4333,7 +4343,7 @@ or
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 21 Jan 2016 13:05:58 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: b49ae1b0-c03f-11e5-a7d2-fdf229d32220
     Response-Time: 3175
@@ -4342,8 +4352,8 @@ or
 
 ## StartMachine (POST /:login/machines/:id?action=start)
 
-Allows you to boot up a machine.  POST to the machine name with an `action` of
-`start`.
+Allows you to boot up an instance.  POST to the instance name with an `action`
+of `start`.
 
 You can poll on [GetMachine](#GetMachine) until the state is `running`.
 
@@ -4364,7 +4374,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 **Error Code**   | **Description**
 ---------------- | ---------------
 ResourceNotFound | If `:login` or `:id` does not exist
-InvalidState     | The machine is in the wrong state to be started
+InvalidState     | The instance is in the wrong state to be started
 InvalidArgument  | If `action` was invalid
 MissingParameter | If `action` wasn't provided
 
@@ -4397,7 +4407,7 @@ or
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 21 Jan 2016 13:07:24 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: e7fda2e0-c03f-11e5-a64c-d133f917673f
     Response-Time: 3487
@@ -4406,7 +4416,7 @@ or
 
 ## RebootMachine (POST /:login/machines/:id?action=reboot)
 
-Allows you to 'reboot' a machine.  POST to the machine name with an `action` of
+Allows you to reboot an instance.  POST to the instance name with an `action` of
 `reboot`.
 
 You can poll on [GetMachine](#GetMachine) until the state is `running`.
@@ -4428,7 +4438,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 **Error Code**   | **Description**
 ---------------- | ---------------
 ResourceNotFound | If `:login` or `:id` does not exist
-InvalidState     | The machine is in the wrong state to be stopped
+InvalidState     | The instance is in the wrong state to be stopped
 InvalidArgument  | If `action` was invalid
 MissingParameter | If `action` wasn't provided
 
@@ -4461,7 +4471,7 @@ or
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 21 Jan 2016 13:09:34 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 35679950-c040-11e5-b1b7-65fab9169f0e
     Response-Time: 3124
@@ -4470,11 +4480,11 @@ or
 
 ## ResizeMachine (POST /:login/machines/:id?action=resize)
 
-Resize a machine to a new [package](#packages) (a.k.a. instance type).
+Resize an instance to a new [package](#packages) (a.k.a. instance type).
 
-Resizing is only supported for non-KVM machines (machines which are not
-`brand=kvm`, also known as 'zones' or 'containers').  KVM virtual machines
-(`brand=kvm`) cannot be resized.
+Resizing is only supported for containers (instances which are not hardware
+virtual machines -- they have `brand=kvm`). Hardware virtual machines cannot
+be resized.
 
 Resizing is not guaranteed to work, especially when resizing upwards in
 resources. It is best-effort, and may fail. Resizing downwards will usually
@@ -4498,7 +4508,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 **Error Code**   | **Description**
 ---------------- | ---------------
 ResourceNotFound | If `:login` or `:id` does not exist
-InvalidState     | The machine is in the wrong state to be resized
+InvalidState     | The instance is in the wrong state to be resized
 InvalidArgument  | If `action` was invalid, or `package` wasn't a valid id or name
 MissingParameter | If `action` or `package` wasn't provided
 
@@ -4527,7 +4537,7 @@ MissingParameter | If `action` or `package` wasn't provided
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 21 Jan 2016 13:12:06 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 8fa7d8d0-c040-11e5-9100-a95edd60134e
     Response-Time: 161
@@ -4535,15 +4545,15 @@ MissingParameter | If `action` or `package` wasn't provided
 
 ## RenameMachine (POST /:login/machines/:id?action=rename)
 
-Allows you to rename a machine.  POST to the machine `id` with an action of
-`rename`.  You must additionally include a new name for the machine.
+Allows you to rename an instance.  POST to the instance `id` with an action of
+`rename`.  You must additionally include a new name for the instance.
 
 ### Inputs
 
 **Field** | **Type** | **Description**
 --------- | -------- | ---------------
 action    | String   | Use the exact string "rename"
-name      | String   | The new "friendly" name for this machine
+name      | String   | The new "friendly" name for this instance
 
 ### Returns
 
@@ -4556,7 +4566,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 **Error Code**   | **Description**
 ---------------- | ---------------
 ResourceNotFound | If `:login` or `:id` does not exist
-InvalidState     | The machine is in the wrong state to be stopped
+InvalidState     | The instance is in the wrong state to be stopped
 InvalidArgument  | If `action` was invalid, or `name` wasn't a valid name
 MissingParameter | If `action` or `name` wasn't provided
 
@@ -4585,7 +4595,7 @@ MissingParameter | If `action` or `name` wasn't provided
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 21 Jan 2016 13:14:17 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: dda360e0-c040-11e5-a64c-d133f917673f
     Response-Time: 3768
@@ -4594,7 +4604,7 @@ MissingParameter | If `action` or `name` wasn't provided
 
 ## EnableMachineFirewall (POST /:login/machines/:id?action=enable_firewall)
 
-Allows you to enable the firewall for a machine.
+Allows you to enable the firewall for an instance.
 
 ### Inputs
 
@@ -4613,7 +4623,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 **Error Code**   | **Description**
 ---------------- | ---------------
 ResourceNotFound | If `:login` or `:id` does not exist
-InvalidState     | The machine is the wrong state to enable firewall
+InvalidState     | The instance is the wrong state to enable firewall
 InvalidArgument  | If `action` was invalid
 MissingParameter | If `action` wasn't provided
 
@@ -4646,7 +4656,7 @@ or
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 21 Jan 2016 13:16:00 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 1b1e83a0-c041-11e5-b1b7-65fab9169f0e
     Response-Time: 3594
@@ -4655,7 +4665,7 @@ or
 
 ## DisableMachineFirewall (POST /:login/machines/:id?action=disable_firewall)
 
-Allows you to completely disable the firewall of a machine.
+Allows you to completely disable the firewall of an instance.
 
 ### Inputs
 
@@ -4674,7 +4684,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 **Error Code**   | **Description**
 ---------------- | ---------------
 ResourceNotFound | If `:login` or `:id` does not exist
-InvalidState     | The machine is the wrong state to disable firewall
+InvalidState     | The instance is the wrong state to disable firewall
 InvalidArgument  | If `action` was invalid
 MissingParameter | If `action` wasn't provided
 
@@ -4707,7 +4717,7 @@ or
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 21 Jan 2016 13:23:39 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 2c74e120-c042-11e5-9100-a95edd60134e
     Response-Time: 4178
@@ -4716,14 +4726,14 @@ or
 
 ## CreateMachineSnapshot (POST /:login/machines/:id/snapshots)
 
-Allows you to take a snapshot of a machine.  Once you have one or more
-snapshots, you can boot the machine from a previous snapshot.
+Allows you to take a snapshot of an instance.  Once you have one or more
+snapshots, you can boot the instance from a previous snapshot.
 
-Snapshots are not usable with other machines; they are a point-in-time snapshot
-of the current machine. Snapshots can also only be taken of machines that are
+Snapshots are not usable with other instances; they are a point-in-time snapshot
+of the current instance. Snapshots can also only be taken of instances that are
 *not* of brand 'kvm'.
 
-Since machine instances use a copy-on-write filesystem, snapshots take up
+Since instance instances use a copy-on-write filesystem, snapshots take up
 increasing amounts of space as the filesystem changes over time. There is a
 limit to how much space snapshots are allowed to take. Plan your snapshots
 accordingly.
@@ -4781,7 +4791,7 @@ or
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     Response-Time: 754
@@ -4799,8 +4809,9 @@ or
 
 ## StartMachineFromSnapshot (POST /:login/machines/:id/snapshots/:name)
 
-If a machine is in the 'stopped' state, you can choose to start the machine from
-the referenced snapshot. This is effectively a means to roll back machine state.
+If an instance is in the 'stopped' state, you can choose to start the instance
+from the referenced snapshot. This is effectively a means to roll back instance
+state.
 
 ### Inputs
 
@@ -4843,7 +4854,7 @@ or
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
     Date: Tue, 05 Jul 2011 17:26:56 GMT
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
     Response-Time: 297
@@ -4852,7 +4863,7 @@ or
 
 ## ListMachineSnapshots (GET /:login/machines/:id/snapshots)
 
-Lists all snapshots taken for a given machine.  There are no filtration
+Lists all snapshots taken for a given instance.  There are no filtration
 parameters for this API.
 
 ### Inputs
@@ -4901,7 +4912,7 @@ or
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0 
     Api-Version: 8.0.0
     Request-Id: 06a57272-9238-4276-951b-4123fbfdb948
     Response-Time: 66
@@ -4967,7 +4978,7 @@ or
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
     Date: Tue, 05 Jul 2011 17:26:56 GMT
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0 
     Api-Version: 8.0.0
     Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
     Response-Time: 297
@@ -4985,7 +4996,7 @@ or
 
 ## DeleteMachineSnapshot (DELETE /:login/machines/:id/snapshots/:name)
 
-Deletes the specified snapshot of a machine.
+Deletes the specified snapshot of an instance.
 
 ### Inputs
 
@@ -5028,7 +5039,7 @@ or
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
     Date: Tue, 05 Jul 2011 17:26:56 GMT
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
     Response-Time: 297
@@ -5037,7 +5048,7 @@ or
 
 ## UpdateMachineMetadata (POST /:login/machines/:id/metadata)
 
-Allows you to update the metadata for a given machine.  Note that updating the
+Allows you to update the metadata for a given instance.  Note that updating the
 metadata via CloudAPI will result in the metadata being updated in the running
 instance.
 
@@ -5090,7 +5101,7 @@ ResourceNotFound | If `:login` or `:id` does not exist
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     Response-Time: 754
@@ -5106,13 +5117,13 @@ ResourceNotFound | If `:login` or `:id` does not exist
 
 ## ListMachineMetadata (GET /:login/machines/:id/metadata)
 
-Returns the complete set of metadata associated with this machine.
+Returns the complete set of metadata associated with this instance.
 
 ### Inputs
 
 **Field**   | **Type** | **Description**
 ----------- | -------- | ---------------
-credentials | Boolean  | Whether or not to return machine credentials. Defaults to false
+credentials | Boolean  | Whether or not to return instance credentials. Defaults to false
 
 ### Returns
 
@@ -5149,7 +5160,7 @@ ResourceNotFound | If `:login` or `:id` does not exist
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     Response-Time: 754
@@ -5169,7 +5180,7 @@ ResourceNotFound | If `:login` or `:id` does not exist
 
 ## GetMachineMetadata (GET /:login/machines/:id/metadata/:key)
 
-Returns a single metadata entry associated with this machine.
+Returns a single metadata entry associated with this instance.
 
 ### Inputs
 
@@ -5208,7 +5219,7 @@ ResourceNotFound | If `:login`, `:id` or `:key` does not exist
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Jul 2014 17:19:26 GMT
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     Response-Time: 754
@@ -5221,7 +5232,7 @@ ResourceNotFound | If `:login`, `:id` or `:key` does not exist
 
 ## DeleteMachineMetadata (DELETE /:login/machines/:id/metadata/:key)
 
-Deletes a single metadata key from this machine.
+Deletes a single metadata key from this instance.
 
 ### Inputs
 
@@ -5258,7 +5269,7 @@ ResourceNotFound | If `:login`, `:id` or `:key` does not exist
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     Response-Time: 754
@@ -5268,7 +5279,7 @@ ResourceNotFound | If `:login`, `:id` or `:key` does not exist
 
 ## DeleteAllMachineMetadata (DELETE /:login/machines/:id/metadata)
 
-Deletes all metadata keys from this machine.
+Deletes all metadata keys from this instance.
 
 ### Inputs
 
@@ -5308,7 +5319,7 @@ to keep the shell from matching files in the current directory.
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     Response-Time: 754
@@ -5319,8 +5330,8 @@ to keep the shell from matching files in the current directory.
 
 ## AddMachineTags (POST /:login/machines/:id/tags)
 
-Set tags on the given machine. A pre-existing tag with the same name as
-one given will be overwritten.
+Set tags on the given instance. A pre-existing tag with the same name as one
+given will be overwritten.
 
 Note: This action is asynchronous. You can poll on `ListMachineTags` to wait for
 the update to be complete (the `triton instance tag set -w,--wait` option does
@@ -5370,7 +5381,7 @@ Using node-smartdc:
 ### Example Response
 
     HTTP/1.1 200 OK
-    server: Joyent SmartDataCenter 8.0.0
+    server: Joyent Triton 8.0.0
     request-id: cb65c530-d0e9-11e5-ac0c-090497b36c30
     date: Thu, 11 Feb 2016 18:03:46 GMT
     response-time: 91
@@ -5383,7 +5394,7 @@ Using node-smartdc:
 
 ## ReplaceMachineTags (PUT /:login/machines/:id/tags)
 
-Fully replace all tags on a machine with the given tags.
+Fully replace all tags on an instance with the given tags.
 
 Note: This action is asynchronous. You can poll on `ListMachineTags` to wait for
 the update to be complete (the `triton instance tag replace-all -w,--wait`
@@ -5433,7 +5444,7 @@ Using node-smartdc:
 ### Example Response
 
     HTTP/1.1 200 OK
-    server: Joyent SmartDataCenter 8.0.0
+    server: Joyent Triton 8.0.0
     request-id: cb65c530-d0e9-11e5-ac0c-090497b36c30
     date: Thu, 11 Feb 2016 18:03:46 GMT
     response-time: 91
@@ -5446,7 +5457,7 @@ Using node-smartdc:
 
 ## ListMachineTags (GET /:login/machines/:id/tags)
 
-Returns the complete set of tags associated with this machine.
+Returns the complete set of tags associated with this instance.
 
 ### Inputs
 
@@ -5494,7 +5505,7 @@ Using node-smartdc:
 ### Example Response
 
     HTTP/1.1 200 OK
-    server: Joyent SmartDataCenter 8.0.0
+    server: Joyent Triton 8.0.0
     request-id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     date: Thu, 11 Feb 2016 18:03:46 GMT
     response-time: 91
@@ -5507,7 +5518,7 @@ Using node-smartdc:
 
 ## GetMachineTag (GET /:login/machines/:id/tags/:tag)
 
-Returns the value for a single tag on this machine.
+Returns the value for a single tag on this instance.
 
 Typically one calls CloudAPI endpoints with `Accept: application/json`. This
 endpoint can be called that way, or alternatively with `Accept: text/plain`
@@ -5582,7 +5593,7 @@ the response:
 
 ## DeleteMachineTag (DELETE /:login/machines/:id/tags/:tag)
 
-Deletes a single tag from this machine.
+Deletes a single tag from this instance.
 
 Note: This action is asynchronous. You can poll on `ListMachineTags` to wait for
 the update to be complete (the `triton instance tag delete -w,--wait` option
@@ -5630,7 +5641,7 @@ Using node-smartdc:
 
 ## DeleteMachineTags (DELETE /:login/machines/:id/tags)
 
-Deletes all tags from a machine.
+Deletes all tags from an instance.
 
 Note: This action is asynchronous. You can poll on `ListMachineTags` to wait for
 the update to be complete (the `triton instance tag delete -w,--wait` option
@@ -5679,7 +5690,7 @@ Using node-smartdc:
 
 ## DeleteMachine (DELETE /:login/machines/:id)
 
-Allows you to completely destroy a machine.
+Allows you to completely destroy an instance.
 
 ### Inputs
 
@@ -5696,7 +5707,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 **Error Code**   | **Description**
 ---------------- | ---------------
 ResourceNotFound | If `:login` or `:id` does not exist
-InvalidState     | The machine is the wrong state to be deleted
+InvalidState     | The instance is the wrong state to be deleted
 
 ### CLI Command
 
@@ -5719,7 +5730,7 @@ or
     HTTP/1.1 204 No Content
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, DELETE
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0
     Connection: close
     Date: Wed, 13 Apr 2011 23:38:03 GMT
     Api-Version: 8.0.0
@@ -5730,7 +5741,7 @@ or
 
 ## MachineAudit (GET /:login/machines/:id/audit)
 
-Provides a list of machine's accomplished actions. Results are sorted from
+Provides a list of an instance's accomplished actions. Results are sorted from
 newest to oldest action.
 
 ### Inputs
@@ -5795,7 +5806,7 @@ or
     connection: Keep-Alive
     content-md5: GRmOq/dAdKZJ4wVpEelRrQ==
     date: Fri, 22 Feb 2013 15:19:37 GMT
-    server: Joyent SmartDataCenter 8.0.0
+    server: Joyent Triton 8.0.0
     api-version: 8.0.0
     request-id: 453aee00-7d03-11e2-8048-5195b6159808
     response-time: 34
@@ -6098,7 +6109,7 @@ ResourceNotFound | If `:login` does not exist
     HTTP/1.1 200 OK
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0
     Connection: close
     Date: Wed, 13 Apr 2011 23:40:30 GMT
     Api-Version: 8.0.0
@@ -6179,7 +6190,7 @@ ResourceNotFound | If `:login` does not exist
     HTTP/1.1 200 OK
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0
     Connection: close
     Date: Wed, 13 Apr 2011 23:49:40 GMT
     Api-Version: 8.0.0
@@ -6269,7 +6280,7 @@ ResourceNotFound | If `:login` or `:id` does not exist
     Location: /my/analytics/instrumentations/1
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, DELETE
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0
     Connection: close
     Date: Wed, 13 Apr 2011 23:53:29 GMT
     Api-Version: 8.0.0
@@ -6347,7 +6358,7 @@ ResourceNotFound | If `:login` or `:id` does not exist
     HTTP/1.1 200 OK
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, DELETE
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0
     Connection: close
     Date: Wed, 13 Apr 2011 23:53:29 GMT
     Api-Version: 8.0.0
@@ -6432,7 +6443,7 @@ InvalidArgument  | If input values were incorrect
     Access-Control-Allow-Methods: GET
     Connection: close
     Date: Wed, 29 Jun 2011 23:57:44 GMT
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 3d511185-36b8-4699-9cdd-a67bf8be7a6d
     Response-Time: 109
@@ -6572,7 +6583,7 @@ MissingParameter | If parameter values were missing
     Location: https://api.example.com/my/analytics/instrumentations/2
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0
     Connection: close
     Date: Wed, 13 Apr 2011 23:43:24 GMT
     Api-Version: 8.0.0
@@ -6645,7 +6656,7 @@ ResourceNotFound | If `:login` or `:id` does not exist
     HTTP/1.1 204 No Content
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, DELETE
-    Server: SmartDataCenter
+    Server: Joyent Triton 8.0.0
     Connection: close
     Date: Wed, 13 Apr 2011 23:56:29 GMT
     Api-Version: 8.0.0
@@ -6658,7 +6669,7 @@ ResourceNotFound | If `:login` or `:id` does not exist
 
 # FirewallRules
 
-You can manage Firewall Rules for your machines through CloudAPI.
+You can manage Firewall Rules for your instances through CloudAPI.
 
 
 ## Firewall Rule Syntax
@@ -6673,28 +6684,28 @@ and `port` is a valid port number.
 
 The rule should have `tag` or `vm` in the FROM or TO target. The following are some possibilities:
 
-### Allow incoming http traffic to a VM:
+### Allow incoming http traffic to an instance:
 
     {
         "enabled": true,
         "rule": "FROM any TO vm 0abeae82-c040-4080-ac60-b60d3e3890a7 ALLOW tcp port 80"
     }
 
-### Block outgoing SMTP traffic from a VM to a subnet:
+### Block outgoing SMTP traffic from an instance to a subnet:
 
     {
         "enabled": true,
         "rule": "FROM vm 0abeae82-c040-4080-ac60-b60d3e3890a7 TO subnet 10.99.99.0/24 BLOCK tcp port 25"
     }
 
-### Allow an IP HTTP and HTTPS access to all VMs tagged www or testwww:
+### Allow an IP HTTP and HTTPS access to all instances tagged www or testwww:
 
     {
         "enabled": true,
         "rule": "FROM ip 10.99.99.7 TO (tag www OR tag testwww) ALLOW tcp (port 80 AND port 443)"
     }
 
-### Allow syslog traffic from VMs tagged with group=web to VMs tagged with group=mon:
+### Allow syslog traffic from instances tagged with group=web to instances tagged with group=mon:
 
     {
         "enabled": true,
@@ -6758,7 +6769,7 @@ or
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
     connection: Keep-Alive
     content-md5: v6s92rl/nTS2Ts5CNDcgQw==
-    server: Joyent SmartDataCenter 8.0.0
+    server: Joyent Triton 8.0.0
     api-version: 8.0.0
     request-id: 35147710-7f49-11e2-8585-bd5fc323c72c
     response-time: 134
@@ -6823,7 +6834,7 @@ or
     access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
     access-control-allow-methods: GET
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
-    server: Joyent SmartDataCenter 8.0.0
+    server: Joyent Triton 8.0.0
     api-version: 8.0.0
     request-id: cf1c1340-7f49-11e2-8585-bd5fc323c72c
     response-time: 203
@@ -6838,7 +6849,7 @@ or
 ## CreateFirewallRule (POST /:login/fwrules)
 
 Adds a new firewall rule for the specified account.  This rule will be added to
-all the account's machines where it may be necessary.
+all the account's instances where it may be necessary.
 
 ### Inputs
 
@@ -6897,7 +6908,7 @@ or
     access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
     access-control-allow-methods: GET
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
-    server: Joyent SmartDataCenter 8.0.0
+    server: Joyent Triton 8.0.0
     api-version: 8.0.0
     request-id: 2c0a2a20-7f49-11e2-8585-bd5fc323c72c
     response-time: 36
@@ -6912,7 +6923,7 @@ or
 ## UpdateFirewallRule (POST /:login/fwrules/:id)
 
 Updates the given rule record and -- depending on rule contents --
-adds/removes/updates the rule on all the required machines.
+adds/removes/updates the rule on all the required instances.
 
 ### Inputs
 
@@ -6973,7 +6984,7 @@ or
     access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
     access-control-allow-methods: GET
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
-    server: Joyent SmartDataCenter 8.0.0
+    server: Joyent Triton 8.0.0
     api-version: 8.0.0
     request-id: 284907d0-7f67-11e2-8585-bd5fc323c72c
     response-time: 225
@@ -7041,7 +7052,7 @@ or
     access-control-allow-methods: GET
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
     connection: Keep-Alive
-    server: Joyent SmartDataCenter 8.0.0
+    server: Joyent Triton 8.0.0
     api-version: 8.0.0
     request-id: 1ebe23c0-7f68-11e2-8585-bd5fc323c72c
     response-time: 232
@@ -7109,7 +7120,7 @@ or
     access-control-allow-methods: GET
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
     content-md5: E7I47cYr/F7S4J68NbK1AQ==
-    server: Joyent SmartDataCenter 8.0.0
+    server: Joyent Triton 8.0.0
     api-version: 8.0.0
     request-id: 8a2d7490-7f67-11e2-8585-bd5fc323c72c
     response-time: 234
@@ -7123,7 +7134,7 @@ or
 
 ## DeleteFirewallRule (DELETE /:login/fwrules/:id)
 
-Removes the given firewall rule from all the required machines.
+Removes the given firewall rule from all the required instances.
 
 ### Inputs
 
@@ -7165,22 +7176,22 @@ or
     access-control-allow-methods: GET
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
     connection: Keep-Alive
-    server: Joyent SmartDataCenter 8.0.0
+    server: Joyent Triton 8.0.0
     api-version: 8.0.0
     request-id: 50a78b60-7f68-11e2-8585-bd5fc323c72c
     response-time: 219
 
 
-## ListMachineFirewallRules (GET /:login/machines/:machine/fwrules)
+## ListMachineFirewallRules (GET /:login/machines/:instance_id/fwrules)
 
 This has exactly the same input and output format as
 [List Firewall Rules](#ListFirewallRules), but just for the rules affecting the
-given `:machine`.
+given `:instance_id`.
 
 
 ## ListFirewallRuleMachines (GET /:login/fwrules/:id/machines)
 
-Lists all machines a firewall rule is applied to, in the same format as
+Lists all instances a firewall rule is applied to, in the same format as
 [List Machines](#ListMachines).
 
 ### Inputs
@@ -7189,29 +7200,29 @@ Lists all machines a firewall rule is applied to, in the same format as
 
 ### Returns
 
-An array of machine objects, which contain:
+An array of instance objects, which contain:
 
 **Field**   | **Type** | **Description**
 ----------- | -------- | ---------------
-id          | UUID     | Unique id for this machine
-name        | String   | The "friendly" name for this machine
-type        | String   | (deprecated) The type of machine (virtualmachine or smartmachine)
-brand       | String   | (v8.0+) The type of machine (e.g. lx)
-state       | String   | The current state of this machine (e.g. running)
-image       | String   | The image id this machine was provisioned with
-memory      | Number   | The amount of RAM this machine has (in MiB)
-disk        | Number   | The amount of disk this machine has (in MiB)
-metadata    | Object[String => String] | Any additional metadata this machine has
-tags        | Object[String => String] | Any tags this machine has
-created     | ISO8601 date | When this machine was created
-updated     | ISO8601 date | When this machine's details was last updated
-docker      | Boolean  | Whether this machine is a Docker container, if present
-ips         | Array[String] | The IP addresses this machine has
-networks    | Array[String] | The network UUIDs of the nics this machine has
-primaryIp   | String   | IP address of the primary nic of this machine
-firewall_enabled | Boolean  | Whether firewall rules are enforced on this machine
-compute_node | String  | UUID of the server on which the machine is located
-package     | String   | The id or name of the package used to create this machine
+id          | UUID     | Unique id for this instance
+name        | String   | The "friendly" name for this instance
+type        | String   | (deprecated) The type of instance (virtualmachine or smartmachine)
+brand       | String   | (v8.0+) The type of instance (e.g. lx)
+state       | String   | The current state of this instance (e.g. running)
+image       | String   | The image id this instance was provisioned with
+memory      | Number   | The amount of RAM this instance has (in MiB)
+disk        | Number   | The amount of disk this instance has (in MiB)
+metadata    | Object[String => String] | Any additional metadata this instance has
+tags        | Object[String => String] | Any tags this instance has
+created     | ISO8601 date | When this instance was created
+updated     | ISO8601 date | When this instance's details was last updated
+docker      | Boolean  | Whether this instance is a Docker container, if present
+ips         | Array[String] | The IP addresses this instance has
+networks    | Array[String] | The network UUIDs of the nics this instance has
+primaryIp   | String   | IP address of the primary nic of this instance
+firewall_enabled | Boolean  | Whether firewall rules are enforced on this instance
+compute_node | String  | UUID of the server on which the instance is located
+package     | String   | The id or name of the package used to create this instance
 
 ### Errors
 
@@ -7252,7 +7263,7 @@ or
     Connection: Keep-Alive
     Content-MD5: w5wJLKlhDzPpC6zKjtqaCw==
     Date: Thu, 21 Jan 2016 10:55:25 GMT
-    Server: Joyent SmartDataCenter 8.0.0
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 779b5cc0-c02d-11e5-a7d2-fdf229d32220
     Response-Time: 3444
@@ -7354,7 +7365,7 @@ ResourceNotFound | If `:login` does not exist
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Server: Joyent SmartDataCenter 7.3.0
+    Server: Joyent Triton 7.3.0
     Api-Version: 7.3.0
 
     [
@@ -7417,7 +7428,7 @@ InvalidArgument  | `vlan_id` or `name` are in use, or `vlan_id` is outside the v
 
     HTTP/1.1 201 Created
     Content-Type: application/json
-    Server: Joyent SmartDataCenter 7.3.0
+    Server: Joyent Triton 7.3.0
     Api-Version: 7.3.0
 
     {
@@ -7467,7 +7478,7 @@ ResourceNotFound | If `:login` or `:vlan_id` does not exist
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Server: Joyent SmartDataCenter 7.3.0
+    Server: Joyent Triton 7.3.0
     Api-Version: 7.3.0
 
     {
@@ -7524,7 +7535,7 @@ ResourceNotFound | If `:login` or `:vlan_id` does not exist
 
     HTTP/1.1 202 Accepted
     Content-Type: application/json
-    Server: Joyent SmartDataCenter 7.3.0
+    Server: Joyent Triton 7.3.0
     Api-Version: 7.3.0
 
     {
@@ -7572,7 +7583,7 @@ InUseError       | The VLAN currently has active networks on it
 
     HTTP/1.1 204 No Content
     Content-Type: application/json
-    Server: Joyent SmartDataCenter 7.3.0
+    Server: Joyent Triton 7.3.0
     Api-Version: 7.3.0
 
 
@@ -7628,7 +7639,7 @@ ResourceNotFound | If `:login` or `:vlan_id` does not exist
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Server: Joyent SmartDataCenter 7.3.0
+    Server: Joyent Triton 7.3.0
     Api-Version: 7.3.0
 
     [
@@ -7746,7 +7757,7 @@ ResourceNotFound | If `:login` does not exist
 
     HTTP/1.1 201 Created
     Content-Type: application/json
-    Server: Joyent SmartDataCenter 7.3.0
+    Server: Joyent Triton 7.3.0
     Api-Version: 7.3.0
 
     {
@@ -7828,7 +7839,7 @@ ResourceNotFound | If `:login`, `:vlan_id` or `:id` does not exist
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Server: Joyent SmartDataCenter 7.3.0
+    Server: Joyent Triton 7.3.0
     Api-Version: 7.3.0
 
     {
@@ -7856,7 +7867,7 @@ ResourceNotFound | If `:login`, `:vlan_id` or `:id` does not exist
 
 ## DeleteFabricNetwork (DELETE /:login/fabrics/default/vlans/:vlan_id/networks/:id)
 
-Deletes the specified Network. Note that no VMs may be provisioned on the
+Deletes the specified Network. Note that no instances may be provisioned on the
 Network.
 
 ### Inputs
@@ -7892,7 +7903,7 @@ InUseError       | The VLAN currently has active networks on it
 
     HTTP/1.1 204 No Content
     Content-Type: application/json
-    Server: Joyent SmartDataCenter 7.3.0
+    Server: Joyent Triton 7.3.0
     Api-Version: 7.3.0
 
 
@@ -7975,7 +7986,7 @@ or
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
     connection: Keep-Alive
     content-md5: v6s92rl/nTS2Ts5CNDcgQw==
-    server: Joyent SmartDataCenter 8.0.0
+    server: Joyent Triton 8.0.0
     api-version: 8.0.0
     request-id: 35147710-7f49-11e2-8585-bd5fc323c72c
     response-time: 134
@@ -8039,7 +8050,7 @@ or
     access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
     access-control-allow-methods: GET, HEAD
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
-    server: Joyent SmartDataCenter 8.0.0
+    server: Joyent Triton 8.0.0
     api-version: 8.0.0
     request-id: cf1c1340-7f49-11e2-8585-bd5fc323c72c
     response-time: 203
@@ -8055,11 +8066,11 @@ or
 
 # Nics
 
-CloudAPI provides a way to list, add and remove NICs attached to a machine.
+CloudAPI provides a way to list, add and remove NICs attached to a instance.
 
 ## ListNics (GET /:login/machines/:id/nics)
 
-List all the NICs on a machine belonging to a given account.
+List all the NICs on an instance belonging to a given account.
 
 ### Inputs
 
@@ -8073,7 +8084,7 @@ An array of NIC objects. NICs are:
 --------- | -------- | ---------------
 ip        | String   | NIC's IPv4 address
 mac       | String   | NIC's MAC address
-primary   | Boolean  | Whether this is the VM's primary NIC
+primary   | Boolean  | Whether this is the instance's primary NIC
 netmask   | String   | IPv4 netmask
 gateway   | String   | IPv4 gateway
 state     | String   | Describes the state of the NIC (e.g. provisioning, running, or stopped)
@@ -8113,7 +8124,7 @@ InvalidArgument  | If `:id` isn't a UUID
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
     connection: Keep-Alive
     content-md5: ahIN4rEEcEIJGltGn9cqRQ==
-    server: Joyent SmartDataCenter 7.1.1
+    server: Joyent Triton 7.2.0
     api-version: 7.2.0
     request-id: 6b8c5170-d45a-11e3-8db6-c7649670227d
     response-time: 183
@@ -8134,7 +8145,7 @@ InvalidArgument  | If `:id` isn't a UUID
 
 ## GetNic (GET /:login/machines/:id/nics/:mac)
 
-Gets a specific NIC on a machine belonging to a given account.
+Gets a specific NIC on an instance belonging to a given account.
 
 NB: the `:mac` element in the path must have all the colons (':') stripped from
 it in the request.
@@ -8151,7 +8162,7 @@ A NIC object:
 --------- | -------- | ---------------
 ip        | String   | NIC's IPv4 address
 mac       | String   | NIC's MAC address
-primary   | Boolean  | Whether this is the VM's primary NIC
+primary   | Boolean  | Whether this is the instance's primary NIC
 netmask   | String   | IPv4 netmask
 gateway   | String   | IPv4 gateway
 state     | String   | Describes the state of the NIC (e.g. provisioning, running, or stopped)
@@ -8191,7 +8202,7 @@ InvalidArgument  | If `:id` isn't a UUID, or `:mac` isn't a MAC address (without
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
     connection: Keep-Alive
     content-md5: ahIN4rEEcEIJGltGn9cqRQ==
-    server: Joyent SmartDataCenter 7.1.1
+    server: Joyent Triton 7.2.0
     api-version: 7.2.0
     request-id: 6b8c5170-d45a-11e3-8db6-c7649670227d
     response-time: 183
@@ -8210,9 +8221,9 @@ InvalidArgument  | If `:id` isn't a UUID, or `:mac` isn't a MAC address (without
 
 ## AddNic (POST /:login/machines/:id/nics)
 
-Creates a new NIC on a machine belonging to a given account.
+Creates a new NIC on an instance belonging to a given account.
 
-*WARNING*: this causes the machine to reboot while adding the NIC.
+*WARNING*: this causes the instance to reboot while adding the NIC.
 
 ### Inputs
 
@@ -8228,7 +8239,7 @@ The newly-created NIC object:
 --------- | -------- | ---------------
 ip        | String   | NIC's IPv4 address
 mac       | String   | NIC's MAC address
-primary   | Boolean  | Whether this is the VM's primary NIC
+primary   | Boolean  | Whether this is the instance's primary NIC
 netmask   | String   | IPv4 netmask
 gateway   | String   | IPv4 gateway
 state     | String   | Describes the state of the NIC (most likely 'provisioning')
@@ -8237,10 +8248,10 @@ It also returns the Location in the headers where the new NIC lives in the HTTP
 API. If a NIC already exists for that network, a 302 redirect will be returned
 instead of the object.
 
-NICs do not appear on a machine immediately, so the state of the new NIC can be
-checked by polling that location. While the NIC is provisioning, it will have a
-`state` of 'provisioning'. Once it's 'running', the NIC is active on the
-machine. If the provision fails, the NIC will be removed and the location will
+NICs do not appear on an instance immediately, so the state of the new NIC can
+be checked by polling that location. While the NIC is provisioning, it will have
+a `state` of 'provisioning'. Once it's 'running', the NIC is active on the
+instance. If the provision fails, the NIC will be removed and the location will
 start returning 404.
 
 ### Errors
@@ -8283,7 +8294,7 @@ MissingParameter | If the `network` argument isn't present
     connection: Keep-Alive
     content-md5: ahIN4rEEcEIJGltGn9cqRQ==
     location: /my/machines/76a533e9-aa3c-4fd4-a194-03fa05663e0e/nics/90b8d02fb8f9
-    server: Joyent SmartDataCenter 7.1.1
+    server: Joyent Triton 7.2.0
     api-version: 7.2.0
     request-id: 6b8c5170-d45a-11e3-8db6-c7649670227d
     response-time: 183
@@ -8301,13 +8312,13 @@ MissingParameter | If the `network` argument isn't present
 
 ## RemoveNic (POST /:login/machines/:id/nics/:mac)
 
-Removes a NIC on a machine belonging to a given account.
+Removes a NIC on an instance belonging to a given account.
 
-Like [AddNic](#AddNic) above, the NIC won't be removed from the machine
+Like [AddNic](#AddNic) above, the NIC won't be removed from the instance
 immediately. After the NIC is removed, it will start returning 404 through
 CloudAPI.
 
-*WARNING*: this causes the machine to reboot while removing the NIC.
+*WARNING*: this causes the instance to reboot while removing the NIC.
 
 ### Inputs
 
@@ -8350,7 +8361,7 @@ InvalidArgument  | If `:id` isn't a UUID
     access-control-allow-methods: GET, HEAD, DELETE
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
     connection: Keep-Alive
-    server: Joyent SmartDataCenter 7.1.1
+    server: Joyent Triton 7.2.0
     api-version: 7.2.0
     request-id: 6b8c5170-d45a-11e3-8db6-c7649670227d
     response-time: 183
@@ -8362,7 +8373,7 @@ InvalidArgument  | If `:id` isn't a UUID
 
 ## Machine State Diagram
 
-The following is the state diagram for a machine:
+The following is the state diagram for a instance:
 
 <pre>
               POST /my/machines
@@ -8393,20 +8404,20 @@ The following is the state diagram for a machine:
 </pre>
 
 At any point the state can also be `offline`, like if there is a network or
-power event to the machine.
+power event to the instance.
 
 
-## Polling machine state
+## Polling instance state
 
-As suggested in [CreateMachine](#CreateMachine), you can poll a machine's state
-to check when that machine's provisioning has either successfully completed or
-failed.  Consider the following code using
+As suggested in [CreateMachine](#CreateMachine), you can poll an instance's
+state to check when that instance's provisioning has either successfully
+completed or failed.  Consider the following code using
 [node.js SDK](https://github.com/joyent/node-smartdc):
 
     var sdc = smartdc.createClient({ ... });
 
     function checkMachineStatus(id, state, callback) {
-        return sdc.getMachine(id, function (err, machine) {
+        return sdc.getMachine(id, function (err, instance) {
             if (err) {
                 if (err.statusCode === 410 && state === 'deleted') {
                     return callback(null, true);
@@ -8414,12 +8425,12 @@ failed.  Consider the following code using
                 return callback(err);
             }
 
-            if ((machine.state === 'deleted' && state !== 'deleted')
-                machine.state === 'failed') {
+            if ((instance.state === 'deleted' && state !== 'deleted')
+                instance.state === 'failed') {
                 return callback(new Error('Provisioning Job failed'));
             }
 
-            return callback(null, (machine ? machine.state === state : false));
+            return callback(null, (instance ? instance.state === state : false));
         }, true);
     }
 
@@ -8438,29 +8449,29 @@ failed.  Consider the following code using
         });
     }
 
-With this code, you can poll when a machine with a given uuid is running by
+With this code, you can poll when an instance with a given uuid is running by
 doing:
 
-    var machine = 'd19432ff-d921-4d6c-b5f9-6b0e4de6665c';
-    waitForMachine(machine, 'running', function (err) {
+    var instance = 'd19432ff-d921-4d6c-b5f9-6b0e4de6665c';
+    waitForMachine(instance, 'running', function (err) {
         if (err) {
-            console.error('Exiting because machine provisioning failed');
+            console.error('Exiting because instance provisioning failed');
             process.exit(1);
         }
 
-        // ... do your stuff here, the machine is running now ...
+        // ... do your stuff here, the instance is running now ...
     });
 
 
-## Polling machine audit
+## Polling instance audit
 
-There are some cases where polling for machine state change will not work
+There are some cases where polling for instance state change will not work
 because there won't be a state change for the requested action (e.g. "rename"),
 or because the state change is short-lived thus making the transition easy to
 miss (e.g. "reboot").
 
-In such cases, consider polling a machine's historical of actions available
-through a machine's [Machine Audit](#MachineAudit), wait for the desired
+In such cases, consider polling an instance's historical of actions available
+through an instance's [Machine Audit](#MachineAudit), wait for the desired
 action to appear on that list, and check successfulness there.  Taking our
 example from previous section, this is how we could check for a reboot:
 
@@ -8489,8 +8500,7 @@ example from previous section, this is how we could check for a reboot:
 
 
     function waitForAction(id, action, time, cb) {
-        console.log('Waiting for machine \'%s\' %s to complete',
-                id, action);
+        console.log('Waiting for instance \'%s\' %s to complete', id, action);
 
         return checkMachineAction(id, action, time, function (err, ready) {
             if (err) {
@@ -8506,14 +8516,14 @@ example from previous section, this is how we could check for a reboot:
         });
     }
 
-With this code, you can poll when a machine with a given uuid has rebooted by
+With this code, you can poll when an instance with a given uuid has rebooted by
 doing:
 
-    waitForAction(machine, 'reboot', (new Date()), function (err) {
+    waitForAction(instance, 'reboot', (new Date()), function (err) {
         if (err) {
             // .. something failed
         } else {
-            // ...all good, reboot happened successfully and machine is running
+            // ...all good, reboot happened successfully and instance is running
         }
     });
 
@@ -8523,7 +8533,7 @@ doing:
 # Appendix B: Cloud Analytics
 
 Cloud Analytics (CA) provides deep observability for systems and applications in
-a SmartDataCenter cloud.  The CA service enables you to dynamically instrument
+a Triton cloud.  The CA service enables you to dynamically instrument
 systems in the cloud to collect performance data that can be visualized in
 real-time (through the portal), or collected using the API and analyzed later by
 custom tools.  This data can be collected and saved indefinitely for capacity
@@ -8741,7 +8751,7 @@ heatmaps.
 Predicates allow you to filter out data points based on the *fields* of a
 metric.  For example, instead of looking at FS operations for your whole
 cloud, you may only care about operations with latency over 100ms, or on a
-particular machine.
+particular instance.
 
 Predicates are represented as JSON objects using an LISP-like syntax.  The
 primary goal for predicate syntax is to be very easy to construct and parse
@@ -8777,7 +8787,7 @@ example, this predicate:
     }
 
 This predicate could be used with the "logical filesystem operations" metric to
-identify file operations performed by MySQL on machines "host1", "host2", or
+identify file operations performed by MySQL on instances "host1", "host2", or
 "host3" that took longer than 100ms.
 
 ### Heatmaps
@@ -8924,8 +8934,8 @@ addresses in the data and they will be included in the returned value.
 
 In addition to HTTP Basic Authentication, CloudAPI supports a new mechanism for
 authenticating HTTP requests based on signing with your SSH private key.
-Specific examples of using this mechanism with SDC are given here. Reference the
-`HTTP Signature Authentication` specification by Joyent, Inc. for complete
+Specific examples of using this mechanism with Triton are given here. Reference
+the `HTTP Signature Authentication` specification by Joyent, Inc. for complete
 details.
 
 A node.js library for HTTP Signature is available with:
@@ -9059,24 +9069,24 @@ Sample code for generating the `Authorization` header (and `Date` header):
 [sdc-addmachinetags](#AddMachineTags)|Allows you to add additional tags, other than those set at provisioning time.
 [sdc-chmod](#SetRoleTags)|Add role tags to CloudAPI resources.
 [sdc-createfirewallrule](#CreateFirewallRule)|Add a new firewall rule.
-[sdc-createimagefrommachine](#CreateImageFromMachine)|Create a new custom image from a machine.
+[sdc-createimagefrommachine](#CreateImageFromMachine)|Create a new custom image from an instance.
 [sdc-createinstrumentation](#CreateInstrumentation)|Creates an instrumentation.
-[sdc-createkey](#CreateKey)|Uploads a new OpenSSH key to SmartDataCenter.
-[sdc-createmachine](#CreateMachine)|Allows you to provision a machine.
-[sdc-createmachinesnapshot](#CreateMachineSnapshot)|Allows you to take a snapshot of a machine.
+[sdc-createkey](#CreateKey)|Uploads a new OpenSSH key to Triton.
+[sdc-createmachine](#CreateMachine)|Allows you to provision an instance.
+[sdc-createmachinesnapshot](#CreateMachineSnapshot)|Allows you to take a snapshot of an instance.
 [sdc-deletefirewallrule](#DeleteFirewallRule)|Removes a given firewall rule.
 [sdc-deleteimage](#DeleteImage)|Delete a private image.
 [sdc-deleteinstrumentation](#DeleteInstrumentation)|Destroys an instrumentation.
 [sdc-deletekey](#DeleteKey)|Deletes an SSH key by name.
-[sdc-deletemachine](#DeleteMachine)|Allows you to completely destroy a machine.
-[sdc-deletemachinemetadata](#DeleteMachineMetadata)|Deletes a single metadata key from this machine.
-[sdc-deletemachinesnapshot](#DeleteMachineSnapshot)|Deletes the specified snapshot of a machine.
-[sdc-deletemachinetag](#DeleteMachineTag)|Deletes a single tag from this machine.
+[sdc-deletemachine](#DeleteMachine)|Allows you to completely destroy an instance.
+[sdc-deletemachinemetadata](#DeleteMachineMetadata)|Deletes a single metadata key from this instance.
+[sdc-deletemachinesnapshot](#DeleteMachineSnapshot)|Deletes the specified snapshot of an instance.
+[sdc-deletemachinetag](#DeleteMachineTag)|Deletes a single tag from this instance.
 [sdc-describeanalytics](#DescribeAnalytics)|Retrieves the "schema" for instrumentations that can be created using the analytics endpoint.
 [sdc-disablefirewallrule](#DisableFirewallRule)|Disable an enabled firewall rule.
-[sdc-disablemachinefirewall](#DisableMachineFirewall)|Completely disable the firewall on a machine.
+[sdc-disablemachinefirewall](#DisableMachineFirewall)|Completely disable the firewall on an instance.
 [sdc-enablefirewallrule](#EnableFirewallRule)|Enable a disabled firewall rule.
-[sdc-enablemachinefirewall](#EnableMachineFirewall)|Enable the firewall on a machine.
+[sdc-enablemachinefirewall](#EnableMachineFirewall)|Enable the firewall on an instance.
 [sdc-exportimage](#ExportImage)|Export an image to Manta.
 [sdc-fabric](#fabrics)|Administer fabric networks and VLANs.
 [sdc-getaccount ](#GetAccount)|Gets details about your account.
@@ -9084,11 +9094,11 @@ Sample code for generating the `Authorization` header (and `Date` header):
 [sdc-getimage](#GetImage)|Gets an individual image by id.
 [sdc-getinstrumentation](#GetInstrumentation)|Retrieves the configuration for an instrumentation.
 [sdc-getkey](#GetKey)|Retrieves an individual key record.
-[sdc-getmachine](#GetMachine)|Gets the details for an individual machine.
-[sdc-getmachineaudit](#MachineAudit)|Get a historical list of actions performed on a machine.
-[sdc-getmachinemetadata](#GetMachineMetadata)|Returns the complete set of metadata associated with this machine.
+[sdc-getmachine](#GetMachine)|Gets the details for an individual instance.
+[sdc-getmachineaudit](#MachineAudit)|Get a historical list of actions performed on an instance.
+[sdc-getmachinemetadata](#GetMachineMetadata)|Returns the complete set of metadata associated with this instance.
 [sdc-getmachinesnapshot](#GetMachineSnapshot)|Gets the state of the named snapshot.
-[sdc-getmachinetag](#GetMachineTag)|Returns the value for a single tag on this machine.
+[sdc-getmachinetag](#GetMachineTag)|Returns the value for a single tag on this instance.
 [sdc-getnetwork](#GetNetwork)|Gets a network by the given id.
 [sdc-getpackage](#GetPackage)|Gets a package by name.
 [sdc-info](#SetRoleTags)|List of role-tags assigned to a given resource.
@@ -9097,32 +9107,32 @@ Sample code for generating the `Authorization` header (and `Date` header):
 [sdc-listimages](#ListImages)|Provides a list of images available in this datacenter.
 [sdc-listinstrumentations](#ListInstrumentations)|Retrieves all currently created instrumentations.
 [sdc-listkeys](#ListKeys)|Lists all public keys we have on record for the specified account.
-[sdc-listmachinefirewallrules](#ListMachineFirewallRules)|List firewall rules applying to a specific machine.
-[sdc-listmachines](#ListMachines)|Lists all machines on an account.
-[sdc-listmachinesnapshots](#ListMachineSnapshots)|Lists all snapshots taken for a given machine.
-[sdc-listmachinetags](#ListMachineTags)|Returns the complete set of tags associated with this machine.
+[sdc-listmachinefirewallrules](#ListMachineFirewallRules)|List firewall rules applying to a specific instance.
+[sdc-listmachines](#ListMachines)|Lists all instances on an account.
+[sdc-listmachinesnapshots](#ListMachineSnapshots)|Lists all snapshots taken for a given instance.
+[sdc-listmachinetags](#ListMachineTags)|Returns the complete set of tags associated with this instance.
 [sdc-listnetworks](#ListNetworks)|Provides a list of networks available to the user in this datacenter.
 [sdc-listpackages](#ListPackages)|Provides a list of packages available in this datacenter.
-[sdc-nics](#nics)|List, add and remove NICs attached to a machine.
+[sdc-nics](#nics)|List, add and remove NICs attached to an instance.
 [sdc-policy](#policies)|Add, list, update and remove policies.
-[sdc-rebootmachine](#RebootMachine)|Allows you to 'reboot' a machine.
-[sdc-renamemachine](#RenameMachine)|Rename a machine.
-[sdc-replacemachinetags](#ReplaceMachineTags)|Replace all tags on a machine.
+[sdc-rebootmachine](#RebootMachine)|Allows you to 'reboot' an instance.
+[sdc-renamemachine](#RenameMachine)|Rename an instance.
+[sdc-replacemachinetags](#ReplaceMachineTags)|Replace all tags on an instance.
 [sdc-resizemachine](#ResizeMachine)|Allows you to resize a container.
 [sdc-role](#roles)|Add, list, update and remove roles.
-[sdc-startmachine](#StartMachine)|Allows you to boot up a machine
-[sdc-startmachinefromsnapshot](#StartMachineFromSnapshot)|Starts a stopped machine from the referenced snapshot.
-[sdc-stopmachine](#StopMachine)|Allows you to shut down a machine.
+[sdc-startmachine](#StartMachine)|Allows you to boot up an instance.
+[sdc-startmachinefromsnapshot](#StartMachineFromSnapshot)|Starts a stopped instance from the referenced snapshot.
+[sdc-stopmachine](#StopMachine)|Allows you to shut down an instance.
 [sdc-updateaccount](#UpdateAccount)|Change details of the current account.
 [sdc-updatefirewallrule](#UpdateFirewallRule)|Change a firewall rule.
 [sdc-updateimage](#UpdateImage)|Update metadata about an image.
-[sdc-updatemachinemetadata](#UpdateMachineMetadata)|Allows you to update the metadata for a given machine.
+[sdc-updatemachinemetadata](#UpdateMachineMetadata)|Allows you to update the metadata for a given instance.
 [sdc-user](#users)|Add, update and remove account users and their keys.
 
 
 
 
-# Appendix E: SDC Changelog
+# Appendix E: Triton Changelog
 
 
 * Starting with version 7.1.0, customer image management is made available,
@@ -9130,7 +9140,7 @@ allowing [Machine Creation from Images](#CreateImageFromMachine),
 [exporting images to the specified manta path](#ExportImage) and
 [custom images deletion](#DeleteImage).
 
-* Version 7.1.0 now adds the listing and manipulation of NICs on VMs.
+* Version 7.1.0 now adds the listing and manipulation of NICs on instances.
 
 * Version 7.1.0 adds a `files` array (containing `compression`, `sha1` and
 `size`) to image objects. In addition, there are the `owner`, `public`, `state`,
@@ -9149,10 +9159,10 @@ tags can be applied to CloudAPI resources.
 * Version 7.3.0 adds support for network fabrics (software-defined networking).
 This allows the creation of virtual LANs and layer-three networks.
 
-* Version 8.0.0 adds a `brand` attribute to VMs, which is more granular than the
-existing `type` (now deprecated), and a `docker` boolean attribute as well,
-which indicates whether a machine is a Docker container or not. The version also
-makes a breaking change to the attribute `type` on images.
+* Version 8.0.0 adds a `brand` attribute to instances, which is more granular
+than the existing `type` (now deprecated), and a `docker` boolean attribute as
+well, which indicates whether an instance is a Docker container or not. The
+version also makes a breaking change to the attribute `type` on images.
 ListDatasets/GetDataset have been removed. The deprecated 6.5 API support, and
 most related 6.5-isms, have been removed. The `default` attribute on packages is
 deprecated, since it only had meaning in 6.5.
