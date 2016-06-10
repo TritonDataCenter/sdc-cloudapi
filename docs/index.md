@@ -4081,7 +4081,10 @@ or
 
 Allows you to provision an instance.
 
-If you do not specify a name, CloudAPI will generate a random one for you.
+If you do not specify a name, CloudAPI will generate a random one for you. If
+you have enabled Triton CNS on your account, this name will also be used in
+DNS to refer to the new instance (and must therefore consist of DNS-safe
+characters only).
 
 Your instance will initially be not available for login (Triton must provision
 and boot it); you can poll [GetMachine](#GetMachine) for its status.  When the
@@ -4122,9 +4125,9 @@ network (it will have one public IP), and one internally-accessible network from
 the datacenter network pools.  It is possible to have an instance attached to
 only an internal network, or both public and internal, or just external.
 
-Be aware that CreateMachine does return IP addresses.  To obtain the IP address
-of a newly-provisioned instance, poll [GetMachine](#GetMachine) until the
-instance state is `running` or a failure.
+Be aware that CreateMachine does not return IP addresses.  To obtain the IP
+address of a newly-provisioned instance, poll [GetMachine](#GetMachine) until
+the instance state is `running` or a failure.
 
 Typically, Triton will allocate the new instance somewhere reasonable within the
 cloud.  You may want this instance to be placed close to, or far away from,
@@ -4153,6 +4156,14 @@ the given instance UUIDs, otherwise in the same rack; it will fail if no space
 can be found in that rack. `far` will try to place the new instance in a
 different rack, otherwise a different server in the same rack; it will fail if
 space can only be found on the same server as the given instance UUIDs.
+
+When Triton CNS is enabled, the DNS search domain of the new VM will be
+automatically set to the suffix of the "instance" record that is created for
+that VM. For example, if the full CNS name of the new VM would be
+"foo.inst.35ad1ec4-2eab-11e6-ac02-8f56c66976a1.us-west-1.triton.zone", its
+automatic DNS search path would include
+"inst.35ad1ec4-2eab-11e6-ac02-8f56c66976a1.us-west-1.triton.zone". This can
+be changed later within the instance, if desired.
 
 ### Inputs
 
