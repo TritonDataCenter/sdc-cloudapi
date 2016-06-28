@@ -95,7 +95,7 @@ echo "# Allow retrieval of images over public network"
 sdcadm post-setup common-external-nics
 
 echo "# Setup NAT and Docker"
-sdcadm experimental update-docker --servers=cns,headnode
+sdcadm post-setup docker
 
 # TODO: how to offer alternative to hook up to remote Manta?
 hack_imgapi_to_allow_local_custom_images
