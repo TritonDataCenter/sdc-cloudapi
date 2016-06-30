@@ -646,7 +646,7 @@ have eventual consistency, not read-after-write.
 
 CloudAPI exposes a REST API over HTTPS.  You can work with the REST API by
 either calling it directly via tooling you already know about (such as curl, et
-al), or by using the CloudAPI CLSs and SDKs from Joyent.  The node-triton
+al), or by using the CloudAPI CLIs and SDKs from Joyent.  The node-triton
 CloudAPI SDK & CLI is available as an npm module, which you can install with:
 
     $ npm install triton
@@ -738,22 +738,6 @@ in the npm `http-signature` module, which you can install with:
 
     npm install http-signature
 
-### Api-Version
-
-CloudAPI is strongly versioned, and all requests *must* specify a version of
-the API.  The `Api-Version` header is expected to contain a
-[semver](http://semver.org/) string describing the API version the client wants
-to use, with the additional twist that your client can specify ranges of
-versions it supports.  For details on how to specify ranges, check
-[node-semver](https://github.com/isaacs/node-semver).  A couple examples:
-
-    Api-Version: ~8
-    Api-Version: >=7.0.0
-
-Joyent recommends you set the Api-Version header to `~8`; each service release
-of Triton will increment the `patch` version; any major releases of Triton will
-increment either the `minor` or `major` version.
-
 ### Using cURL with CloudAPI
 
 Since [cURL](http://curl.haxx.se/) is commonly used to script requests to web
@@ -764,7 +748,7 @@ communicating with CloudAPI:
       local now=`date -u "+%a, %d %h %Y %H:%M:%S GMT"`;
       local signature=`echo ${now} | tr -d '\n' | openssl dgst -sha256 -sign ~/.ssh/id_rsa | openssl enc -e -a | tr -d '\n'`;
 
-      curl -i -H "Accept: application/json" -H "api-version: ~8" -H "Date: ${now}" -H "Authorization: Signature keyId=\"/$SDC_ACCOUNT/keys/id_rsa\",algorithm=\"rsa-sha256\" ${signature}" --url $SDC_URL$@;
+      curl -i -H "Accept: application/json" -H "accept-version: ~8" -H "Date: ${now}" -H "Authorization: Signature keyId=\"/$SDC_ACCOUNT/keys/id_rsa\",algorithm=\"rsa-sha256\" ${signature}" --url $SDC_URL$@;
       echo "";
     }
 
@@ -849,6 +833,87 @@ Clients are expected to check HTTP status code first, and if it's in the 4xx
 range, they can leverage the codes above.
 
 
+# API Versions
+
+All requests to CloudAPI must specify an acceptable API [version
+range](https://github.com/npm/node-semver#ranges) via the 'Accept-Version' (or
+for backward compatibility the 'Api-Version') header. For example:
+
+    Accept-Version: ~8              // accept any 8.x version
+    Accept-Version: 7.1.0           // require exactly this version
+    Accept-Version: ~8||~7          // accept 8.x or 7.x
+    Accept-Version: *               // wild west
+
+For new applications using CloudAPI SDKs, it is recommended that one explicitly
+accept a particular major version, e.g. `Accept-Version: ~8`, so that
+future CloudAPI backward incompatible changes (always done with a *major*
+version bump) don't break your application.
+
+The `triton` tool uses `Accept-Version: ~8||~7` by default. Users can restrict
+the API version via the `triton --accept-version=RANGE ...` option. The older
+`sdc-*` tools from node-smartdc similarly use `~8||~7` by default, and users
+can restrict the API version via the `SDC_API_VERSION=RANGE` environment
+variable or the `--api-version=RANGE` option to each command.
+
+The rest of this section describes API changes in each version.
+
+## 8.0.0
+
+- Instance/machine objects (from GetMachine, ListMachines) now has a `brand`
+  attribute, which is more granular than the existing `type` (now deprecated).
+  Also a `docker` boolean attribute, which indicates whether the instance
+  is a Docker container.
+
+- [Backward incompatible] This version also makes a breaking change to the
+  attribute `type` on images. In API versions 7 and earlier, `<image>.type`
+  was either "virtualmachine" (for zvol images) or "smartmachine" for other
+  image types. In version 8, `<image>.type` is the untranslated [type value
+  from the image in the IMGAPI](https://images.joyent.com/docs/#manifest-type).
+
+- [Backward incompatible] ListDatasets and GetDataset have been removed.
+  Use ListImages and GetImage, respectively.
+
+- [Backward incompatible] The long deprecated support for API version 6.5
+  has been dropped. The `default` attribute on package objects is deprecated,
+  since it only had meaning in 6.5.
+
+
+## 7.3.0
+
+- Network fabrics (software-defined networking) support.
+  This allows the creation of virtual LANs and layer-three networks.
+
+## 7.2.0
+
+- RBAC v1 has been made available on the CloudAPI interface. Accounts can create
+  users, rules can be created and combined to make policies, policies and users
+  can be associated together using roles, and role tags can be applied to
+  CloudAPI resources.
+
+
+## 7.1.0
+
+- Starting with version 7.1.0, customer image management is made available,
+  allowing [Machine Creation from Images](#CreateImageFromMachine),
+  [exporting images to the specified manta path](#ExportImage) and
+  [custom images deletion](#DeleteImage).
+
+- Instance objects (from GetMachine, ListMachines) now have a `networks` array
+  of IDs (UUIDs) of the networks on which the instance has NICs.
+
+- Image objects (from GetImage, ListImages) now have a `files` array (containing
+  `compression`, `sha1` and `size`), `owner`, `public`, `state`, `tags`, `eula`,
+  and `acl` attributes.
+
+- Firewall rules include information regarding rules being global or not
+  (`global` attribute), and will optionally include a human-readable
+  `description` attribute for the rules (which can be modified except for global
+  rules).
+
+
+## 7.0.0
+
+- HTTP signature auth.
 
 
 # Account
@@ -3983,7 +4048,7 @@ Gets the details for an individual instance.
 
 **Field**   | **Type** | **Description**
 ----------- | -------- | ---------------
-id          | UUID     | Unique id for this instance 
+id          | UUID     | Unique id for this instance
 name        | String   | The "friendly" name for this instance
 type        | String   | (deprecated) The type of instance (virtualmachine or smartmachine)
 brand       | String   | (v8.0+) The type of instance (e.g. lx)
@@ -3998,10 +4063,10 @@ updated     | ISO8601 date | When this instance's details was last updated
 docker      | Boolean  | Whether this instance is a Docker container, if present
 ips         | Array[String] | The IP addresses this instance has
 networks    | Array[String] | The network UUIDs of the nics this instance has
-primaryIp   | String   | IP address of the primary nic of this instance 
-firewall_enabled | Boolean  | Whether firewall rules are enforced on this instance 
+primaryIp   | String   | IP address of the primary nic of this instance
+firewall_enabled | Boolean  | Whether firewall rules are enforced on this instance
 compute_node | String  | UUID of the server on which the instance is located
-package     | String   | The id or name of the package used to create this instance 
+package     | String   | The id or name of the package used to create this instance
 dns_names   | Array[String] | DNS names of the instance
 
 ### Errors
@@ -4182,7 +4247,7 @@ firewall_enabled | Boolean | Completely enable or disable firewall for this inst
 
 **Field**   | **Type** | **Description**
 ----------- | -------- | ---------------
-id          | UUID     | Unique id for this instance 
+id          | UUID     | Unique id for this instance
 name        | String   | The "friendly" name for this instance
 type        | String   | (deprecated) The type of instance (virtualmachine or smartmachine)
 brand       | String   | (v8.0+) The type of instance (e.g. lx)
@@ -4923,7 +4988,7 @@ or
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: Joyent Triton 8.0.0 
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: 06a57272-9238-4276-951b-4123fbfdb948
     Response-Time: 66
@@ -4989,7 +5054,7 @@ or
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
     Date: Tue, 05 Jul 2011 17:26:56 GMT
-    Server: Joyent Triton 8.0.0 
+    Server: Joyent Triton 8.0.0
     Api-Version: 8.0.0
     Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
     Response-Time: 297
@@ -9139,47 +9204,6 @@ Sample code for generating the `Authorization` header (and `Date` header):
 [sdc-updateimage](#UpdateImage)|Update metadata about an image.
 [sdc-updatemachinemetadata](#UpdateMachineMetadata)|Allows you to update the metadata for a given instance.
 [sdc-user](#users)|Add, update and remove account users and their keys.
-
-
-
-
-# Appendix E: Triton Changelog
-
-
-* Starting with version 7.1.0, customer image management is made available,
-allowing [Machine Creation from Images](#CreateImageFromMachine),
-[exporting images to the specified manta path](#ExportImage) and
-[custom images deletion](#DeleteImage).
-
-* Version 7.1.0 now adds the listing and manipulation of NICs on instances.
-
-* Version 7.1.0 adds a `files` array (containing `compression`, `sha1` and
-`size`) to image objects. In addition, there are the `owner`, `public`, `state`,
-`tags`, `eula` and `acl` attributes.
-
-* Starting with version 7.1.1, firewall rules include information regarding
-rules being global or not (`global` attribute), and will optionally include a
-human-readable `description` attribute for the rules (which can be modified
-except for global rules).
-
-* Starting with version 7.2.0, RBAC has been made available on the CloudAPI
-interface. Accounts can create users, rules can be created and combined to make
-policies, policies and users can be associated together using roles, and role
-tags can be applied to CloudAPI resources.
-
-* Version 7.3.0 adds support for network fabrics (software-defined networking).
-This allows the creation of virtual LANs and layer-three networks.
-
-* Version 8.0.0 adds a `brand` attribute to instances, which is more granular
-than the existing `type` (now deprecated), and a `docker` boolean attribute as
-well, which indicates whether an instance is a Docker container or not. The
-version also makes a breaking change to the attribute `type` on images.
-ListDatasets/GetDataset have been removed. The deprecated 6.5 API support, and
-most related 6.5-isms, have been removed. The `default` attribute on packages is
-deprecated, since it only had meaning in 6.5.
-
-* Version 8.0.2 removes the ability to filter ListMachines with a package name.
-This was never documented or officially supported.
 
 
 <p style="min-height: 31px; margin-top: 60px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0">
