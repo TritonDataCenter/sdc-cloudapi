@@ -857,6 +857,14 @@ variable or the `--api-version=RANGE` option to each command.
 
 The rest of this section describes API changes in each version.
 
+## 8.1.0
+
+- This version should have no visible API changes, but updates a lot of
+  libraries that Cloudapi depends on, as well as the nodejs major version.
+  Visible differences with 8.0.0 are bugs, but it's possible some might have
+  crept through.
+
+
 ## 8.0.0
 
 - Instance/machine objects (from GetMachine, ListMachines) now has a `brand`
