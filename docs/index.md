@@ -8386,7 +8386,7 @@ MissingParameter | If the `network` argument isn't present
     }
 
 
-## RemoveNic (POST /:login/machines/:id/nics/:mac)
+## RemoveNic (DELETE /:login/machines/:id/nics/:mac)
 
 Removes a NIC on an instance belonging to a given account.
 
