@@ -217,6 +217,27 @@ test('GetImage should not return non-permission images', function (t) {
 });
 
 
+test('GetImage returns disabled images', function (t) {
+    CLIENT.imgapi.disableImage(IMAGE.id, function (err) {
+        t.ifError(err);
+
+        CLIENT.get('/my/images/' + IMAGE.id, function (err2, req, res, body) {
+            t.ifError(err2);
+
+            t.equal(res.statusCode, 200, 'GET /my/images/:uuid status');
+            common.checkHeaders(t, res.headers);
+            t.ok(body, 'GET /my/images/:uuid body');
+            checkImage(t, body);
+
+            CLIENT.imgapi.enableImage(IMAGE.id, function (err3) {
+                t.ifError(err3);
+                t.end();
+            });
+        });
+    });
+});
+
+
 test('GetImage 404', function (t) {
     CLIENT.get('/my/images/' + common.uuid(), function (err) {
         t.ok(err, 'GET /my/images/ error');
