@@ -244,7 +244,8 @@ For example:
 You can use the `--name` flag to name your instance; if you do not specify a
 name,  Triton will generate one for you.  `--image` is the `id` of the image
 you'd like to use as the new instance's base.  `--package` is the `id` of the
-package to use to set instance dimensions.
+package to use to set instance dimensions. For the `triton` command, you can
+also pass the name of the image or the package instead of their id.
 
 Retrieve the status of your new instance by:
 
@@ -9140,71 +9141,76 @@ Sample code for generating the `Authorization` header (and `Date` header):
 
 # Appendix D: CloudAPI CLI Commands
 
-**Command** | **Description**
------------ | ---------------
-[sdc-addmachinetags](#AddMachineTags)|Allows you to add additional tags, other than those set at provisioning time.
-[sdc-chmod](#SetRoleTags)|Add role tags to CloudAPI resources.
-[sdc-createfirewallrule](#CreateFirewallRule)|Add a new firewall rule.
-[sdc-createimagefrommachine](#CreateImageFromMachine)|Create a new custom image from an instance.
-[sdc-createinstrumentation](#CreateInstrumentation)|Creates an instrumentation.
-[sdc-createkey](#CreateKey)|Uploads a new OpenSSH key to Triton.
-[sdc-createmachine](#CreateMachine)|Allows you to provision an instance.
-[sdc-createmachinesnapshot](#CreateMachineSnapshot)|Allows you to take a snapshot of an instance.
-[sdc-deletefirewallrule](#DeleteFirewallRule)|Removes a given firewall rule.
-[sdc-deleteimage](#DeleteImage)|Delete a private image.
-[sdc-deleteinstrumentation](#DeleteInstrumentation)|Destroys an instrumentation.
-[sdc-deletekey](#DeleteKey)|Deletes an SSH key by name.
-[sdc-deletemachine](#DeleteMachine)|Allows you to completely destroy an instance.
-[sdc-deletemachinemetadata](#DeleteMachineMetadata)|Deletes a single metadata key from this instance.
-[sdc-deletemachinesnapshot](#DeleteMachineSnapshot)|Deletes the specified snapshot of an instance.
-[sdc-deletemachinetag](#DeleteMachineTag)|Deletes a single tag from this instance.
-[sdc-describeanalytics](#DescribeAnalytics)|Retrieves the "schema" for instrumentations that can be created using the analytics endpoint.
-[sdc-disablefirewallrule](#DisableFirewallRule)|Disable an enabled firewall rule.
-[sdc-disablemachinefirewall](#DisableMachineFirewall)|Completely disable the firewall on an instance.
-[sdc-enablefirewallrule](#EnableFirewallRule)|Enable a disabled firewall rule.
-[sdc-enablemachinefirewall](#EnableMachineFirewall)|Enable the firewall on an instance.
-[sdc-exportimage](#ExportImage)|Export an image to Manta.
-[sdc-fabric](#fabrics)|Administer fabric networks and VLANs.
-[sdc-getaccount ](#GetAccount)|Gets details about your account.
-[sdc-getfirewallrule](#GetFirewallRule)|Get details about a specific firewall rule.
-[sdc-getimage](#GetImage)|Gets an individual image by id.
-[sdc-getinstrumentation](#GetInstrumentation)|Retrieves the configuration for an instrumentation.
-[sdc-getkey](#GetKey)|Retrieves an individual key record.
-[sdc-getmachine](#GetMachine)|Gets the details for an individual instance.
-[sdc-getmachineaudit](#MachineAudit)|Get a historical list of actions performed on an instance.
-[sdc-getmachinemetadata](#GetMachineMetadata)|Returns the complete set of metadata associated with this instance.
-[sdc-getmachinesnapshot](#GetMachineSnapshot)|Gets the state of the named snapshot.
-[sdc-getmachinetag](#GetMachineTag)|Returns the value for a single tag on this instance.
-[sdc-getnetwork](#GetNetwork)|Gets a network by the given id.
-[sdc-getpackage](#GetPackage)|Gets a package by name.
-[sdc-info](#SetRoleTags)|List of role-tags assigned to a given resource.
-[sdc-listdatacenters](#ListDatacenters)|Provides a list of all datacenters this cloud is aware of.
-[sdc-listfirewallrules](#ListFirewallRules)|List all firewall rules applying to this account.
-[sdc-listimages](#ListImages)|Provides a list of images available in this datacenter.
-[sdc-listinstrumentations](#ListInstrumentations)|Retrieves all currently created instrumentations.
-[sdc-listkeys](#ListKeys)|Lists all public keys we have on record for the specified account.
-[sdc-listmachinefirewallrules](#ListMachineFirewallRules)|List firewall rules applying to a specific instance.
-[sdc-listmachines](#ListMachines)|Lists all instances on an account.
-[sdc-listmachinesnapshots](#ListMachineSnapshots)|Lists all snapshots taken for a given instance.
-[sdc-listmachinetags](#ListMachineTags)|Returns the complete set of tags associated with this instance.
-[sdc-listnetworks](#ListNetworks)|Provides a list of networks available to the user in this datacenter.
-[sdc-listpackages](#ListPackages)|Provides a list of packages available in this datacenter.
-[sdc-nics](#nics)|List, add and remove NICs attached to an instance.
-[sdc-policy](#policies)|Add, list, update and remove policies.
-[sdc-rebootmachine](#RebootMachine)|Allows you to 'reboot' an instance.
-[sdc-renamemachine](#RenameMachine)|Rename an instance.
-[sdc-replacemachinetags](#ReplaceMachineTags)|Replace all tags on an instance.
-[sdc-resizemachine](#ResizeMachine)|Allows you to resize a container.
-[sdc-role](#roles)|Add, list, update and remove roles.
-[sdc-startmachine](#StartMachine)|Allows you to boot up an instance.
-[sdc-startmachinefromsnapshot](#StartMachineFromSnapshot)|Starts a stopped instance from the referenced snapshot.
-[sdc-stopmachine](#StopMachine)|Allows you to shut down an instance.
-[sdc-updateaccount](#UpdateAccount)|Change details of the current account.
-[sdc-updatefirewallrule](#UpdateFirewallRule)|Change a firewall rule.
-[sdc-updateimage](#UpdateImage)|Update metadata about an image.
-[sdc-updatemachinemetadata](#UpdateMachineMetadata)|Allows you to update the metadata for a given instance.
-[sdc-user](#users)|Add, update and remove account users and their keys.
-
+**`smartdc` Command** | **`triton` Command** | **Description**
+------------------- | ------------------ | ---------------
+[sdc-addmachinetags](#AddMachineTags)|[triton instance tag set](#AddMachineTags)|Allows you to add additional tags, other than those set at provisioning time.
+[sdc-chmod](#SetRoleTags)|-|Add role tags to CloudAPI resources.
+[sdc-createfirewallrule](#CreateFirewallRule)|[triton fwrule create](#CreateFirewallRule)|Add a new firewall rule.
+[sdc-createimagefrommachine](#CreateImageFromMachine)|[triton image create](#CreateImageFromMachine)|Create a new custom image from an instance.
+[sdc-createinstrumentation](#CreateInstrumentation)|-|Creates an instrumentation.
+[sdc-createkey](#CreateKey)|[triton key add](#CreateKey)|Uploads a new OpenSSH key to Triton.
+[sdc-createmachine](#CreateMachine)|[triton instance create](#CreateMachine)|Allows you to provision an instance.
+[sdc-createmachinesnapshot](#CreateMachineSnapshot)|[triton instance snapshot create](#CreateMachineSnapshot)|Allows you to take a snapshot of an instance.
+[sdc-deletefirewallrule](#DeleteFirewallRule)|[triton fwrule delete](#DeleteFirewallRule)|Removes a given firewall rule.
+[sdc-deleteimage](#DeleteImage)|[triton image delete](#DeleteImage)|Delete a private image.
+[sdc-deleteinstrumentation](#DeleteInstrumentation)|-|Destroys an instrumentation.
+[sdc-deletekey](#DeleteKey)|[triton key delete](#DeleteKey)|Deletes an SSH key by name.
+[sdc-deletemachine](#DeleteMachine)|[triton instance delete](#DeleteMachine)|Allows you to completely destroy an instance.
+[sdc-deletemachinemetadata](#DeleteMachineMetadata)|-|Deletes a single metadata key from this instance.
+[sdc-deletemachinesnapshot](#DeleteMachineSnapshot)|[triton instance snapshot delete](#DeleteMachineSnapshot)|Deletes the specified snapshot of an instance.
+[sdc-deletemachinetag](#DeleteMachineTag)|[triton instance tag delete](#DeleteMachineTag)|Deletes a single tag from this instance.
+[sdc-describeanalytics](#DescribeAnalytics)| - |Retrieves the "schema" for instrumentations that can be created using the analytics endpoint.
+[sdc-disablefirewallrule](#DisableFirewallRule)|[triton fwrule disable](#DisableFirewallRule)|Disable an enabled firewall rule.
+[sdc-disablemachinefirewall](#DisableMachineFirewall)|[triton instance disable-firewall](#DisableMachineFirewall)|Completely disable the firewall on an instance.
+[sdc-enablefirewallrule](#EnableFirewallRule)|[triton fwrule enable](#EnableFirewallRule)|Enable a disabled firewall rule.
+[sdc-enablemachinefirewall](#EnableMachineFirewall)|[triton instance enable-firewall](#EnableMachineFirewall)|Enable the firewall on an instance.
+[sdc-exportimage](#ExportImage)|-|Export an image to Manta.
+[sdc-fabric](#fabrics)|-|Administer fabric networks and VLANs.
+[sdc-getaccount](#GetAccount)|[triton account get](#GetAccount)|Gets details about your account.
+[sdc-getfirewallrule](#GetFirewallRule)|[triton fwrule get](#GetFirewallRule)|Get details about a specific firewall rule.
+[sdc-getimage](#GetImage)|[triton image get](#GetImage)|Gets an individual image by id.
+[sdc-getinstrumentation](#GetInstrumentation)|-|Retrieves the configuration for an instrumentation.
+[sdc-getkey](#GetKey)|[triton key get](#GetKey)|Retrieves an individual key record.
+[sdc-getmachine](#GetMachine)|[triton instance get](#GetMachine)|Gets the details for an individual instance.
+[sdc-getmachineaudit](#MachineAudit)|[triton instance audit](#MachineAudit)|Get a historical list of actions performed on an instance.
+[sdc-getmachinemetadata](#GetMachineMetadata)|-|Returns the complete set of metadata associated with this instance.
+[sdc-getmachinesnapshot](#GetMachineSnapshot)|[triton instance snapshot get](#GetMachineSnapshot)|Gets the state of the named snapshot.
+[sdc-getmachinetag](#GetMachineTag)|[triton instance tag get](#GetMachineTag)|Returns the value for a single tag on this instance.
+[sdc-getnetwork](#GetNetwork)|[triton network get](#GetNetwork)|Gets a network by the given id.
+[sdc-getpackage](#GetPackage)|[triton package get](#GetPackage)|Gets a package by name.
+[sdc-info](#SetRoleTags)|-|List of role-tags assigned to a given resource.
+[sdc-listdatacenters](#ListDatacenters)|[triton datacenters](#ListDatacenters)|Provides a list of all datacenters this cloud is aware of.
+[sdc-listfirewallrules](#ListFirewallRules)|[triton fwrule list](#ListFirewallRules)|List all firewall rules applying to this account.
+[sdc-listimages](#ListImages)|[triton image list](#ListImages)|Provides a list of images available in this datacenter.
+[sdc-listinstrumentations](#ListInstrumentations)|-|Retrieves all currently created instrumentations.
+[sdc-listkeys](#ListKeys)|[triton key list](#ListKeys)|Lists all public keys we have on record for the specified account.
+[sdc-listmachinefirewallrules](#ListMachineFirewallRules)|[triton instance fwrules list](#ListMachineFirewallRules)|List firewall rules applying to a specific instance.
+[sdc-listmachines](#ListMachines)|[triton instance list](#ListMachines)|Lists all instances on an account.
+[sdc-listmachinesnapshots](#ListMachineSnapshots)|[triton instance snapshot list](#ListMachineSnapshots)|Lists all snapshots taken for a given instance.
+[sdc-listmachinetags](#ListMachineTags)|[triton instance tag list](#ListMachineTags)|Returns the complete set of tags associated with this instance.
+[sdc-listnetworks](#ListNetworks)|[triton network list](#ListNetworks)|Provides a list of networks available to the user in this datacenter.
+[sdc-listpackages](#ListPackages)|[triton package list](#ListPackages)|Provides a list of packages available in this datacenter.
+[sdc-nics](#nics)|-|List, add and remove NICs attached to an instance.
+[sdc-policy](#policies)|-|Add, list, update and remove policies.
+[sdc-rebootmachine](#RebootMachine)|[triton instance reboot](#RebootMachine)|Allows you to 'reboot' an instance.
+[sdc-renamemachine](#RenameMachine)|-|Rename an instance.
+[sdc-replacemachinetags](#ReplaceMachineTags)|[triton instance tag replace-all](#ReplaceMachineTags)|Replace all tags on an instance.
+[sdc-resizemachine](#ResizeMachine)|-|Allows you to resize a container.
+[sdc-role](#roles)|-|Add, list, update and remove roles.
+[sdc-startmachine](#StartMachine)|[triton instance start](#StartMachine)|Allows you to boot up an instance.
+[sdc-startmachinefromsnapshot](#StartMachineFromSnapshot)|[triton instance start](#StartMachineFromSnapshot)|Starts a stopped instance from the referenced snapshot.
+[sdc-stopmachine](#StopMachine)|[triton instance stop](#StopMachine)|Allows you to shut down an instance.
+[sdc-updateaccount](#UpdateAccount)|[triton account update](#UpdateAccount)|Change details of the current account.
+[sdc-updatefirewallrule](#UpdateFirewallRule)|[triton fwrule update](#UpdateFirewallRule)|Change a firewall rule.
+[sdc-updateimage](#UpdateImage)|-|Update metadata about an image.
+[sdc-updatemachinemetadata](#UpdateMachineMetadata)|-|Allows you to update the metadata for a given instance.
+[sdc-user](#users)|-|Add, update and remove account users and their keys.
+-|triton info|Print an account summary.
+-|triton instance ip|Print the primary IP of the given instance.
+-|triton instance ssh|SSH to the primary IP of an instance.
+-|triton instance wait|Wait on instances changing state.
+-|triton profile|List, get, create and update Triton CLI profiles.
+-|[triton services](#ListServices)|List available service endpoints for the datacenter.
 
 <p style="min-height: 31px; margin-top: 60px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0">
 <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/"><img alt="Creative Commons License" style="border-width:0;float:left;margin:4px 8px 0 0;" src="https://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a> <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Text" property="dct:title" rel="dct:type">Joyent CloudAPI Documentation</span> by <a xmlns:cc="http://creativecommons.org/ns#" href="http://www.joyent.com" property="cc:attributionName" rel="cc:attributionURL">Joyent, Inc.</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
