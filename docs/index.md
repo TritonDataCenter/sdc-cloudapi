@@ -153,6 +153,7 @@ interact with CloudAPI using either node-triton or node-smartdc:
 * `SDC_ACCOUNT`: Your username; the login you use for Triton.
 * `SDC_USER`: If authenticating as a subuser, the username of the subuser.
   See [Role Based Access Control](#rbac-users-roles-policies).
+* `SDC_TESTING`: If using a self-signed SSL certificate, set this to 1.
 
 An example for `SDC_URL` is `https://us-west-1.api.joyentcloud.com`.  Each
 datacenter in a cloud has its own CloudAPI endpoint; a different cloud that uses
@@ -1297,7 +1298,7 @@ ResourceNotFound | If `:login` does not exist
 
 ### CLI Command
 
-    $ triton key add --nams=barbardos ~/.ssh/id_rsa.pub
+    $ triton key add --name=barbardos ~/.ssh/id_rsa.pub
 
 or
 
@@ -3883,7 +3884,7 @@ name        | String   | Machine name to find (will make your list size 1, or 0 
 image       | String   | Image id; returns instances provisioned with that image
 state       | String   | The current state of the instance (e.g. running)
 memory      | Number   | The current size of the RAM deployed for the instance (in MiB)
-tombstone   | Number   | Include instances destroyed in the last N minutes
+tombstone   | Boolean  | Include destroyed and failed instances
 limit       | Number   | Return a max of N instances; default is 1000 (which is also the maximum allowable result set size)
 offset      | Number   | Get a `limit` number of instances starting at this `offset`
 tag.$name   | String   | An arbitrary set of tags can be used for querying, assuming they are prefixed with "tag."
@@ -4193,14 +4194,15 @@ only an internal network, or both public and internal, or just external.
 
 Be aware that CreateMachine does not return IP addresses.  To obtain the IP
 address of a newly-provisioned instance, poll [GetMachine](#GetMachine) until
-the instance state is `running` or a failure.
+the instance state is `running`.
 
 Typically, Triton will allocate the new instance somewhere reasonable within the
-cloud.  You may want this instance to be placed close to, or far away from,
-other existing instances belonging to you;  if so, you can provide locality
-hints to CloudAPI.  Locality hints are not guarantees, unless `strict` is set
-true, but Triton will attempt to satisfy the hints if possible. An example of a
-locality hint is:
+cloud.  You may want this instance to be placed on the same server as another
+instance you have, or have it placed on an entirely different server from your
+existing instances so that you can spread them out. In either case, you can
+provide locality hints (aka 'affinity' criteria) to CloudAPI.
+
+Here is an example of a locality hint:
 
     "locality": {
       "strict": false,
@@ -4208,20 +4210,14 @@ locality hint is:
       "far": ["da568166-9d93-42c8-b9b2-bce9a6bb7e0a", "d45eb2f5-c80b-4fea-854f-32e4a9441e53"]
     }
 
-UUIDs provided should be the ids of instances belonging to you.
+UUIDs provided should be the ids of instances belonging to you. If there is only
+a single UUID entry in an array, you can omit the array and provide the UUID
+string directly as the value to a near/far key.
 
-Locality hints are optional. Both `near`, `far`, and `strict` are also optional;
-you can provide just one if desired. Lastly, if there's only a single UUID entry
-in an array, you can omit the array and provide the UUID string directly as the
-value to a near/far key.
-
-`strict` defaults to false if not provided. If `strict` is provided and is true,
-the creation of the new instance will fail if the provided `near` and/or `far`
-cannot be met. `near` will try to place the new instance on the same server as
-the given instance UUIDs, otherwise in the same rack; it will fail if no space
-can be found in that rack. `far` will try to place the new instance in a
-different rack, otherwise a different server in the same rack; it will fail if
-space can only be found on the same server as the given instance UUIDs.
+`strict` defaults to false, meaning that Triton will attempt to meet all the
+`near` and/or `far` criteria but will still provision the instance when no
+server fits all the requirements. If `strict` is set to true, the creation of
+the new instance will fail if the affinity criteria cannot be met.
 
 When Triton CNS is enabled, the DNS search domain of the new VM will be
 automatically set to the suffix of the "instance" record that is created for
