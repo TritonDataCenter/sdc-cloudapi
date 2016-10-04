@@ -3864,6 +3864,8 @@ machines are useful for non-SmartOS or non-Linux stacks.
 
 Lists all instances we have on record for your account.  If you have a large
 number of instances, you can filter using the input parameters listed below.
+Note that deleted instances are returned only if the instance history has not
+been purged from Triton.
 
 You can paginate this API by passing in `offset` and `limit`.  HTTP responses
 will contain the additional headers `x-resource-count` and `x-query-limit`.  If
@@ -3884,7 +3886,7 @@ name        | String   | Machine name to find (will make your list size 1, or 0 
 image       | String   | Image id; returns instances provisioned with that image
 state       | String   | The current state of the instance (e.g. running)
 memory      | Number   | The current size of the RAM deployed for the instance (in MiB)
-tombstone   | Boolean  | Include destroyed and failed instances
+tombstone   | Boolean  | Include destroyed and failed instances available in instance history
 limit       | Number   | Return a max of N instances; default is 1000 (which is also the maximum allowable result set size)
 offset      | Number   | Get a `limit` number of instances starting at this `offset`
 tag.$name   | String   | An arbitrary set of tags can be used for querying, assuming they are prefixed with "tag."
@@ -4041,6 +4043,9 @@ can combine them.  Run `triton instance list --help` or
 ## GetMachine (GET /:login/machines/:id)
 
 Gets the details for an individual instance.
+
+Deleted instances are returned only if the instance history has not
+been purged from Triton.
 
 ### Inputs
 
@@ -5816,6 +5821,9 @@ or
 
 Provides a list of an instance's accomplished actions. Results are sorted from
 newest to oldest action.
+
+Note that the complete audit trail is returned only if the instance history and
+job records have not been purged from Triton.
 
 ### Inputs
 
