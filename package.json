@@ -29,7 +29,7 @@
         "assert-plus": "1.0.0",
         "asn1": "0.1.11",
         "ctype": "0.5.2",
-        "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#f382a4",
+        "keyapi": "git+ssh://git@github.com:joyent/keyapi.git#c30dd2710ad2175095dc0e96479686fa774b8063",
         "aperture": "git+ssh://git@github.com:joyent/node-aperture.git#016977",
         "mahi": "git+ssh://git@github.com:joyent/node-mahi.git#7c0499",
         "aperture-config": "git+ssh://git@github.com:joyent/aperture-config.git#master",
