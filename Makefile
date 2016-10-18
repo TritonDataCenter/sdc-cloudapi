@@ -47,9 +47,9 @@ CLEAN_FILES	+= node_modules cscope.files
 
 # The prebuilt sdcnode version we want. See
 # "tools/mk/Makefile.node_prebuilt.targ" for details.
-NODE_PREBUILT_VERSION=v0.10.48
+NODE_PREBUILT_VERSION=v4.6.1
 ifeq ($(shell uname -s),SunOS)
-	NODE_PREBUILT_IMAGE=de411e86-548d-11e4-a4b7-3bb60478632a
+	NODE_PREBUILT_IMAGE=18b094b0-eb01-11e5-80c1-175dac7ddf02
 	NODE_PREBUILT_TAG=zone
 endif
 
@@ -87,7 +87,7 @@ PATH	:= $(NODE_INSTALL)/bin:/opt/local/bin:${PATH}
 all: build sdc-scripts
 
 .PHONY: build
-build: haproxy $(SMF_MANIFESTS) | $(TAP) $(REPO_DEPS)
+build: $(SMF_MANIFESTS) | $(TAP) $(REPO_DEPS)
 	$(NPM) install
 
 $(TAP): | $(NPM_EXEC)
@@ -100,21 +100,6 @@ clean-docs:
 clean:: clean-docs
 
 
-# Build HAProxy when in SunOS
-.PHONY: haproxy
-ifeq ($(shell uname -s),SunOS)
-haproxy:
-	@echo "Building HAproxy"
-	cd deps/haproxy-1.4.21 && /opt/local/bin/gmake TARGET=solaris
-else
-haproxy:
-	@echo "HAproxy building only in SunOS"
-endif
-
-
-CLEAN_FILES += deps/haproxy-1.4.21/haproxy
-
-
 .PHONY: release
 release: check build docs
 	@echo "Building $(RELEASE_TARBALL)"
@@ -124,7 +109,6 @@ release: check build docs
 	@mkdir -p $(RELSTAGEDIR)/root
 	@mkdir -p $(RELSTAGEDIR)/root/opt/smartdc/cloudapi/ssl
 	cp -r	$(ROOT)/bin \
-		$(ROOT)/deps/haproxy-1.4.21 \
 		$(ROOT)/etc \
 		$(ROOT)/lib \
 		$(ROOT)/plugins \
@@ -157,7 +141,7 @@ publish: release
 	mkdir -p $(BITS_DIR)/$(NAME)
 	cp $(ROOT)/$(RELEASE_TARBALL) $(BITS_DIR)/$(NAME)/$(RELEASE_TARBALL)
 
-.PHONY: test no_machines_test auth_test account_test analytics_test datacenters_test datasets_test fabrics_test images_test keys_test networks_test nics_test machines_all_test machines_70_test machines_71_test machines_72_test machines_73_test machines_80_test machines_test packages_test populate_networks_test services_test users_test provision_limits_plugin_test plugins_test
+.PHONY: test no_machines_test auth_test account_test analytics_test datacenters_test datasets_test fabrics_test images_test keys_test networks_test nics_test machines_all_test machines_70_test machines_71_test machines_72_test machines_73_test machines_80_test machines_test packages_test populate_networks_test services_test users_test provision_limits_plugin_test plugins_test tests_test
 
 auth_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/auth.test.js
@@ -220,12 +204,15 @@ populate_network_test: $(TAP)
 services_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/services.test.js
 
+tests_test: $(TAP)
+	$(NODE_EXEC) $(TAP) test/tests.test.js
+
 users_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/users.test.js
 
-test: auth_test account_test analytics_test datacenters_test datasets_test fabrics_test images_test keys_test networks_test packages_test populate_network_test services_test users_test nics_test machines_test
+test: auth_test account_test analytics_test datacenters_test datasets_test fabrics_test images_test keys_test networks_test packages_test populate_network_test services_test tests_test users_test nics_test machines_test
 
-no_machines_test: auth_test account_test analytics_test datacenters_test datasets_test fabrics_test images_test keys_test networks_test packages_test populate_network_test services_test users_test
+no_machines_test: auth_test account_test analytics_test datacenters_test datasets_test fabrics_test images_test keys_test networks_test packages_test populate_network_test services_test tests_test users_test
 
 provision_limits_plugin_test:
 	$(NODE_EXEC) $(TAP) test/provision_limits.test.javascript

@@ -11,7 +11,7 @@
 -->
 
 <service_bundle type="manifest" name="haproxy">
-    <service name="cloudapi/haproxy" type="service" version="1">
+    <service name="pkgsrc/haproxy" type="service" version="1">
 
 	<create_default_instance enabled="false" />
 	<single_instance />
@@ -39,7 +39,7 @@
 
 	<exec_method type="method"
 		     name="start"
-         exec="@@PREFIX@@/haproxy-1.4.21/haproxy -f @@PREFIX@@/etc/haproxy.cfg -D"
+         exec="/opt/local/sbin/haproxy -f @@PREFIX@@/etc/haproxy.cfg -D"
 		     timeout_seconds="30">
 	    <method_context working_directory="@@PREFIX@@">
 		<method_environment>

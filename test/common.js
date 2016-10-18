@@ -23,7 +23,7 @@ var util = require('util');
 var fs = require('fs');
 var vasync = require('vasync');
 
-var UFDS = require('sdc-clients').UFDS;
+var UFDS = require('ufds');
 var VMAPI = require('sdc-clients').VMAPI;
 var CNAPI = require('sdc-clients').CNAPI;
 var NAPI = require('sdc-clients').NAPI;
