@@ -72,7 +72,7 @@ function setup_cloudapi {
 
     svccfg import $SVC_ROOT/smf/manifests/haproxy.xml || \
         fatal "unable to import haproxy"
-    svcadm enable "cloudapi/haproxy" || fatal "unable to start haproxy"
+    svcadm enable "pkgsrc/haproxy" || fatal "unable to start haproxy"
 
     #cloudapi instances
     local cloudapi_xml_in=$SVC_ROOT/smf/manifests/cloudapi.xml.in

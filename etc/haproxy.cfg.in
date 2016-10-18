@@ -14,6 +14,7 @@ defaults
         option  redispatch
         option  abortonclose
         option  forwardfor
+        option  http-tunnel
         retries 1
         timeout queue   0
         timeout connect 2000

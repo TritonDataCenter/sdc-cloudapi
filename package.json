@@ -1,7 +1,7 @@
 {
     "name": "cloudapi",
     "description": "SmartDataCenter CloudAPI",
-    "version": "8.0.3",
+    "version": "8.1.0",
     "author": "Joyent (joyent.com)",
     "private": true,
     "engines": {
@@ -13,25 +13,25 @@
         "url": "git+ssh://git@github.com:joyent/sdc-cloudapi.git"
     },
     "dependencies": {
-        "vasync": "1.4.3",
+        "vasync": "1.6.4",
         "filed": "0.0.7",
         "http-signature": "1.1.0",
         "mime": "1.2.7",
-        "libuuid": "0.1.2",
+        "libuuid": "0.2.1",
         "nopt": "2.0.0",
-        "restify": "git+https://github.com/mcavage/node-restify.git#0d7b4ba",
-        "bunyan": "0.22.1",
+        "restify": "4.3.0",
+        "bunyan": "1.8.1",
         "cueball": "1.1.4",
         "kang": "1.1.0",
-        "sdc-clients": "9.4.0",
-        "ufds": "1.1.3",
+        "sdc-clients": "10.0.0",
+        "ufds": "1.2.0",
         "semver": "2.2.1",
         "nodemailer": "0.3.29",
         "clone": "0.1.5",
         "assert-plus": "1.0.0",
         "asn1": "0.1.11",
         "ctype": "0.5.2",
-        "keyapi": "git+https://github.com/joyent/keyapi.git#c30dd2710ad2175095dc0e96479686fa774b8063",
+        "keyapi": "git+https://github.com/joyent/keyapi.git#e14b3d582e1d9d338b7082d61f34ba8d1bbc540a",
         "aperture": "git+https://github.com/joyent/node-aperture.git#016977",
         "mahi": "2.0.1",
         "aperture-config": "git+https://github.com/joyent/aperture-config.git#master",
@@ -41,7 +41,7 @@
     },
     "devDependencies": {
         "tape": "3.5.0",
-        "smartdc": "git+https://github.com/joyent/node-smartdc.git#adea68"
+        "smartdc": "8.1.0"
     },
     "sdcDependencies": {
         "imgapi": ">=2.1.0",
