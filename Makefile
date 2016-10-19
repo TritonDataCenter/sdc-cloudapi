@@ -47,7 +47,7 @@ CLEAN_FILES	+= node_modules cscope.files
 
 # The prebuilt sdcnode version we want. See
 # "tools/mk/Makefile.node_prebuilt.targ" for details.
-NODE_PREBUILT_VERSION=v0.10.47
+NODE_PREBUILT_VERSION=v0.10.48
 ifeq ($(shell uname -s),SunOS)
 	NODE_PREBUILT_IMAGE=de411e86-548d-11e4-a4b7-3bb60478632a
 	NODE_PREBUILT_TAG=zone
