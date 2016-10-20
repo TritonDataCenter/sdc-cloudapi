@@ -66,11 +66,21 @@
     "cueballHttpAgent": {
         "resolvers": ["{{{BINDER_SERVICE}}}"],
         "initialDomains": [
+            "{{{vmapi_domain}}}",
+            "{{{cnapi_domain}}}",
+            "{{{napi_domain}}}",
+            "{{{fwapi_domain}}}",
+            "{{{imgapi_domain}}}",
+{{#CNS_SERVICE}}
+            "{{{cns_domain}}}",
+{{/CNS_SERVICE}}
+{{#MAHI_SERVICE}}
             "{{{mahi_domain}}}",
-            "{{{fwapi_domain}}}"
+{{/MAHI_SERVICE}}
+            "{{{papi_domain}}}"
         ],
         "spares": 4,
-        "maximum": 10,
+        "maximum": 20,
         "recovery": {
             "default": {
                 "timeout": 2000,
