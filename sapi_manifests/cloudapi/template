@@ -28,7 +28,12 @@
     "ufds_master": {
         "url": "ldaps://{{{ufds_remote_ip}}}",
         "bindDN": "{{{ufds_ldap_root_dn}}}",
+        {{^ufds_remote_ldap_root_pw}}
         "bindPassword": "{{{ufds_ldap_root_pw}}}",
+        {{/ufds_remote_ldap_root_pw}}
+        {{#ufds_remote_ldap_root_pw}}
+        "bindPassword": "{{{ufds_remote_ldap_root_pw}}}",
+        {{/ufds_remote_ldap_root_pw}}
         "cache": {
             "size": 5000,
             "age": 60
