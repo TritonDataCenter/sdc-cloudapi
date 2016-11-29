@@ -3927,7 +3927,7 @@ updated     | ISO8601 date | When this instance's details was last updated
 docker      | Boolean  | Whether this instance is a Docker container, if present
 ips         | Array[String] | The IP addresses this instance has
 networks    | Array[String] | The network UUIDs of the nics this instance has
-primaryIp   | String   | IP address of the primary nic of this instance
+primaryIp   | String   | The IP address of the primary NIC of this instance. The "primary" NIC is used to determine the default gateway for an instance. Commonly it is also on an external network (i.e. accessible on the public internet) and hence usable for SSH'ing into an instance, but not always. (Note: In future Triton versions it will be possible to have multiple IPv4 and IPv6 addresses on a particular NIC, at which point the current definition of `primaryIp` will be ambiguous and will need to change.)
 firewall_enabled | Boolean  | Whether firewall rules are enforced on this instance
 compute_node | String  | UUID of the server on which the instance is located
 package     | String   | The id or name of the package used to create this instance
@@ -4080,11 +4080,11 @@ updated     | ISO8601 date | When this instance's details was last updated
 docker      | Boolean  | Whether this instance is a Docker container, if present
 ips         | Array[String] | The IP addresses this instance has
 networks    | Array[String] | The network UUIDs of the nics this instance has
-primaryIp   | String   | IP address of the primary nic of this instance
+primaryIp   | String   | The IP address of the primary NIC of this instance. The "primary" NIC is used to determine the default gateway for an instance. Commonly it is also on an external network (i.e. accessible on the public internet) and hence usable for SSH'ing into an instance, but not always. (Note: In future Triton versions it will be possible to have multiple IPv4 and IPv6 addresses on a particular NIC, at which point the current definition of `primaryIp` will be ambiguous and will need to change.)
 firewall_enabled | Boolean  | Whether firewall rules are enforced on this instance
 compute_node | String  | UUID of the server on which the instance is located
 package     | String   | The id or name of the package used to create this instance
-dns_names   | Array[String] | DNS names of the instance
+dns_names   | Array[String] | DNS names of the instance (if the instance is using [CNS](https://docs.joyent.com/public-cloud/network/cns))
 
 ### Errors
 

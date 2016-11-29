@@ -81,6 +81,10 @@ function checkMachine(t, m) {
     t.ok(m.metadata, 'checkMachine metadata ok');
     t.notOk(m.docker, 'checkMachine docker attr not set');
 
+    if (m.state === 'running') {
+        t.ok(m.primaryIp, 'checkMachine primaryIp ok');
+    }
+
     // Sometimes test suites from other applications create zones with a
     // 00000000-0000-0000-0000-000000000000 billing_id, which is changed by
     // cloudapi to '' since it's not an actual package UUID. Alas, we work
