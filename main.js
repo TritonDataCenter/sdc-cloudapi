@@ -154,7 +154,12 @@ function run() {
     config.log = LOG;
 
     tritonTracer.init({
-        log: config.log
+        log: config.log,
+        sampling: {
+            GET: {
+                '/--ping': 0.01
+            }
+        }
     });
 
     // We create a temporary server which will reply to all requests with 503
