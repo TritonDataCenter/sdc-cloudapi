@@ -85,7 +85,7 @@
             "{{{papi_domain}}}"
         ],
         "spares": 4,
-        "maximum": 20,
+        "maximum": 100,
         "recovery": {
             "default": {
                 "timeout": 2000,
