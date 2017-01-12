@@ -27,12 +27,11 @@ var restify = require('restify');
 var RequestCaptureStream = restify.bunyan.RequestCaptureStream;
 
 var app = require('./lib').app;
-
+var mod_config = require('./lib/config.js');
 
 
 // --- Globals
 
-var DEFAULT_CFG = __dirname + '/etc/cloudapi.config.json';
 var LOG;
 var PARSED;
 
@@ -107,60 +106,6 @@ function usage(code, message) {
 }
 
 
-function configure(file, options, log) {
-    assert.string(file, 'file');
-    assert.object(options, 'options');
-    assert.object(log, 'log');
-    var config;
-
-    try {
-        config = JSON.parse(fs.readFileSync(file, 'utf8'));
-
-        if (config.certificate && config.key && !config.port) {
-            config.port = 443;
-        }
-
-        if (!config.port) {
-            config.port = 80;
-        }
-
-    } catch (e1) {
-        console.error('Unable to parse %s: %s', file, e1.message);
-        process.exit(1);
-    }
-
-    if (options.port) {
-        config.port = options.port;
-    }
-
-    try {
-        if (config.certificate) {
-            config.certificate = fs.readFileSync(config.certificate, 'utf8');
-        }
-    } catch (e2) {
-        console.error('Unable to load %s: %s', config.certificate, e2.message);
-        process.exit(1);
-    }
-
-    try {
-        if (config.key) {
-            config.key = fs.readFileSync(config.key, 'utf8');
-        }
-    } catch (e3) {
-        console.error('Unable to load %s: %s', config.certificate, e3.message);
-        process.exit(1);
-    }
-
-    if (typeof (config.maxHttpSockets) === 'number') {
-        log.info('Tuning max sockets to %d', config.maxHttpSockets);
-        http.globalAgent.maxSockets = config.maxHttpSockets;
-        https.globalAgent.maxSockets = config.maxHttpSockets;
-    }
-
-    return config;
-}
-
-
 // Create a temporary server which simply returns 500 to all requests
 function createBootstrapServer(port, cb) {
     var bootstrapServer = restify.createServer();
@@ -194,7 +139,11 @@ function run() {
         serializers: restify.bunyan.serializers
     });
 
-    var config = configure(PARSED.file || DEFAULT_CFG, PARSED, LOG);
+    var config = mod_config.configure({
+        configFilePath: PARSED.file,
+        overrides: PARSED,
+        log: LOG
+    });
 
     setupLogger(config);
     config.log = LOG;

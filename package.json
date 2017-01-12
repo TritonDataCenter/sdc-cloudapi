@@ -23,7 +23,7 @@
         "bunyan": "1.8.1",
         "cueball": "1.1.9",
         "kang": "1.1.0",
-        "sdc-clients": "10.0.0",
+        "sdc-clients": "git+https://github.com/joyent/node-sdc-clients.git#tritonnfs",
         "ufds": "1.2.0",
         "semver": "2.2.1",
         "nodemailer": "0.3.29",
