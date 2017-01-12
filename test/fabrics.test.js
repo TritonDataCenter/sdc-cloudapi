@@ -11,20 +11,17 @@
 var assert = require('assert-plus');
 var clone = require('clone');
 var fmt = require('util').format;
-var common = require('./common');
 var test = require('tape').test;
 var vasync = require('vasync');
+
+var common = require('./common');
+var mod_testNetworks = require('./lib/networks');
 
 var checkNotFound = common.checkNotFound;
 
 
 // --- Globals
 
-
-// How often to poll for VLAN / networks:
-var CHECK_INTERVAL = 500;
-// Maximum
-var CHECK_TIMEOUT = 30000;
 var CLIENT;
 var OTHER;
 var CLIENTS;
@@ -408,34 +405,6 @@ function tooLongMsg(prop) {
 function typeMsg(prop, found, exp) {
     return fmt('property "%s": %s value found, but a %s is required',
             prop, found, exp);
-}
-
-
-/**
- * Poll for the creation of the default VLAN
- */
-function waitForDefaultVLAN(t) {
-    var start = Date.now();
-    t.pass('Waiting for default fabric VLAN to be created...');
-
-    function _checkVlan() {
-        CLIENT.get('/my/fabrics/default/vlans/2',
-                function (err, req, res, body) {
-            if (body && body.vlan_id) {
-                t.pass('found default vlan');
-                return t.end();
-            }
-
-            if ((Date.now() - start) > CHECK_TIMEOUT) {
-                t.pass('did not found default vlan before timeout');
-                return t.end();
-            }
-
-            return setTimeout(_checkVlan, CHECK_INTERVAL);
-        });
-    }
-
-    _checkVlan();
 }
 
 
@@ -1005,7 +974,7 @@ test('default fabric', TEST_OPTS, function (tt) {
 
     // The default vlan for a user is created
     tt.test('wait for default VLAN creation', function (t) {
-        waitForDefaultVLAN(t);
+        mod_testNetworks.waitForDefaultVLAN(CLIENT, t);
     });
 
 
@@ -1179,7 +1148,7 @@ test('teardown', TEST_OPTS, function (tt) {
         function _delNet(net, cb) {
             CLIENT.del(fmt('/my/fabrics/default/vlans/%d/networks/%s',
                     net.vlan_id, net.id), function (err, req, res, body) {
-                t.ifErr(err, 'delete network');
+                t.ifErr(err, 'delete network ' + net.id);
 
                 t.equal(res.statusCode, 204, 'delete fabric network');
                 common.checkHeaders(t, res.headers);
