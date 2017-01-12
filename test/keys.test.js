@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2017, Joyent, Inc.
  */
 
 var test = require('tape').test;
@@ -235,6 +235,8 @@ test('DeleteKey OK - other', function (t) {
                 code: 'ResourceNotFound',
                 message: 'id_rsa 1 does not exist'
             },
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'id_rsa 1 does not exist',
             name: 'ResourceNotFoundError',
             restCode: 'ResourceNotFound',

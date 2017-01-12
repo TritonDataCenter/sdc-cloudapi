@@ -68,6 +68,11 @@
     "ca": {
         "url": "http://{{{ca_domain}}}:23181"
     },
+{{#experimental_cloudapi_nfs_shared_volumes}}
+    "volapi": {
+        "url": "http://volapi.{{{datacenter_name}}}.{{{dns_domain}}}"
+    },
+{{/experimental_cloudapi_nfs_shared_volumes}}
     "cueballHttpAgent": {
         "resolvers": ["{{{BINDER_SERVICE}}}"],
         "initialDomains": [
@@ -183,10 +188,19 @@
     {{#CLOUDAPI_IGNORE_APPROVED_FOR_PROVISIONING}}
     "ignore_approved_for_provisioning_flag": true,
     {{/CLOUDAPI_IGNORE_APPROVED_FOR_PROVISIONING}}
+    {{#experimental_cloudapi_nfs_shared_volumes}}
+    "experimental_cloudapi_nfs_shared_volumes": {{{experimental_cloudapi_nfs_shared_volumes}}},
+    {{/experimental_cloudapi_nfs_shared_volumes}}
+    {{#experimental_cloudapi_automount_nfs_shared_volumes}}
+    "experimental_cloudapi_automount_nfs_shared_volumes": {{{experimental_cloudapi_automount_nfs_shared_volumes}}},
+    {{/experimental_cloudapi_automount_nfs_shared_volumes}}
     {{^CLOUDAPI_TEST_MODE}}
-    "test": false
+    "test": false,
     {{/CLOUDAPI_TEST_MODE}}
     {{#CLOUDAPI_TEST_MODE}}
-    "test": {{{CLOUDAPI_TEST_MODE}}}
+    "test": {{{CLOUDAPI_TEST_MODE}}},
     {{/CLOUDAPI_TEST_MODE}}
+    "admin_nic_tag": "admin",
+    "external_nic_tag": "external",
+    "internal_nic_tag": "internal"
 }
