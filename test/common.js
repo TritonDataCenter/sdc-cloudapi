@@ -847,6 +847,9 @@ function napiDeleteNicTagByName(opts, cb) {
     });
 }
 
+function createResourceName(prefix) {
+    return prefix + '-' + libuuid.create();
+}
 
 // --- Library
 
@@ -882,5 +885,7 @@ module.exports = {
 
     getCfg: function () {
         return CONFIG;
-    }
+    },
+
+    createResourceName: createResourceName
 };
