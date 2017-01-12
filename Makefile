@@ -5,7 +5,7 @@
 #
 
 #
-# Copyright 2016 Joyent, Inc.
+# Copyright 2017 Joyent, Inc.
 #
 
 #
@@ -33,7 +33,10 @@ TAP		:= ./node_modules/.bin/tape
 DOC_FILES	 = index.md admin.md dev.md
 RESTDOWN_FLAGS   = --brand-dir=deps/restdown-brand-remora
 EXTRA_DOC_DEPS += deps/restdown-brand-remora/.git
-JS_FILES	:= $(shell ls *.js) $(shell find lib -maxdepth 1 -name '*.js') \
+# We explicitly don't want to lint node-http-signature, as it's an external
+# repository that is exceptionally bundled in this repo to ensure backward
+# compatibilty when handling different signature formats.
+JS_FILES	:= $(shell ls *.js) $(shell find lib -name '*.js' | grep -v node-http-signature) \
 	$(shell find test -name '*.js') $(shell find bench -name '*.js') \
 	$(shell find plugins -name '*.js') \
 	$(shell find test -name '*.javascript')

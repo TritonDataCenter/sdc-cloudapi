@@ -899,6 +899,8 @@ test('nics', function (tt) {
         var path = '/my/machines/' + fixtures.otherVm.uuid + '/nics';
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'VM not found',
             statusCode: 404,
             restCode: 'ResourceNotFound',
@@ -917,6 +919,8 @@ test('nics', function (tt) {
         var path = '/my/machines/fdc3cefd-1943-4050-ba59-af5680508481/nics';
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'VM not found',
             statusCode: 404,
             restCode: 'ResourceNotFound',
@@ -935,6 +939,8 @@ test('nics', function (tt) {
         var path = '/my/machines/wowzers/nics';
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'Invalid Parameters',
             statusCode: 409,
             restCode: 'ValidationFailed',
@@ -1000,6 +1006,8 @@ test('nics', function (tt) {
         // the err message must match the 'Get non-owner NIC from owner machine'
         // test below
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'nic not found',
             statusCode: 404,
             restCode: 'ResourceNotFound',
@@ -1018,6 +1026,8 @@ test('nics', function (tt) {
         var path = '/my/machines/' + fixtures.instId + '/nics/wowzers';
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'mac has invalid format',
             statusCode: 409,
             restCode: 'InvalidArgument',
@@ -1037,6 +1047,8 @@ test('nics', function (tt) {
         var path = '/my/machines/wowzers/nics/' + mac;
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'Invalid Parameters',
             statusCode: 409,
             restCode: 'ValidationFailed',
@@ -1061,6 +1073,8 @@ test('nics', function (tt) {
         var path = '/my/machines/' + fixtures.otherVm.uuid + '/nics/' + mac;
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'VM not found',
             statusCode: 404,
             restCode: 'ResourceNotFound',
@@ -1081,6 +1095,8 @@ test('nics', function (tt) {
 
         // the err message must match the 'Get nonexistent NIC' test above
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'nic not found',
             statusCode: 404,
             restCode: 'ResourceNotFound',
@@ -1100,6 +1116,8 @@ test('nics', function (tt) {
         var path = '/my/machines/' + fixtures.otherVm.uuid + '/nics/' + mac;
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'VM not found',
             statusCode: 404,
             restCode: 'ResourceNotFound',
@@ -1118,6 +1136,8 @@ test('nics', function (tt) {
         var path = '/my/machines/fa9e18e4-654a-43a8-918b-cce04bdbf461/nics/'
             + instNic.mac.replace(/\:/g, '');
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'VM not found',
             statusCode: 404,
             restCode: 'ResourceNotFound',
@@ -1202,6 +1222,8 @@ test('nics', function (tt) {
         var args = { network: fixtures.otherNetwork.uuid };
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'owner cannot provision on network',
             statusCode: 403,
             restCode: 'NotAuthorized',
@@ -1221,6 +1243,8 @@ test('nics', function (tt) {
         var args = { network: fixtures.networks[0].network.uuid };
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'VM not found',
             statusCode: 404,
             restCode: 'ResourceNotFound',
@@ -1240,6 +1264,8 @@ test('nics', function (tt) {
         var args = { network: fixtures.otherNetwork.uuid };
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'VM not found',
             statusCode: 404,
             restCode: 'ResourceNotFound',
@@ -1260,6 +1286,8 @@ test('nics', function (tt) {
         var args = { network: fixtures.networks[1].network.uuid };
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'Server does not support that network',
             statusCode: 409,
             restCode: 'InvalidArgument',
@@ -1279,6 +1307,8 @@ test('nics', function (tt) {
         var args = { network: fixtures.networks[1].pool.uuid };
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'Server does not support that network',
             statusCode: 409,
             restCode: 'InvalidArgument',
@@ -1298,6 +1328,8 @@ test('nics', function (tt) {
         var args = { network: 'wowzers' };
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'network argument has invalid format',
             statusCode: 409,
             restCode: 'InvalidArgument',
@@ -1317,6 +1349,8 @@ test('nics', function (tt) {
         var args = { network: fixtures.networks[0].network.uuid };
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'Invalid Parameters',
             statusCode: 409,
             restCode: 'ValidationFailed',
@@ -1341,6 +1375,8 @@ test('nics', function (tt) {
         var args = { network: '05cab1d4-f816-41c0-b45f-a4ffeda5a6b5' };
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'network not found',
             statusCode: 409,
             restCode: 'InvalidArgument',
@@ -1360,6 +1396,8 @@ test('nics', function (tt) {
         var args = { network: fixtures.networks[0].network.uuid };
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'VM not found',
             statusCode: 404,
             restCode: 'ResourceNotFound',
@@ -1379,6 +1417,8 @@ test('nics', function (tt) {
         var path = '/my/machines/' + fixtures.otherVm.uuid + '/nics/' + mac;
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'VM not found',
             statusCode: 404,
             restCode: 'ResourceNotFound',
@@ -1398,6 +1438,8 @@ test('nics', function (tt) {
         var path = '/my/machines/' + fixtures.instId + '/nics/' + mac;
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'nic not found',
             statusCode: 404,
             restCode: 'ResourceNotFound',
@@ -1417,6 +1459,8 @@ test('nics', function (tt) {
         var path = '/my/machines/' + fixtures.otherVm.uuid + '/nics/' + mac;
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'VM not found',
             statusCode: 404,
             restCode: 'ResourceNotFound',
@@ -1435,6 +1479,8 @@ test('nics', function (tt) {
         var path = '/my/machines/' + fixtures.instId + '/nics/wowzers';
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'mac has invalid format',
             statusCode: 409,
             restCode: 'InvalidArgument',
@@ -1454,6 +1500,8 @@ test('nics', function (tt) {
         var path = '/my/machines/wowzers/nics/' + mac;
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'Invalid Parameters',
             statusCode: 409,
             restCode: 'ValidationFailed',
@@ -1477,6 +1525,8 @@ test('nics', function (tt) {
         var path = '/my/machines/' + fixtures.instId + '/nics/012345678901';
 
         var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'nic not found',
             statusCode: 404,
             restCode: 'ResourceNotFound',
