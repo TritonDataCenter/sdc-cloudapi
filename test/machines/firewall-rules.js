@@ -122,7 +122,12 @@ module.exports = function (suite, client, other, machine, callback) {
             t.deepEqual(body, {
                 code: 'InvalidParameters',
                 message: 'Invalid parameters',
-                errors: []
+                errors: [ {
+                    code: 'InvalidParameter',
+                    field: 'rule',
+                    message: 'Subnet "10.99.99.0/23" is invalid (bits set to ' +
+                        'right of mask)'
+                } ]
             });
 
             t.end();
