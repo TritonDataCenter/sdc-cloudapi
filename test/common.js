@@ -57,7 +57,7 @@ var PASSWD = 'secret123';
 var DEFAULT_CFG = path.join(__dirname, '..', '/etc/cloudapi.cfg');
 
 var LOG = new bunyan.createLogger({
-    level: process.env.LOG_LEVEL || 'info',
+    level: process.env.LOG_LEVEL || 'warn',
     name: 'sdccloudapitest',
     stream: process.stderr,
     serializers: restify.bunyan.serializers

@@ -708,8 +708,11 @@ function removeNic(t, instId, nic) {
     });
 }
 
+
 function waitTilNicDeleted(t, apiPath) {
-    var count = 30;
+    // Sometimes NICs take a very long time to delete due to long-reboot
+    // times that some zones experience
+    var count = 120;
 
     function check() {
         count--;
@@ -1486,6 +1489,7 @@ test('nics', function (tt) {
             });
         });
     });
+
 
     tt.test('  Remove NIC using network pool', function (t) {
         removeNic(t, fixtures.instId, instNic);
