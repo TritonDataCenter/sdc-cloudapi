@@ -86,9 +86,9 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
         function (t) {
             var expectedState = 'ready';
 
-            mod_testVolumes.waitForTransitionToState(CLIENT, testVolume.uuid,
+            mod_testVolumes.waitForTransitionToState(CLIENT, testVolume.id,
                 expectedState, function onTransition() {
-                    CLIENT.get('/my/volumes/' + testVolume.uuid,
+                    CLIENT.get('/my/volumes/' + testVolume.id,
                         function onGetVolume(getVolumeErr, req, res, volume) {
                             t.ifErr(getVolumeErr,
                                 'getting newly created volume should not ' +
@@ -109,7 +109,7 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
     });
 
     test('updating newly created volume\'s name should succeed', function (t) {
-        CLIENT.post('/my/volumes/' + testVolume.uuid, {
+        CLIENT.post('/my/volumes/' + testVolume.id, {
             name: testVolumeSecondName
         }, function onVolumeRenamed(volUpdateErr) {
             t.ifErr(volUpdateErr, 'renaming volume ' + testVolumeName + ' to ' +
@@ -133,7 +133,7 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
     });
 
     test('deleting volume should be successful', function (t) {
-        CLIENT.del('/my/volumes/' + testVolume.uuid,
+        CLIENT.del('/my/volumes/' + testVolume.id,
             function onDelVolume(delVolumeErr) {
                 t.ifErr(delVolumeErr,
                     'deleting newly created volume should not error');
@@ -146,9 +146,9 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
         function (t) {
             var expectedState = 'deleted';
 
-            mod_testVolumes.waitForTransitionToState(CLIENT, testVolume.uuid,
+            mod_testVolumes.waitForTransitionToState(CLIENT, testVolume.id,
                 expectedState, function onTransition() {
-                    CLIENT.get('/my/volumes/' + testVolume.uuid,
+                    CLIENT.get('/my/volumes/' + testVolume.id,
                         function onGetVolume(getVolumeErr, req, res, volume) {
                             t.ifErr(getVolumeErr,
                                 'getting newly created volume should not ' +

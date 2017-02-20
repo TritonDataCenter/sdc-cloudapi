@@ -91,9 +91,9 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
             var expectedState = 'ready';
 
             testVolumes.waitForTransitionToState(CLIENT,
-                testVolumeDefaultSize.uuid,
+                testVolumeDefaultSize.id,
                 expectedState, function onTransition() {
-                    CLIENT.get('/my/volumes/' + testVolumeDefaultSize.uuid,
+                    CLIENT.get('/my/volumes/' + testVolumeDefaultSize.id,
                         function onGetVolume(getVolumeErr, req, res, volume) {
                             t.ifErr(getVolumeErr,
                                 'getting newly created volume should not ' +
@@ -114,7 +114,7 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
     });
 
     test('deleting volume should be successful', function (t) {
-        CLIENT.del('/my/volumes/' + testVolumeDefaultSize.uuid,
+        CLIENT.del('/my/volumes/' + testVolumeDefaultSize.id,
             function onDelVolume(delVolumeErr) {
                 t.ifErr(delVolumeErr,
                     'deleting newly created volume should not error');
@@ -128,9 +128,9 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
             var expectedState = 'deleted';
 
             testVolumes.waitForTransitionToState(CLIENT,
-                testVolumeDefaultSize.uuid,
+                testVolumeDefaultSize.id,
                 expectedState, function onTransition() {
-                    CLIENT.get('/my/volumes/' + testVolumeDefaultSize.uuid,
+                    CLIENT.get('/my/volumes/' + testVolumeDefaultSize.id,
                         function onGetVolume(getVolumeErr, req, res, volume) {
                             t.ifErr(getVolumeErr,
                                 'getting newly created volume should not ' +
@@ -184,9 +184,9 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
             var expectedState = 'ready';
 
             testVolumes.waitForTransitionToState(CLIENT,
-                testVolumeDefaultSize.uuid,
+                testVolumeDefaultSize.id,
                 expectedState, function onTransition() {
-                    CLIENT.get('/my/volumes/' + testVolume20MibsSize.uuid,
+                    CLIENT.get('/my/volumes/' + testVolume20MibsSize.id,
                         function onGetVolume(getVolumeErr, req, res, volume) {
                             t.ifErr(getVolumeErr,
                                 'getting newly created volume should not ' +
@@ -207,7 +207,7 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
     });
 
     test('deleting volume should be successful', function (t) {
-        CLIENT.del('/my/volumes/' + testVolume20MibsSize.uuid,
+        CLIENT.del('/my/volumes/' + testVolume20MibsSize.id,
             function onDelVolume(delVolumeErr) {
                 t.ifErr(delVolumeErr,
                     'deleting newly created volume should not error');
@@ -221,9 +221,9 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
             var expectedState = 'deleted';
 
             testVolumes.waitForTransitionToState(CLIENT,
-                testVolume20MibsSize.uuid,
+                testVolume20MibsSize.id,
                 expectedState, function onTransition() {
-                    CLIENT.get('/my/volumes/' + testVolume20MibsSize.uuid,
+                    CLIENT.get('/my/volumes/' + testVolume20MibsSize.id,
                         function onGetVolume(getVolumeErr, req, res, volume) {
                             t.ifErr(getVolumeErr,
                                 'getting newly created volume should not ' +
