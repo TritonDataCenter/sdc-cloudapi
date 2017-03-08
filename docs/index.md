@@ -859,6 +859,13 @@ variable or the `--api-version=RANGE` option to each command.
 
 The rest of this section describes API changes in each version.
 
+## 8.2.1
+
+- GetMachine works with machines that do not have a package or a network. Such
+  machines cannot be created through CloudAPI, so this isn't applicable to most
+  people unless they have an operator do this for them. ListMachines no longer
+  breaks for such machines either.
+
 ## 8.2.0
 
 - This version adds support for {{shortId}} tags in the 'name' parameter when
@@ -3924,6 +3931,15 @@ credentials | Boolean  | Whether to include the generated credentials for instan
 Note that if the special input `tags=*` is provided, any other input will be
 completely ignored and the response will return all instances with any tag.
 
+Be aware that in the case of instances created with vmadm directly (i.e. not
+through CloudAPI), ips, networks, primaryIp and package may be in a different
+format than expected. The `ips` array can contain the value "dhcp", not just
+IP strings, the `networks` array can contain null values for networks that
+CloudAPI was unable to determine (e.g. as a result of a "dhcp" IP), `primaryIp`
+too can have the value of "dhcp", and the package string can be empty instead of
+a UUID. Unless ops is bypassing CloudAPI and creating instances directly, it is
+unlikely you need concern yourself with this caveat.
+
 ### Returns
 
 An array of instance objects, which contain:
@@ -4103,6 +4119,15 @@ firewall_enabled | Boolean  | Whether firewall rules are enforced on this instan
 compute_node | String  | UUID of the server on which the instance is located
 package     | String   | The id or name of the package used to create this instance
 dns_names   | Array[String] | DNS names of the instance (if the instance is using [CNS](https://docs.joyent.com/public-cloud/network/cns))
+
+Be aware that in the case of instances created with vmadm directly (i.e. not
+through CloudAPI), ips, networks, primaryIp and package may be in a different
+format than expected. The `ips` array can contain the value "dhcp", not just
+IP strings, the `networks` array can contain null values for networks that
+CloudAPI was unable to determine (e.g. as a result of a "dhcp" IP), `primaryIp`
+too can have the value of "dhcp", and the package string can be empty instead of
+a UUID. Unless ops is bypassing CloudAPI and creating instances directly, it is
+unlikely you need concern yourself with this caveat.
 
 ### Errors
 

@@ -17,6 +17,7 @@ var addPackage = common.addPackage;
 var checkNotFound = common.checkNotFound;
 var machinesCommon = require('./machines/common');
 var checkMachine = machinesCommon.checkMachine;
+var waitForJob = machinesCommon.waitForJob;
 
 
 // --- Globals
@@ -1215,7 +1216,9 @@ test('CreateMachine with {{shortId}} in alias', function (t) {
     });
 });
 
+
 test('Wait For Running {{shortId}} machine', waitForRunning);
+
 
 test('Get {{shortId}} machine', function (t) {
     if (!MACHINE_UUID) {
@@ -1240,7 +1243,84 @@ test('Get {{shortId}} machine', function (t) {
     });
 });
 
+
 test('Delete {{shortId}} machine', deleteMachine);
+
+
+test('Create packageless machine', function (t) {
+    var ownerUuid = CLIENT.account.uuid;
+    var vmDescription = {
+        owner_uuid: ownerUuid,
+        alias: 'cloudapi-packageless-machine-test',
+        brand: 'joyent-minimal',
+        networks: [ {
+            uuid: '', // filled in below
+            primary: true
+        } ],
+        ram: 64,
+        cpu_cap: 50,
+        image_uuid: IMAGE_UUID
+    };
+
+    CLIENT.napi.listNetworks({ nic_tag: 'external' }, function (err, nets) {
+        t.ifError(err, 'listing external network');
+
+        vmDescription.networks[0].uuid = nets[0].uuid;
+
+        CLIENT.vmapi.createVm(vmDescription, function (err2, vm) {
+            t.ifError(err2, 'Creating packageless VM');
+
+            MACHINE_UUID = vm.vm_uuid;
+
+            t.end();
+        });
+    });
+});
+
+
+test('Wait for running packageless machine', waitForRunning);
+
+
+test('Remove nic from packageless machine', function (t) {
+    CLIENT.vmapi.getVm({ uuid: MACHINE_UUID }, function (err, vm) {
+        t.ifError(err, 'getting VM ' + MACHINE_UUID);
+
+        var nic = vm.nics[0];
+
+        CLIENT.vmapi.removeNics({
+            uuid: MACHINE_UUID,
+            macs: [nic.mac]
+        }, function (err2, job) {
+            t.ifError(err2, 'Removing nic ' + nic.mac);
+
+            waitForJob(CLIENT, job.job_uuid, function (err3) {
+                t.ifError(err3, 'waiting for job ' + job.job_uuid);
+                t.end();
+            });
+        });
+    });
+});
+
+
+test('ListMachines with packageless/nicless machine', function (t) {
+    CLIENT.get('/my/machines', function (err, req, res, body) {
+        t.ifError(err, 'GET /my/machines error');
+        t.equal(res.statusCode, 200, 'GET /my/machines status');
+        t.ok(Array.isArray(body), 'GET /my/machines body is array');
+        t.ok(body.length, 'GET /my/machines list is not empty');
+
+        var testVm = body.filter(function (m) {
+            return m.id === MACHINE_UUID;
+        })[0];
+
+        t.ok(testVm, 'packageless/nicless VM listed successfully');
+
+        t.end();
+    });
+});
+
+
+test('Delete packageless/nicless machine', deleteMachine);
 
 
 test('teardown', function (t) {
