@@ -168,17 +168,18 @@ function createBootstrapServer(port, cb) {
 
     function bootstrapHandler(req, res, next) {
         res.send(new restify.InternalError('Failure to connect to Moray'));
+        next();
+    }
 
-        if (next) {
-            next();
-        }
+    function bootstrapMethodNotAllowed(req, res, err, next) {
+        bootstrapHandler(req, res, next);
     }
 
     ['get', 'post', 'put', 'del', 'head'].forEach(function (method) {
         bootstrapServer[method]('/.*/', bootstrapHandler);
     });
 
-    bootstrapServer.on('MethodNotAllowed', bootstrapHandler);
+    bootstrapServer.on('MethodNotAllowed', bootstrapMethodNotAllowed);
 
     bootstrapServer.listen(port, function () {
         cb(null, bootstrapServer);
