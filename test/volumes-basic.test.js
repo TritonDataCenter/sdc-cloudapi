@@ -19,6 +19,12 @@ var mod_testVolumes = require('./lib/volumes');
 
 var CONFIG = mod_config.configure();
 
+/*
+ * This regular expression is not meant to match the general ISO 8601 format,
+ * only the specific format outputted by new Date().toISOString().
+ */
+var ISO_DATE_STRING_RE = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/;
+
 if (CONFIG.experimental_nfs_shared_volumes !== true) {
     console.log('experimental_nfs_shared_volumes setting not enabled, ' +
         'skipping tests');
@@ -77,6 +83,9 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
                     'volume should have state \'' + expectedState + '\'');
                 t.equal(testVolume.vm_uuid, undefined,
                     'vm_uuid property should not be present in the response');
+                t.ok(ISO_DATE_STRING_RE.test(testVolume.create_timestamp),
+                    'create_timestamp field should match ' +
+                        ISO_DATE_STRING_RE);
 
                 t.end();
             });
@@ -86,6 +95,7 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
         CLIENT.get('/my/volumes',
             function onVolumesListed(volumesListErr, req, res, volumes) {
                 var volumesWithNewlyCreatedVolumeName;
+                var createTimestamp;
 
                 t.ifErr(volumesListErr, 'listing volumes shoult not error');
                 t.ok(Array.isArray(volumes),
@@ -100,6 +110,12 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
                     'Only one volume should have name ' + testVolumeName);
                 t.equal(volumesWithNewlyCreatedVolumeName[0].vm_uuid, undefined,
                     'vm_uuid property should not be present in the response');
+
+                createTimestamp =
+                    volumesWithNewlyCreatedVolumeName[0].create_timestamp;
+                t.ok(ISO_DATE_STRING_RE.test(createTimestamp),
+                    'create_timestamp field should match ' +
+                        ISO_DATE_STRING_RE);
 
                 t.end();
             });
@@ -116,6 +132,9 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
                     'volume name should be \'' + testVolumeName + '\'');
                 t.equal(testVolume.vm_uuid, undefined,
                     'vm_uuid property should not be present in the response');
+                t.ok(ISO_DATE_STRING_RE.test(testVolume.create_timestamp),
+                    'create_timestamp field should match ' +
+                        ISO_DATE_STRING_RE);
 
                 t.end();
             });
