@@ -75,6 +75,8 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
                         '\'');
                 t.equal(testVolume.state, 'creating',
                     'volume should have state \'' + expectedState + '\'');
+                t.equal(testVolume.vm_uuid, undefined,
+                    'vm_uuid property should not be present in the response');
 
                 t.end();
             });
@@ -96,6 +98,8 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
                     });
                 t.ok(volumesWithNewlyCreatedVolumeName.length, 1,
                     'Only one volume should have name ' + testVolumeName);
+                t.equal(volumesWithNewlyCreatedVolumeName[0].vm_uuid, undefined,
+                    'vm_uuid property should not be present in the response');
 
                 t.end();
             });
@@ -110,6 +114,8 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
                     'response should be a non-null object ');
                 t.equal(volume.name, testVolumeName,
                     'volume name should be \'' + testVolumeName + '\'');
+                t.equal(testVolume.vm_uuid, undefined,
+                    'vm_uuid property should not be present in the response');
 
                 t.end();
             });
