@@ -33,6 +33,7 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
         common.createResourceName('test-volumes-size-default');
     var testVolumeName20MibsSize =
         common.createResourceName('test-volumes-size-20');
+    var VOLUME_SIZE_20_GiBs = 20 * units.MIBS_IN_GB;
 
     test('setup', function (t) {
         common.setup({clientApiVersion: '~8.0'}, function (_, clients, server) {
@@ -156,7 +157,7 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
             CLIENT.post('/my/volumes', {
                 name: testVolumeName20MibsSize,
                 type: 'tritonnfs',
-                size: '20g'
+                size: VOLUME_SIZE_20_GiBs
             }, function onVolumeCreated(volumeCreationErr, req, res, volume) {
                 var expectedState = 'creating';
                 var expectedType = 'tritonnfs';
@@ -173,8 +174,8 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
                         '\'');
                 t.equal(testVolume20MibsSize.state, 'creating',
                     'volume should have state \'' + expectedState + '\'');
-                t.equal(testVolume20MibsSize.size, 20 * units.MIBS_IN_GB,
-                    'volume size should be ' + 20 * units.MIBS_IN_GB + ' MiBs');
+                t.equal(testVolume20MibsSize.size, VOLUME_SIZE_20_GiBs,
+                    'volume size should be ' + VOLUME_SIZE_20_GiBs + ' MiBs');
                 t.end();
             });
     });
