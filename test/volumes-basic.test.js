@@ -36,6 +36,7 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
 
     var testVolumeName = common.createResourceName('test-volumes-basic');
     var testVolume;
+    var testVolumeStorageVmUuid;
 
     test('setup', function (t) {
         common.setup({clientApiVersion: '~8.0'}, function (_, clients, server) {
@@ -166,6 +167,105 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
             });
     });
 
+    test('getting volume directly through VOLAPI', function (t) {
+        CLIENT.volapi.getVolume({
+            uuid: testVolume.id
+        }, function onGetVol(getVolErr, volume) {
+            t.ifErr(getVolErr,
+                'getting volume through VOLAPI should not error');
+            t.ok(volume, 'a volume should be found');
+            t.ok(volume.vm_uuid, 'volume should have a VM uuid');
+
+            testVolumeStorageVmUuid = volume.vm_uuid;
+
+            t.end();
+        });
+    });
+
+    test('listing machines should NOT include volume\'s storage VM',
+        function (t) {
+            CLIENT.get('/my/machines',
+                function onMachinesListed(machinesListErr, req, res, machines) {
+                    var machinesWithStorageVmUuid;
+
+                    t.ifErr(machinesListErr,
+                        'listing machines should not error');
+
+                    if (machines && machines.length > 0) {
+                        machinesWithStorageVmUuid =
+                            machines.filter(function hasStorageVmUuid(machine) {
+                                return machine.id === testVolumeStorageVmUuid;
+                            });
+
+                        t.ok(machinesWithStorageVmUuid.length, 0,
+                            'No machine should have uuid of a storage VM uuid');
+                    } else {
+                        t.ok(!machines || machines.length === 0,
+                            'listing machines returned an empty list');
+                    }
+
+                    t.end();
+                });
+        });
+
+    test('getting nfs volume\'s storage VM should error', function (t) {
+        CLIENT.get('/my/machines/' + testVolumeStorageVmUuid,
+            function onMachineGet(machineGetErr, req, res, machine) {
+                var expectedErrCode = 'ResourceNotFound';
+
+                t.ok(machineGetErr,
+                    'getting storage VM machine should error');
+                t.equal(machineGetErr.restCode, expectedErrCode,
+                    'error code should be: ' + expectedErrCode);
+
+                t.end();
+            });
+    });
+
+    test('sending HEAD req for nfs volume\'s storage VM should error',
+        function (t) {
+            CLIENT.head('/my/machines/' + testVolumeStorageVmUuid,
+                function onMachineHead(machineHeadErr, req, res, machine) {
+                    var expectedStatusCode = 404;
+
+                    t.ok(machineHeadErr,
+                        'sending HEAD request for storage VM machine should ' +
+                            'error');
+                    t.equal(machineHeadErr.statusCode, expectedStatusCode,
+                        'status code should be: ' + expectedStatusCode);
+
+                    t.end();
+                });
+        });
+
+    test('updating nfs volume\'s storage VM should error', function (t) {
+        CLIENT.post('/my/machines/' + testVolumeStorageVmUuid,
+            function onMachineUpdate(machineUpdateErr, req, res, machine) {
+                var expectedErrCode = 'ResourceNotFound';
+
+                t.ok(machineUpdateErr,
+                    'updating storage VM machine should error');
+                t.equal(machineUpdateErr.restCode, expectedErrCode,
+                    'error code should be: ' + expectedErrCode);
+
+                t.end();
+            });
+    });
+
+    test('deleting nfs volume\'s storage VM should error', function (t) {
+        CLIENT.del('/my/machines/' + testVolumeStorageVmUuid,
+            function onMachineDel(machineDelErr, req, res, machine) {
+                var expectedErrCode = 'ResourceNotFound';
+
+                t.ok(machineDelErr,
+                    'deleting storage VM machine should error');
+                t.equal(machineDelErr.restCode, expectedErrCode,
+                    'error code should be: ' + expectedErrCode);
+
+                t.end();
+            });
+    });
+
     test('deleting volume should be successful', function (t) {
         CLIENT.del('/my/volumes/' + testVolume.id,
             function onDelVolume(delVolumeErr) {
@@ -174,7 +274,6 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
                 t.end();
             });
     });
-
 
     test('volume should eventually transition to state \'deleted\'',
         function (t) {
