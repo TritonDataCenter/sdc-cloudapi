@@ -17,7 +17,7 @@ function waitForTransitionToState(cloudapiClient, volumeUuid, expectedState,
     assert.string(expectedState, 'expectedState');
     assert.func(callback, 'callback');
 
-    var MAX_NB_RETRIES = 60;
+    var MAX_NB_RETRIES = 120;
     var nbRetriesSoFar = 0;
     var RETRY_DELAY_IN_MS = 1000;
 
