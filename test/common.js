@@ -30,6 +30,7 @@ var NAPI = require('sdc-clients').NAPI;
 var IMGAPI = require('sdc-clients').IMGAPI;
 var PAPI = require('sdc-clients').PAPI;
 var MAHI = require('mahi');
+var VOLAPI = require('sdc-clients').VOLAPI;
 
 var app = require('../lib').app;
 var apertureConfig = require('aperture-config').config;
@@ -207,6 +208,20 @@ function _ufds() {
     });
 }
 
+function _volapi() {
+    return new VOLAPI({
+        version: '^1',
+        userAgent: 'cloudapi-tests',
+        url: process.env.VOLAPI_URL || CONFIG.volapi.url ||
+            'http://10.99.99.41',
+        retry: {
+            retries: 1,
+            minTimeout: 1000
+        },
+        log: LOG,
+        agent: false
+    });
+}
 
 function clientTeardown(client, cb) {
     client.close();
@@ -359,6 +374,7 @@ function setupClient(version, serverUrl, user, keyId, keyPath, parentAcc, cb) {
     client.papi   = _papi();
     client.mahi   = _mahi();
     client.ufds   = _ufds();
+    client.volapi = _volapi();
 
     var ufds = client.ufds;
 
