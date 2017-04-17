@@ -163,6 +163,14 @@ test('search packages by name', function (t) {
 });
 
 
+test('search packages by name with wildcard', function (t) {
+    var name = SDC_512.name.slice(0, -4) + '*';
+    searchAndCheck('name=' + name, t, function (pkg) {
+        t.equal(pkg.name, SDC_512.name);
+    });
+});
+
+
 test('search packages by memory', function (t) {
     searchAndCheck('memory=128', t, function (pkg) {
         t.equal(pkg.memory, 128);

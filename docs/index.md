@@ -860,6 +860,12 @@ variable or the `--api-version=RANGE` option to each command.
 The rest of this section describes API changes in each version.
 
 
+## 8.1.1
+
+- It's now possible to query packages using wildcards. See the
+[ListPackages](#ListPackages) section.
+
+
 ## 8.1.0
 
 - This version should have no visible API changes, but updates a lot of
@@ -3701,6 +3707,11 @@ group      | String   | The group this package belongs to
 
 When any values are provided for one or more of the aforementioned inputs, the
 retrieved packages will match all of them.
+
+When querying, wildcards (i.e. '*') are allowed for string fields. For example,
+to list all packages with a name that starts with "foo", give "foo*" as the
+package name.
+
 
 ### Returns
 
