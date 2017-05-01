@@ -173,9 +173,12 @@ module.exports = function (suite, client, other, machine, callback) {
         }
 
         var unrecognizedMsg = 'Unrecognized special triton tag "triton.foo"';
-        var stringMsg = '"triton.cns.services" must be a string';
-        var booleanMsg = '"triton.cns.disable" must be a boolean';
-        var dnsMsg = '"_foo.bar" is not DNS safe';
+        var stringMsg = 'Triton tag "triton.cns.services" value must be a ' +
+            'string: true (boolean)';
+        var booleanMsg = 'Triton tag "triton.cns.disable" value must be a ' +
+            'boolean: "true" (string)';
+        var dnsMsg = 'invalid "triton.cns.services" tag: Expected DNS name ' +
+            'but "_" found.';
         var dockerMsg = 'Special tag "docker:label:com.docker." not supported';
 
         function postBadTritonTag(_, next) {
