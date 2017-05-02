@@ -12,7 +12,7 @@ markdown2extras: tables, code-friendly
 -->
 
 <!--
-    Copyright 2016, Joyent, Inc.
+    Copyright 2017, Joyent, Inc.
 -->
 
 
@@ -858,6 +858,13 @@ can restrict the API version via the `SDC_API_VERSION=RANGE` environment
 variable or the `--api-version=RANGE` option to each command.
 
 The rest of this section describes API changes in each version.
+
+## 8.2.0
+
+- This version adds support for {{shortId}} tags in the 'name' parameter when
+  creating a machine using [CreateMachine](#CreateMachine) machine. Any
+  instances of {{shortId}} in the name will be replaced with the shortened
+  version (first 8 characters) of the machine's id.
 
 
 ## 8.1.1
@@ -4257,7 +4264,7 @@ be changed later within the instance, if desired.
 
 **Field** | **Type** | **Description**
 --------- | -------- | ---------------
-name      | String   | Friendly name for this instance; default is the first 8 characters of the machine id
+name      | String   | Friendly name for this instance; default is the first 8 characters of the machine id. If the name includes the string {{shortId}}, any instances of that tag within the name will be replaced by the first 8 characters of the machine id.
 package   | String   | Id of the package to use on provisioning, obtained from [ListPackages](#ListPackages)
 image     | String   | The image UUID (the "id" field in [ListImages](#ListImages))
 networks  | Array    | Desired networks ids, obtained from [ListNetworks](#ListNetworks)

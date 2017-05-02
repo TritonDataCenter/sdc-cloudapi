@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2016, Joyent, Inc.
+ * Copyright 2017, Joyent, Inc.
  */
 
 var util = require('util');
@@ -1197,6 +1197,50 @@ function (t) {
 
 
 test('Delete Docker machine', deleteMachine);
+
+
+// Test using {{shortId}} in alias
+test('CreateMachine with {{shortId}} in alias', function (t) {
+    var obj = {
+        image: IMAGE_UUID,
+        package: SDC_256.name,
+        name: 'db-{{shortId}}-1.0',
+        server_uuid: HEADNODE_UUID,
+        firewall_enabled: true
+    };
+
+    machinesCommon.createMachine(t, CLIENT, obj, function (_, machineUuid) {
+        MACHINE_UUID = machineUuid;
+        t.end();
+    });
+});
+
+test('Wait For Running {{shortId}} machine', waitForRunning);
+
+test('Get {{shortId}} machine', function (t) {
+    if (!MACHINE_UUID) {
+        t.notOk('no MACHINE_UUID, cannot get');
+        t.end();
+        return;
+    }
+
+    CLIENT.get('/my/machines/' + MACHINE_UUID, function (err, req, res, body) {
+        var shortId;
+
+        t.ifError(err, 'GET /my/machines error');
+
+        if (!err) {
+            // first bit of 445a0be6-016f-e232-...
+            shortId = body.id.split('-')[0];
+            t.equal(body.name, 'db-' + shortId + '-1.0',
+                'resulting alias was as expected');
+        }
+
+        t.end();
+    });
+});
+
+test('Delete {{shortId}} machine', deleteMachine);
 
 
 test('teardown', function (t) {
