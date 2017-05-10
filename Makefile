@@ -49,6 +49,8 @@ CLEAN_FILES	+= node_modules cscope.files
 # "tools/mk/Makefile.node_prebuilt.targ" for details.
 NODE_PREBUILT_VERSION=v4.6.1
 ifeq ($(shell uname -s),SunOS)
+	# This is sdc-minimal-multiarch-lts@15.4.1, compat with
+	# triton-origin-multiarch-15.4.1.
 	NODE_PREBUILT_IMAGE=18b094b0-eb01-11e5-80c1-175dac7ddf02
 	NODE_PREBUILT_TAG=zone
 endif
