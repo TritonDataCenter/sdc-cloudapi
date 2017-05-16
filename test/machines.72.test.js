@@ -388,6 +388,7 @@ test('sub-user tests', function (t) {
     });
 });
 
+
 test('Add submachine role-tag', function (t) {
     CLIENT.put({
         path: '/' + ACCOUNT_NAME + '/machines/' + SUB_MACHINE_UUID,
@@ -402,6 +403,23 @@ test('Add submachine role-tag', function (t) {
         t.ok(body['role-tag']);
         t.ok(Array.isArray(body['role-tag']));
         t.equal(body['role-tag'][0], ROLE_NAME);
+        t.end();
+    });
+});
+
+
+test('Verify submachine role-tag', function (t) {
+    CLIENT.get({
+        path: '/' + ACCOUNT_NAME + '/machines/' + SUB_MACHINE_UUID,
+        headers: {
+            'accept-version': '~7.2',
+            'role-tag': true
+        }
+    }, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        t.ok(res.headers['role-tag'], 'resource role-tag header');
+        t.equal(res.headers['role-tag'], ROLE_NAME, 'resource role-tag');
         t.end();
     });
 });
