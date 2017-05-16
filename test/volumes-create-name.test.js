@@ -15,16 +15,9 @@ var vasync = require('vasync');
 var common = require('./common');
 var mod_config = require('../lib/config.js');
 var mod_testConfig = require('./lib/config');
-var mod_testNetworks = require('./lib/networks');
 var mod_testVolumes = require('./lib/volumes');
 
 var CONFIG = mod_config.configure();
-
-/*
- * This regular expression is not meant to match the general ISO 8601 format,
- * only the specific format outputted by new Date().toISOString().
- */
-var ISO_DATE_STRING_RE = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/;
 
 if (CONFIG.experimental_nfs_shared_volumes !== true) {
     console.log('experimental_nfs_shared_volumes setting not enabled, ' +
@@ -49,7 +42,7 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
             t.ifErr(volumeCreationErr,
                 'creating a volume with no name should succeed');
             t.ok(testVolume, 'should have set testVolume');
-            t.equal(testVolume.name.length, 64,
+            t.ok((testVolume.name.length > 1),
                 'returned volume should have a name, got: '
                 + JSON.stringify(testVolume.name));
 
