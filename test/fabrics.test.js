@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2015, Joyent, Inc.
+ * Copyright (c) 2017, Joyent, Inc.
  */
 
 var assert = require('assert-plus');
@@ -109,7 +109,8 @@ function afterFindInList(t, legitUuids, params, callback, err, req, res, body) {
 
     body.forEach(function (net) {
         t.notEqual(legitUuids.indexOf(net.id), -1,
-            'cloudapi net listing contains networks it should not');
+            fmt('network %s from CloudAPI network listing is in legitUuids: %j',
+                net.id, legitUuids));
 
         if (net.name === params.name) {
             found = net;
@@ -268,7 +269,8 @@ function findVLANinList(t, params, callback) {
                 // check, since VLANs from different owners can have the same
                 // ids
                 t.notEqual(viewableIds.indexOf(vlan.vlan_id), -1,
-                    'cloudapi vlan listing contains vlans it should not');
+                    fmt('VLAN %s from CloudAPI VLAN listing is in '
+                        + 'viewableIds: %j', vlan.vlan_id, viewableIds));
 
                 if (vlan.name === params.name) {
                     t.deepEqual(vlan, params, 'params');
@@ -292,7 +294,8 @@ function findVLANinList(t, params, callback) {
 function getViewableUuids(t, nets, accountUuid) {
     var viewableUuids = nets.filter(function (net) {
         if (net.owner_uuids && net.owner_uuids.indexOf(accountUuid) === -1) {
-            t.ok(false, 'napi listing contains networks it should not');
+            t.ok(false, fmt('account %s is in network %s "owner_uuids": %j',
+                accountUuid, net.uuid, net.owner_uuids));
             return false;
         }
         return true;
