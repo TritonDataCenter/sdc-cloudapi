@@ -10,6 +10,7 @@
 
 var assert = require('assert-plus');
 var test = require('tape').test;
+var verror = require('verror');
 
 var common = require('./common');
 var mod_config = require('../lib/config.js');
@@ -275,30 +276,20 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
             });
     });
 
-    test('volume should eventually transition to state \'deleted\'',
-        function (t) {
-            var expectedState = 'deleted';
+    test('volume should eventually disappear', function (t) {
+        mod_testVolumes.waitForDeletion(CLIENT, testVolume.id,
+            function onDeleted() {
+                CLIENT.get('/my/volumes/' + testVolume.id,
+                    function onGetVolume(getVolumeErr) {
+                        t.ok(verror.hasCauseWithName(getVolumeErr,
+                            'VOLUME_NOT_FOUNDError'), 'expected ' +
+                            'VOLUME_NOT_FOUNDError error, got: ' +
+                            (getVolumeErr ? getVolumeErr.name :
+                            JSON.stringify(getVolumeErr)));
 
-            mod_testVolumes.waitForTransitionToState(CLIENT, testVolume.id,
-                expectedState, function onTransition() {
-                    CLIENT.get('/my/volumes/' + testVolume.id,
-                        function onGetVolume(getVolumeErr, req, res, volume) {
-                            t.ifErr(getVolumeErr,
-                                'getting newly created volume should not ' +
-                                    'error');
-                            t.ok(typeof (volume) === 'object' &&
-                                volume !== null,
-                                    'response should be a non-null object');
-                            t.equal(volume.name, testVolumeName,
-                                'volume name should be \'' + testVolumeName +
-                                    '\'');
-                            t.equal(volume.state, expectedState,
-                                'volume should have transitioned to state \'' +
-                                    expectedState + '\'');
-
-                            t.end();
-                    });
-            });
+                        t.end();
+                });
+        });
     });
 
     test('teardown', function (t) {
