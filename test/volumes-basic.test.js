@@ -292,6 +292,39 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
         });
     });
 
+    // We created and deleted some VMs above. Without a predicate or a state
+    // filter, we should not see any 'deleted' or 'failed' in a default query.
+    test('/my/volumes should not include deleted or failed by default',
+        function (t) {
+
+            CLIENT.get('/my/volumes',
+                function onGetVolumes(getVolumesErr, req, res, volumes) {
+                    var idx;
+                    var state;
+                    var statesFound = {};
+
+                    t.ifErr(getVolumesErr, 'getting volumes should succeed');
+                    t.ok(typeof (volumes) === 'object' &&
+                    volumes !== null,
+                        'response should be a non-null object');
+
+                    for (idx = 0; idx < volumes.length; idx++) {
+                        state = volumes[idx].state;
+                        if (!statesFound.hasOwnProperty(state)) {
+                            statesFound[state] = 0;
+                        }
+                        statesFound[state]++;
+                    }
+
+                    t.equal(statesFound['failed'], undefined,
+                        'results should include no failed volumes');
+                    t.equal(statesFound['deleted'], undefined,
+                        'results should include no deleted volumes');
+
+                    t.end();
+                });
+    });
+
     test('teardown', function (t) {
         common.teardown(CLIENTS, SERVER, function () {
             t.end();
