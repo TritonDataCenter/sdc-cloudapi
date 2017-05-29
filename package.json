@@ -38,7 +38,7 @@
         "joyent-schemas": "git+https://github.com/joyent/schemas.git#caf3a226ed0707f5da897e1da151cc6d97fccda2",
         "jsprim": "0.6.1",
         "strsplit": "1.0.0",
-        "verror": "1.6.1",
+        "verror": "1.10.0",
         "xregexp": "3.1.0"
     },
     "devDependencies": {
