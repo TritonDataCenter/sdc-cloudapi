@@ -10,6 +10,7 @@
 
 var assert = require('assert-plus');
 var test = require('tape').test;
+var verror = require('verror');
 
 var common = require('./common');
 var mod_config = require('../lib/config.js');
@@ -123,30 +124,18 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
             });
     });
 
+    test('volume should eventually disappear', function (t) {
+        testVolumes.waitForDeletion(CLIENT, testVolumeDefaultSize.id,
+            function onDeleted() {
+                CLIENT.get('/my/volumes/' + testVolumeDefaultSize.id,
+                    function onGetVolume(getVolumeErr) {
+                        t.ok(verror.hasCauseWithName(getVolumeErr,
+                            'VOLUME_NOT_FOUNDError'), 'expected ' +
+                            'VOLUME_NOT_FOUNDError error, got: ' +
+                            (getVolumeErr ? getVolumeErr.name :
+                            JSON.stringify(getVolumeErr)));
 
-    test('volume should eventually transition to state \'deleted\'',
-        function (t) {
-            var expectedState = 'deleted';
-
-            testVolumes.waitForTransitionToState(CLIENT,
-                testVolumeDefaultSize.id,
-                expectedState, function onTransition() {
-                    CLIENT.get('/my/volumes/' + testVolumeDefaultSize.id,
-                        function onGetVolume(getVolumeErr, req, res, volume) {
-                            t.ifErr(getVolumeErr,
-                                'getting newly created volume should not ' +
-                                    'error');
-                            t.ok(typeof (volume) === 'object' &&
-                                volume !== null,
-                                    'response should be a non-null object');
-                            t.equal(volume.name, testVolumeNameDefaultSize,
-                                'volume name should be \'' +
-                                    testVolumeNameDefaultSize + '\'');
-                            t.equal(volume.state, expectedState,
-                                'volume should have transitioned to state \'' +
-                                    expectedState + '\'');
-
-                            t.end();
+                        t.end();
                     });
             });
     });
@@ -216,30 +205,18 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
             });
     });
 
+    test('volume should eventually disappear', function (t) {
+        testVolumes.waitForDeletion(CLIENT, testVolume20MibsSize.id,
+            function onDeleted() {
+                CLIENT.get('/my/volumes/' + testVolume20MibsSize.id,
+                    function onGetVolume(getVolumeErr) {
+                        t.ok(verror.hasCauseWithName(getVolumeErr,
+                            'VOLUME_NOT_FOUNDError'), 'expected ' +
+                            'VOLUME_NOT_FOUNDError error, got: ' +
+                            (getVolumeErr ? getVolumeErr.name :
+                            JSON.stringify(getVolumeErr)));
 
-    test('volume should eventually transition to state \'deleted\'',
-        function (t) {
-            var expectedState = 'deleted';
-
-            testVolumes.waitForTransitionToState(CLIENT,
-                testVolume20MibsSize.id,
-                expectedState, function onTransition() {
-                    CLIENT.get('/my/volumes/' + testVolume20MibsSize.id,
-                        function onGetVolume(getVolumeErr, req, res, volume) {
-                            t.ifErr(getVolumeErr,
-                                'getting newly created volume should not ' +
-                                    'error');
-                            t.ok(typeof (volume) === 'object' &&
-                                volume !== null,
-                                    'response should be a non-null object');
-                            t.equal(volume.name, testVolumeName20MibsSize,
-                                'volume name should be \'' +
-                                testVolumeName20MibsSize + '\'');
-                            t.equal(volume.state, expectedState,
-                                'volume should have transitioned to state \'' +
-                                    expectedState + '\'');
-
-                            t.end();
+                        t.end();
                     });
             });
     });
