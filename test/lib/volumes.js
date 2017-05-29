@@ -9,6 +9,7 @@
  */
 
 var assert = require('assert-plus');
+var verror = require('verror');
 
 function waitForTransitionToState(cloudapiClient, volumeUuid, expectedState,
     callback) {
@@ -42,6 +43,42 @@ function waitForTransitionToState(cloudapiClient, volumeUuid, expectedState,
     pollVolumeState();
 }
 
+function waitForDeletion(cloudapiClient, volumeUuid, callback) {
+    assert.object(cloudapiClient, 'cloudapiClient');
+    assert.uuid(volumeUuid, 'volumeUuid');
+    assert.func(callback, 'callback');
+
+    var MAX_NB_RETRIES = 120;
+    var nbRetriesSoFar = 0;
+    var RETRY_DELAY_IN_MS = 1000;
+
+    function pollVolumeState() {
+        if (nbRetriesSoFar > MAX_NB_RETRIES) {
+            callback();
+        } else {
+            ++nbRetriesSoFar;
+
+            cloudapiClient.get('/my/volumes/' + volumeUuid,
+                function onGetVolume(getVolumeErr, req, res, volume) {
+                    if (getVolumeErr) {
+                        if (verror.hasCauseWithName(getVolumeErr,
+                            'VOLUME_NOT_FOUNDError')) {
+
+                            callback();
+                            return;
+                        }
+                        callback(getVolumeErr);
+                    } else {
+                        setTimeout(pollVolumeState, RETRY_DELAY_IN_MS);
+                    }
+                });
+        }
+    }
+
+    pollVolumeState();
+}
+
 module.exports = {
-    waitForTransitionToState: waitForTransitionToState
+    waitForTransitionToState: waitForTransitionToState,
+    waitForDeletion: waitForDeletion
 };
