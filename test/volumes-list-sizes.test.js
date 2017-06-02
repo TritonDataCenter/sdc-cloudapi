@@ -59,7 +59,8 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
             CLIENT.get('/my/volumes/sizes?type=tritonnfs',
                 function onGetVolumeSizes(err, req, res, volumeSizes) {
                     t.ifErr(err, 'GET /my/volumes/sizes should succeed');
-                    t.ok(volumeSizes, 'returned volumeSizes should be an object');
+                    t.ok(volumeSizes,
+                        'returned volumeSizes should be an object');
                     t.ok(Array.isArray(volumeSizes),
                         'returned volumeSizes should also be an array');
                     t.ok(volumeSizes.length > 0,
