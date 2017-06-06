@@ -40,24 +40,13 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
         });
     });
 
-    /*
-     * This is necessary so that we proceed with the rest of the tests suite
-     * only after the entry for the newly added user (including its default
-     * fabric network used to provision volumes) is present in UFDS.
-     */
-    test('getting config from ufds', function (t) {
-        mod_testConfig.waitForAccountConfigReady(CLIENT,
-            function onConfigReady(configReadyErr) {
-                t.ifErr(configReadyErr, 'newly created user\'s config should ' +
-                    'eventually be created');
-                t.end();
-            });
-    });
-
     test('should be able to get volume sizes',
         function (t) {
             CLIENT.get('/my/volumes/sizes?type=tritonnfs',
                 function onGetVolumeSizes(err, req, res, volumeSizes) {
+                    var idx = 0;
+                    var sorted = true;
+
                     t.ifErr(err, 'GET /my/volumes/sizes should succeed');
                     t.ok(volumeSizes,
                         'returned volumeSizes should be an object');
@@ -74,8 +63,33 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
                             volumeSizes[0].description);
                     }
 
+                    // check that volume sizes are in ascending order
+                    for (idx = 0; idx < volumeSizes.length; idx++) {
+                        if (idx > 0 &&
+                            volumeSizes[idx - 1] > volumeSizes[idx]) {
+
+                            sorted = false;
+                        }
+                    }
+                    t.ok(sorted, 'volume sizes should be in ascending order');
+
                     t.end();
                 });
+    });
+
+    test(' GET /my/volumes/sizes?type=invalidType should fail', function (t) {
+        CLIENT.get('/my/volumes/sizes?type=invalidType',
+            function onGetVolumeSizes(err, req, res, body) {
+                t.ok(err, 'expected error listing volume sizes, got: ' +
+                    (err ? err.message : JSON.stringify(err)));
+                t.ok(body, 'expected to get a body');
+                if (body) {
+                    t.equal(body.message, 'Invalid volume type: invalidType. ' +
+                        'Volume type should be one of: tritonnfs',
+                        'expected body to be an invalid type error');
+                }
+                t.end();
+            });
     });
 
     test('teardown', function (t) {
