@@ -174,23 +174,9 @@ function deleteFixtures(t, fixtures, cb) {
                 next();
                 return;
             }
-            CLIENT.vmapi.listJobs({
-                vm_uuid: ctx.instId,
-                task: 'destroy'
-            }, function (err, jobs) {
-                t.ifError(err, 'list "destroy" jobs for vm ' + ctx.instId);
-                if (err) {
-                    next(err);
-                    return;
-                }
-
-                t.ok(Array.isArray(jobs), 'got an array of jobs');
-                var job = jobs[0];
-                t.ok(job, 'first one is job ' + job.uuid);
-                waitForJob(CLIENT, job.uuid, function (err2) {
-                    t.ifError(err2, 'waitForJob ' + job.uuid);
-                    next(err2);
-                });
+            waitForJob(CLIENT, ctx.deleteJobUuid, function (err) {
+                t.ifError(err, 'waitForJob ' + ctx.deleteJobUuid);
+                next(err);
             });
         },
 
@@ -198,13 +184,14 @@ function deleteFixtures(t, fixtures, cb) {
             if (fixtures) {
                 ctx.headnode = fixtures.headnode;
                 next();
-            } else {
-                common.getHeadnode(CLIENT, function (err, headnode) {
-                    t.ifError(err, 'getHeadnode');
-                    ctx.headnode = headnode;
-                    next();
-                });
+                return;
+
             }
+            common.getHeadnode(CLIENT, function (err, headnode) {
+                t.ifError(err, 'getHeadnode');
+                ctx.headnode = headnode;
+                next();
+            });
         },
 
         function removeServerTags(ctx, next) {
