@@ -42,12 +42,12 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
 
     test('should be able to get volume sizes',
         function (t) {
-            CLIENT.get('/my/volumes/sizes?type=tritonnfs',
+            CLIENT.get('/my/volumesizes?type=tritonnfs',
                 function onGetVolumeSizes(err, req, res, volumeSizes) {
                     var idx = 0;
                     var sorted = true;
 
-                    t.ifErr(err, 'GET /my/volumes/sizes should succeed');
+                    t.ifErr(err, 'GET /my/volumesizes should succeed');
                     t.ok(volumeSizes,
                         'returned volumeSizes should be an object');
                     t.ok(Array.isArray(volumeSizes),
@@ -77,8 +77,8 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
                 });
     });
 
-    test(' GET /my/volumes/sizes?type=invalidType should fail', function (t) {
-        CLIENT.get('/my/volumes/sizes?type=invalidType',
+    test(' GET /my/volumesizes?type=invalidType should fail', function (t) {
+        CLIENT.get('/my/volumesizes?type=invalidType',
             function onGetVolumeSizes(err, req, res, body) {
                 t.ok(err, 'expected error listing volume sizes, got: ' +
                     (err ? err.message : JSON.stringify(err)));
