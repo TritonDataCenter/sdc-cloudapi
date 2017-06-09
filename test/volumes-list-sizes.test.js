@@ -40,6 +40,22 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
         });
     });
 
+    test('should be able to get volume sizes w/ default type',
+        function (t) {
+            CLIENT.get('/my/volumesizes',
+                function onGetVolumeSizes(err, req, res, volumeSizes) {
+                    t.ifErr(err, 'GET /my/volumesizes should succeed');
+                    t.ok(volumeSizes,
+                        'returned volumeSizes should be an object');
+                    t.ok(Array.isArray(volumeSizes),
+                        'returned volumeSizes should also be an array');
+                    t.ok(volumeSizes.length > 0,
+                        'should have at least one volumeSize entry');
+
+                    t.end();
+                });
+    });
+
     test('should be able to get volume sizes',
         function (t) {
             CLIENT.get('/my/volumesizes?type=tritonnfs',
