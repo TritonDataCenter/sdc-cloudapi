@@ -23,6 +23,7 @@
         "bunyan": "1.8.1",
         "cueball": "2.1.1",
         "kang": "1.1.0",
+        "krill": "1.0.1",
         "sdc-clients": "git+https://github.com/joyent/node-sdc-clients.git#tritonnfs",
         "ufds": "1.3.0",
         "semver": "2.2.1",
