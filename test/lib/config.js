@@ -15,7 +15,7 @@ function waitForAccountConfigReady(client, callback) {
     assert.func(callback, 'callback');
 
     var nbTries = 0;
-    var MAX_NB_TRIES = 10;
+    var MAX_NB_TRIES = 20;
     var TRY_DELAY_IN_MS = 1000;
 
     function getConfig() {
@@ -31,7 +31,7 @@ function waitForAccountConfigReady(client, callback) {
                         return;
                     }
                 } else {
-                    callback();
+                    callback(null, ufdsConfig);
                     return;
                 }
             });
