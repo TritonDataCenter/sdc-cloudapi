@@ -14,7 +14,9 @@ var vasync = require('vasync');
 
 var common = require('./common');
 var mod_config = require('../lib/config.js');
+
 var CONFIG = mod_config.configure();
+
 if (CONFIG.experimental_nfs_shared_volumes !== true) {
     console.log('experimental_nfs_shared_volumes setting not enabled, ' +
         'skipping tests');
