@@ -326,7 +326,8 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
     });
 
     test('teardown', function (t) {
-        common.teardown(CLIENTS, SERVER, function () {
+        common.teardown(CLIENTS, SERVER, function onTeardown(err) {
+            t.ifErr(err, 'teardown should be successful, got: ' + err);
             t.end();
         });
     });
