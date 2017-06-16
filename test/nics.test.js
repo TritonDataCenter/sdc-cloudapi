@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2016 Joyent, Inc.
+ * Copyright (c) 2017, Joyent, Inc.
  */
 
 /*
@@ -638,8 +638,36 @@ function verifyUnchangedNics(t, mutator) {
                 belongs_to_type: 'zone'
             }, function (err2, newNics) {
                 t.ifError(err2, 'NAPI ListNics for newNics');
-                t.deepEqual(sortNics(origNics), sortNics(newNics),
-                    'origNics and newNics should be the same');
+
+                /*
+                 * Ignore some useless fields:
+                 * - The 'state' property of NICs isn't currently useful for
+                 *   anything. When a NIC is created in NAPI it is typically
+                 *   set to state=provisioning. After that, net-agent will
+                 *   asynchronously set it to 'running' or 'stopped' depending
+                 *   on the VM state. There is also a reference to updating
+                 *   nic.state in sdc-vmapi.git -- but that looks like unused
+                 *   code.
+                 * - The 'modified_timestamp' is updated asynchronously which
+                 *   can break these tests. I'm not sure why that is updated.
+                 *   Perhaps a no-op UpdateNic from net-agent.
+                 *
+                 * Because those changes are asynchronous, it is difficult and
+                 * obtuse to wait for nic state settling for testing. Therefore
+                 * we will just skip comparison of those fields.
+                 */
+                var dropAsyncUpdatedNicProps = function (nic) {
+                    delete nic.modified_timestamp;
+                    delete nic.state;
+                };
+                origNics.forEach(dropAsyncUpdatedNicProps);
+                newNics.forEach(dropAsyncUpdatedNicProps);
+
+                var changes = findObjectArrayChanges(origNics, newNics, 'mac');
+                t.equal(changes.length, 0,
+                    'origNics and newNics should be the same: differing NICs: '
+                        + JSON.stringify(changes));
+
                 t.end();
             });
         });
@@ -647,10 +675,39 @@ function verifyUnchangedNics(t, mutator) {
 }
 
 
-function sortNics(nics) {
-    return nics.sort(function (a, b) {
-        return (a.mac > b.mac) ? 1 : -1;
+/*
+ * Return an array of "change" objects:
+ *      {"original": <object from oldArr>, "modified": <object from newArr>}
+ * for each differing object (identified by the `key` field).
+ *
+ * Limitation: This assumes keys on the objects being compared are in the same
+ * order. This suffices for NIC objects from NAPI.
+ */
+function findObjectArrayChanges(oldArr, newArr, key) {
+    var oldArrLookup = {};
+    oldArr.forEach(function (oldObj) {
+        var val = oldObj[key];
+        oldArrLookup[val] = oldObj;
     });
+
+    var changes = [];
+
+    newArr.forEach(function (newObj) {
+        var val = newObj[key];
+        var oldObj = oldArrLookup[val];
+
+        if (!oldObj || JSON.stringify(newObj) !== JSON.stringify(oldObj)) {
+            changes.push({ original: oldObj, modified: newObj });
+        }
+
+        delete oldArrLookup[val];
+    });
+
+    Object.keys(oldArrLookup).forEach(function (name) {
+        changes.push({ original: oldArrLookup[name], modified: null});
+    });
+
+    return changes;
 }
 
 
