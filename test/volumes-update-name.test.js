@@ -148,8 +148,8 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
                 CLIENT.get('/my/volumes/' + testVolume.id,
                     function onGetVolume(getVolumeErr) {
                         t.ok(verror.hasCauseWithName(getVolumeErr,
-                            'VOLUME_NOT_FOUNDError'), 'expected ' +
-                            'VOLUME_NOT_FOUNDError error, got: ' +
+                            'VolumeNotFoundError'), 'expected ' +
+                            'VolumeNotFoundError error, got: ' +
                             (getVolumeErr ? getVolumeErr.name :
                             JSON.stringify(getVolumeErr)));
 
