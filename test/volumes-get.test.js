@@ -40,7 +40,7 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
         function (t) {
             CLIENT.get('/my/volumes/' + libuuid.create(),
                 function onVolumeGet(volGetErr, req, res, volume) {
-                    var expectedErrCode = 'VOLUME_NOT_FOUND';
+                    var expectedErrCode = 'VolumeNotFound';
                     var expectedStatusCode = 404;
 
                     t.equal(res.statusCode, expectedStatusCode,

@@ -62,7 +62,7 @@ function waitForDeletion(cloudapiClient, volumeUuid, callback) {
                 function onGetVolume(getVolumeErr, req, res, volume) {
                     if (getVolumeErr) {
                         if (verror.hasCauseWithName(getVolumeErr,
-                            'VOLUME_NOT_FOUNDError')) {
+                            'VolumeNotFoundError')) {
 
                             callback();
                             return;
