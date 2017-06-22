@@ -349,6 +349,7 @@ function setupClient(version, serverUrl, user, keyId, keyPath, parentAcc, cb) {
     client.login = user;
     client.passwd = PASSWD;
     client.keyId = keyId;
+    client.datacenter = CONFIG.datacenter_name;
 
     // Create clients to all the APIs
     client.wfapi  = _wfapi();
@@ -442,6 +443,41 @@ function waitForMahiCache(mahiclient, apath, cb) {
 
         return cb(null, res);
     });
+}
+
+
+function waitForAccountConfigReady(client, cb) {
+    assert.object(client, 'client');
+    assert.func(cb, 'callback');
+
+    var nbTries = 0;
+    var MAX_NB_TRIES = 10;
+    var TRY_DELAY_IN_MS = 1000;
+
+    function getConfig() {
+        ++nbTries;
+        if (nbTries >= MAX_NB_TRIES) {
+            cb(new Error('max number of tries reached'));
+            return;
+        }
+
+        client.get('/my/config', function onGetConfig(err, req, res, config) {
+            if (err) {
+                cb(err);
+                return;
+            }
+
+            if (config.default_network) {
+                cb();
+            } else {
+                setTimeout(getConfig, TRY_DELAY_IN_MS);
+            }
+
+            return;
+        });
+    }
+
+    getConfig();
 }
 
 
@@ -595,6 +631,12 @@ function setup(opts, cb) {
         },
         function setupPackage(_, next) {
             addPackage(userClient, SDC_128_PACKAGE, next);
+        },
+        function waitUserClientConfig(_, next) {
+            waitForAccountConfigReady(userClient, next);
+        },
+        function waitOtherUserClientConfig(_, next) {
+            waitForAccountConfigReady(otherUserClient, next);
         }
     ] }, function (err) {
         if (err) {

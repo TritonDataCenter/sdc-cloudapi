@@ -800,6 +800,7 @@ request:
 415      | Unsupported Media Type   | Request was encoded in a format CloudAPI does not understand
 420      | Slow Down       | You're sending too many requests too quickly
 449      | Retry With      | Invalid Version header; try with a different Api-Version string
+500      | Internal Error  | An unexpected error occurred; see returned message for more details.
 503      | Service Unavailable      | Either there's no capacity in this datacenter, or it's in a maintenance window
 
 ### Error Responses

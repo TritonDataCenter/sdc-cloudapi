@@ -176,6 +176,77 @@ function checkDefaultNet(t, net) {
 
 
 /**
+ * Temporarily remove dclocalconfig before invoking testFunc(). Add it back when
+ * done.
+ */
+function withoutDcLocalConfig(testFunc, cb) {
+    var accountUuid = CLIENT.account.uuid;
+    var dc = CLIENT.datacenter;
+    var ufds = CLIENT.ufds;
+    var config;
+
+    var pollGoneCount = 20;
+    var pollPresentCount = 20;
+    var pollInterval = 500; // in ms
+
+    vasync.pipeline({ funcs: [
+        function getConf(_, next) {
+            ufds.getDcLocalConfig(accountUuid, dc, function (err, _config) {
+                config = _config;
+                next(err);
+            });
+        },
+        function deleteConf(_, next) {
+            ufds.deleteDcLocalConfig(accountUuid, dc, next);
+        },
+        function pollConfGone(_, next) {
+            --pollGoneCount;
+            if (pollGoneCount === 0) {
+                next(new Error('dclocalconfig took too long to remove'));
+                return;
+            }
+
+            ufds.getDcLocalConfig(accountUuid, dc, function (err) {
+                if (err) {
+                    next(err.restCode === 'ResourceNotFound' ? null : err);
+                    return;
+                }
+
+                setTimeout(pollConfGone.bind(null, _, next), pollInterval);
+            });
+        },
+        function runTestFunc(_, next) {
+            testFunc(null, next);
+        },
+        function addConf(_, next) {
+            ufds.addDcLocalConfig(accountUuid, dc, config, next);
+        },
+        function pollConfPresent(_, next) {
+            --pollPresentCount;
+            if (pollPresentCount === 0) {
+                next(new Error('dclocalconfig took too long to return'));
+                return;
+            }
+
+            ufds.getDcLocalConfig(accountUuid, dc, function (err) {
+                if (err) {
+                    if (err.restCode === 'ResourceNotFound') {
+                        setTimeout(pollConfPresent.bind(null, _, next),
+                            pollInterval);
+                    } else {
+                        next(err);
+                    }
+                    return;
+                }
+
+                next();
+            });
+        }
+    ]}, cb);
+}
+
+
+/**
  * Find a fabric network in a user's overall network list
  */
 function findNetInList(t, params, callback) {
@@ -994,7 +1065,6 @@ test('default fabric', TEST_OPTS, function (tt) {
     });
 
 
-
     tt.test('confirm default network change', function (t) {
         if (!DEFAULT_NET) {
             t.fail('default vlan not found: skipping test');
@@ -1061,6 +1131,40 @@ test('default fabric', TEST_OPTS, function (tt) {
         changeDefaultNet(t, DEFAULT_NET);
     });
 
+
+    tt.test('attempt to GET/PUT a config when missing dclocalconfig',
+    function (t) {
+        if (!DEFAULT_NET) {
+            t.fail('default vlan not found: skipping test');
+            t.end();
+            return;
+        }
+
+        withoutDcLocalConfig(function (_, next) {
+            CLIENT.get('/my/config', function (err, req, res, config) {
+                t.ifError(err, 'GET Error');
+                t.equal(res.statusCode, 200, 'GET status');
+
+                t.deepEqual(config, {});
+
+                CLIENT.put('/my/config', {
+                    default_network: DEFAULT_NET.id
+                }, function (err2, req2, res2, body) {
+                    t.ok(err2, 'PUT Error expected');
+                    t.equal(res2.statusCode, 500, 'PUT status');
+                    t.deepEqual(body, {
+                        code: 'InternalError',
+                        message: 'Config currently unavailable.'
+                    });
+
+                    next();
+                });
+            });
+        }, function (err) {
+            t.ifError(err, 'Error while running without dclocalconfig');
+            t.end();
+        });
+    });
 });
 
 
