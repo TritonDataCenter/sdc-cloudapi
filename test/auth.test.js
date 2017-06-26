@@ -696,27 +696,17 @@ test('get /:account role-tag - other', function (t) {
 });
 
 
-test('cleanup sdcAccountResources', function (t) {
-    var id = CLIENT.account.uuid;
-    CLIENT.ufds.listResources(id, function (err, resources) {
+test('cleanup resources', function (t) {
+    common.deleteResources(CLIENT, function (err) {
         t.ifError(err);
-        vasync.forEachPipeline({
-            inputs: resources,
-            func: function (resource, _cb) {
-                CLIENT.ufds.deleteResource(id, resource.uuid, function (er2) {
-                    return _cb();
-                });
-            }
-        }, function (er3, results) {
-            t.ifError(er3);
-            t.end();
-        });
+        t.end();
     });
 });
 
 
 test('teardown', function (t) {
-    common.teardown(CLIENTS, SERVER, function () {
+    common.teardown(CLIENTS, SERVER, function (err) {
+        t.ifError(err, 'teardown success');
         t.end();
     });
 });

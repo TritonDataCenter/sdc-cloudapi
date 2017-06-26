@@ -1324,11 +1324,13 @@ test('Delete packageless/nicless machine', deleteMachine);
 
 
 test('teardown', function (t) {
-    common.deletePackage(CLIENT, SDC_256, function () {
-        common.deletePackage(CLIENT, SDC_256_INACTIVE, function () {
-            common.deletePackage(CLIENT, SDC_128_LINUX, function () {
-                common.deletePackage(CLIENT, SDC_512, function () {
-                    common.teardown(CLIENTS, SERVER, function () {
+    common.deletePackage(CLIENT, SDC_256, function (err) {
+        common.deletePackage(CLIENT, SDC_256_INACTIVE, function (err2) {
+            common.deletePackage(CLIENT, SDC_128_LINUX, function (err3) {
+                common.deletePackage(CLIENT, SDC_512, function (err4) {
+                    common.teardown(CLIENTS, SERVER, function (err5) {
+                        t.ifError(err||err2||err3||err4||err5,
+                                'teardown success');
                         t.end();
                     });
                 });

@@ -295,7 +295,8 @@ test('teardown', function (t) {
         common.deletePackage(CLIENT, SDC_512_NO_PERMISSION, function (err2) {
             t.ifError(err2);
 
-            common.teardown(CLIENTS, SERVER, function () {
+            common.teardown(CLIENTS, SERVER, function (err3) {
+                t.ifError(err3, 'teardown success');
                 t.end();
             });
         });

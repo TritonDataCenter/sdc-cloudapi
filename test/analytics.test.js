@@ -751,7 +751,8 @@ test('DeleteInstrumentation OK - clone', function (t) {
 
 
 test('teardown', function (t) {
-    common.teardown(CLIENTS, SERVER, function () {
+    common.teardown(CLIENTS, SERVER, function (err) {
+        t.ifError(err, 'teardown success');
         t.end();
     });
 });

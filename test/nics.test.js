@@ -1577,7 +1577,8 @@ test('nics', function (tt) {
         deleteFixtures(t, fixtures, function (err) {
             t.ifError(err, 'deleteFixtures');
 
-            common.teardown(CLIENTS, CLOUDAPI_SERVER, function () {
+            common.teardown(CLIENTS, CLOUDAPI_SERVER, function (err2) {
+                t.ifError(err2, 'teardown success');
                 t.end();
             });
         });

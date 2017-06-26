@@ -456,8 +456,17 @@ test('Delete sub-user machine tests', function (t) {
 });
 
 
+test('cleanup resources', function (t) {
+    common.deleteResources(CLIENT, function (err) {
+        t.ifError(err);
+        t.end();
+    });
+});
+
+
 test('teardown', function (t) {
-    common.teardown(CLIENTS, SERVER, function () {
+    common.teardown(CLIENTS, SERVER, function (err) {
+        t.ifError(err, 'teardown success');
         t.end();
     });
 });

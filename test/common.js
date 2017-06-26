@@ -208,24 +208,101 @@ function _ufds() {
 }
 
 
-function clientTeardown(client, cb) {
+/*
+ * Destroy all data associated with a client.
+ */
+function clientDataTeardown(client, cb) {
+    assert.object(client, 'client');
+    assert.func(cb, 'callback');
+
+    var ufds = client.ufds;
+    var dc = CONFIG.datacenter_name;
+    var account = client.account;
+    var id = account.uuid;
+    var sub = account.account; // has parent account UUID if this acc a subuser
+
+    var pollDelay = 500; // in ms
+
+    ufds.deleteKey(account, 'id_rsa', function deleteKeyCb(err) {
+        if (err) {
+            cb(err);
+            return;
+        }
+
+        pollKeyDeletion();
+    });
+
+    var pollKeyCount = 10;
+    function pollKeyDeletion() {
+        --pollKeyCount;
+        if (pollKeyCount === 0) {
+            cb(new Error('Key failed to delete in time'));
+            return;
+        }
+
+        ufds.getKey(account, 'id_rsa', function getKeyCb(err) {
+            if (err) {
+                if (err.restCode !== 'ResourceNotFound') {
+                    cb(err);
+                    return;
+                }
+
+                if (!sub) {
+                    ufds.deleteDcLocalConfig(id, dc, pollConfigDeletion);
+                } else {
+                    ufds.deleteUser(account, cb);
+                }
+                return;
+            }
+
+            setTimeout(pollKeyDeletion, pollDelay);
+        });
+    }
+
+    var pollConfigCount = 10;
+    function pollConfigDeletion(err) {
+        if (err) {
+            cb(err);
+            return;
+        }
+
+        --pollConfigCount;
+        if (pollConfigCount === 0) {
+            cb(new Error('Config failed to delete in time'));
+            return;
+        }
+
+        ufds.deleteDcLocalConfig(id, dc, function delConfigCb(err2) {
+            if (err2) {
+                if (err2.restCode !== 'ResourceNotFound') {
+                    cb(err2);
+                } else {
+                    ufds.deleteUser(account, cb);
+                }
+                return;
+            }
+
+            setTimeout(pollConfigDeletion, pollDelay);
+        });
+    }
+}
+
+
+/*
+ * Close all client connections.
+ */
+function clientClose(client, cb) {
+    assert.object(client, 'client');
+    assert.func(cb, 'callback');
+
     client.close();
     client.mahi.close();
 
     var ufds = client.ufds;
-
-    // we ignore errors until the end and try to clean up as much as possible
-    ufds.deleteKey(client.login, 'id_rsa', function (err) {
-        ufds.deleteUser(client.login, function (err2) {
-            ufds.client.removeAllListeners('close');
-            ufds.client.removeAllListeners('timeout');
-            ufds.removeAllListeners('timeout');
-
-            ufds.close(function () {
-                return cb(err || err2);
-            });
-        });
-    });
+    ufds.client.removeAllListeners('close');
+    ufds.client.removeAllListeners('timeout');
+    ufds.removeAllListeners('timeout');
+    ufds.close(cb);
 }
 
 
@@ -451,7 +528,7 @@ function waitForAccountConfigReady(client, cb) {
     assert.func(cb, 'callback');
 
     var nbTries = 0;
-    var MAX_NB_TRIES = 10;
+    var MAX_NB_TRIES = 20;
     var TRY_DELAY_IN_MS = 1000;
 
     function getConfig() {
@@ -660,9 +737,9 @@ function setup(opts, cb) {
 
 
 function teardown(clients, server, cb) {
-    assert.object(clients);
-    assert.object(server);
-    assert.func(cb);
+    assert.object(clients, 'clients');
+    assert.object(server, 'server');
+    assert.func(cb, 'callback');
 
     var userClient      = clients.user;
     var subUserClient   = clients.subuser;
@@ -671,21 +748,40 @@ function teardown(clients, server, cb) {
     var ufds    = userClient.ufds;
     var accUuid = userClient.account.uuid;
 
-    // XXX No! Don't ignore errors. Fix this to handle errors.
-    // ignore all errors; try to clean up as much as possible
-    ufds.deleteRole(accUuid, userClient.role.uuid, function () {
-        ufds.deletePolicy(accUuid, userClient.policy.uuid, function () {
-            deletePackage(userClient, SDC_128_PACKAGE, function () {
-                clientTeardown(subUserClient, function () {
-                    clientTeardown(userClient, function () {
-                        clientTeardown(otherUserClient, function () {
-                            if (server.close) {
-                                server.close(cb);
-                            } else {
-                                cb();
-                            }
-                        });
-                    });
+    vasync.pipeline({ funcs: [
+        function (_, next) {
+            ufds.deleteRole(accUuid, userClient.role.uuid, next);
+        },
+        function (_, next) {
+            ufds.deletePolicy(accUuid, userClient.policy.uuid, next);
+        },
+        function (_, next) {
+            deletePackage(userClient, SDC_128_PACKAGE, next);
+        },
+        function (_, next) {
+            clientDataTeardown(subUserClient, next);
+        },
+        function (_, next) {
+            clientDataTeardown(userClient, next);
+        },
+        function (_, next) {
+            clientDataTeardown(otherUserClient, next);
+        }
+    ]}, function teardownCb(err) {
+        // we defer errors here to finish(), because otherwise it's likely
+        // we'll hang
+        clientClose(subUserClient, function (err2) {
+            clientClose(userClient, function (err3) {
+                clientClose(otherUserClient, function (err4) {
+                    function finish(err5) {
+                        cb(err || err2 || err3 || err4 || err5);
+                    }
+
+                    if (server.close) {
+                        server.close(finish);
+                    } else {
+                        finish();
+                    }
                 });
             });
         });
@@ -738,6 +834,25 @@ function addPackage(client, pkg, cb) {
 
 function deletePackage(client, pkg, cb) {
     client.papi.del(pkg.uuid, { force: true }, cb);
+}
+
+
+function deleteResources(client, cb) {
+    var id = client.account.uuid;
+
+    client.ufds.listResources(id, function listResourcesCb(err, resources) {
+        if (err) {
+            cb(err);
+            return;
+        }
+
+        vasync.forEachPipeline({
+            inputs: resources,
+            func: function (resource, next) {
+                client.ufds.deleteResource(id, resource.uuid, next);
+            }
+        }, cb);
+    });
 }
 
 
@@ -914,6 +1029,8 @@ module.exports = {
     deletePackage: deletePackage,
     getHeadnode: getHeadnode,
     getTestImage: getTestImage,
+
+    deleteResources: deleteResources,
 
     // Some NAPI client conveniences
     napiDeleteNicTagByName: napiDeleteNicTagByName,

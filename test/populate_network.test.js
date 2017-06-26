@@ -224,7 +224,8 @@ test('teardown', function (t) {
     CLIENT.ufds.deleteKey('admin', KEY_NAME, function (err) {
         t.ifError(err);
 
-        common.teardown(CLIENTS, SERVER, function () {
+        common.teardown(CLIENTS, SERVER, function (err2) {
+            t.ifError(err2, 'teardown success');
             t.end();
         });
     });
