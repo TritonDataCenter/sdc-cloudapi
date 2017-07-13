@@ -22,7 +22,9 @@ function waitForAccountConfigReady(client, callback) {
         ++nbTries;
         client.get('/my/config',
             function onGetConfig(getConfigErr, req, res, ufdsConfig) {
-                if (getConfigErr) {
+                console.log('ufdsConfig:', ufdsConfig);
+                if (getConfigErr ||
+                    (ufdsConfig && ufdsConfig.default_network === undefined)) {
                     if (nbTries >= MAX_NB_TRIES) {
                         callback(new Error('max number of tries reached'));
                         return;
