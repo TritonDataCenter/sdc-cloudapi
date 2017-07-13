@@ -277,7 +277,11 @@ function clientDataTeardown(client, cb) {
     var pollConfigCount = 10;
     function pollConfigDeletion(err) {
         if (err) {
-            cb(err);
+            if (err.restCode !== 'ResourceNotFound') {
+                cb(err);
+            } else {
+                ufds.deleteUser(account, cb);
+            }
             return;
         }
 
