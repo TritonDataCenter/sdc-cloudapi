@@ -302,6 +302,8 @@ test('tag resource collection with non-existent role', function (t) {
         'role-tag': ['asdasdasdasd']
     }, function (err, req, res, body) {
         t.deepEqual(err, {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'Role(s) asdasdasdasd not found',
             statusCode: 409,
             restCode: 'InvalidArgument',
@@ -360,6 +362,8 @@ test('tag individual resource with non-existent role', function (t) {
         'role-tag': ['asdasdasdasd']
     }, function (err, req, res, body) {
         t.deepEqual(err, {
+            jse_info: {},
+            jse_shortmsg: '',
             message: 'Role(s) asdasdasdasd not found',
             statusCode: 409,
             restCode: 'InvalidArgument',
