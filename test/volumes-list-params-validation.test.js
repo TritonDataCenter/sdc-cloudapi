@@ -93,7 +93,6 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
     var snowflakeName1 = VOLUMES_NAMES_PREFIX + '-empty1-foo';
     var snowflakeName2 = VOLUMES_NAMES_PREFIX + '-empty2-foo';
 
-
     test('setup', function (tt) {
         tt.test('common setup', function (t) {
             common.setup({clientApiVersion: '~8.0'},
@@ -257,43 +256,53 @@ if (CONFIG.experimental_nfs_shared_volumes !== true) {
             }
         ];
 
-        testVolumeObjects.forEach(function createVolume(newVol) {
-            tt.test('create volume ' + newVol.name, function (t) {
+        vasync.forEachPipeline({
+            func: function createVolume(newVol, cb) {
+                // Can't use tt.comment because our version of tape doesn't have
+                // the fix for substack/tape#92 (See also PUBAPI-1418)
+                tt.ok(true, 'creating volume ' + newVol.name);
                 createTestVolume(CLIENT, newVol,
                     function onCreated(err, createVol) {
                         var expectedState = 'ready';
 
-                        t.ifErr(err, 'should have created volume '
+                        tt.ifErr(err, 'should have created volume '
                             + newVol.name);
-                        t.ok(createVol, 'should have volume response');
-                        if (err || !createVol) {
-                            t.end();
+                        tt.ok(createVol, 'should have volume response');
+                        if (err) {
+                            cb(err);
                             return;
                         }
-                        t.ok(createVol, 'volume should have an id, got: '
+                        if (!createVol) {
+                            cb(new Error('invalid created volume in response'));
+                            return;
+                        }
+                        tt.ok(createVol, 'volume should have an id, got: '
                             + createVol.id);
 
                         // We need to wait for the volume to go "ready" here
-                        // because volumes cannot be deleted when the underlying
-                        // VM does not yet have a server_uuid.
+                        // because volumes cannot be deleted when the
+                        // underlying VM does not yet have a server_uuid.
 
                         waitTestVolume(CLIENT, createVol.id, expectedState,
                             function onWait(waitErr, waitVol) {
-                                t.ifErr(waitErr, 'getting newly created volume '
-                                    + 'should not error');
-                                t.ok((typeof (waitVol) === 'object' &&
+                                tt.ifErr(waitErr, 'getting newly created '
+                                    + 'volume should not error');
+                                tt.ok((typeof (waitVol) === 'object' &&
                                     waitVol !== null),
                                     'response should be a non-null object');
-                                t.equal(waitVol.name, newVol.name,
+                                tt.equal(waitVol.name, newVol.name,
                                     'volume name should be \''
                                     + newVol.name + '\'');
-                                t.equal(waitVol.state, expectedState,
-                                    'volume should have transitioned to state '
-                                    + '\'' + expectedState + '\'');
-                                t.end();
+                                tt.equal(waitVol.state, expectedState,
+                                    'volume should have transitioned to '
+                                    + 'state \'' + expectedState + '\'');
+                                cb();
                             });
                     });
-            });
+            }, inputs: testVolumeObjects
+        }, function pipelineComplete(err) {
+            tt.ifErr(err, 'should have created all volumes without error');
+            tt.end();
         });
     });
 
