@@ -70,7 +70,7 @@
     },
 {{#experimental_nfs_shared_volumes}}
     "volapi": {
-        "url": "http://{{{volapi_domain}}}"
+        "url": "http://volapi.{{{datacenter_name}}}.{{{dns_domain}}}"
     },
 {{/experimental_nfs_shared_volumes}}
     "cueballHttpAgent": {
