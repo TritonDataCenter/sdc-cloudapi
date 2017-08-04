@@ -81,9 +81,9 @@ function waitTestVolume(client, volumeId, expectedState, callback) {
         });
 }
 
-if (CONFIG.experimental_nfs_shared_volumes !== true) {
-    console.log('experimental_nfs_shared_volumes setting not enabled, ' +
-        'skipping tests');
+if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
+    console.log('experimental_cloudapi_nfs_shared_volumes setting not ' +
+        'enabled, skipping tests');
     process.exitCode = 0;
 } else {
     var CLIENTS;
