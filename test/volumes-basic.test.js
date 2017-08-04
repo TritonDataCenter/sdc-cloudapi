@@ -26,9 +26,9 @@ var CONFIG = mod_config.configure();
  */
 var ISO_DATE_STRING_RE = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/;
 
-if (CONFIG.experimental_nfs_shared_volumes !== true) {
-    console.log('experimental_nfs_shared_volumes setting not enabled, ' +
-        'skipping tests');
+if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
+    console.log('experimental_cloudapi_nfs_shared_volumes setting not ' +
+        'enabled, skipping tests');
     process.exitCode = 0;
 } else {
     var CLIENTS;
