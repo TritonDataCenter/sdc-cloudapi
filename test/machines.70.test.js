@@ -152,7 +152,7 @@ test('Wait For Running', function (t) {
 
 
 test('Get Machine,  with Firewall Enabled', function (t) {
-    if (MACHINE_UUID) {
+    if (!MACHINE_UUID) {
         return t.end();
     }
 
