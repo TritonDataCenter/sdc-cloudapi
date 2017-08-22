@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2017, Joyent, Inc.
  */
 
 /*
@@ -24,6 +24,7 @@ var path = require('path');
 var bunyan = require('bunyan');
 var nopt = require('nopt');
 var restify = require('restify');
+var auditLogger = require('./lib/audit_logger');
 var RequestCaptureStream = restify.bunyan.RequestCaptureStream;
 
 var app = require('./lib').app;
@@ -162,12 +163,18 @@ function configure(file, options, log) {
 
 
 // Create a temporary server which simply returns 500 to all requests
-function createBootstrapServer(port, cb) {
-    var bootstrapServer = restify.createServer();
+function createBootstrapServer(port, log, cb) {
+    var bootstrapServer = restify.createServer({ log: log });
     bootstrapServer.use(restify.fullResponse());
 
+    bootstrapServer.on('after', auditLogger({
+        log: log.child({ component: 'bootstrap' })
+    }));
+
     function bootstrapHandler(req, res, next) {
-        res.send(new restify.InternalError('Failure to connect to Moray'));
+        var msg = 'Attempting to connect to internal services during bootstrap';
+        log.warn(msg);
+        res.send(new restify.InternalError(msg));
         next();
     }
 
@@ -206,7 +213,7 @@ function run() {
     // listening due to dependencies not being available (e.g. Moray is
     // offline, so plugin configs cannot be loaded)
 
-    createBootstrapServer(config.port, function (err, bootstrapServer) {
+    createBootstrapServer(config.port, LOG, function (err, bootstrapServer) {
         if (err) {
             throw err;
         }
