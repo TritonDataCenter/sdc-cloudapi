@@ -5,7 +5,7 @@
 -->
 
 <!--
-    Copyright 2016, Joyent, Inc.
+    Copyright (c) 2017, Joyent, Inc.
 -->
 
 # sdc-cloudapi
@@ -57,46 +57,41 @@ cloudapi zone, the config file is created - and automatically updated - by the
 
 ## Testing
 
-Before testing, you need to create an environment the tests can operate in,
-on the headnode you're using for tests. Assuming that you'll be testing using
-COAL's Headnode, and that you've already created a cloudapi zone on that
+Before testing, you need to create an environment the tests can operate in, on
+the headnode you're using for tests. Assuming that you'll be testing using
+COAL's Headnode, and that you've already created a `cloudapi` zone on that
 headnode, the easiest way to prepare the headnode for CloudAPI testing will be
 running the following from the global zone:
 
-    /zones/`vmadm lookup -1 alias=cloudapi0`/root/opt/smartdc/cloudapi/tools/coal-setup.sh
+    /zones/$(vmadm lookup -1 alias=cloudapi0)/root/opt/smartdc/cloudapi/tools/coal-setup.sh
 
-This script will hack DAPI for headnode provisioning, update imgapi to allow
-local custom images, and install some images required for testing.
+This script will:
 
-Once you've completed this process you can run:
+- Reconfigure the system to allow provisioning on the headnode itself.
+- Configure IMGAPI with an "external" NIC for access to the public image server.
+- Install `sdc-docker`.
+- Configure IMGAPI to enable local storage of custom images.
+- Create a sample package and import a particular base image.
+- Configure Fabric networking.
+
+Once you have completed this process, you can run:
 
     make test
 
-or, individually:
+This will invoke all of the tests in the `test/` directory.  If you wish to run
+a particular subset of the tests, you can provide a list.  For example, to run
+just `test/machines.70.test.js` and `test/nics.test.js`, invoke:
 
-    make account_test
-    make analytics_test
-    make auth_test
-    make datacenters_test
-    make datasets_test
-    make fabrics_test
-    make images_test
-    make keys_test
-    make machines_test
-    make networks_test
-    make nics_test
-    make packages_test
-    make services_test
-    make users_test
+    make test TEST_LIST='machines.70 nics'
 
 There are some requirements to run the test suites, in the form of environment
 variables. The following is a list of these variables and their default values:
 
 - `LOG_LEVEL`: Tests log level. Default `info`.
-- `POLL_INTERVAL`: Value used to check for a vm status change, in milisecs.
-  By default, 500 miliseconds.
-- `SDC_SETUP_TESTS`: The tests are running versus an existing SDC setup. (No
-need to boot a server instance, since there's one already running).
+- `POLL_INTERVAL`: Value used to check for a VM status change, in milliseconds.
+  The default value is 500 milliseconds.
+- `SDC_SETUP_TESTS`: The tests are running against an existing Triton setup. (No
+  need to boot a server instance, since there's one already running).
 
 Also, the contents of the aforementioned `./etc/cloudapi.cfg` file should have
 been properly set.

@@ -6,16 +6,16 @@
 #
 
 #
-# Copyright (c) 2014, Joyent, Inc.
+# Copyright (c) 2017, Joyent, Inc.
 #
 
 #
-# Setup everything required for development/testing CloudAPI into COAL
+# Set up everything required for testing CloudAPI in COAL
 #
-# This is script is pretty much identical to coal-setup-for-image-mgmt one
-# located at IMGAPI zone. Main differences are that current one has been
-# upgraded to use PAPI instead of UFDS sdcPackages, and that it will fetch
-# and install some Joyent Public images for testing.
+# NOTE: If you change the way this script works, please be sure to update the
+# "Testing" section of the documentation, which describes the expected
+# behaviour.
+#
 
 if [[ -n "$TRACE" ]]; then
     export PS4='[\D{%FT%TZ}] ${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
@@ -115,10 +115,14 @@ sdc-papi /packages -X POST -d '{
     "version": "1.0.0"
 }' | json -H
 
-# Current the cloudapi test suite assumes the following image is installed:
+#
+# The CloudAPI test suite assumes the following image is installed:
+#
 #   minimal-64-lts (latest version)
-# Note: Keep in sync with test/common.js#getBaseImage().
-image_uuid=`joyent-imgadm list name=minimal-64-lts -o uuid|tail -1`
+#
+# NOTE: This must be kept in sync with "getTestImage()" in "test/common.js"
+#
+image_uuid=$(joyent-imgadm list name=minimal-64-lts -o uuid | tail -1)
 install_image ${image_uuid}
 
 # setup fabrics
