@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2016 Joyent, Inc.
+ * Copyright 2017 Joyent, Inc.
  */
 
 /*
@@ -248,7 +248,7 @@ function clientDataTeardown(client, cb) {
                 }
 
                 if (!sub) {
-                    ufds.deleteDcLocalConfig(id, dc, pollConfigDeletion);
+                    pollConfigDeletion();
                 } else {
                     ufds.deleteUser(account, cb);
                 }
@@ -260,12 +260,7 @@ function clientDataTeardown(client, cb) {
     }
 
     var pollConfigCount = 10;
-    function pollConfigDeletion(err) {
-        if (err) {
-            cb(err);
-            return;
-        }
-
+    function pollConfigDeletion() {
         --pollConfigCount;
         if (pollConfigCount === 0) {
             cb(new Error('Config failed to delete in time'));
@@ -526,6 +521,11 @@ function waitForMahiCache(mahiclient, apath, cb) {
 function waitForAccountConfigReady(client, cb) {
     assert.object(client, 'client');
     assert.func(cb, 'callback');
+
+    if (!CONFIG.fabrics_enabled) {
+        cb();
+        return;
+    }
 
     var nbTries = 0;
     var MAX_NB_TRIES = 20;
