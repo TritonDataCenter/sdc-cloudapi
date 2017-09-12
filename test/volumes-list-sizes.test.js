@@ -74,9 +74,9 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                         t.ok(volumeSizes[0].size,
                             'volumeSizes[0] should have "size", got: ' +
                             volumeSizes[0].size);
-                        t.ok(volumeSizes[0].description,
-                            'volumeSizes[0] should have "description", got: ' +
-                            volumeSizes[0].description);
+                        t.ok(volumeSizes[0].type,
+                            'volumeSizes[0] should have "type", got: ' +
+                            volumeSizes[0].type);
                     }
 
                     // check that volume sizes are in ascending order
