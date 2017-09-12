@@ -4251,9 +4251,9 @@ network (it will have one public IP), and one internally-accessible network from
 the datacenter network pools.  It is possible to have an instance attached to
 only an internal network, or both public and internal, or just external.
 
-Be aware that CreateMachine does not return IP addresses.  To obtain the IP
-address of a newly-provisioned instance, poll [GetMachine](#GetMachine) until
-the instance state is `running`.
+Be aware that CreateMachine does not return IP addresses or networks.  To
+obtain the IP addresses and networks of a newly-provisioned instance, poll
+[GetMachine](#GetMachine) until the instance state is `running`.
 
 Typically, Triton will allocate the new instance somewhere reasonable within the
 cloud.  You may want this instance to be placed on the same server as another
@@ -4293,7 +4293,7 @@ be changed later within the instance, if desired.
 name      | String   | Friendly name for this instance; default is the first 8 characters of the machine id. If the name includes the string {{shortId}}, any instances of that tag within the name will be replaced by the first 8 characters of the machine id.
 package   | String   | Id of the package to use on provisioning, obtained from [ListPackages](#ListPackages)
 image     | String   | The image UUID (the "id" field in [ListImages](#ListImages))
-networks  | Array    | Desired networks ids, obtained from [ListNetworks](#ListNetworks)
+networks  | Array    | Desired networks ids, obtained from [ListNetworks](#ListNetworks). See the note about network pools under [AddNic](#AddNic).
 locality  | Object[String => Array] | Optionally specify which instances the new instance should be near or far from
 metadata.$name | String | An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata."
 tag.$name | String   | An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag."
@@ -8048,7 +8048,8 @@ InUseError       | The VLAN currently has active networks on it
 
 CloudAPI provides a way to get details on public and customer-specific networks
 in a datacenter. This also includes all of the networks available in your
-fabric.
+fabric. Your fabric networks are exclusive to your account. All other networks
+may be usable by other tenants.
 
 
 ## ListNetworks (GET /:login/networks)
@@ -8071,6 +8072,13 @@ name        | String   | The network name
 public      | Boolean  | Whether this a public or private (rfc1918) network
 fabric      | Boolean  | Whether this network is created on a fabric
 description | String   | Description of this network (optional)
+
+Each object returned may be an individual network, or a network pool. A network
+pool is a logical grouping of one or more networks that share the same
+routability characteristics. See [AddNic](#AddNic) about the behavior of
+provisioning with a network pool. This also means that the network id(s)
+returned by GetMachine or GetNic will not be in the list of networks returned
+by ListNetworks if it was originally provisioned using a pool.
 
 If the network is on a fabric, the following additional fields are included:
 
@@ -8378,16 +8386,24 @@ primary   | Boolean  | Whether this is the instance's primary NIC
 netmask   | String   | IPv4 netmask
 gateway   | String   | IPv4 gateway
 state     | String   | Describes the state of the NIC (most likely 'provisioning')
+network   | String   | The network UUID. See below.
 
 It also returns the Location in the headers where the new NIC lives in the HTTP
 API. If a NIC already exists for that network, a 302 redirect will be returned
 instead of the object.
 
+If the input network uuid is a network pool (a logical grouping of one or more
+networks that share the same routability characteristics) then a NIC will be
+provisioned from one of the associated networks. The network UUID returned will
+always be the UUID of the actual network assigned, not the UUID of the pool.
+
 NICs do not appear on an instance immediately, so the state of the new NIC can
-be checked by polling that location. While the NIC is provisioning, it will have
-a `state` of 'provisioning'. Once it's 'running', the NIC is active on the
-instance. If the provision fails, the NIC will be removed and the location will
-start returning 404.
+be checked by polling [GetNic](#GetNic). While the NIC is provisioning, it will
+have a `state` of 'provisioning'.  Once the Nic is active on the instance the
+NIC will have a `state` of 'running'.  If the provision fails, the NIC will be
+removed and GetNic will start returning 404.
+
+
 
 ### Errors
 
