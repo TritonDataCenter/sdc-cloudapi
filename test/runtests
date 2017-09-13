@@ -106,7 +106,7 @@ echo "#     SDC_SSO_ADMIN_IP is $SDC_SSO_ADMIN_IP"
 cd $TOP
 
 # Generate list of tests
-test_files=$(ls -1 test/*.test.js)
+test_files=$(ls -1 test/*.test.js test/plugins/*.test.js)
 if [[ -n "$opt_test_pattern" ]]; then
     test_files=$(echo "$test_files" | grep "$opt_test_pattern" || true)
     echo "# Running filtered set of test files: $test_files"
