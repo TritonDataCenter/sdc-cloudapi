@@ -1323,6 +1323,15 @@ test('ListMachines with packageless/nicless machine', function (t) {
 test('Delete packageless/nicless machine', deleteMachine);
 
 
+test('Affinity tests', function (t) {
+    var affinityTest = require('./machines/affinity');
+    affinityTest(t, CLIENT, OTHER, IMAGE_UUID, SDC_128.uuid, HEADNODE_UUID,
+        function () {
+        t.end();
+    });
+});
+
+
 test('teardown', function (t) {
     common.deletePackage(CLIENT, SDC_256, function (err) {
         common.deletePackage(CLIENT, SDC_256_INACTIVE, function (err2) {
