@@ -27,13 +27,12 @@ var machinesCommon = require('./machines/common');
 var CONFIG = mod_config.configure();
 var IMGAPI_SOURCE = 'https://images.joyent.com';
 var KEY_FILENAME = '/tmp/cloudapi-test-key';
+var TEST_IMAGE_KVM =
+    'd472f84c-69cf-431c-b848-c5dce6bee153'; // ubuntu-certified-16.04
 var TEST_IMAGE_LX = '7b5981c4-1889-11e7-b4c5-3f3bdfc9b88b'; // ubuntu-16.04
 var TEST_IMAGE_SMARTOS =
     'ede31770-e19c-11e5-bb6e-3b7de3cca9ce'; // minimal-multiarch-lts (15.4.1)
 var UFDS_ADMIN_UUID = CONFIG.ufds_admin_uuid;
-
-// XXX
-TEST_IMAGE_SMARTOS = 'd0ebf524-2034-11e7-8e3d-878122f9de41';
 
 function deleteKeypair(cb) {
     child_process.exec([
@@ -122,7 +121,10 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             });
     });
 
-    // need a package we can use to provision our containers
+    /*
+     * Need a fabric network we can use to provision our containers for the NFS
+     * traffic to flow.
+     */
     test('find fabric network', function (t) {
         CLIENT.get('/my/networks',
             function onGetNetworks(getNetworksErr, req, res, networks) {
@@ -184,6 +186,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
     // Ensure we have required images
     test('ensure images', function (t) {
+        var foundKvm = false;
         var foundLx = false;
         var foundSmartOS = false;
         var idx = 0;
@@ -196,8 +199,8 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                 if (!getImagesErr) {
                     t.ok(Array.isArray(images),
                         'images should be an array');
-                    t.ok(images.length >= 2,
-                        'should have at least two images');
+                    t.ok(images.length >= 3,
+                        'should have at least three images');
                 }
 
                 for (idx = 0; idx < images.length; idx++) {
@@ -207,6 +210,9 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     if (images[idx].id === TEST_IMAGE_SMARTOS) {
                         foundSmartOS = true;
                     }
+                    if (images[idx].id === TEST_IMAGE_KVM) {
+                        foundKvm = true;
+                    }
                 }
 
                 if (!foundLx) {
@@ -215,6 +221,10 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
                 if (!foundSmartOS) {
                     missing.push(TEST_IMAGE_SMARTOS);
+                }
+
+                if (!foundKvm) {
+                    missing.push(TEST_IMAGE_KVM);
                 }
 
                 getMissingImages(t, missing, function (getMissingErr) {
@@ -590,6 +600,40 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
         getState();
     });
+
+    test('creating a KVM container using volume should fail', function (t) {
+        var payload;
+
+        payload = {
+            metadata: {},
+            image: TEST_IMAGE_KVM,
+            package: testPackage.id,
+            name: 'cloudapi-volume-kvm-' + libuuid.create().split('-')[0],
+            firewall_enabled: false,
+            networks: [
+                {ipv4_uuid: networkUuidSsh, primary: true},
+                {ipv4_uuid: networkUuidFabric}
+            ],
+            volumes: [
+                {
+                    name: testVolumeName,
+                    type: 'tritonnfs',
+                    mode: 'rw',
+                    mountpoint: '/foo'
+                }
+            ]
+        };
+
+        CLIENT.post('/my/machines', payload, function (err, req, res, body) {
+            t.ok(err, 'expect VM create failure');
+            t.equal(err.statusCode, 409, 'expected 409');
+            t.equal(err.message, 'volumes not yet supported with brand "kvm"',
+                'expected error due to unsupported kvm');
+
+            t.end();
+        });
+    });
+
 
     test('deleting volume should be successful', function (t) {
         CLIENT.del('/my/volumes/' + testVolume.id,
