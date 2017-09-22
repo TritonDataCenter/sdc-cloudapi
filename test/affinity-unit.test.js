@@ -40,7 +40,7 @@ var log = bunyan.createLogger({
  */
 function MockDc(servers) {
     assert.arrayOfObject(servers, 'servers');
-    self = this;
+    var self = this;
 
     this.servers = servers;
 
@@ -111,8 +111,8 @@ MockDc.prototype.vmsFromRule = function (rule) {
     } else {
         // tag
         self.vms.forEach(function (vm) {
-            if (vm.tags && vm.tags.hasOwnProperty(key)
-                && valueRe.test(vm.tags[key].toString()))
+            if (vm.tags && vm.tags.hasOwnProperty(key) &&
+                valueRe.test(vm.tags[key].toString()))
             {
                 vms.push(vm);
             }
@@ -127,7 +127,8 @@ function assertLocalityFromRules(opts) {
     var rulesInfo = [];
     opts.exprs.forEach(function (expr) {
         var rule = lib_affinity.ruleFromExpr(expr);
-        rule.vms = opts.dc.vmsFromRule(rule); // .vms is the "Info" part of rulesInfo
+        // .vms is the "Info" part of rulesInfo
+        rule.vms = opts.dc.vmsFromRule(rule);
         rulesInfo.push(rule);
     });
 
@@ -175,6 +176,7 @@ function assertLocalityFromRules(opts) {
 test('affinity-unit', function (tt) {
     // A layout of our (unnamed) test account's VMs in the DC. We'll run
     // affinity->locality tests against this setup.
+    /* BEGIN JSSTYLED */
     var dc = new MockDc([
         {
             uuid: 'aaaaaaaa-9f2c-11e7-8d2a-7b05237c283d',
@@ -196,7 +198,7 @@ test('affinity-unit', function (tt) {
             uuid: 'cccccccc-9f2d-11e7-bfaa-03c71f6e23e9',
             hostname: 'CNc',
             vms: [
-                { uuid: 'a22832e8-9f2d-11e7-99a4-a3ae10e549f5', alias: 'webhead2', tags: {} },
+                { uuid: 'a22832e8-9f2d-11e7-99a4-a3ae10e549f5', alias: 'webhead2', tags: {} }
             ]
         },
         {
@@ -207,6 +209,7 @@ test('affinity-unit', function (tt) {
             ]
         }
     ]);
+    /* END JSSTYLED */
 
     tt.test('  localityFromRulesInfo', function (t) {
         assertLocalityFromRules({
@@ -277,7 +280,7 @@ test('affinity-unit', function (tt) {
             exprs: [
                 'instance==webhead*',
                 'role==database',
-                'instance!=webhead3',
+                'instance!=webhead3'
             ],
             // We expect the 'near' to be the first VM from either CNa or CNb
             // (randomly selected).
