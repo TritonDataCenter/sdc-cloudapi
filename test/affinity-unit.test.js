@@ -19,7 +19,7 @@ var test = require('tape').test;
 var deepEqual = require('tape/node_modules/deep-equal');
 var util = require('util');
 var VError = require('verror');
-var XRegExp = require('XRegExp');
+var XRegExp = require('xregexp');
 
 var lib_affinity = require('../lib/triton-affinity');
 
@@ -254,7 +254,7 @@ test('affinity-unit', function (tt) {
             ],
             err: {
                 message: 'cannot satisfy affinity rule "role==/^data/", '
-                    + '"far" rules eliminate all its servers'
+                    + '"!=" rules eliminate all its servers'
             }
         });
 
