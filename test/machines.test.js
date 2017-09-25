@@ -1325,6 +1325,7 @@ test('Delete packageless/nicless machine', deleteMachine);
 
 test('Affinity tests', function (t) {
     var affinityTest = require('./machines/affinity');
+
     affinityTest(t, CLIENT, OTHER, IMAGE_UUID, SDC_128.uuid, HEADNODE_UUID,
         function () {
         t.end();

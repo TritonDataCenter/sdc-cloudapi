@@ -15,8 +15,8 @@
 
 var assert = require('assert-plus');
 var bunyan = require('bunyan');
-var test = require('tape').test;
 var deepEqual = require('tape/node_modules/deep-equal');
+var test = require('tape').test;
 var util = require('util');
 var VError = require('verror');
 var XRegExp = require('xregexp');
@@ -77,9 +77,9 @@ MockDc.prototype.vmsFromRule = function (rule) {
     var key = rule.key;
     var val = rule.value;
     var valueType = rule.valueType;
+    var valueRe;
     var vms = [];
 
-    var valueRe;
     if (valueType === 'exact') {
         valueRe = new RegExp('^' + XRegExp.escape(val) + '$');
     } else if (valueType === 'glob') {
@@ -124,7 +124,13 @@ MockDc.prototype.vmsFromRule = function (rule) {
 
 
 function assertLocalityFromRules(opts) {
+    var i;
+    var expectedLocality;
+    var foundMatch;
+    var locality;
+    var locSummary;
     var rulesInfo = [];
+
     opts.exprs.forEach(function (expr) {
         var rule = lib_affinity.ruleFromExpr(expr);
         // .vms is the "Info" part of rulesInfo
@@ -133,7 +139,7 @@ function assertLocalityFromRules(opts) {
     });
 
     try {
-        var locality = lib_affinity.localityFromRulesInfo(
+        locality = lib_affinity.localityFromRulesInfo(
             {log: log, rules: rulesInfo});
     } catch (err) {
         if (opts.err) {
@@ -150,15 +156,15 @@ function assertLocalityFromRules(opts) {
     }
     if (opts.locality) {
         if (Array.isArray(opts.locality)) {
-            var foundMatch = false;
-            for (var i = 0; i < opts.locality.length; i++) {
-                var expectedLocality = opts.locality[i];
+            foundMatch = false;
+            for (i = 0; i < opts.locality.length; i++) {
+                expectedLocality = opts.locality[i];
                 foundMatch = deepEqual(locality, expectedLocality);
                 if (foundMatch) {
                     break;
                 }
             }
-            var locSummary = opts.locality.map(
+            locSummary = opts.locality.map(
                 function (loc) { return JSON.stringify(loc); });
             opts.t.assert(foundMatch, util.format('%j -> one of %s',
                 opts.exprs, locSummary.join(', ')));
