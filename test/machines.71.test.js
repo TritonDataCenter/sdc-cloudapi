@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2017, Joyent, Inc.
  */
 
 var util = require('util');
@@ -289,7 +289,7 @@ test('Wait for img create job', function (t) {
                 IMAGE_UUID = null;
             }
 
-            t.ifError(err, 'create image job');
+            t.ifError(err, 'create image job ' + IMAGE_JOB_UUID);
             t.end();
         });
     } else {

@@ -838,27 +838,80 @@ range, they can leverage the codes above.
 
 # API Versions
 
+A CloudAPI endpoint has two relevant version values: the code version and the
+"API version". The former includes the full `major.minor.patch` version value
+of the deployed server and, as of CloudAPI v8.3.0, is available in the "Server"
+header of all responses:
+
+    Server: cloudapi/8.3.1
+
+The *API* version is only changed for major versions, e.g. API version "8.0.0"
+is used for all 8.x code versions. (Older CloudAPI v7 would bump the API version
+at the minor version level.)
+
 All requests to CloudAPI must specify an acceptable API [version
 range](https://github.com/npm/node-semver#ranges) via the 'Accept-Version' (or
 for backward compatibility the 'Api-Version') header. For example:
 
     Accept-Version: ~8              // accept any 8.x version
-    Accept-Version: 7.1.0           // require exactly this version
+    Accept-Version: 7.0.0           // require exactly this version
     Accept-Version: ~8||~7          // accept 8.x or 7.x
-    Accept-Version: *               // wild west
+    Accept-Version: *               // the latest version (wild west)
 
 For new applications using CloudAPI SDKs, it is recommended that one explicitly
 accept a particular major version, e.g. `Accept-Version: ~8`, so that
 future CloudAPI backward incompatible changes (always done with a *major*
 version bump) don't break your application.
 
-The `triton` tool uses `Accept-Version: ~8||~7` by default. Users can restrict
-the API version via the `triton --accept-version=RANGE ...` option. The older
-`sdc-*` tools from node-smartdc similarly use `~8||~7` by default, and users
-can restrict the API version via the `SDC_API_VERSION=RANGE` environment
-variable or the `--api-version=RANGE` option to each command.
+The [`triton` tool](https://github.com/joyent/node-triton) uses
+`Accept-Version: ~8||~7` by default. Users can restrict the API version via the
+`triton --accept-version=RANGE ...` option. The older `sdc-*` tools from
+node-smartdc similarly use `~8||~7` by default, and users can restrict the API
+version via the `SDC_API_VERSION=RANGE` environment variable or the
+`--api-version=RANGE` option to each command.
 
-The rest of this section describes API changes in each version.
+The set of supported *API versions* is given in the ping endpoint:
+
+    GET /ping
+    accept: application/json
+    accept-version: ~8
+    ...
+
+    HTTPS/1.1 200 OK
+    server: cloudapi/8.3.0
+    content-type: application/json
+    ...
+    api-version: 8.0.0
+
+    {
+        "ping": "pong",
+        "cloudapi": {
+            "versions": [
+                "7.0.0",
+                "7.1.0",
+                "7.2.0",
+                "7.3.0",
+                "8.0.0"
+            ]
+        }
+    }
+
+
+# Versions
+
+The section describes API changes in CloudAPI versions.
+
+## 8.3.0
+
+- CreateMachine supports a new `affinity` field for specifying affinity rules.
+  Affinity rules (inspired by Docker Swarm affinity filters) allow a more
+  powerful mechanism for controlling server placement of instances.
+  This deprecates the `locality` field for "locality hints" on CreateMachine.
+  Limitation: Affinity rules currently do not properly consider *concurrent*
+  provisions (see [TRITON-9](https://smartos.org/bugview/TRITON-9)).
+
+  This CloudAPI feature is comparable to [Triton's Docker placement affinity
+  rules](https://apidocs.joyent.com/docker/features/placement).
 
 ## 8.2.1
 
@@ -4256,27 +4309,8 @@ obtain the IP addresses and networks of a newly-provisioned instance, poll
 [GetMachine](#GetMachine) until the instance state is `running`.
 
 Typically, Triton will allocate the new instance somewhere reasonable within the
-cloud.  You may want this instance to be placed on the same server as another
-instance you have, or have it placed on an entirely different server from your
-existing instances so that you can spread them out. In either case, you can
-provide locality hints (aka 'affinity' criteria) to CloudAPI.
-
-Here is an example of a locality hint:
-
-    "locality": {
-      "strict": false,
-      "near": ["af7ebb74-59be-4481-994f-f6e05fa53075"],
-      "far": ["da568166-9d93-42c8-b9b2-bce9a6bb7e0a", "d45eb2f5-c80b-4fea-854f-32e4a9441e53"]
-    }
-
-UUIDs provided should be the ids of instances belonging to you. If there is only
-a single UUID entry in an array, you can omit the array and provide the UUID
-string directly as the value to a near/far key.
-
-`strict` defaults to false, meaning that Triton will attempt to meet all the
-`near` and/or `far` criteria but will still provision the instance when no
-server fits all the requirements. If `strict` is set to true, the creation of
-the new instance will fail if the affinity criteria cannot be met.
+cloud. See [affinity rules](#affinity-rules) below for options on controlling
+server placement of new instances.
 
 When Triton CNS is enabled, the DNS search domain of the new VM will be
 automatically set to the suffix of the "instance" record that is created for
@@ -4288,13 +4322,15 @@ be changed later within the instance, if desired.
 
 ### Inputs
 
+
 **Field** | **Type** | **Description**
 --------- | -------- | ---------------
 name      | String   | Friendly name for this instance; default is the first 8 characters of the machine id. If the name includes the string {{shortId}}, any instances of that tag within the name will be replaced by the first 8 characters of the machine id.
 package   | String   | Id of the package to use on provisioning, obtained from [ListPackages](#ListPackages)
 image     | String   | The image UUID (the "id" field in [ListImages](#ListImages))
 networks  | Array    | Desired networks ids, obtained from [ListNetworks](#ListNetworks). See the note about network pools under [AddNic](#AddNic).
-locality  | Object[String => Array] | Optionally specify which instances the new instance should be near or far from
+affinity  | Array    | (Added in CloudAPI v8.3.0.) Optional array of [affinity rules](#affinity-rules).
+locality  | Object   | (Deprecated in CloudAPI v8.3.0.) Optionally object of [locality hints](#locality-hints), specify which instances the new instance should be near or far from.
 metadata.$name | String | An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata."
 tag.$name | String   | An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag."
 firewall_enabled | Boolean | Completely enable or disable firewall for this instance. Default is false
@@ -4408,6 +4444,77 @@ Create instance with tags
 or
 
     $ sdc-createmachine --image=2b683a82-a066-11e3-97ab-2faa44701c5a --package=7b17343c-94af-6266-e0e8-893a3b9993d0 -t foo=bar -t group=test
+
+
+### Affinity rules
+
+As of CloudAPI v8.3.0 an "affinity" field can be specified with CreateMachine.
+It is an array of "affinity rules" to specify rules (or hints, "soft rules") for
+placement of the new instance.
+
+By default, Triton makes a reasonable attempt to spread all containers (and
+non-Docker containers and VMs) owned by a single account across separate
+physical servers.
+
+Affinity rules are of one of the following forms:
+
+    instance<op><value>
+    container<op><value>
+    <tagName><op><value>
+
+<op> is one of:
+
+
+- `==`: The new instance must be on the same node as the instance(s) identified
+  by <value>.
+- `!=`: The new instance must be on a different node as the instance(s)
+  identified by <value>.
+- `==~`: The new instance should be on the same node as the instance(s)
+  identified by <value>. I.e. this is a best effort or "soft" rule.
+- `!=~`: The new instance should be on a different node as the instance(s)
+  identified by <value>. I.e. this is a best effort or "soft" rule.
+
+<value> is an exact string, simple \*-glob, or regular expression to match
+against instance names or IDs, or against the named tag's value. Some examples:
+
+    # Run on the same node as instance silent_bob.
+    triton instance create -a instance==silent_bob ...
+
+    # Run on a different node as all instances tagged with 'role=database'.
+    triton instance create -a 'role!=database' ...
+
+    # Run on a different node to all instances with names starting with "foo".
+    triton instance create -a 'instance!=foo*' ...
+
+    # Same, using a regular expression.
+    triton instance create -a 'instance!=/^foo/' ...
+
+
+### Locality hints
+
+(Deprecated in CloudAPI v8.3.0.)
+
+You may want this instance to be placed on the same server as another
+instance you have, or have it placed on an entirely different server from your
+existing instances so that you can spread them out. In either case, you can
+provide locality hints to CloudAPI.
+
+Here is an example of a locality hint:
+
+    "locality": {
+      "strict": false,
+      "near": ["af7ebb74-59be-4481-994f-f6e05fa53075"],
+      "far": ["da568166-9d93-42c8-b9b2-bce9a6bb7e0a", "d45eb2f5-c80b-4fea-854f-32e4a9441e53"]
+    }
+
+UUIDs provided should be the ids of instances belonging to you. If there is only
+a single UUID entry in an array, you can omit the array and provide the UUID
+string directly as the value to a near/far key.
+
+`strict` defaults to false, meaning that Triton will attempt to meet all the
+`near` and/or `far` criteria but will still provision the instance when no
+server fits all the requirements. If `strict` is set to true, the creation of
+the new instance will fail if the affinity criteria cannot be met.
 
 ### User-script
 
