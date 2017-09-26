@@ -4467,11 +4467,11 @@ Affinity rules are of one of the following forms:
 
 - `==`: The new instance must be on the same node as the instance(s) identified
   by <value>.
-- `!=`: The new instance must be on a different node as the instance(s)
+- `!=`: The new instance must be on a different node to the instance(s)
   identified by <value>.
 - `==~`: The new instance should be on the same node as the instance(s)
   identified by <value>. I.e. this is a best effort or "soft" rule.
-- `!=~`: The new instance should be on a different node as the instance(s)
+- `!=~`: The new instance should be on a different node to the instance(s)
   identified by <value>. I.e. this is a best effort or "soft" rule.
 
 <value> is an exact string, simple \*-glob, or regular expression to match
@@ -4480,7 +4480,7 @@ against instance names or IDs, or against the named tag's value. Some examples:
     # Run on the same node as instance silent_bob.
     triton instance create -a instance==silent_bob ...
 
-    # Run on a different node as all instances tagged with 'role=database'.
+    # Run on a different node to all instances tagged with 'role=database'.
     triton instance create -a 'role!=database' ...
 
     # Run on a different node to all instances with names starting with "foo".
