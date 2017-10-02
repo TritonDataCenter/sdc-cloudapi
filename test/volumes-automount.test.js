@@ -57,10 +57,12 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
     var fooContents;
     var lxIp;
+    var lxVmDelErr;
     var lxVmUuid;
     var networkUuidFabric;
     var networkUuidSsh;
     var smartosIp;
+    var smartosVmDelErr;
     var smartosVmUuid;
     var testPackage;
     var testVolumeName = common.createResourceName('test-volumes-automount');
@@ -416,6 +418,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     test('deleting LX container should be successful', function (t) {
         CLIENT.del('/my/machines/' + lxVmUuid,
             function onDelVm(delVmErr) {
+                lxVmDelErr = delVmErr;
                 t.ifErr(delVmErr, 'deleting LX VM should succeed');
                 t.end();
             });
@@ -459,7 +462,18 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                 });
         }
 
-        getState();
+        if (lxVmDelErr) {
+            t.fail('DeleteVm request failed, so there is no point in waiting ' +
+                'for the container to be deleted');
+            t.end();
+        } else if (lxVmUuid === undefined) {
+            t.fail('LX container was not provisioned, marking test as failed ' +
+                'because it is not relevant to delete a container that was ' +
+                'not created');
+            t.end();
+        } else {
+            getState();
+        }
     });
 
     test('create a SmartOS container using volume', function (t) {
@@ -555,7 +569,8 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     test('deleting SmartOS container should be successful', function (t) {
         CLIENT.del('/my/machines/' + smartosVmUuid,
             function onDelVm(delVmErr) {
-                t.ifErr(delVmErr, 'deleting LX VM should succeed');
+                smartosVmDelErr = delVmErr;
+                t.ifErr(delVmErr, 'deleting SmartOS VM should succeed');
                 t.end();
             });
     });
@@ -598,7 +613,17 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                 });
         }
 
-        getState();
+        if (smartosVmUuid === undefined) {
+            t.fail('No SmartOS VM UUID, so there is no point in trying to ' +
+                'delete it');
+            t.end();
+        } else if (smartosVmDelErr) {
+            t.fail('Error when sending DeleteVM request, so there is no ' +
+                'point in waiting for the VM to be deleted');
+            t.end();
+        } else {
+            getState();
+        }
     });
 
     test('creating a KVM container using volume should fail', function (t) {
