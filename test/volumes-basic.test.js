@@ -175,7 +175,8 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             t.ifErr(getVolErr,
                 'getting volume through VOLAPI should not error');
             t.ok(volume, 'a volume should be found');
-            t.ok(volume.vm_uuid, 'volume should have a VM uuid');
+            t.ok(volume.vm_uuid, 'volume should have a VM uuid, got ' +
+                volume.vm_uuid);
 
             testVolumeStorageVmUuid = volume.vm_uuid;
 
@@ -216,8 +217,11 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
                 t.ok(machineGetErr,
                     'getting storage VM machine should error');
-                t.equal(machineGetErr.restCode, expectedErrCode,
-                    'error code should be: ' + expectedErrCode);
+
+                if (machineGetErr) {
+                    t.equal(machineGetErr.restCode, expectedErrCode,
+                        'error code should be: ' + expectedErrCode);
+                }
 
                 t.end();
             });

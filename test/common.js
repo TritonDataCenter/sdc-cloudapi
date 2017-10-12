@@ -275,7 +275,16 @@ function clientDataTeardown(client, cb) {
     }
 
     var pollConfigCount = 10;
-    function pollConfigDeletion() {
+    function pollConfigDeletion(err) {
+        if (err) {
+            if (err.restCode !== 'ResourceNotFound') {
+                cb(err);
+            } else {
+                ufds.deleteUser(account, cb);
+            }
+            return;
+        }
+
         --pollConfigCount;
         if (pollConfigCount === 0) {
             cb(new Error('Config failed to delete in time'));
