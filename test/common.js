@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2017 Joyent, Inc.
+ * Copyright (c) 2017, Joyent, Inc.
  */
 
 /*
@@ -856,17 +856,30 @@ function deleteResources(client, cb) {
 }
 
 
-function getHeadnode(client, cb) {
-    client.cnapi.listServers({ extras: 'sysinfo' }, function (err, servers) {
+/*
+ * Find a server to use for test provisions. We'll just use a running headnode
+ * (the simple case that works for COAL). Limitation: This assumes headnode
+ * provisioning is enabled (e.g. via 'sdcadm post-setup dev-headnode-prov').
+ */
+function getTestServer(client, cb) {
+    client.cnapi.listServers({
+        headnode: true,
+        extras: 'sysinfo'
+    }, function (err, servers) {
         if (err) {
-            return err;
+            cb(err);
+            return;
         }
 
-        var headnode = servers.filter(function (s) {
-            return s.headnode;
-        })[0];
+        var runningHeadnodes = servers.filter(function (s) {
+            return s.status === 'running';
+        });
 
-        return cb(null, headnode);
+        if (runningHeadnodes.length === 0) {
+            cb(new Error('could not find a test server'));
+        } else {
+            cb(null, runningHeadnodes[0]);
+        }
     });
 }
 
@@ -1027,7 +1040,7 @@ module.exports = {
     uuid: uuid,
     addPackage: addPackage,
     deletePackage: deletePackage,
-    getHeadnode: getHeadnode,
+    getTestServer: getTestServer,
     getTestImage: getTestImage,
 
     deleteResources: deleteResources,
