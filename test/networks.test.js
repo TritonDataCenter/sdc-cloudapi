@@ -21,12 +21,22 @@ var common = require('./common');
 var CLIENTS;
 var CLIENT;
 var SERVER;
+var OTHER;
 
 // Fixture names
 var NIC_TAG = 'sdccloudapitest_networks_nictag';
 var NETWORK1_NAME = 'sdccloudapitest_networks_network1';
 var NETWORK2_NAME = 'sdccloudapitest_networks_network2';
+var NETWORK3_NAME = 'sdccloudapitest_networks_network3';
 var POOL1_NAME = 'sdccloudapitest_networks_pool1';
+
+// Test variables
+var NO_SUCH_NETWORK_UUID = 'deaddead-c626-11e5-b674-334e7e514480';
+var RESERVED_IP = '10.99.92.25';
+var ZONE_IP1 = '10.99.90.52';
+var ZONE_IP2 = '10.99.90.53';
+var ZONE_UUID1 = 'c4311f24-de18-40b9-b57e-249f2aec7533';
+var ZONE_UUID2 = '5dd79db9-3d42-40a3-a600-7fa2984ff48c';
 
 
 // --- Helpers
@@ -58,6 +68,15 @@ function deleteFixtures(t, cb) {
                 name: NETWORK2_NAME
             }, function (err) {
                 t.ifError(err, 'deleteNetwork2');
+                next();
+            });
+        },
+        function deleteNetwork3(_, next) {
+            common.napiDeleteNetworkByName({
+                napi: CLIENT.napi,
+                name: NETWORK3_NAME
+            }, function (err) {
+                t.ifError(err, 'deleteNetwork3');
                 next();
             });
         },
@@ -106,6 +125,18 @@ function createFixtures(t, cb) {
                 next(err);
             });
         },
+        function mkTestNetwork3(_, next) {
+            var params = {
+                owner_uuids: [ CLIENT.account.uuid ],
+                gateway: '10.99.92.1'
+            };
+            createTestNetwork(NETWORK3_NAME, 92, params, function (err, net) {
+                t.ifError(err, 'createFixtures: ' + NETWORK3_NAME);
+                t.ok(net, 'createFixtures: network3');
+                fixtures.network3 = net;
+                next(err);
+            });
+        },
         function mkTestPool1(_, next) {
             var params = {
                 name: POOL1_NAME,
@@ -116,6 +147,50 @@ function createFixtures(t, cb) {
                 t.ifError(err, 'createFixtures: ' + params.name);
                 t.ok(pool, 'createFixtures: pool');
                 fixtures.pool1 = pool;
+                next(err);
+            });
+        },
+        function mkTestZoneIP1(_, next) {
+            var params = {
+                owner_uuid: CLIENT.account.uuid,
+                belongs_to_type: 'zone',
+                belongs_to_uuid: ZONE_UUID1
+            };
+            CLIENT.napi.updateIP(fixtures.network1.uuid, ZONE_IP1, params,
+                    function (err, ip) {
+                t.ifError(err, 'createFixtures: zone ip ' + ZONE_IP1);
+                t.ok(ip, 'createFixtures: reserved ip');
+                fixtures.ip2 = ip;
+                next(err);
+            });
+        },
+        /*
+         * Used to ensure a ListNetworkIPs doesn't leak other customers IPs
+         * on a public network
+         */
+        function mkTestZoneIP2(_, next) {
+            var params = {
+                owner_uuid: OTHER.account.uuid,
+                belongs_to_type: 'zone',
+                belongs_to_uuid: ZONE_UUID2
+            };
+            CLIENT.napi.updateIP(fixtures.network1.uuid, ZONE_IP2, params,
+                    function (err, ip) {
+                t.ifError(err, 'createFixtures: zone ip ' + ZONE_IP2);
+                t.ok(ip, 'createFixtures: reserved ip');
+                fixtures.ip3 = ip;
+                next(err);
+            });
+        },
+        function reserveIP(_, next) {
+            var params = {
+                reserved: true
+            };
+            CLIENT.napi.updateIP(fixtures.network3.uuid, RESERVED_IP, params,
+                    function (err, ip) {
+                t.ifError(err, 'createFixtures: reserved ip ' + RESERVED_IP);
+                t.ok(ip, 'createFixtures: reserved ip');
+                fixtures.ip1 = ip;
                 next(err);
             });
         },
@@ -149,16 +224,21 @@ function createFixtures(t, cb) {
 }
 
 
-function createTestNetwork(name, octet, cb) {
-    var params = {
-        name: name,
-        vlan_id: 59,
-        subnet: '10.99.' + octet + '.0/24',
-        provision_start_ip: '10.99.' + octet + '.5',
-        provision_end_ip: '10.99.' + octet + '.250',
-        nic_tag: NIC_TAG
-    };
-    CLIENT.napi.createNetwork(params, cb);
+function createTestNetwork(name, octet, params, cb) {
+    if (typeof (params) === 'function') {
+        cb = params;
+        params = undefined;
+    }
+
+    var _params = params || {};
+    _params.name = name;
+    _params.vlan_id =  59;
+    _params.subnet = '10.99.' + octet + '.0/24';
+    _params.provision_start_ip = '10.99.' + octet + '.5';
+    _params.provision_end_ip = '10.99.' + octet + '.250';
+    _params.nic_tag = NIC_TAG;
+
+    CLIENT.napi.createNetwork(_params, cb);
 }
 
 
@@ -202,6 +282,7 @@ test('networks', function (tt) {
                     CLIENTS = clients;
                     CLIENT = clients.user;
                     SERVER = server;
+                    OTHER = clients.other;
                     next();
                 });
             },
@@ -307,7 +388,6 @@ test('networks', function (tt) {
 
 
     tt.test('  get network (404)', function (t) {
-        var NO_SUCH_NETWORK_UUID = 'deaddead-c626-11e5-b674-334e7e514480';
         CLIENT.get('/my/networks/' + NO_SUCH_NETWORK_UUID,
                 function (err, req, res, body) {
             common.checkNotFound(t, err, req, res, body);
@@ -315,6 +395,138 @@ test('networks', function (tt) {
         });
     });
 
+    tt.test('  get network ips (404)', function (t) {
+        var path = format('/my/networks/%s/ips', NO_SUCH_NETWORK_UUID);
+        CLIENT.get(path, function (err, req, res, body) {
+            common.checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+    /*
+     *  On public networks we should only see provisioned ips owned
+     *  by the specific user.
+     */
+    tt.test('  get network ips (public)', function (t) {
+        var out = [
+            {
+                ip: ZONE_IP1,
+                reserved: false,
+                managed: false,
+                belongs_to_uuid: ZONE_UUID1,
+                owner_uuid: CLIENT.account.uuid
+            }
+        ];
+        var path = format('/my/networks/%s/ips', fixtures.network1.uuid);
+        CLIENT.get(path, function (err, req, res, body) {
+            t.ifError(err, 'GET /my/networks/' + fixtures.network1.uuid +
+                '/ips error');
+            t.equal(res.statusCode, 200, 'GET /my/networks/:uuid/ips status');
+            common.checkHeaders(t, res.headers);
+            t.ok(body, 'GET /my/networks/:uuid/ips body');
+            t.deepEqual(body, out, 'ListNetworkIPs shows only reserved and '
+                + 'provisioned ips OK');
+            t.end();
+        });
+    });
+
+    /*
+     *  On private networks we should see provisioned/reserved ips
+     *  as well as 'triton_protected' ips such as the broadcast/gateway
+     */
+    tt.test('  get network ips (owner)', function (t) {
+        var out = [
+            {
+                ip: '10.99.92.1',
+                managed: true,
+                reserved: true
+            },
+            {
+                ip: RESERVED_IP,
+                managed: false,
+                reserved: true
+            },
+            {
+                ip: '10.99.92.255',
+                managed: true,
+                reserved: true
+            }
+        ];
+        var path = format('/my/networks/%s/ips', fixtures.network3.uuid);
+        CLIENT.get(path, function (err, req, res, body) {
+            t.ifError(err, 'GET /my/networks/' + fixtures.network3.uuid +
+                '/ips error');
+            t.equal(res.statusCode, 200, 'GET /my/networks/:uuid/ips status');
+            common.checkHeaders(t, res.headers);
+            t.ok(body, 'GET /my/networks/:uuid/ips body');
+            t.deepEqual(body, out, 'ListNetworkIPs shows only reserved and '
+                + 'provisioned ips OK');
+            t.end();
+        });
+    });
+
+    tt.test('  get network ip (404)', function (t) {
+        var path = format('/my/networks/%s/ips/10.99.98.1',
+            fixtures.network3.uuid);
+        CLIENT.get(path, function (err, req, res, body) {
+            common.checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+    // GET of owned IP on public network works
+    tt.test('  get ip on public network (owner)', function (t) {
+        var out = {
+            ip: ZONE_IP1,
+            managed: false,
+            reserved: false,
+            belongs_to_uuid: ZONE_UUID1,
+            owner_uuid: CLIENT.account.uuid
+        };
+        var path = format('/my/networks/%s/ips/%s', fixtures.network1.uuid,
+            ZONE_IP1);
+        CLIENT.get(path, function (err, req, res, body) {
+            t.ifError(err, 'GET /my/networks/' + fixtures.network1.uuid +
+                '/ips/' + ZONE_IP1 + ' error');
+            t.equal(res.statusCode, 200,
+                'GET /my/networks/:uuid/ips/:ip_address status');
+            common.checkHeaders(t, res.headers);
+            t.ok(body, 'GET /my/networks/:uuid/ips/:ip_address body');
+            t.deepEqual(body, out, 'GetNetworkIP works on owned IP');
+            t.end();
+        });
+    });
+
+    //  GET of unowned IP on a public network returns 404
+    tt.test('  get ip on public network (not owner)', function (t) {
+        var path = format('/my/networks/%s/ips/%s', fixtures.network1.uuid,
+            ZONE_IP2);
+        CLIENT.get(path, function (err, req, res, body) {
+            common.checkNotFound(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+    // GET of IP on private network works
+    tt.test('  get ip on private network (owner)', function (t) {
+        var out = {
+            ip: RESERVED_IP,
+            reserved: true,
+            managed: false
+        };
+        var path = format('/my/networks/%s/ips/%s', fixtures.network3.uuid,
+            RESERVED_IP);
+        CLIENT.get(path, function (err, req, res, body) {
+            t.ifError(err, 'GET /my/networks/' + fixtures.network3.uuid +
+                '/ips/' + RESERVED_IP + ' error');
+            t.equal(res.statusCode, 200,
+                'GET /my/networks/:uuid/ips/:ip_address status');
+            common.checkHeaders(t, res.headers);
+            t.ok(body, 'GET /my/networks/:uuid/ips/:ip_address body');
+            t.deepEqual(body, out, 'GetNetworkIP works on private network');
+            t.end();
+        });
+    });
 
     tt.test('  teardown', function (t) {
         vasync.pipeline({ funcs: [

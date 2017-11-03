@@ -8312,7 +8312,184 @@ or
     }
 
 
+## ListNetworkIPs (GET /:login/networks/:id/ips)
 
+List a network's IPs. On a public network only IPs owned by the user will be
+returned.  On a private network all IPs that are either reserved or allocated
+will be returned.
+
+Note that not every network from [ListNetworks](#ListNetworks) will work. Some
+UUIDs are for pools which are not supported at this time.  However, every
+network UUID from [GetMachine](#GetMachine) and [GetNic](#GetNic) will work, as
+they are UUIDs for a specific network.
+
+The `reserved` field determines if the IP can be used automatically when
+provisioning a new instance. If `reserved` is set to true, then the IP will not
+be given out.
+
+The `managed` field in the IP object tells you if the IP is manged by Triton
+itself. An example of this is the gateway and broadcast IPs on a network.
+
+If the IP is associated with an instance then `owner_uuid` will be shown as
+well, so that on shared private networks it is clear who is using the IP.  The
+`belongs_to_uuid` field will tell you which instance owns the IP if any, and
+will only be present if that instance is owned by you.
+
+You can paginate this API by passing in `offset` and `limit`.  HTTP responses
+will contain the additional headers `x-resource-count` and `x-query-limit`.  If
+`x-resource-count` is less than `x-query-limit`, you're done, otherwise call the
+API again with `offset` set to `offset` + `limit` to fetch additional instances.
+
+### Inputs
+
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+limit        | Number   | Return a max of N IPs; default is 1000 (which is also the maximum allowable result set size)
+offset       | Number   | Get a `limit` number of IPs starting at this `offset`
+
+### Returns
+
+An array of IP objects.  IPs are:
+
+**Field**  | **Type**   | **Description**
+---------- | ---------- | ---------------
+ip         | String     | IP Address
+reserved   | Boolean    | Whether this IP is reserved or not
+managed    | Boolean    | True if the user cannot modify the IP via UpdateNetworkIP (example broadcast and gateway IPs)
+owner_uuid | UUID       | UUID of the owner that the instance is associated with (Optional)
+belongs_to_uuid | UUID  | UUID of the instance the IP is associated with (Optional)
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
+
+### CLI Command
+
+    $ triton network ip list daeb93a2-532e-4bd4-8788-b6b30f10ac17
+
+#### Example Request
+
+    GET /my/networks/daeb93a2-532e-4bd4-8788-b6b30f10ac17/ips HTTP/1.1
+    authorization: Signature keyId="...
+    accept: application/json
+    accept-version: ~8
+    host: api.example.com
+
+#### Example Response
+
+    HTTP/1.1 200 OK
+    x-query-limit: 1000
+    x-resource-count: 4
+    Content-Type: application/json
+    Content-Length: 331
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: +d/D0BiDjXGmeuxP93uZ5Q==
+    Date: Tue, 31 Oct 2017 20:49:11 GMT
+    Server: cloudapi/8.3.0
+    Api-Version: 8.0.0
+    Request-Id: fdbce926-fc33-456f-af3c-c39b59cd4066
+    Response-Time: 82
+
+    [
+      {
+        "ip": "192.168.128.1",
+        "reserved": true,
+        "managed": true
+      },
+      {
+        "ip": "192.168.128.4",
+        "reserved": true,
+        "managed": false
+      },
+      {
+        "ip": "192.168.128.5",
+        "reserved": false,
+        "owner_uuid": "7dfbbcda-4f62-cdf8-df31-d1e4d8d34c5e",
+        "belongs_to_uuid": "272a7a08-ddc7-c4b2-97bd-ae3257fd8eb9",
+        "managed": false
+      },
+      {
+        "ip": "192.168.131.255",
+        "reserved": true,
+        "managed": true
+      }
+    ]
+
+## GetNetworkIP (GET /:login/networks/:id/ips/:ip_address)
+
+Get a network's IP. On a public network you can only get an IP owned by you. On
+private network you can get an IP owned by any of the network's shared owners,
+however the `belongs_to_uuid` field will be omitted if you do not own the
+instance the IP is assocaited with.
+
+### Inputs
+
+* None
+
+### Returns
+
+An IP object:
+
+**Field**  | **Type**   | **Description**
+---------- | ---------- | ---------------
+ip         | String     | IP Address
+reserved   | Boolean    | Whether this IP is reserved or not
+managed    | Boolean    | True if the user cannot modify the IP via UpdateNetworkIP (example broadcast and gateway IPs)
+owner_uuid | UUID       | UUID of the owner that the instance is associated with (Optional)
+belongs_to_uuid | UUID  | UUID of the instance the IP is associated with (Optional)
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:id`, or `:ip_address` does not exist
+
+### CLI Command
+
+    $ triton network ip get daeb93a2-532e-4bd4-8788-b6b30f10ac17 192.168.128.5
+
+#### Example Request
+
+    GET /my/networks/daeb93a2-532e-4bd4-8788-b6b30f10ac17/ips/192.168.128.5 HTTP/1.1
+    authorization: Signature keyId="...
+    accept: application/json
+    accept-version: ~8
+    host: api.example.com
+
+#### Example Response
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Content-Length: 164
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: E65nD1+bNuM3eutsB/8lPw==
+    Date: Tue, 31 Oct 2017 20:54:03 GMT
+    Server: cloudapi/8.3.0
+    Api-Version: 8.0.0
+    Request-Id: a31097ad-6154-45a3-af08-e3dfddd70d22
+    Response-Time: 393
+
+    {
+      "ip": "192.168.128.5",
+      "reserved": false,
+      "owner_uuid": "7dfbbcda-4f62-cdf8-df31-d1e4d8d34c5e",
+      "belongs_to_uuid": "272a7a08-ddc7-c4b2-97bd-ae3257fd8eb9",
+      "managed": false
+    }
 
 # Nics
 
