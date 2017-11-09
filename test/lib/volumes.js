@@ -25,19 +25,20 @@ function waitForTransitionToState(cloudapiClient, volumeUuid, expectedState,
     function pollVolumeState() {
         if (nbRetriesSoFar > MAX_NB_RETRIES) {
             callback();
-        } else {
-            ++nbRetriesSoFar;
-
-            cloudapiClient.get('/my/volumes/' + volumeUuid,
-                function onGetVolume(getVolumeErr, req, res, volume) {
-                    if (!getVolumeErr && volume !== undefined &&
-                        volume.state === expectedState) {
-                        callback();
-                    } else {
-                        setTimeout(pollVolumeState, RETRY_DELAY_IN_MS);
-                    }
-                });
+            return;
         }
+
+        ++nbRetriesSoFar;
+
+        cloudapiClient.get('/my/volumes/' + volumeUuid,
+            function onGetVolume(getVolumeErr, req, res, volume) {
+                if (!getVolumeErr && volume !== undefined &&
+                    volume.state === expectedState) {
+                    callback();
+                } else {
+                    setTimeout(pollVolumeState, RETRY_DELAY_IN_MS);
+                }
+            });
     }
 
     pollVolumeState();

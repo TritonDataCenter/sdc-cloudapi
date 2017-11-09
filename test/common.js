@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2017 Joyent, Inc.
+ * Copyright (c) 2017, Joyent, Inc.
  */
 
 /*
@@ -276,15 +276,6 @@ function clientDataTeardown(client, cb) {
 
     var pollConfigCount = 10;
     function pollConfigDeletion(err) {
-        if (err) {
-            if (err.restCode !== 'ResourceNotFound') {
-                cb(err);
-            } else {
-                ufds.deleteUser(account, cb);
-            }
-            return;
-        }
-
         --pollConfigCount;
         if (pollConfigCount === 0) {
             cb(new Error('Config failed to delete in time'));
@@ -456,7 +447,9 @@ function setupClient(version, serverUrl, user, keyId, keyPath, parentAcc, cb) {
     client.papi   = _papi();
     client.mahi   = _mahi();
     client.ufds   = _ufds();
-    client.volapi = _volapi();
+    if (CONFIG.experimental_cloudapi_nfs_shared_volumes === true) {
+        client.volapi = _volapi();
+    }
 
     var ufds = client.ufds;
 
@@ -881,17 +874,30 @@ function deleteResources(client, cb) {
 }
 
 
-function getHeadnode(client, cb) {
-    client.cnapi.listServers({ extras: 'sysinfo' }, function (err, servers) {
+/*
+ * Find a server to use for test provisions. We'll just use a running headnode
+ * (the simple case that works for COAL). Limitation: This assumes headnode
+ * provisioning is enabled (e.g. via 'sdcadm post-setup dev-headnode-prov').
+ */
+function getTestServer(client, cb) {
+    client.cnapi.listServers({
+        headnode: true,
+        extras: 'sysinfo'
+    }, function (err, servers) {
         if (err) {
-            return err;
+            cb(err);
+            return;
         }
 
-        var headnode = servers.filter(function (s) {
-            return s.headnode;
-        })[0];
+        var runningHeadnodes = servers.filter(function (s) {
+            return s.status === 'running';
+        });
 
-        return cb(null, headnode);
+        if (runningHeadnodes.length === 0) {
+            cb(new Error('could not find a test server'));
+        } else {
+            cb(null, runningHeadnodes[0]);
+        }
     });
 }
 
@@ -1029,10 +1035,6 @@ function napiDeleteNicTagByName(opts, cb) {
     });
 }
 
-function createResourceName(prefix) {
-    return prefix + '-' + libuuid.create();
-}
-
 // --- Library
 
 
@@ -1055,7 +1057,7 @@ module.exports = {
     uuid: uuid,
     addPackage: addPackage,
     deletePackage: deletePackage,
-    getHeadnode: getHeadnode,
+    getTestServer: getTestServer,
     getTestImage: getTestImage,
 
     deleteResources: deleteResources,
@@ -1069,7 +1071,5 @@ module.exports = {
 
     getCfg: function () {
         return CONFIG;
-    },
-
-    createResourceName: createResourceName
+    }
 };

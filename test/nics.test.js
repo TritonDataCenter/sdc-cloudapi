@@ -180,16 +180,15 @@ function deleteFixtures(t, fixtures, cb) {
             });
         },
 
-        function getHeadnode(ctx, next) {
+        function getATestServer(ctx, next) {
             if (fixtures) {
-                ctx.headnode = fixtures.headnode;
+                ctx.server = fixtures.server;
                 next();
                 return;
-
             }
-            common.getHeadnode(CLIENT, function (err, headnode) {
-                t.ifError(err, 'getHeadnode');
-                ctx.headnode = headnode;
+            common.getTestServer(CLIENT, function (err, testServer) {
+                t.ifError(err, 'getATestServer');
+                ctx.server = testServer;
                 next();
             });
         },
@@ -207,8 +206,8 @@ function deleteFixtures(t, fixtures, cb) {
                 nicTags.push(fixtures.internal.nicTag.name);
             }
 
-            removeTagsFromServer(t, nicTags, ctx.headnode, function (err, job) {
-                t.ifError(err, 'remove NIC tags from headnode server: '
+            removeTagsFromServer(t, nicTags, ctx.server, function (err, job) {
+                t.ifError(err, 'remove NIC tags from server: '
                     + nicTags);
 
                 waitForJob(CLIENT, job.job_uuid, function (err2) {
@@ -287,10 +286,10 @@ function createFixtures(t, cb) {
             });
         },
 
-        function getHeadnode(_, next) {
-            common.getHeadnode(CLIENT, function (err, headnode) {
-                t.ifError(err, 'getHeadnode');
-                fixtures.headnode = headnode;
+        function getATestServer(_, next) {
+            common.getTestServer(CLIENT, function (err, testServer) {
+                t.ifError(err, 'getTestServer');
+                fixtures.server = testServer;
                 next();
             });
         },
@@ -300,14 +299,13 @@ function createFixtures(t, cb) {
 
             /*
              * If we created an 'internal' network above, we'll need to add
-             * that NIC tag to the server to which we will provision
-             * (i.e. the headnode)
+             * that NIC tag to the server to which we will provision.
              */
             if (fixtures.internal) {
                 nicTags.push(fixtures.internal.nicTag.name);
             }
 
-            addNicTagsToServer(t, nicTags, fixtures.headnode,
+            addNicTagsToServer(t, nicTags, fixtures.server,
                     function (err, job) {
                 t.ifError(err);
                 waitForJob(CLIENT, job.job_uuid, function (err2) {
@@ -329,7 +327,7 @@ function createFixtures(t, cb) {
                     image: image.id,
                     package: SDC_128.name,
                     name: FIXTURE_DATA.inst.name,
-                    server_uuid: fixtures.headnode.uuid,
+                    server_uuid: fixtures.server.uuid,
                     firewall_enabled: true
                 };
                 machinesCommon.createMachine(t, CLIENT, obj,

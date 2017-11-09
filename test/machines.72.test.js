@@ -25,7 +25,7 @@ var checkMachine = machinesCommon.checkMachine;
 var SDC_128 = common.sdc_128_package;
 
 var PROVISIONABLE_NET_UUID;
-var HEADNODE_UUID;
+var SERVER_UUID;
 var IMAGE_UUID;
 
 var ROLE_NAME;
@@ -64,10 +64,10 @@ test('setup', function (t) {
 });
 
 
-test('Get Headnode', function (t) {
-    common.getHeadnode(CLIENT, function (err, headnode) {
+test('Get test server', function (t) {
+    common.getTestServer(CLIENT, function (err, testServer) {
         t.ifError(err);
-        HEADNODE_UUID = headnode.uuid;
+        SERVER_UUID = testServer.uuid;
         t.end();
     });
 });
@@ -103,7 +103,7 @@ test('CreateMachine', function (t) {
         image: IMAGE_UUID,
         package: SDC_128.name,
         name: 'a' + uuid().substr(0, 7),
-        server_uuid: HEADNODE_UUID,
+        server_uuid: SERVER_UUID,
         firewall_enabled: true
     };
 
@@ -189,7 +189,7 @@ test('7.3 networks format should fail', function (t) {
         package: SDC_128.name,
         name: 'a' + uuid().substr(0, 7),
         networks: [ { ipv4_uuid: PROVISIONABLE_NET_UUID, ipv4_count: 1 } ],
-        server_uuid: HEADNODE_UUID
+        server_uuid: SERVER_UUID
     };
 
     CLIENT.post({
@@ -304,7 +304,7 @@ test('sub-user tests', function (t) {
                 image: IMAGE_UUID,
                 package: SDC_128.name,
                 name: 'a' + uuid().substr(0, 7),
-                server_uuid: HEADNODE_UUID,
+                server_uuid: SERVER_UUID,
                 firewall_enabled: true
             };
 

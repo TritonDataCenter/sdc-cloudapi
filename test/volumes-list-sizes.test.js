@@ -26,10 +26,6 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     var CLIENT;
     var SERVER;
 
-    var testVolumeName = common.createResourceName('test-volumes-basic');
-    var testVolume;
-    var testVolumeStorageVmUuid;
-
     test('setup', function (t) {
         common.setup({clientApiVersion: '~8.0'}, function (_, clients, server) {
             CLIENTS = clients;

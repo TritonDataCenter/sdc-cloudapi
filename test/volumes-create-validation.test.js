@@ -59,8 +59,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     });
 
     test('creating volume with invalid type fails', function (t) {
-        var testVolumeName =
-            common.createResourceName('test-volumes-basic-invalid-type');
+        var testVolumeName = 'test-volumes-basic-invalid-type';
         var invalidVolumeType = 'invalid-volume-type';
 
         CLIENT.post('/my/volumes', {
@@ -86,8 +85,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
     test('creating volume with invalid size fails', function (t) {
         var invalidVolumeSize = 'invalid-volume-size';
-        var testVolumeName =
-            common.createResourceName('test-volumes-basic-invalid-size');
+        var testVolumeName = 'test-volumes-basic-invalid-size';
         var testVolumeType = 'tritonnfs';
 
         CLIENT.post('/my/volumes', {
@@ -126,12 +124,10 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             {},
             42
         ];
-        var testContainerNamePrefix = 'test-volumes-basic-invalid-network';
 
         vasync.forEachParallel({
             func: function createVolWithInvalidNetworks(invalidNetworks, done) {
-                var testVolumeName =
-                    common.createResourceName(testContainerNamePrefix);
+                var testVolumeName = 'test-volumes-basic-invalid-network';
                 var testVolumeType = 'tritonnfs';
 
                 CLIENT.post('/my/volumes', {

@@ -86,7 +86,7 @@ var SDC_512 = {
     active: true
 };
 
-var HEADNODE_UUID;
+var SERVER_UUID;
 var IMAGE_UUID;
 var MACHINE_UUID;
 
@@ -142,10 +142,10 @@ test('setup', function (t) {
 });
 
 
-test('Get Headnode', function (t) {
-    common.getHeadnode(CLIENT, function (err, headnode) {
+test('Get test server', function (t) {
+    common.getTestServer(CLIENT, function (err, testServer) {
         t.ifError(err);
-        HEADNODE_UUID = headnode.uuid;
+        SERVER_UUID = testServer.uuid;
         t.end();
     });
 });
@@ -178,7 +178,7 @@ test('Create machine with inactive package', function (t) {
         image: IMAGE_UUID,
         package: SDC_256_INACTIVE.name,
         name: 'a' + uuid().substr(0, 7),
-        server_uuid: HEADNODE_UUID
+        server_uuid: SERVER_UUID
     };
 
     CLIENT.post('/my/machines', obj, function (err, req, res, body) {
@@ -202,7 +202,7 @@ test('Create machine with os mismatch', function (t) {
         image: IMAGE_UUID,
         package: SDC_128_LINUX.name,
         name: 'a' + uuid().substr(0, 7),
-        server_uuid: HEADNODE_UUID,
+        server_uuid: SERVER_UUID,
         firewall_enabled: true
     };
 
@@ -236,7 +236,7 @@ test('Create machine with too many public networks', function (t) {
             image: IMAGE_UUID,
             package: SDC_256.name,
             name: 'a' + uuid().substr(0, 7),
-            server_uuid: HEADNODE_UUID,
+            server_uuid: SERVER_UUID,
             firewall_enabled: true,
             networks: networkUuids
         };
@@ -293,7 +293,7 @@ test('CreateMachine using invalid networks', function (t) {
     var obj = {
         image: IMAGE_UUID,
         package: SDC_256.name,
-        server_uuid: HEADNODE_UUID,
+        server_uuid: SERVER_UUID,
         networks: ['8180ef72-40fa-4b86-915b-803bcf96b442'] // invalid
     };
 
@@ -324,7 +324,7 @@ test('CreateMachine using network without permissions', function (t) {
     var vmDetails = {
         image: IMAGE_UUID,
         package: SDC_256.name,
-        server_uuid: HEADNODE_UUID
+        server_uuid: SERVER_UUID
     };
 
     CLIENT.napi.createNetwork(netDetails, function (err, net) {
@@ -374,7 +374,7 @@ test('Create machine with invalid locality', function (t) {
         image: IMAGE_UUID,
         package: SDC_256.name,
         name: 'a' + uuid().substr(0, 7),
-        server_uuid: HEADNODE_UUID,
+        server_uuid: SERVER_UUID,
         locality: { near: 'asdasd' }
     };
 
@@ -411,7 +411,7 @@ test('CreateMachine using image without permission', function (t) {
         var obj = {
             image: inaccessibleImage.uuid,
             package: SDC_256.name,
-            server_uuid: HEADNODE_UUID
+            server_uuid: SERVER_UUID
         };
 
         return CLIENT.post('/my/machines', obj, function (er2, req, res, body) {
@@ -447,7 +447,7 @@ test('CreateMachine without approved_for_provisioning', function (t) {
         var obj = {
             image: IMAGE_UUID,
             package: SDC_256.name,
-            server_uuid: HEADNODE_UUID
+            server_uuid: SERVER_UUID
         };
 
         httpClient.post('/my/machines', obj, function (err2, req, res, body) {
@@ -486,7 +486,7 @@ test('CreateMachine', function (t) {
             far: 'af4167f0-beda-4af9-9ae4-99d544499c14', // fake UUID
             strict: true
         },
-        server_uuid: HEADNODE_UUID,
+        server_uuid: SERVER_UUID,
         firewall_enabled: true
     };
 
@@ -942,7 +942,7 @@ test('ListMachines destroyed', function (t) {
 test('CreateMachine using query args', function (t) {
     var query = '/my/machines?image=' + IMAGE_UUID +
                 '&package=' + SDC_128.name +
-                '&server_uuid=' + HEADNODE_UUID;
+                '&server_uuid=' + SERVER_UUID;
 
     CLIENT.post(query, {}, function (err, req, res, body) {
         t.ifError(err, 'POST /my/machines error');
@@ -978,7 +978,7 @@ test('CreateMachine using multiple same networks', function (t) {
         var obj = {
             image: IMAGE_UUID,
             package: SDC_128.name,
-            server_uuid: HEADNODE_UUID,
+            server_uuid: SERVER_UUID,
             networks: [networkUuid, networkUuid, networkUuid]
         };
 
@@ -1206,7 +1206,7 @@ test('CreateMachine with {{shortId}} in alias', function (t) {
         image: IMAGE_UUID,
         package: SDC_256.name,
         name: 'db-{{shortId}}-1.0',
-        server_uuid: HEADNODE_UUID,
+        server_uuid: SERVER_UUID,
         firewall_enabled: true
     };
 
@@ -1326,7 +1326,7 @@ test('Delete packageless/nicless machine', deleteMachine);
 test('Affinity tests', function (t) {
     var affinityTest = require('./machines/affinity');
 
-    affinityTest(t, CLIENT, OTHER, IMAGE_UUID, SDC_128.uuid, HEADNODE_UUID,
+    affinityTest(t, CLIENT, OTHER, IMAGE_UUID, SDC_128.uuid, SERVER_UUID,
         function () {
         t.end();
     });

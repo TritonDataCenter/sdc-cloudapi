@@ -27,14 +27,12 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 } else {
     var CLIENTS;
     var CLIENT;
-    var DEFAULT_VOLUME_SIZE = 10 * units.MIBS_IN_GB;
+    var DEFAULT_VOLUME_SIZE = 10 * units.MiBS_IN_GiB;
     var SERVER;
     var testVolumeDefaultSize, testVolume20MibsSize;
-    var testVolumeNameDefaultSize =
-        common.createResourceName('test-volumes-size-default');
-    var testVolumeName20MibsSize =
-        common.createResourceName('test-volumes-size-20');
-    var VOLUME_SIZE_20_GiBs = 20 * units.MIBS_IN_GB;
+    var testVolumeNameDefaultSize = 'test-volumes-size-default';
+    var testVolumeName20MibsSize = 'test-volumes-size-20';
+    var VOLUME_SIZE_20_GiBs = 20 * units.MiBS_IN_GiB;
 
     test('setup', function (t) {
         common.setup({clientApiVersion: '~8.0'}, function (_, clients, server) {

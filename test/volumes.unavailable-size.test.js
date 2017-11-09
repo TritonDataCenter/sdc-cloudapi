@@ -29,8 +29,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     var CLIENTS;
     var CLIENT;
     var SERVER;
-    var testVolumeNameUnavailableSize =
-        common.createResourceName('test-volumes-size-default');
+    var testVolumeNameUnavailableSize = 'test-volumes-size-default';
 
     test('setup', function (t) {
         common.setup({clientApiVersion: '~8.0'}, function (_, clients, server) {

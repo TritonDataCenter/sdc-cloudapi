@@ -30,9 +30,6 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     var SERVER;
     var USER;
 
-    var testVolumeName =
-        common.createResourceName('test-volumes-no-fabric-network');
-
     test('setup', function (t) {
         common.setup({clientApiVersion: '~8.0'},
             function onSetupDone(_, clients, server) {
@@ -77,7 +74,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     test('creating volume with default params should fail',
         function (t) {
             CLIENT.post('/my/volumes', {
-                name: testVolumeName,
+                name: 'test-volumes-no-fabric-network',
                 type: 'tritonnfs'
             }, function onVolumeCreated(volumeCreationErr, req, res, body) {
                 var expectedStatusCode = 409;

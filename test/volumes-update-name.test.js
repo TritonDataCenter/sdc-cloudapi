@@ -29,9 +29,8 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     var CLIENT;
     var SERVER;
 
-    var testVolumeName = common.createResourceName('test-volumes-basic');
-    var testVolumeSecondName =
-        common.createResourceName('test-volumes-basic-renamed');
+    var testVolumeName = 'test-volumes-basic';
+    var testVolumeSecondName = 'test-volumes-basic-renamed';
     var testVolume;
 
     test('setup', function (t) {

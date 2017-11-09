@@ -65,7 +65,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     var smartosVmDelErr;
     var smartosVmUuid;
     var testPackage;
-    var testVolumeName = common.createResourceName('test-volumes-automount');
+    var testVolumeName = 'test-volumes-automount';
     var testVolume;
     var testVolumeStorageVmUuid;
 

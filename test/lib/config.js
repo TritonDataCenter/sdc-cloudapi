@@ -15,16 +15,17 @@ function waitForAccountConfigReady(client, callback) {
     assert.func(callback, 'callback');
 
     var nbTries = 0;
-    var MAX_NB_TRIES = 20;
+    var MAX_NUM_TRIES = 20;
     var TRY_DELAY_IN_MS = 1000;
 
     function getConfig() {
-        ++nbTries;
         client.get('/my/config',
             function onGetConfig(getConfigErr, req, res, ufdsConfig) {
+                ++nbTries;
+
                 if (getConfigErr ||
                     (ufdsConfig && ufdsConfig.default_network === undefined)) {
-                    if (nbTries >= MAX_NB_TRIES) {
+                    if (nbTries >= MAX_NUM_TRIES) {
                         callback(new Error('max number of tries reached'));
                         return;
                     } else {

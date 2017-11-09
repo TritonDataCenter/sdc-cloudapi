@@ -26,7 +26,7 @@ function waitForDefaultVLAN(CLIENT, t) {
             }
 
             if ((Date.now() - start) > CHECK_TIMEOUT) {
-                t.pass('did not found default vlan before timeout');
+                t.pass('did not find default vlan before timeout');
                 return t.end();
             }
 

@@ -10,6 +10,7 @@
 
 var assert = require('assert-plus');
 var test = require('tape').test;
+var util = require('util');
 var verror = require('verror');
 
 var common = require('./common');
@@ -26,6 +27,30 @@ var CONFIG = mod_config.configure();
  */
 var ISO_DATE_STRING_RE = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/;
 
+function checkVolumeNotFoundError(err) {
+    var expectedErrorName = 'VolumeNotFoundError';
+    var expectedStatusCode = 404;
+    var expectedRestCode = 'VolumeNotFound';
+
+    if (!err) {
+        return false;
+    }
+
+    if (err.statusCode !== expectedStatusCode) {
+        return false;
+    }
+
+    if (err.restCode !== expectedRestCode) {
+        return false;
+    }
+
+    if (err.name !== expectedErrorName) {
+        return false;
+    }
+
+    return true;
+}
+
 if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     console.log('experimental_cloudapi_nfs_shared_volumes setting not ' +
         'enabled, skipping tests');
@@ -33,9 +58,10 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 } else {
     var CLIENTS;
     var CLIENT;
+    var OTHER;
     var SERVER;
 
-    var testVolumeName = common.createResourceName('test-volumes-basic');
+    var testVolumeName = 'test-volumes-basic';
     var testVolume;
     var testVolumeStorageVmUuid;
 
@@ -43,6 +69,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
         common.setup({clientApiVersion: '~8.0'}, function (_, clients, server) {
             CLIENTS = clients;
             CLIENT = clients.user;
+            OTHER = clients.other;
             SERVER = server;
 
             t.end();
@@ -166,6 +193,37 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                             t.end();
                         });
             });
+    });
+
+    test('getting volume from other account should fail', function (t) {
+        OTHER.get('/my/volumes/' + testVolume.id,
+            function onGetVol(getVolErr, req, res, volume) {
+                t.equal(checkVolumeNotFoundError(getVolErr), true,
+                    'expected VolumeNotFoundError, got: ' +
+                        util.inspect(getVolErr));
+                t.end();
+            });
+    });
+
+    test('deleting volume from other account should fail', function (t) {
+        OTHER.del('/my/volumes/' + testVolume.id,
+            function onDelVol(delVolErr, req, res, volume) {
+                t.equal(checkVolumeNotFoundError(delVolErr), true,
+                    'expected VolumeNotFoundError, got: ' +
+                        util.inspect(delVolErr));
+                t.end();
+            });
+    });
+
+    test('updating volume from other account should fail', function (t) {
+        OTHER.post('/my/volumes/' + testVolume.id, {
+            name: 'foo'
+        }, function onUpdateVol(updateVolErr, req, res, volume) {
+            t.equal(checkVolumeNotFoundError(updateVolErr), true,
+                'expected VolumeNotFoundError, got: ' +
+                    util.inspect(updateVolErr));
+            t.end();
+        });
     });
 
     test('getting volume directly through VOLAPI', function (t) {
