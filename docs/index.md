@@ -747,11 +747,18 @@ services, here's a simple Bash function you can use to wrap cURL when
 communicating with CloudAPI:
 
     $ function cloudapi() {
-      local now=`date -u "+%a, %d %h %Y %H:%M:%S GMT"`;
-      local signature=`echo ${now} | tr -d '\n' | openssl dgst -sha256 -sign ~/.ssh/id_rsa | openssl enc -e -a | tr -d '\n'`;
+        local now=$(date -u '+%a, %d %h %Y %H:%M:%S GMT')
+        local signature=$(echo -n "$now" | openssl dgst -sha256 -sign ~/.ssh/id_rsa | openssl enc -e -a | tr -d '\n')
+        local url="$SDC_URL$1"
+        shift
 
-      curl -i -H "Accept: application/json" -H "accept-version: ~8" -H "Date: ${now}" -H "Authorization: Signature keyId=\"/$SDC_ACCOUNT/keys/id_rsa\",algorithm=\"rsa-sha256\" ${signature}" --url $SDC_URL$@;
-      echo "";
+        curl -s -k -i \
+            -H 'Accept: application/json' \
+            -H "accept-version: ~8" \
+            -H "Date: $now" \
+            -H "Authorization: Signature keyId=\"/$SDC_ACCOUNT/keys/id_rsa\",algorithm=\"rsa-sha256\" $signature" \
+            "$@" "$url"
+        echo
     }
 
 You may need to alter the path to your SSH key in the above function, as well as
@@ -900,6 +907,12 @@ The set of supported *API versions* is given in the ping endpoint:
 # Versions
 
 The section describes API changes in CloudAPI versions.
+
+## 8.4.0
+
+- This version adds support for the following new endpoints:
+  [ListNetworkIPs](#ListNetworkIPs), [GetNetworkIP](#GetNetworkIP),
+  and [UpdateNetworkIP](#UpdateNetworkIP).
 
 ## 8.3.0
 
@@ -8488,6 +8501,81 @@ ResourceNotFound | If `:login`, `:id`, or `:ip_address` does not exist
       "reserved": false,
       "owner_uuid": "7dfbbcda-4f62-cdf8-df31-d1e4d8d34c5e",
       "belongs_to_uuid": "272a7a08-ddc7-c4b2-97bd-ae3257fd8eb9",
+      "managed": false
+    }
+
+## UpdateNetworkIP (PUT /:login/networks/:id/ips/:ip_address)
+
+Update a network's IP to toggle the `reserved` flag. If `reserved` is set to
+`true` the IP will not be given out automatically at provision time. You cannot
+update an IP on a public network. On private networks you can update an IP that
+is already in use by an instance owned by you, or an IP that is not yet in use
+as long as it's within the network's subnet.
+
+### Inputs
+
+**Field**  | **Type** | **Description**
+---------- | -------- | ---------------
+reserved   | boolean  | If true take the IP out of the provisioning pool
+
+### Returns
+
+An IP object:
+
+**Field**  | **Type**   | **Description**
+---------- | ---------- | ---------------
+ip         | String     | IP Address
+reserved   | Boolean    | Whether this IP is reserved or not
+managed    | Boolean    | True if the user cannot modify the IP via UpdateNetworkIP (example broadcast and gateway IPs)
+owner_uuid | UUID       | UUID of the owner that the instance is associated with (Optional)
+belongs_to_uuid | UUID  | UUID of the instance the IP is associated with (Optional)
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:id`, or `:ip_address` does not exist
+InvalidArgument  | If `:id` is not a UUID, or it is a public network. If `:ip_address` is in use by another user
+MissingParameter | If the `reserved` argument isn't specefied
+
+### CLI Command
+
+    $ triton network ip update daeb93a2-532e-4bd4-8788-b6b30f10ac17 192.168.128.5 reserved=false
+
+#### Example Request
+
+    PUT  /my/networks/daeb93a2-532e-4bd4-8788-b6b30f10ac17/ips/192.168.128.5 HTTP/1.1
+    authorization: Signature keyId="...
+    accept: application/json
+    accept-version: ~8
+    host: api.example.com
+
+    {
+      "reserved": false
+    }
+
+#### Example Response
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Content-Length: 55
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: PUT, GET, HEAD
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: DvheKXPZSZw5lav9REKHuw==
+    Date: Wed, 22 Nov 2017 18:53:02 GMT
+    Server: cloudapi/8.3.0
+    Api-Version: 8.0.0
+    Request-Id: a9715a00-6194-4053-9846-fcdf9c5476fb
+    Response-Time: 76
+
+    {
+      "ip": "192.168.128.5",
+      "reserved": false,
       "managed": false
     }
 

@@ -33,10 +33,13 @@ var POOL1_NAME = 'sdccloudapitest_networks_pool1';
 // Test variables
 var NO_SUCH_NETWORK_UUID = 'deaddead-c626-11e5-b674-334e7e514480';
 var RESERVED_IP = '10.99.92.25';
+var NETWORK3_MANAGED_IP = '10.99.92.1';
 var ZONE_IP1 = '10.99.90.52';
 var ZONE_IP2 = '10.99.90.53';
+var ZONE_IP3 = '10.99.92.27'; // used for private network test (different owner)
 var ZONE_UUID1 = 'c4311f24-de18-40b9-b57e-249f2aec7533';
 var ZONE_UUID2 = '5dd79db9-3d42-40a3-a600-7fa2984ff48c';
+var ZONE_UUID3 = 'd8fb0a51-4dc3-4338-8bec-de41b82a16bc';
 
 
 // --- Helpers
@@ -127,7 +130,7 @@ function createFixtures(t, cb) {
         },
         function mkTestNetwork3(_, next) {
             var params = {
-                owner_uuids: [ CLIENT.account.uuid ],
+                owner_uuids: [ CLIENT.account.uuid, OTHER.account.uuid ],
                 gateway: '10.99.92.1'
             };
             createTestNetwork(NETWORK3_NAME, 92, params, function (err, net) {
@@ -178,7 +181,19 @@ function createFixtures(t, cb) {
                     function (err, ip) {
                 t.ifError(err, 'createFixtures: zone ip ' + ZONE_IP2);
                 t.ok(ip, 'createFixtures: reserved ip');
-                fixtures.ip3 = ip;
+                next(err);
+            });
+        },
+        function mkTestZoneIP3(_, next) {
+            var params = {
+                owner_uuid: OTHER.account.uuid,
+                belongs_to_type: 'zone',
+                belongs_to_uuid: ZONE_UUID3
+            };
+            CLIENT.napi.updateIP(fixtures.network3.uuid, ZONE_IP3, params,
+                    function (err, ip) {
+                t.ifError(err, 'createFixtures: zone ip ' + ZONE_IP3);
+                t.ok(ip, 'createFixtures: reserved ip');
                 next(err);
             });
         },
@@ -403,11 +418,13 @@ test('networks', function (tt) {
         });
     });
 
+    // IP tests ------------
+
     /*
      *  On public networks we should only see provisioned ips owned
      *  by the specific user.
      */
-    tt.test('  get network ips (public)', function (t) {
+    tt.test('  list network ips (public)', function (t) {
         var out = [
             {
                 ip: ZONE_IP1,
@@ -434,7 +451,7 @@ test('networks', function (tt) {
      *  On private networks we should see provisioned/reserved ips
      *  as well as 'triton_protected' ips such as the broadcast/gateway
      */
-    tt.test('  get network ips (owner)', function (t) {
+    tt.test('  list network ips (owner)', function (t) {
         var out = [
             {
                 ip: '10.99.92.1',
@@ -445,6 +462,12 @@ test('networks', function (tt) {
                 ip: RESERVED_IP,
                 managed: false,
                 reserved: true
+            },
+            {
+                ip: ZONE_IP3,
+                managed: false,
+                reserved: false,
+                owner_uuid: OTHER.account.uuid
             },
             {
                 ip: '10.99.92.255',
@@ -524,6 +547,85 @@ test('networks', function (tt) {
             common.checkHeaders(t, res.headers);
             t.ok(body, 'GET /my/networks/:uuid/ips/:ip_address body');
             t.deepEqual(body, out, 'GetNetworkIP works on private network');
+            t.end();
+        });
+    });
+
+    //  Update of IP on a public network returns InvalidArgument
+    tt.test('  update ip on public network', function (t) {
+        var path = format('/my/networks/%s/ips/%s', fixtures.network1.uuid,
+            ZONE_IP2);
+        CLIENT.put(path, {reserved: true}, function (err, req, res, body) {
+            common.checkInvalidArgument(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+    //  Update of a managed IP returns InvalidArgument
+    tt.test('  update managed ip', function (t) {
+        var path = format('/my/networks/%s/ips/%s', fixtures.network3.uuid,
+            NETWORK3_MANAGED_IP);
+        CLIENT.put(path, {reserved: true}, function (err, req, res, body) {
+            common.checkInvalidArgument(t, err, req, res, body);
+            t.end();
+        });
+    });
+
+    tt.test('  update ip on private network (true)', function (t) {
+        var ip = '10.99.92.26';
+        var out = {
+            ip: ip,
+            managed: false,
+            reserved: true
+        };
+        var path = format('/my/networks/%s/ips/%s', fixtures.network3.uuid,
+            ip);
+        CLIENT.put(path, {reserved: true}, function (err, req, res, body) {
+            t.ifError(err, 'PUT /my/networks/' + fixtures.network3.uuid +
+                '/ips/' + ip  + ' error');
+            t.equal(res.statusCode, 200,
+                'PUT /my/networks/:uuid/ips/:ip_address status');
+            common.checkHeaders(t, res.headers);
+            t.ok(body, 'PUT /my/networks/:uuid/ips/:ip_address body');
+            t.deepEqual(body, out, 'UpdateNetworkIP reserved=true works on'
+                + ' private network');
+            t.end();
+        });
+    });
+
+    // Set reservation back to false
+    tt.test('  update ip on private network (false)', function (t) {
+        var ip = '10.99.92.26';
+        var out = {
+            ip: ip,
+            managed: false,
+            reserved: false
+        };
+        var path = format('/my/networks/%s/ips/%s', fixtures.network3.uuid,
+            ip);
+        CLIENT.put(path, {reserved: false}, function (err, req, res, body) {
+            t.ifError(err, 'PUT /my/networks/' + fixtures.network3.uuid +
+                '/ips/' + ip  + ' error');
+            t.equal(res.statusCode, 200,
+                'PUT /my/networks/:uuid/ips/:ip_address status');
+            common.checkHeaders(t, res.headers);
+            t.ok(body, 'PUT /my/networks/:uuid/ips/:ip_address body');
+            t.deepEqual(body, out, 'UpdateNetworkIP reserved=false works on'
+                + ' private network');
+            t.end();
+        });
+    });
+
+    /*
+     * Update of IP on private network in use by another user returns
+     * InvalidArgument
+     */
+    tt.test('  update ip on private network in use by another account',
+        function (t) {
+        var path = format('/my/networks/%s/ips/%s', fixtures.network3.uuid,
+            ZONE_IP3);
+        CLIENT.put(path, {reserved: true}, function (err, req, res, body) {
+            common.checkInvalidArgument(t, err, req, res, body);
             t.end();
         });
     });
