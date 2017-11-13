@@ -690,6 +690,8 @@ test('DeleteInstrumentation OK', function (t) {
             t.equal(res2.statusCode, 404);
 
             t.deepEqual(err2, {
+                jse_info: {},
+                jse_shortmsg: '',
                 message: 'resource not found',
                 statusCode: 404,
                 restCode: 'ResourceNotFound',
