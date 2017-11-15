@@ -14,6 +14,9 @@ var Keyapi = require('keyapi');
 var test = require('tape').test;
 var restify = require('restify');
 var vasync = require('vasync');
+var url = require('url');
+var sshpk = require('sshpk');
+var qs = require('querystring');
 
 var common = require('./common');
 var checkNotFound = common.checkNotFound;
@@ -64,6 +67,35 @@ test('signature auth', function (t) {
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
         t.ok(/Signature/.test(req._headers.authorization));
+        t.ok(body);
+        t.ok(Array.isArray(body));
+        t.ok(body.length);
+        t.end();
+    });
+});
+
+
+test('pre-signed url', function (t) {
+    var key = sshpk.parsePrivateKey(CLIENT.privateKey);
+    var path = '/my/keys';
+    var host = url.parse(SERVER.url).host;
+
+    var params = {};
+    params.keyId = CLIENT.keyId;
+    params.algorithm = key.type + '-' + key.defaultHashAlgorithm();
+    params.expires = Math.round(Date.now() / 1000) + 300;
+
+    var signstr = 'GET\n' + host + '\n' + path + '\n' + qs.stringify(params);
+    var signer = key.createSign();
+    signer.update(signstr);
+    params.signature = signer.sign().toString();
+
+    path += '?' + qs.stringify(params);
+
+    CLIENT.get(path, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
         t.ok(body);
         t.ok(Array.isArray(body));
         t.ok(body.length);
