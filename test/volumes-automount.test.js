@@ -12,6 +12,7 @@ var assert = require('assert-plus');
 var child_process = require('child_process');
 var fs = require('fs');
 var test = require('tape').test;
+var util = require('util');
 var vasync = require('vasync');
 var verror = require('verror');
 
@@ -25,13 +26,12 @@ var mod_testVolumes = require('./lib/volumes');
 var machinesCommon = require('./machines/common');
 
 var CONFIG = mod_config.configure();
-var IMGAPI_SOURCE = 'https://images.joyent.com';
+var JOYENT_IMGAPI_SOURCE = 'https://images.joyent.com';
 var KEY_FILENAME = '/tmp/cloudapi-test-key';
-var TEST_IMAGE_KVM =
-    'd472f84c-69cf-431c-b848-c5dce6bee153'; // ubuntu-certified-16.04
-var TEST_IMAGE_LX = '7b5981c4-1889-11e7-b4c5-3f3bdfc9b88b'; // ubuntu-16.04
-var TEST_IMAGE_SMARTOS =
-    'ede31770-e19c-11e5-bb6e-3b7de3cca9ce'; // minimal-multiarch-lts (15.4.1)
+var TEST_IMAGE_KVM = 'ubuntu-certified-16.04';
+var TEST_IMAGE_LX = 'ubuntu-16.04';
+var TEST_IMAGE_NAMES_TO_UUID = {};
+var TEST_IMAGE_SMARTOS = 'minimal-multiarch-lts';
 var UFDS_ADMIN_UUID = CONFIG.ufds_admin_uuid;
 
 function deleteKeypair(cb) {
@@ -42,6 +42,105 @@ function deleteKeypair(cb) {
         KEY_FILENAME + '.pub'
     ].join(' '), function onKeyPairDeleted(err, stdout, stderr) {
         cb(err);
+    });
+}
+
+/*
+ * Make the image with name "imageName" provisionable. If it's not imported, it
+ * imports it in the DC's IMGAPI service. If it's imported and not public, it
+ * makes the image public.
+ *
+ * @params {String} imageName (required): the name of the image to make
+ *   provisionable
+ * @params {Function} callback (required): called at the end of the process as
+ *   callback(err, provisionableImgObject)
+ */
+function makeImageProvisionable(imageName, callback) {
+    assert.string(imageName, 'imageName');
+    assert.func(callback, 'callback');
+
+    var context = {};
+
+    vasync.pipeline({arg: context, funcs: [
+        function listImportedImages(ctx, next) {
+            CLIENT.get('/my/images?name=' + imageName,
+                function onListImportedImages(listImagesErr, req, res, images) {
+                    ctx.images = images;
+                    next(listImagesErr);
+                });
+
+        },
+        function ensureOneImportedImgIsPublic(ctx, next) {
+            var firstImage;
+            var publicImages;
+
+            assert.optionalArrayOfObject(ctx.images, 'ctx.images');
+
+            if (ctx.images) {
+                publicImages = ctx.images.filter(function isPublic(image) {
+                    return image.public;
+                });
+
+                if (publicImages.length > 0) {
+                    ctx.provisionableImages = publicImages[0];
+                    next();
+                } else {
+                    firstImage = ctx.images[0];
+                    firstImage.public = true;
+                    CLIENT.imgapi.updateImage(firstImage.uuid, firstImage,
+                        CLIENT.account.uuid,
+                        function onImageUpdated(updateImgErr) {
+                            if (updateImgErr) {
+                                next(updateImgErr);
+                                return;
+                            }
+
+                            ctx.provisionableImages = firstImage;
+                            next();
+                        });
+                }
+            } else {
+                next();
+            }
+        },
+        function importImg(ctx, next) {
+            assert.optionalArrayOfObject(ctx.images, 'ctx.images');
+            assert.optionalBool(ctx.atLeastOneImgPublic,
+                'ctx.atLeastOneImgPublic');
+
+            if (!ctx.images) {
+                CLIENT.joyentImgapi.listImages({
+                    name: imageName
+                }, function onListImages(listImagesErr, images) {
+                    if (listImagesErr) {
+                        next(listImagesErr);
+                        return;
+                    }
+
+                    if (!images || images.length === 0) {
+                        next(new Error('Could not find image ' +
+                            'with name ' + imageName));
+                        return;
+                    }
+
+                    CLIENT.imgapi.adminImportRemoteImageAndWait(images[0].uuid,
+                        JOYENT_IMGAPI_SOURCE, {},
+                        function onImgImported(importImgErr) {
+                            if (importImgErr) {
+                                next(importImgErr);
+                                return;
+                            }
+
+                            ctx.provisionableImages = images[0];
+                            next();
+                        });
+                });
+            } else {
+                next();
+            }
+        }
+    ]}, function onAllDone(err) {
+        callback(err, context.provisionableImages);
     });
 }
 
@@ -68,22 +167,6 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     var testVolumeName = 'test-volumes-automount';
     var testVolume;
     var testVolumeStorageVmUuid;
-
-    function getMissingImages(t, missing, callback) {
-        if (missing.length === 0) {
-            callback();
-            return;
-        }
-
-        vasync.forEachParallel({
-            func: function importOneImage(imgUuid, cb) {
-                CLIENT.imgapi.adminImportRemoteImageAndWait(imgUuid,
-                    IMGAPI_SOURCE, {}, cb);
-            }, inputs: missing
-        }, function (err, results) {
-            callback(err);
-        });
-    }
 
     test('setup', function (t) {
         common.setup({clientApiVersion: '~8.0'}, function (_, clients, server) {
@@ -188,53 +271,28 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
     // Ensure we have required images
     test('ensure images', function (t) {
-        var foundKvm = false;
-        var foundLx = false;
-        var foundSmartOS = false;
-        var idx = 0;
-        var missing = [];
+        var IMG_NAMES = [TEST_IMAGE_LX, TEST_IMAGE_KVM, TEST_IMAGE_SMARTOS];
 
-        CLIENT.get('/my/images',
-            function onGetImages(getImagesErr, req, res, images) {
-                t.ifErr(getImagesErr, 'getting images should succeed');
+        vasync.forEachParallel({
+            func: makeImageProvisionable,
+            inputs: IMG_NAMES
+        }, function onAllImgsSetupDone(imgsSetupErr, results) {
+            t.ifErr(imgsSetupErr, 'setting up images should not error');
 
-                if (!getImagesErr) {
-                    t.ok(Array.isArray(images),
-                        'images should be an array');
-                    t.ok(images.length >= 3,
-                        'should have at least three images');
-                }
+            if (!imgsSetupErr) {
+                TEST_IMAGE_NAMES_TO_UUID[TEST_IMAGE_LX] =
+                    results.successes[0].id;
+                TEST_IMAGE_NAMES_TO_UUID[TEST_IMAGE_KVM] =
+                    results.successes[1].id;
+                TEST_IMAGE_NAMES_TO_UUID[TEST_IMAGE_SMARTOS] =
+                    results.successes[2].id;
 
-                for (idx = 0; idx < images.length; idx++) {
-                    if (images[idx].id === TEST_IMAGE_LX) {
-                        foundLx = true;
-                    }
-                    if (images[idx].id === TEST_IMAGE_SMARTOS) {
-                        foundSmartOS = true;
-                    }
-                    if (images[idx].id === TEST_IMAGE_KVM) {
-                        foundKvm = true;
-                    }
-                }
+                t.comment('provisionable images: ' +
+                    util.inspect(TEST_IMAGE_NAMES_TO_UUID));
+            }
 
-                if (!foundLx) {
-                    missing.push(TEST_IMAGE_LX);
-                }
-
-                if (!foundSmartOS) {
-                    missing.push(TEST_IMAGE_SMARTOS);
-                }
-
-                if (!foundKvm) {
-                    missing.push(TEST_IMAGE_KVM);
-                }
-
-                getMissingImages(t, missing, function (getMissingErr) {
-                    t.ifErr(getMissingErr,
-                        'should have succeeded to get missing images');
-                    t.end();
-                });
-            });
+            t.end();
+        });
     });
 
     // delete previous SSH keypair(s)
@@ -275,6 +333,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
      * only after the entry for the newly added user (including its default
      * fabric network used to provision volumes) is present in UFDS.
      */
+
     test('getting config from ufds', function (t) {
         mod_testConfig.waitForAccountConfigReady(CLIENT,
             function onConfigReady(configReadyErr) {
@@ -331,7 +390,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
         payload = {
             metadata: {},
-            image: TEST_IMAGE_LX,
+            image: TEST_IMAGE_NAMES_TO_UUID[TEST_IMAGE_LX],
             package: testPackage.id,
             name: 'cloudapi-volume-lx-' + libuuid.create().split('-')[0],
             firewall_enabled: false,
@@ -481,7 +540,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
         payload = {
             metadata: {},
-            image: TEST_IMAGE_SMARTOS,
+            image: TEST_IMAGE_NAMES_TO_UUID[TEST_IMAGE_SMARTOS],
             package: testPackage.id,
             name: 'cloudapi-volume-smartos-' + libuuid.create().split('-')[0],
             firewall_enabled: false,
@@ -631,7 +690,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
         payload = {
             metadata: {},
-            image: TEST_IMAGE_KVM,
+            image: TEST_IMAGE_NAMES_TO_UUID[TEST_IMAGE_KVM],
             package: testPackage.id,
             name: 'cloudapi-volume-kvm-' + libuuid.create().split('-')[0],
             firewall_enabled: false,
