@@ -54,6 +54,9 @@ function deleteKeypair(cb) {
  *   provisionable
  * @params {Function} callback (required): called at the end of the process as
  *   callback(err, provisionableImgObject)
+ *
+ * where "provisionableImgObject" represents an image with an "id" property that
+ * stores its UUID.
  */
 function makeImageProvisionable(imageName, callback) {
     assert.string(imageName, 'imageName');
@@ -70,6 +73,13 @@ function makeImageProvisionable(imageName, callback) {
                 });
 
         },
+        /*
+         * When images are imported into a DC's IMGAPI because they're an origin
+         * image for another image imported from updates.joyent.com, their
+         * "public" attribute is set to false, which makes them
+         * non-provisionable. In this case, we just update that public property
+         * to "true".
+         */
         function ensureOneImportedImgIsPublic(ctx, next) {
             var firstImage;
             var publicImages;
@@ -82,7 +92,7 @@ function makeImageProvisionable(imageName, callback) {
                 });
 
                 if (publicImages.length > 0) {
-                    ctx.provisionableImages = publicImages[0];
+                    ctx.provisionableImage = publicImages[0];
                     next();
                 } else {
                     firstImage = ctx.images[0];
@@ -95,7 +105,7 @@ function makeImageProvisionable(imageName, callback) {
                                 return;
                             }
 
-                            ctx.provisionableImages = firstImage;
+                            ctx.provisionableImage = firstImage;
                             next();
                         });
                 }
@@ -103,12 +113,16 @@ function makeImageProvisionable(imageName, callback) {
                 next();
             }
         },
+        /*
+         * If an image with name "imageName" is not imported, we import it now
+         * from images.joyent.com.
+         */
         function importImg(ctx, next) {
             assert.optionalArrayOfObject(ctx.images, 'ctx.images');
             assert.optionalBool(ctx.atLeastOneImgPublic,
                 'ctx.atLeastOneImgPublic');
 
-            if (!ctx.images) {
+            if (!ctx.images || ctx.images.length === 0) {
                 CLIENT.joyentImgapi.listImages({
                     name: imageName
                 }, function onListImages(listImagesErr, images) {
@@ -125,13 +139,16 @@ function makeImageProvisionable(imageName, callback) {
 
                     CLIENT.imgapi.adminImportRemoteImageAndWait(images[0].uuid,
                         JOYENT_IMGAPI_SOURCE, {},
-                        function onImgImported(importImgErr) {
+                        function onImgImported(importImgErr, image) {
                             if (importImgErr) {
                                 next(importImgErr);
                                 return;
                             }
 
-                            ctx.provisionableImages = images[0];
+                            image.id = image.uuid;
+                            delete image.uuid;
+
+                            ctx.provisionableImage = image;
                             next();
                         });
                 });
@@ -140,7 +157,7 @@ function makeImageProvisionable(imageName, callback) {
             }
         }
     ]}, function onAllDone(err) {
-        callback(err, context.provisionableImages);
+        callback(err, context.provisionableImage);
     });
 }
 

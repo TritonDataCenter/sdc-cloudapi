@@ -170,7 +170,7 @@ function _imgapi() {
 
 function _joyentImgapi() {
     return new IMGAPI({
-        url: 'https://joyent.imgapi.com/',
+        url: 'https://images.joyent.com/',
         retry: {
             retries: 1,
             minTimeout: 1000
