@@ -168,6 +168,18 @@ function _imgapi() {
     });
 }
 
+function _joyentImgapi() {
+    return new IMGAPI({
+        url: 'https://images.joyent.com/',
+        retry: {
+            retries: 1,
+            minTimeout: 1000
+        },
+        log: LOG,
+        agent: false
+    });
+}
+
 
 function _papi() {
     return PAPI({
@@ -444,6 +456,7 @@ function setupClient(version, serverUrl, user, keyId, keyPath, parentAcc, cb) {
     client.cnapi  = _cnapi();
     client.napi   = _napi();
     client.imgapi = _imgapi();
+    client.joyentImgapi = _joyentImgapi();
     client.papi   = _papi();
     client.mahi   = _mahi();
     client.ufds   = _ufds();
