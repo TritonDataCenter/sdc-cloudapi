@@ -4356,6 +4356,37 @@ locality  | Object   | (Deprecated in CloudAPI v8.3.0.) Optionally object of [lo
 metadata.$name | String | An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata."
 tag.$name | String   | An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag."
 firewall_enabled | Boolean | Completely enable or disable firewall for this instance. Default is false
+volumes   | Array    | A list of objects representing volumes to mount when the newly created machine boots
+
+#### volumes
+
+The `volumes` input parameter allows users to specify a list of volumes to mount
+in the new machine when it boots:
+
+```
+"volumes": [
+  {
+    "name": "volume-name-1",
+    "type": "tritonnfs",
+    "mode": "rw",
+    "mountpoint": "/foo"
+  },
+  {
+    "name": "volume-name-2",
+    "mode": "ro",
+    "mountpoint": "/bar"
+  }
+]
+```
+
+Each object of the `volumes` array has the following layout:
+
+**Field**  | **Type** | **Description**
+---------- | -------- | ---------------
+name       | String   | The name of the volume to mount
+type       | String   | The type of the volume to mount (currently only `"tritonnfs"` is supported)
+mode       | String   | Determines the read/write mode for the volume to mount. Accepted values are `"ro"` (for read-only) and `"rw"` (for read-write). The default value is `"rw"`.
+mountpoint | String   | Specifies where the volume is mounted in the newly created machine's filesystem. It must start with a slash (`"/"`) and it must contain at least one character that is not `'/'`.
 
 ### Returns
 
@@ -8934,6 +8965,395 @@ InvalidArgument  | If `:id` isn't a UUID
     x-resource-count: 1
 
 
+
+
+# Volumes
+
+_The API endpoints documented in this section are considered experimental. There
+is no guarantee on backward compatibility for them. Breaking changes can and
+will be made to them. They are available only for CloudAPI services running in
+datacenters for which NFS volumes support has been explicitly enabled. By
+default, it is disabled._
+
+
+## Volume objects
+
+Volumes are represented as objects that share a common set of properties:
+
+**Name**     | **Type** | **Description**
+--------     | -------- | --------------- |
+id         | String   | The UUID of the volume itself
+owner_uuid | String   | The UUID of the volume's owner. In the example of a NFS shared volume, the owner is the user who created the volume
+name       | String   | The volume's name. It must be unique for a given user. It must match the regular expression `/^[a-zA-Z0-9][a-zA-Z0-9_\.\-]+$/`. There is no limit on the length of a volume's name
+type       | String   | Identifies the volume's type. There is currently one possible value for this property: `tritonnfs`. Additional types may be added in the future, and they can all have different sets of [type specific properties](#type-specific-properties)
+create_timestamp | String | A timestamp that indicates the time at which the volume was created
+state      | String   | `creating`, `ready`, `deleting`, `deleted` or `failed`. Indicates in which state the volume currently is. `failed` volumes are still persisted to Moray for troubleshooting/debugging purposes. See the section [Volumes state machine](#volumes-state-machine) for a diagram and further details about the volumes' state machine
+networks   | Array of string | A list of network UUIDs that represents the networks on which this volume can be reached
+refs       | Array of string | A list of VM UUIDs that reference this volume
+
+Here's an example of a volume object in JSON format:
+
+```
+{
+  "id": "some-uuid",
+  "owner_uuid": "some-uuid",
+  "name": "foo",
+  "type": "tritonnfs",
+  "create_timestamp": "2017-11-16T17:31:56.763Z",
+  "state": "created",
+  "networks": [
+    "bf6960ac-97e3-47b6-9fe0-bc12c47db78a"
+  ],
+  "refs": [
+    "some-vm-uuid"
+  ]
+}
+```
+
+### Naming constraints
+
+#### Uniqueness
+
+Volume names need to be _unique per account_.
+
+#### Renaming
+
+Renaming a volume is not allowed for volumes that are referenced by active VMs.
+
+### Type-specific properties
+
+Different volume types may need to store different properties in addition to the
+properties listed above. For instance, tritonnfs volumes have the following
+extra properties:
+
+* `filesystem_path`: the path that can be used by a NFS client to mount the NFS
+  remote filesystem in the host's filesystem.
+* `size`: a Number representing the storage size available for this volume, in
+  mebibytes.
+
+A `'tritonnfs'` volume can be represented as following:
+
+```
+{
+  "id": "some-uuid",
+  "owner_uuid": "some-uuid",
+  "name": "foo",
+  "type": "tritonnfs",
+  "create_timestamp": "2017-11-16T17:31:56.763Z",
+  "state": "created",
+  "size": 10240,
+  "networks": [
+    "bf6960ac-97e3-47b6-9fe0-bc12c47db78a"
+  ],
+  "refs": [
+    "some-vm-uuid"
+  ],
+  "filesystem_path": "host:port/path",
+}
+```
+
+### Deletion and usage semantics
+
+A volume is considered to be "in use" if its `refs` property is a non-empty
+array. When a container which mounts shared volumes is created and becomes
+"active", it is added as a "reference" to those shared volumes.
+
+A container is considered to be active when it's in any state except `failed` or
+`destroyed` -- in other words in any state that can transition to `running`.
+
+For instance, even if a _stopped_ machine is the only remaining machine that
+references a given shared volume, it won't be possible to delete that volume
+until that machine is _deleted_.
+
+Deleting a shared volume when there's still at least one active machine that
+references it will result in an error.
+
+A shared volume can be deleted if its only users are mounting it using something
+other than Triton APIs (e.g., by using the `mount` command manually from within
+a VM).
+
+### Volumes state machine
+
+![Volumes state FSM](media/img/volumes-state-fsm.png)
+
+
+## ListVolumes (GET /:login/volumes)
+
+_Available only for CloudAPI services running in datacenters for which NFS
+volumes support has been explicitly enabled. By default, it is disabled._
+
+### Input
+
+Param       | Type         | Description
+----------- | ------------ | -----------
+name        | String       | Allows filtering volumes by name
+predicate   | String       | URL-encoded JSON string representing an object that can be used to build a LDAP filter. This LDAP filter can search for volumes on arbitrary indexed properties. More details below
+size        | String       | Allows filtering volumes by size, e.g `size=10240`
+state       | String       | Allows filtering volumes by state, e.g `state=failed`
+| type      | String       | Allows filtering volumes by type, e.g `tritonnfs`
+
+#### Searching by name
+
+`name` is a string containing either a full volume name, or a partial volume
+name prefixed and/or suffixed with a `*` character. For example:
+
+ * foo
+ * foo\*
+ * \*foo
+ * \*foo\*
+
+are all valid `name=` searches which will match respectively:
+
+ * the exact name `foo`
+ * any name that starts with `foo` such as `foobar`
+ * any name that ends with `foo` such as `barfoo`
+ * any name that contains `foo` such as `barfoobar`
+
+#### Searching by predicate
+
+The `predicate` parameter is a JSON string that can be used to build an LDAP
+filter to search on the following indexed properties:
+
+* `name`
+* `billing_id`
+* `type`
+* `state`
+* `tags`
+
+Important: when using a predicate, the same parameter cannot be found in both
+the predicate and the non-predicate query parameters. For example, if a
+predicate includes the `name` field, passing the `name=` query parameter is an
+error.
+
+### Output
+
+A list of volume objects of the following form:
+
+```
+[
+  {
+    "id": "e435d72a-2498-8d49-a042-87b222a8b63f",
+    "name": "my-volume",
+    "owner_uuid": "ae35672a-9498-ed41-b017-82b221a8c63f",
+    "type": "tritonnfs",
+    "filesystem_path": "host:port/path",
+    "state": "ready",
+    "networks": [
+      "1537d72a-949a-2d89-7049-17b2f2a8b634"
+    ],
+    "refs": [
+      "4d57d71c-1b7d-9ec1-3a21-2fdc14acb671"
+    ]
+  }
+]
+```
+
+
+## CreateVolume (POST /:login/volumes)
+
+_Available only for CloudAPI services running in datacenters for which NFS
+volumes support has been explicitly enabled. By default, it is disabled._
+
+### Input
+
+Param       | Type         | Mandatory | Description
+----------- | ------------ |-----------|--------------------------------------
+name        | String       | No        | The desired name for the volume. If missing, a unique name for the current user will be generated
+size        | Number       | No        | The desired minimum storage capacity for that volume in mebibytes. Default value is 10240 mebibytes (10 gibibytes)
+type        | String       | Yes       | The type of volume. Currently only `'tritonnfs'` is supported
+networks    | Array        | Yes       | A list of UUIDs representing networks on which the volume is reachable. These networks must be fabric networks owned by the user sending the request
+
+### Output
+
+A [volume object](#volume-objects) representing the volume being created. When
+the response is sent, the volume and all its resources are not yet created and
+its state is `creating`. Users need to poll the newly-created volume with the
+`GetVolume` API to determine when it's ready to use (its state transitions to
+`ready`).
+
+If the creation process fails, the volume object has its state set to `failed`.
+
+
+## GetVolume (GET /:login/volumes/:id)
+
+_Available only for CloudAPI services running in datacenters for which NFS
+volumes support has been explicitly enabled. By default, it is disabled._
+
+GetVolume can be used to get data from an already-created volume, or to
+determine when a volume being created is ready to be used.
+
+### Input
+
+Param         | Type         | Description
+------------- | ------------ | -----------------------------
+id            | String       | The UUID of the volume object
+
+### Output
+
+A [volume object](#volume-objects) representing the volume with UUID `id`.
+
+
+## DeleteVolume (DELETE /:login/volumes/:id)
+
+_Available only for CloudAPI services running in datacenters for which NFS
+volumes support has been explicitly enabled. By default, it is disabled._
+
+### Input
+
+Param       | Type      | Description
+----------- | --------- | -----------------------------
+id          | String    | The UUID of the volume object
+
+Deletion of a shared volume is not
+allowed if it has at least one "active user". See the section
+["Deletion and usage semantics"](#deletion-and-usage-semantics) for more
+information.
+
+### Output
+
+The output is empty and the status code is 204 if the deletion was scheduled
+successfully.
+
+A volume is always deleted asynchronously. In order to determine when the volume
+is actually deleted, users need to poll the volume using the `GetVolume`
+endpoint until it returns a 404 response.
+
+If resources are using the volume to be deleted, the request results in a
+`VolumeInUse` error.
+
+
+## UpdateVolume (POST /:login/volumes/:id)
+
+_Available only for CloudAPI services running in datacenters for which NFS
+volumes support has been explicitly enabled. By default, it is disabled._
+
+The `UpdateVolume` endpoint can be used to update the following properties of a
+shared volume:
+
+* `name`, to rename a volume. See [the section on renaming volumes](#renaming)
+  for further details.
+
+### Input
+
+Param | Type   | Description
+----- | -------| ----------------------------------------
+id    | String | The UUID of the volume object
+name  | String | The new name of the volume with id `id`
+
+Sending any other input parameter will result in an error. Updating other
+properties of a volume, such as the networks it's attached to, must be performed
+by using other separate endpoints.
+
+### Output
+
+The output is empty and the status code is 204 if the volume was successfully
+updated.
+
+
+## ListVolumeSizes (GET /:login/volumesizes)
+
+_Available only for CloudAPI services running in datacenters for which NFS
+volumes support has been explicitly enabled. By default, it is disabled._
+
+The `ListVolumeSizes` endpoint can be used to determine in what sizes volumes of
+a certain type are available.
+
+### Input
+
+Param    | Type         | Description
+-------- | ------------ | --------------------------------
+type     | String       | the type of the volume (e.g `tritonnfs`)
+
+Sending any other input parameter will result in an error.
+
+### Output
+
+The response is an array of objects having two properties:
+
+* `size`: a number in mebibytes that represents the size of a volume
+
+* `type`: the type of volume for which the size is available
+
+```
+[
+  {
+    "size": 10240,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 20480,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 30720,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 40960,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 51200,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 61440,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 71680,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 81920,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 92160,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 102400,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 204800,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 307200,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 409600,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 512000,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 614400,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 716800,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 819200,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 921600,
+    "type": "tritonnfs"
+  },
+  {
+    "size": 1024000,
+    "type": "tritonnfs"
+  }
+]
+```
 
 # Appendix A: Machine States
 
