@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2017, Joyent, Inc.
+ * Copyright 2018, Joyent, Inc.
  */
 
 var util = require('util');
@@ -1235,7 +1235,8 @@ test('Create Docker machine', function (t) {
             'docker:entrypoint': '[]'
         },
         tags: {
-            'docker:label:com.docker.blah': 'quux'
+            'docker:label:com.docker.blah': 'quux',
+            'triton.instance.undeletable': true
         },
         autoboot: true, // false
         docker: true,
@@ -1404,6 +1405,44 @@ function (t) {
             function (err, req, res, body) {
         checkTagDeleteAllValidationError(t, err, req, res, body);
         t.end();
+    });
+});
+
+
+test('Check cannot delete machine with triton.instance.undeletable tag',
+function (t) {
+    CLIENT.del('/my/machines/' + MACHINE_UUID, function (err, req, res, body) {
+        t.ok(err, 'delete error expected');
+        t.equal(res.statusCode, 409, 'http code');
+        t.deepEqual(body, {
+            code: 'MachineUndeletableError',
+            message: 'Instance has "triton.instance.undeletable" tag ' +
+                'enabled, preventing deletion'
+        }, 'check error message');
+        t.end();
+    });
+});
+
+
+test('Remove triton.instance.undeletable tag', function (t) {
+    var url = '/my/machines/' + MACHINE_UUID + '/tags/' +
+        'triton.instance.undeletable';
+
+    CLIENT.del(url, function (err, req, res) {
+        t.ifError(err, 'delete tag error');
+        t.equal(res.statusCode, 204, 'http code');
+
+        CLIENT.vmapi.listJobs({
+            vm_uuid: MACHINE_UUID,
+            task: 'update'
+        }, function (err2, jobs) {
+            t.ifError(err2, 'list jobs error');
+
+            machinesCommon.waitForJob(CLIENT, jobs[0].uuid, function (err3) {
+                t.ifError(err3, 'wait for job error');
+                t.end();
+            });
+        });
     });
 });
 

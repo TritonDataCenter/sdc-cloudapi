@@ -12,7 +12,7 @@ markdown2extras: tables, code-friendly
 -->
 
 <!--
-    Copyright 2017, Joyent, Inc.
+    Copyright 2018, Joyent, Inc.
 -->
 
 
@@ -907,6 +907,12 @@ The set of supported *API versions* is given in the ping endpoint:
 # Versions
 
 The section describes API changes in CloudAPI versions.
+
+## 8.5.1
+
+- Added [Instance Protection](#instance-protection). Adding a special tag to an
+  instance will stop both [DeleteMachine](#DeleteMachine) and SDC Docker from
+  destroying an instance. This remains true until the tag is removed.
 
 ## 8.5.0
 
@@ -6014,6 +6020,9 @@ Using node-smartdc:
 
 Allows you to completely destroy an instance.
 
+An instance cannot be destroyed so long as [Instance
+Protection](#instance-protection) is enabled on that instance.
+
 ### Inputs
 
 * None
@@ -6026,10 +6035,11 @@ Allows you to completely destroy an instance.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-**Error Code**   | **Description**
----------------- | ---------------
-ResourceNotFound | If `:login` or `:id` does not exist
-InvalidState     | The instance is the wrong state to be deleted
+**Error Code**       | **Description**
+-------------------- | ---------------
+ResourceNotFound     | If `:login` or `:id` does not exist
+InvalidState         | The instance is the wrong state to be deleted
+CannotDestroyMachine | Instance Protection is enabled on this instance
 
 ### CLI Command
 
@@ -6146,6 +6156,38 @@ or
           "keyId": "/:login/keys/:fingerprint"
         }
       }, ...]
+
+
+## Instance Protection
+
+If you want to decrease the risk of accidental instance destruction, it is
+possible to make instance destruction (e.g. through
+[DeleteMachine](#DeleteMachine)) a two-step process.
+
+Instances that have the tag `triton.instance.undeletable` set to boolean `true`
+cannot be deleted, either through CloudAPI or SDC Docker. In order to delete
+such an instance, the above tag needs to be removed first.
+
+Tags can be added during instance creation (see
+[CreateMachine](#CreateMachine)), or added later (see
+[AddMachineTags](#AddMachineTags)). The instance then cannot be destroyed until
+the tag is removed, although all other operations will still work. To destroy
+the instance, first remove the `triton.instance.protection` tag (see
+[DeleteMachineTag](#DeleteMachineTag)).
+
+An example using node-triton:
+
+    $ triton instance tag set eec23902 triton.instance.undeletable=true
+    {
+        "triton.instance.undeletable": true
+    }
+    $ triton instance rm eec23902
+    error: Machine has instance-protection tag "triton.instance.undeletable" enabled, preventing deletion
+    triton instance rm: error: command failure
+    $ triton instance tag rm eec23902 triton.instance.undeletable --wait
+    Deleted tag triton.instance.undeletable on instance eec23902
+    $ triton instance rm eec23902
+    Delete (async) instance eec23902 (eec23902-13a2-48ec-ae7d-a8b8a86f053b)
 
 
 
