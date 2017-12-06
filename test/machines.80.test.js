@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2015, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 var util = require('util');
@@ -129,6 +129,14 @@ test('ListMachines (filter by joyent brand) - other', function (t) {
     OTHER.get('/my/machines?brand=joyent', function (err, req, res, body) {
         t.ifError(err);
         t.deepEqual(body, []);
+        t.end();
+    });
+});
+
+
+test('Deletion Protection tests', function (t) {
+    var deletionProtectionTest = require('./machines/deletion_protection');
+    deletionProtectionTest(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });

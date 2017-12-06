@@ -913,6 +913,10 @@ The section describes API changes in CloudAPI versions.
 - CreateMachine now accepts the `brand` field for specifying the brand of the
   instance to create. This is currently only useful when provisioning a
   virtualmachine in a datacenter that supports both kvm (default) and bhyve.
+- Added [Deletion Protection](#deletion-protection). Setting
+  deletion\_protection to true when creating or updating an instances will stop
+  stop both [DeleteMachine](#DeleteMachine) and SDC Docker from destroying an
+  instance. This remains true until that attribute is set to false.
 
 ## 8.5.0
 
@@ -4952,7 +4956,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 **Error Code**   | **Description**
 ---------------- | ---------------
 ResourceNotFound | If `:login` or `:id` does not exist
-InvalidState     | The instance is the wrong state to enable firewall
+InvalidState     | The instance is in the wrong state to enable firewall
 InvalidArgument  | If `action` was invalid
 MissingParameter | If `action` wasn't provided
 
@@ -5013,7 +5017,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 **Error Code**   | **Description**
 ---------------- | ---------------
 ResourceNotFound | If `:login` or `:id` does not exist
-InvalidState     | The instance is the wrong state to disable firewall
+InvalidState     | The instance is in the wrong state to disable firewall
 InvalidArgument  | If `action` was invalid
 MissingParameter | If `action` wasn't provided
 
@@ -5036,6 +5040,115 @@ or
     Api-Version: ~8
 
     action=disable_firewall
+
+### Example Response
+
+    HTTP/1.1 202 Accepted
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD, DELETE, PUT
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Date: Thu, 21 Jan 2016 13:23:39 GMT
+    Server: Joyent Triton 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 2c74e120-c042-11e5-9100-a95edd60134e
+    Response-Time: 4178
+    Transfer-Encoding: chunked
+
+
+
+## EnableDeletionProtection (POST /:login/machines/:id?action=enable_deletion_protection)
+
+Enable [Deletion Protection](#deletion-protection) on an instance. An instance
+can no longer be destroyed until the protection is disabled.
+
+### Inputs
+
+**Field** | **Type** | **Description**
+--------- |--------- | ---------------
+action    | String   | Use the exact string "enable_deletion_protection"
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
+InvalidState     | The instance is in the wrong state to enable firewall
+InvalidArgument  | If `action` was invalid
+MissingParameter | If `action` wasn't provided
+
+### Example Request
+
+    POST /my/machines/c2855c3a-a91d-46b8-9da6-6d7ab1bc6962 HTTP/1.1
+    Host: api.example.com
+    Authorization: ...
+    Accept: application/json
+    Content-Length: 12
+    Content-Type: application/x-www-form-urlencoded
+    Api-Version: ~8
+
+    action=enable_deletion_protection
+
+### Example Response
+
+    HTTP/1.1 202 Accepted
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD, DELETE, PUT
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Date: Thu, 21 Jan 2017 13:16:00 GMT
+    Server: Joyent Triton 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: 1b1e83a0-c041-11e5-b1b7-65fab9169f0e
+    Response-Time: 3594
+    Transfer-Encoding: chunked
+
+
+## DisableDeletionProtection (POST /:login/machines/:id?action=disable_deletion_protection)
+
+Disable [Deletion Protection](#deletion-protection) on an instance. An instance
+can be destroyed after it is disabled.
+
+### Inputs
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+action    | String   | Use the exact string "disable_deletion_protection"
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
+InvalidState     | The instance is in the wrong state to disable firewall
+InvalidArgument  | If `action` was invalid
+MissingParameter | If `action` wasn't provided
+
+### Example Request
+
+    POST /my/machines/c2855c3a-a91d-46b8-9da6-6d7ab1bc6962 HTTP/1.1
+    Host: api.example.com
+    Authorization: ...
+    Accept: application/json
+    Content-Length: 12
+    Content-Type: application/x-www-form-urlencoded
+    Api-Version: ~8
+
+    action=disable_deletion_protection
 
 ### Example Response
 
@@ -6021,6 +6134,9 @@ Using node-smartdc:
 
 Allows you to completely destroy an instance.
 
+An instance cannot be destroyed so long as [Instance
+Protection](#instance-protection) is enabled on that instance.
+
 ### Inputs
 
 * None
@@ -6033,10 +6149,11 @@ Allows you to completely destroy an instance.
 
 For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
 
-**Error Code**   | **Description**
----------------- | ---------------
-ResourceNotFound | If `:login` or `:id` does not exist
-InvalidState     | The instance is the wrong state to be deleted
+**Error Code**       | **Description**
+-------------------- | ---------------
+ResourceNotFound     | If `:login` or `:id` does not exist
+InvalidState         | The instance is in the wrong state to be deleted
+CannotDestroyMachine | [Deletion Protection](#deletion-protection) is enabled on this instance
 
 ### CLI Command
 
@@ -6155,6 +6272,22 @@ or
       }, ...]
 
 
+## Deletion Protection
+
+If you want to decrease the risk of accidental instance destruction, it is
+possible to make instance destruction (e.g. through
+[DeleteMachine](#DeleteMachine)) a two-step process.
+
+Instances that have the attribute `deletion_protection` set to boolean `true`
+cannot be deleted, either through CloudAPI or SDC Docker. In order to delete
+such an instance, the above attribute needs to be set to false first.
+
+The attribute can be set during instance creation (see
+[CreateMachine](#CreateMachine)), or added later (see
+[EnableDeletionProtection](#EnableDeletionProtection)). The instance then cannot
+be destroyed until the attribute is set to false, although all other operations
+will still work. To destroy the instance, first call
+[DisableDeletionProtection](#DisableDeletionProtection)) on the instance.
 
 
 # Analytics

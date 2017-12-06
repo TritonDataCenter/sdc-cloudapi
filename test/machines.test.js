@@ -743,6 +743,7 @@ test('CreateMachine', function (t) {
             strict: true
         },
         server_uuid: SERVER_UUID,
+        deletion_protection: true,
         firewall_enabled: true
     };
 
@@ -963,6 +964,8 @@ test('Get Machine', function (t) {
         tags[machinesCommon.TAG_KEY] = machinesCommon.TAG_VAL;
         t.deepEqual(machine.tags, tags, 'Machine tags');
 
+        t.equal(machine.deletion_protection, true, 'deletion protection');
+
         t.end();
     });
 });
@@ -1073,6 +1076,48 @@ test('Firewall Rules tests', function (t) {
 });
 
 
+test('Check cannot delete machine with deletion_protection set',
+function (t) {
+    CLIENT.del('/my/machines/' + MACHINE_UUID,
+        function delCb(err, req, res, body) {
+
+        t.ok(err, 'delete error expected');
+        t.equal(res.statusCode, 409, 'http code');
+        t.deepEqual(body, {
+            code: 'MachineUndeletableError',
+            message: 'Instance has "deletion_protection" enabled, ' +
+                'preventing deletion'
+        }, 'check error message');
+
+        t.end();
+    });
+});
+
+
+test('Remove deletion_protection', function (t) {
+    CLIENT.post('/my/machines/' + MACHINE_UUID, {
+        action: 'disable_deletion_protection'
+    }, function removeProtectionCb(err, req, res) {
+        t.ifError(err, 'disable_deletion_protection error');
+        t.equal(res.statusCode, 202, 'http code');
+
+        CLIENT.vmapi.listJobs({
+            vm_uuid: MACHINE_UUID,
+            task: 'update'
+        }, function listCb(err2, jobs) {
+            t.ifError(err2, 'list jobs error');
+
+            machinesCommon.waitForJob(CLIENT, jobs[0].uuid,
+                function waitCb(err3) {
+
+                t.ifError(err3, 'wait for job error');
+                t.end();
+            });
+        });
+    });
+});
+
+
 test('Delete tests', function (t) {
     var deleteTest = require('./machines/delete');
     deleteTest(t, CLIENT, OTHER, MACHINE_UUID, function () {
@@ -1101,11 +1146,11 @@ test('machine audit', function (t) {
         t.ok(f.caller.keyId, 'f.caller.keyId: ' + f.caller.keyId);
 
         var expectedJobs = [
-            'destroy', 'delete_snapshot', 'rollback_snapshot',
-            'create_snapshot', 'replace_metadata', 'remove_metadata',
-            'set_metadata', 'remove_tags', 'replace_tags', 'remove_tags',
-            'set_tags', 'resize', 'resize', 'reboot', 'start', 'stop',
-            'provision'
+            'destroy', 'disable_deletion_protection', 'delete_snapshot',
+            'rollback_snapshot', 'create_snapshot', 'replace_metadata',
+            'remove_metadata', 'set_metadata', 'remove_tags', 'replace_tags',
+            'remove_tags', 'set_tags', 'resize', 'resize', 'reboot', 'start',
+            'stop', 'provision'
         ];
 
         for (var i = 0; i !== expectedJobs.length; i++) {
