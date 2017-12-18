@@ -11,6 +11,8 @@
 var util = require('util');
 var test = require('tape').test;
 var restify = require('restify');
+var vasync = require('vasync');
+
 var common = require('./common');
 var uuid = common.uuid;
 var addPackage = common.addPackage;
@@ -89,6 +91,8 @@ var SDC_512 = {
 var SERVER_UUID;
 var IMAGE_UUID;
 var MACHINE_UUID;
+var NETWORK_UUID;
+var NETWORK_IP = '10.99.66.50';
 
 var CLIENTS;
 var CLIENT;
@@ -332,9 +336,12 @@ test('CreateMachine using network without permissions', function (t) {
 
         vmDetails.networks = [net.uuid];
 
-        CLIENT.post('/my/machines', vmDetails, function (err2, req, res, body) {
-            t.ok(err2);
-            t.equal(err2.statusCode, 409);
+        CLIENT.post('/my/machines', vmDetails, function (machineCreateErr, req,
+            res, body) {
+            t.ok(machineCreateErr);
+            if (machineCreateErr) {
+                t.equal(machineCreateErr.statusCode, 409);
+            }
             t.deepEqual(body, {
                 code: 'InvalidArgument',
                 message: 'Invalid Networks'
@@ -342,6 +349,206 @@ test('CreateMachine using network without permissions', function (t) {
 
             CLIENT.napi.deleteNetwork(net.uuid, {}, function (err3) {
                 t.ifError(err3);
+                t.end();
+            });
+        });
+    });
+});
+
+
+test('CreateMachine using public network and ip', function (t) {
+    var netDetails = {
+        name: 'machines-test-network-fake-public',
+        vlan_id: 99,
+        subnet: '10.99.66.0/24',
+        provision_start_ip: '10.99.66.5',
+        provision_end_ip: '10.99.66.250',
+        nic_tag: 'external',
+        owner_uuids: []
+    };
+
+    var vmDetails = {
+        image: IMAGE_UUID,
+        package: SDC_256.name,
+        server_uuid: SERVER_UUID
+    };
+
+    CLIENT.napi.createNetwork(netDetails, function (err, net) {
+        t.ifError(err);
+
+        vmDetails.networks = [
+            {
+                ipv4_uuid: net.uuid,
+                ipv4_ips: ['10.99.66.10']
+            }
+        ];
+
+        CLIENT.post('/my/machines', vmDetails, function (machineCreateErr, req,
+            res, body) {
+            t.ok(machineCreateErr);
+            if (machineCreateErr) {
+                t.equal(machineCreateErr.statusCode, 409);
+            }
+            t.deepEqual(body, {
+                code: 'InvalidArgument',
+                message: 'ipv4_uuid: ' + net.uuid +
+                        ' cannot specify IP on a public network'
+            });
+
+            CLIENT.napi.deleteNetwork(net.uuid, {},
+                function napiDeleteNetwork(networkDelErr) {
+                t.ifError(networkDelErr);
+                t.end();
+            });
+        });
+    });
+});
+
+
+test('CreateMachine using unknown network and an ip', function (t) {
+    var networkUuid = 'd674f27a-e695-11e7-8490-001fc69cf4fd';
+    var vmDetails = {
+        image: IMAGE_UUID,
+        package: SDC_256.name,
+        server_uuid: SERVER_UUID,
+        networks: [
+            {
+                ipv4_uuid: networkUuid,
+                // IP set to any value just for this test
+                ipv4_ips: ['10.99.66.10']
+            }
+        ]
+    };
+
+    CLIENT.post('/my/machines', vmDetails, function (machineCreateErr, req, res,
+        body) {
+        t.ok(machineCreateErr);
+        if (machineCreateErr) {
+            t.equal(machineCreateErr.statusCode, 404);
+        }
+        t.deepEqual(body, {
+            code: 'ResourceNotFound',
+            message: 'ipv4_uuid: network ' + networkUuid +
+                ' not found'
+        });
+
+        t.end();
+    });
+});
+
+
+test('CreateMachine using network pool and an ip', function (t) {
+    var networkPoolUuid;
+    var networkUuids = [];
+    var networks = [
+        {
+            name: 'machines-test-network-pool-fake-1',
+            vlan_id: 97,
+            subnet: '10.99.55.0/24',
+            provision_start_ip: '10.99.55.5',
+            provision_end_ip: '10.99.55.250',
+            nic_tag: 'external',
+            owner_uuids: []
+        },
+        {
+            name: 'machines-test-network-pool-fake-2',
+            vlan_id: 98,
+            subnet: '10.99.67.0/24',
+            provision_start_ip: '10.99.67.5',
+            provision_end_ip: '10.99.67.250',
+            nic_tag: 'external',
+            owner_uuids: []
+        }
+    ];
+
+
+    function createNetwork(params, done) {
+        CLIENT.napi.createNetwork(params, function (err, net) {
+            if (err) {
+                done(err);
+                return;
+            }
+            networkUuids.push(net.uuid);
+            done();
+        });
+    }
+
+    function createNetworksForPool(_, done) {
+        vasync.forEachPipeline({
+            func: createNetwork,
+            inputs: networks
+        }, function (err, results) {
+            if (err) {
+                done(err);
+                return;
+            }
+            done();
+        });
+    }
+
+    function createPool(_, done) {
+        CLIENT.napi.createNetworkPool('network-pool-fake',
+            {networks: networkUuids}, function (err, net) {
+            if (err) {
+                done(err);
+                return;
+            }
+            networkPoolUuid = net.uuid;
+            done();
+        });
+    }
+
+    function runTest(_, done) {
+        var vmDetails = {
+            image: IMAGE_UUID,
+            package: SDC_256.name,
+            server_uuid: SERVER_UUID,
+            networks: [
+                {
+                    ipv4_uuid: networkPoolUuid,
+                    // IP set to any value just for this test
+                    ipv4_ips: ['10.99.66.10']
+                }
+            ]
+        };
+        CLIENT.post('/my/machines', vmDetails, function (machineCreateErr, req,
+            res, body) {
+            t.ok(machineCreateErr);
+            if (machineCreateErr) {
+                t.equal(machineCreateErr.statusCode, 409);
+            }
+            t.deepEqual(body, {
+                code: 'InvalidArgument',
+                message: 'ipv4_uuid: ' + networkPoolUuid +
+                        ' cannot specify IP on a network pool'
+            });
+
+            // Call done without error since we expect to get one
+            done();
+        });
+    }
+
+    vasync.pipeline({
+        funcs: [createNetworksForPool, createPool, runTest]
+    }, function (err, results) {
+        // Regardless of errors we should cleanup and end the test
+        CLIENT.napi.deleteNetworkPool(networkPoolUuid,
+            function (delNetworkPoolErr, net) {
+            t.ifError(delNetworkPoolErr);
+
+            function deleteNetwork(netUuid, done) {
+                CLIENT.napi.deleteNetwork(netUuid,
+                    function (delNetworkErr, _) {
+                    t.ifError(delNetworkErr);
+                    done();
+                });
+            }
+
+            vasync.forEachParallel({
+                func: deleteNetwork,
+                inputs: networkUuids
+            }, function (delPipelineErr, _) {
+                t.ifError(delPipelineErr);
                 t.end();
             });
         });
@@ -828,20 +1035,21 @@ test('Delete tests', function (t) {
 test('machine audit', function (t) {
     var p = '/my/machines/' + MACHINE_UUID + '/audit';
 
+    t.ok(true, p);
     CLIENT.get(p, function (err, req, res, body) {
-        t.ifError(err);
-        t.ok(Array.isArray(body));
-        t.ok(body.length);
+        t.ifError(err, 'CLIENT.get error');
+        t.ok(Array.isArray(body), 'body is array');
+        t.ok(body.length > 0, 'body non-zero length');
 
         var f = body[body.length - 1];
-        t.ok(f.success);
-        t.ok(f.time);
-        t.ok(f.action);
-        t.ok(f.caller);
-        t.ok(f.caller.type);
-        t.equal(f.caller.type, 'signature');
-        t.ok(f.caller.ip);
-        t.ok(f.caller.keyId);
+        t.ok(f.success, 'f.success: ' + f.success);
+        t.ok(f.time, 'f.time: ' + f.time);
+        t.ok(f.action, 'f.action: ' + f.action);
+        t.ok(f.caller, 'f.caller: ' + f.caller);
+        t.ok(f.caller.type, 'f.caller.type: ' + f.caller.type);
+        t.equal(f.caller.type, 'signature', 'f.caller.type == signature');
+        t.ok(f.caller.ip, 'f.caller.ip: ' + f.caller.ip);
+        t.ok(f.caller.keyId, 'f.caller.keyId: ' + f.caller.keyId);
 
         var expectedJobs = [
             'destroy', 'delete_snapshot', 'rollback_snapshot',
@@ -854,6 +1062,8 @@ test('machine audit', function (t) {
         for (var i = 0; i !== expectedJobs.length; i++) {
             var expected = expectedJobs[i];
             var job      = body[i];
+            t.ok(job, 'expected job: ' + expected);
+
             var caller   = job.caller;
 
             if (expected === 'replace_tags') {
@@ -861,13 +1071,14 @@ test('machine audit', function (t) {
                 // vmapi doesn't promise immediate consistency, we have to
                 // accept that sometimes the replace_tags job only adds a tag
                 t.ok(job.action === 'replace_tags' || job.action === 'set_tags',
-                    'action');
+                    'action match');
             } else {
-                t.equal(job.action, expected, 'action');
+                t.equal(job.action, expected, 'action match');
             }
-            t.equal(caller.type, 'signature');
-            t.ok(caller.ip, 'ip');
-            t.ok(caller.keyId.indexOf('test@joyent.com/keys/id_rsa') !== -1);
+            t.equal(caller.type, 'signature', 'caller.type == signature');
+            t.ok(caller.ip, 'caller.ip: ' + caller.ip);
+            t.ok(caller.keyId.indexOf('test@joyent.com/keys/id_rsa') !== -1,
+                'test key found');
         }
 
         t.end();
@@ -1328,6 +1539,154 @@ test('Affinity tests', function (t) {
 
     affinityTest(t, CLIENT, OTHER, IMAGE_UUID, SDC_128.uuid, SERVER_UUID,
         function () {
+        t.end();
+    });
+});
+
+
+test('Create Machine using network and IP', function (t) {
+    var netDetails = {
+        name: 'machines-test-network-and-ip',
+        vlan_id: 99,
+        subnet: '10.99.66.0/24',
+        provision_start_ip: '10.99.66.5',
+        provision_end_ip: '10.99.66.250',
+        nic_tag: 'external',
+        owner_uuids: [CLIENT.account.uuid]
+    };
+
+    var obj = {
+        image: IMAGE_UUID,
+        package: SDC_128.name,
+        server_uuid: SERVER_UUID
+    };
+
+    CLIENT.napi.createNetwork(netDetails, function (err, net) {
+        t.ifError(err);
+
+        NETWORK_UUID = net.uuid;
+
+        obj.networks = [
+            {
+                ipv4_uuid: NETWORK_UUID,
+                ipv4_ips: [ NETWORK_IP ]
+            }
+        ];
+
+
+        machinesCommon.createMachine(t, CLIENT, obj, function (_, machineUuid) {
+            MACHINE_UUID = machineUuid;
+            t.end();
+        });
+
+    });
+});
+
+
+test('Wait For Running Machine provisioned with IP', waitForRunning);
+
+
+test('Verify the machines IP', function (t) {
+    var params = {
+        belongs_to_uuid: MACHINE_UUID,
+        belongs_to_type: 'zone'
+    };
+
+    CLIENT.napi.listNics(params, function napiListNics(err, nics) {
+        t.ifError(err);
+
+        var found = nics.some(function nicHasIp(n) {
+            return n.ip === NETWORK_IP;
+        });
+
+        t.ok(found, 'nic with correct ip found');
+        t.end();
+    });
+});
+
+
+test('Create Machine using network and in use IP', function (t) {
+    var obj = {
+        image: IMAGE_UUID,
+        package: SDC_128.name,
+        server_uuid: SERVER_UUID,
+        networks: [
+            {
+                ipv4_uuid: NETWORK_UUID,
+                ipv4_ips: [ NETWORK_IP ]
+            }
+        ]
+    };
+
+    CLIENT.post('/my/machines', obj, function createMachine(err, req, res,
+        body) {
+        t.ok(err);
+        if (err) {
+            t.equal(err.statusCode, 422);
+        }
+        t.deepEqual(body, {
+            code: 'InvalidParameters',
+            message: 'Invalid parameters',
+            errors: [ {
+                code: 'UsedBy',
+                message: 'IP in use'
+            } ]
+        });
+        t.end();
+    });
+});
+
+
+test('Destroy machine created with IP', function (t) {
+    CLIENT.vmapi.deleteVm({
+        uuid: MACHINE_UUID,
+        owner_uuid: CLIENT.account.uuid
+    }, function (err, job) {
+        t.ifError(err, 'Deleting machine ' + MACHINE_UUID);
+
+        waitForJob(CLIENT, job.job_uuid, function (deleteJobErr) {
+            t.ifError(deleteJobErr, 'waiting for job ' + job.job_uuid);
+            t.end();
+        });
+    });
+});
+
+
+test('CreateMachine using network and invalid number of ips', function (t) {
+    var vmDetails = {
+        image: IMAGE_UUID,
+        package: SDC_256.name,
+        server_uuid: SERVER_UUID,
+        networks: [
+            {
+                ipv4_uuid: NETWORK_UUID,
+                // IP set to any value just for this test
+                ipv4_ips: ['10.99.66.10', '10.99.66.10']
+            }
+        ]
+    };
+
+    CLIENT.post('/my/machines', vmDetails, function (machineCreateErr, req, res,
+        body) {
+        t.ok(machineCreateErr);
+        if (machineCreateErr) {
+            t.equal(machineCreateErr.statusCode, 409);
+        }
+        t.deepEqual(body, {
+            code: 'InvalidArgument',
+            message: 'ipv4_ips: network with ipv4_uuid ' +
+                    NETWORK_UUID + ' should contain a single IP array'
+        });
+
+        t.end();
+    });
+});
+
+
+test('Destroy machines-test-network-and-ip network', function (t) {
+    CLIENT.napi.deleteNetwork(NETWORK_UUID,
+        function napiDeleteNetwork(err, res) {
+        t.ifError(err);
         t.end();
     });
 });

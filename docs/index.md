@@ -908,6 +908,15 @@ The set of supported *API versions* is given in the ping endpoint:
 
 The section describes API changes in CloudAPI versions.
 
+## 8.5.0
+
+- CreateMachine and AddNic now accept specifying a [network
+  object](#network-objects) instead of just a network UUID. The network object
+  extends functionality by allowing a machine to be provisioned with specific
+  IPs. It's also now possible to add a NIC to an instance with a specific IP.
+  It's worth noting that it's still possible to pass in just the UUID of a
+  network, however you cannot mix the new and old formats in the same request.
+
 ## 8.4.0
 
 - This version adds support for the following new endpoints:
@@ -4341,7 +4350,7 @@ be changed later within the instance, if desired.
 name      | String   | Friendly name for this instance; default is the first 8 characters of the machine id. If the name includes the string {{shortId}}, any instances of that tag within the name will be replaced by the first 8 characters of the machine id.
 package   | String   | Id of the package to use on provisioning, obtained from [ListPackages](#ListPackages)
 image     | String   | The image UUID (the "id" field in [ListImages](#ListImages))
-networks  | Array    | Desired networks ids, obtained from [ListNetworks](#ListNetworks). See the note about network pools under [AddNic](#AddNic).
+networks  | Array    | Array of [network objects](#network-objects), or an array of network UUIDs obtained from [ListNetworks](#ListNetworks). See the note about network pools under [AddNic](#AddNic).
 affinity  | Array    | (Added in CloudAPI v8.3.0.) Optional array of [affinity rules](#affinity-rules).
 locality  | Object   | (Deprecated in CloudAPI v8.3.0.) Optionally object of [locality hints](#locality-hints), specify which instances the new instance should be near or far from.
 metadata.$name | String | An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata."
@@ -4457,6 +4466,36 @@ Create instance with tags
 or
 
     $ sdc-createmachine --image=2b683a82-a066-11e3-97ab-2faa44701c5a --package=7b17343c-94af-6266-e0e8-893a3b9993d0 -t foo=bar -t group=test
+
+
+### Network objects
+
+As of CloudAPI v8.5.0 the networks parameter to CreateMachine takes an array of
+network objects to add flexibility and more control. It is also still possible
+to pass in an array of network UUID strings instead of the new network object
+format.
+
+At a minimum the network object must contain an `ipv4_uuid` parameter that is
+the UUID of the network you wish the machine to have a NIC on. In addition you
+may pass in a `ipv4_ips` property that is an array made up of a single IP on
+that network's subnet.
+
+When specifying an `ipv4_ips` array, the `ipv4_uuid` cannot be the UUID of a
+network pool, or a public network.
+
+Here are some examples of possible network objects:
+
+    [
+      {
+        "ipv4_uuid": "f65153df-edf5-11e7-bb45-54e1adb5aaf3",
+        "ipv4_ips": [
+          "10.0.1.50"
+        ]
+      },
+      {
+        "ipv4_uuid": "6fa58531-edf6-11e7-bb45-54e1adb5aaf3"
+      }
+    ]
 
 
 ### Affinity rules
@@ -8744,7 +8783,7 @@ Creates a new NIC on an instance belonging to a given account.
 
 **Field** | **Type** | **Description**
 --------- | -------- | ---------------
-network   | UUID     | ID of network this NIC should attach to
+network   | Object or String   | [Network object](#network-objects) or network UUID string.
 
 ### Returns
 
@@ -8763,6 +8802,10 @@ network   | String   | The network UUID. See below.
 It also returns the Location in the headers where the new NIC lives in the HTTP
 API. If a NIC already exists for that network, a 302 redirect will be returned
 instead of the object.
+
+As of CloudAPI v8.5.0, AddNic now accepts a [network object](#network-objects)
+for the network parameter.  It's still possible to pass in just the network UUID
+string instead of using the new network object format.
 
 If the input network uuid is a network pool (a logical grouping of one or more
 networks that share the same routability characteristics) then a NIC will be

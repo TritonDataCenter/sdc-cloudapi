@@ -781,6 +781,8 @@ function waitTilNicDeleted(t, apiPath) {
 // --- Tests
 
 test('nics', function (tt) {
+    // filled in later when adding a fabric nic
+    var fabricNetworkIp;
     var fixtures;
     var instNic;
 
@@ -1151,6 +1153,88 @@ test('nics', function (tt) {
         getErr(t, path, expectedErr);
     });
 
+    tt.test('  Create NIC using public network and ip', function (t) {
+        var path = '/my/machines/' + fixtures.instId + '/nics';
+        var networkParams = {
+            ipv4_uuid: fixtures.externalNetwork.uuid,
+            // Doesn't matter what IP we pass here, just that we pass one
+            ipv4_ips: [ '192.168.1.1' ]
+        };
+        var args = { network: networkParams };
+
+        var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
+            message: 'ipv4_uuid: ' + fixtures.externalNetwork.uuid +
+                    ' cannot specify IP on a public network',
+            statusCode: 409,
+            restCode: 'InvalidArgument',
+            name: 'InvalidArgumentError',
+            body: {
+                code: 'InvalidArgument',
+                message: 'ipv4_uuid: ' + fixtures.externalNetwork.uuid +
+                        ' cannot specify IP on a public network'
+            }
+        };
+
+        postErr(t, path, args, expectedErr);
+    });
+
+    tt.test('  Create NIC using network and multiple ips', function (t) {
+        var path = '/my/machines/' + fixtures.instId + '/nics';
+        var networkParams = {
+            ipv4_uuid: fixtures.networks[0].network.uuid,
+            // Doesn't matter what IPs we use here, we should short curcuit
+            // early when multiple are detected
+            ipv4_ips: [ '192.168.1.1', '192.168.1.1' ]
+        };
+        var args = { network: networkParams };
+
+        var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
+            message: 'ipv4_ips: network with ipv4_uuid ' +
+                    fixtures.networks[0].network.uuid +
+                    ' should contain a single IP array',
+            statusCode: 409,
+            restCode: 'InvalidArgument',
+            name: 'InvalidArgumentError',
+            body: {
+                code: 'InvalidArgument',
+                message: 'ipv4_ips: network with ipv4_uuid ' +
+                        fixtures.networks[0].network.uuid +
+                        ' should contain a single IP array'
+            }
+        };
+
+        postErr(t, path, args, expectedErr);
+    });
+
+    tt.test('  Create NIC using unknown network and ip', function (t) {
+        var path = '/my/machines/' + fixtures.instId + '/nics';
+        var networkParams = {
+            ipv4_uuid: 'dd39e200-e68b-11e7-8490-001fc69cf4fd',
+            ipv4_ips: [ '192.168.1.1' ]
+        };
+        var args = { network: networkParams };
+
+        var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
+            message: 'ipv4_uuid: network ' + networkParams.ipv4_uuid +
+                ' not found',
+            statusCode: 404,
+            restCode: 'ResourceNotFound',
+            name: 'ResourceNotFoundError',
+            body: {
+                code: 'ResourceNotFound',
+                message: 'ipv4_uuid: network ' + networkParams.ipv4_uuid +
+                    ' not found'
+            }
+        };
+
+        postErr(t, path, args, expectedErr);
+    });
 
     tt.test('  Create NIC using network', function (t) {
         var path = '/my/machines/' + fixtures.instId + '/nics';
@@ -1567,6 +1651,9 @@ test('nics', function (tt) {
             t.ifError(nic.belongs_to_type);
             t.ifError(nic.belongs_to_uuid);
 
+            // Save the IP to use in the add nic provision from pool with IP
+            fixtures.networks[0].ip = nic.ip;
+
             var location = res.headers.location;
             t.ok(location);
 
@@ -1585,6 +1672,70 @@ test('nics', function (tt) {
 
     tt.test('  Remove NIC using network pool', function (t) {
         removeNic(t, fixtures.instId, instNic);
+    });
+
+    tt.test('  Create NIC using network pool and ip', function (t) {
+        var path = '/my/machines/' + fixtures.instId + '/nics';
+        var networkParams = {
+            ipv4_uuid: fixtures.networks[0].pool.uuid,
+            ipv4_ips: [ fixtures.networks[0].ip ]
+        };
+        var args = { network: networkParams };
+
+        var expectedErr = {
+            jse_info: {},
+            jse_shortmsg: '',
+            message: 'ipv4_uuid: ' + fixtures.networks[0].pool.uuid +
+                    ' cannot specify IP on a network pool',
+            statusCode: 409,
+            restCode: 'InvalidArgument',
+            name: 'InvalidArgumentError',
+            body: {
+                code: 'InvalidArgument',
+                message: 'ipv4_uuid: ' + fixtures.networks[0].pool.uuid +
+                        ' cannot specify IP on a network pool'
+            }
+        };
+
+        postErr(t, path, args, expectedErr);
+    });
+
+
+    tt.test('  Add fabric network NIC with managed ip', FABRIC_TEST_OPTS,
+        function (t) {
+        CLIENT.get('/my/networks', function (err, req, res, networks) {
+            t.ifError(err);
+
+            var fabricNetwork = networks.filter(function (net) {
+                return net.fabric;
+            })[0];
+            t.ok(fabricNetwork, format('fabricNetwork %s (%s)',
+                fabricNetwork.id, fabricNetwork.name));
+
+            var path = '/my/machines/' + fixtures.instId + '/nics';
+            var networkParams = {
+                ipv4_uuid: fabricNetwork.id,
+                ipv4_ips: [ fabricNetwork.gateway ]
+            };
+            var args = { network: networkParams };
+
+            var expectedErr = {
+                jse_info: {},
+                jse_shortmsg: '',
+                message: 'cannot use ' + fabricNetwork.gateway +
+                        ' because it is a managed IP',
+                statusCode: 409,
+                restCode: 'InvalidArgument',
+                name: 'InvalidArgumentError',
+                body: {
+                    code: 'InvalidArgument',
+                    message: 'cannot use ' + fabricNetwork.gateway +
+                            ' because it is a managed IP'
+                }
+            };
+
+            postErr(t, path, args, expectedErr);
+        });
     });
 
 
@@ -1609,6 +1760,10 @@ test('nics', function (tt) {
                 instNic = nic;
                 t.ok(instNic, 'AddNic nic: ' + JSON.stringify(nic));
 
+                // Save the ip so we can pass it back in manually in another
+                // create test
+                fabricNetworkIp = nic.ip;
+
                 waitTilNicAdded(t, location);
             });
         });
@@ -1616,6 +1771,43 @@ test('nics', function (tt) {
 
 
     tt.test('  Remove NIC using fabric network', FABRIC_TEST_OPTS,
+            function (t) {
+        removeNic(t, fixtures.instId, instNic);
+    });
+
+
+    tt.test('  Add fabric network NIC with ip', FABRIC_TEST_OPTS, function (t) {
+        CLIENT.get('/my/networks', function (err, req, res, networks) {
+            t.ifError(err);
+
+            var fabricNetwork = networks.filter(function (net) {
+                return net.fabric;
+            })[0];
+            t.ok(fabricNetwork, format('fabricNetwork %s (%s)',
+                fabricNetwork.id, fabricNetwork.name));
+
+            var path = '/my/machines/' + fixtures.instId + '/nics';
+            var networkParams = {
+                ipv4_uuid: fabricNetwork.id,
+                ipv4_ips: [ fabricNetworkIp ]
+            };
+            var args = { network: networkParams };
+            CLIENT.post(path, args, function (nicCreateErr, nicCreateReq,
+                nicCreateRes, nic) {
+                t.ifError(nicCreateErr, 'AddNic to vm '+ fixtures.instId);
+                t.equal(nicCreateRes.statusCode, 201, 'AddNic 201 statusCode');
+
+                var location = nicCreateRes.headers.location;
+                t.ok(location, 'AddNic Location header: ' + location);
+                instNic = nic;
+                t.ok(instNic, 'AddNic nic: ' + JSON.stringify(nic));
+
+                waitTilNicAdded(t, location);
+            });
+        });
+    });
+
+    tt.test('  Remove NIC using fabric network and ip', FABRIC_TEST_OPTS,
             function (t) {
         removeNic(t, fixtures.instId, instNic);
     });

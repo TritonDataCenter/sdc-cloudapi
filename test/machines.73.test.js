@@ -145,28 +145,28 @@ test('networks: invalid formats', function (tt) {
     tt.test('ipv4_uuid: not a UUID', function (t) {
         provisionWithInvalidNetwork(t, [
             { ipv4_uuid: 'asdf' }
-        ], 'Invalid Networks');
+        ], 'ipv4_uuid: asdf is not a uuid');
     });
 
 
-    tt.test('ipv4_uuid: wrong type', function (t) {
+    tt.test('ipv4_uuid: wrong type (object)', function (t) {
         provisionWithInvalidNetwork(t, [
             { ipv4_uuid: {} }
-        ], 'property "networks[0].ipv4_uuid": string expected');
+        ], 'ipv4_uuid must be a string');
     });
 
 
-    tt.test('ipv4_count: wrong type', function (t) {
+    tt.test('ipv4_count: wrong type (ipv4_count not a number)', function (t) {
         provisionWithInvalidNetwork(t, [
             { ipv4_uuid: PROVISIONABLE_NET_UUID, ipv4_count: 'a' }
-        ], 'Invalid VM parameters: Invalid networks');
+        ], 'ipv4_count must be a number');
     });
 
 
-    tt.test('ipv4_count: wrong type', function (t) {
+    tt.test('ipv4_count: wrong type (ipv4_count not 1)', function (t) {
         provisionWithInvalidNetwork(t, [
             { ipv4_uuid: PROVISIONABLE_NET_UUID, ipv4_count: 2 }
-        ], 'Invalid VM parameters: Invalid networks');
+        ], 'ipv4_count can only be set to 1');
     });
 
 });
