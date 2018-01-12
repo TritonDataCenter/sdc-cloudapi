@@ -96,8 +96,8 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     (err ? err.message : JSON.stringify(err)));
                 t.ok(body, 'expected to get a body');
                 if (body) {
-                    t.equal(body.message, 'Invalid volume type: invalidType. ' +
-                        'Volume type should be one of: tritonnfs',
+                    t.equal(body.message, 'Error: Invalid volume type: ' +
+                        'invalidType. Volume type should be one of: tritonnfs',
                         'expected body to be an invalid type error');
                 }
                 t.end();

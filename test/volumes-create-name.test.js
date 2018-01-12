@@ -42,9 +42,11 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             t.ifErr(volumeCreationErr,
                 'creating a volume with no name should succeed');
             t.ok(testVolume, 'should have set testVolume');
-            t.ok((testVolume.name.length > 1),
-                'returned volume should have a name, got: '
-                + JSON.stringify(testVolume.name));
+            if (testVolume) {
+                t.ok((testVolume.name.length > 1),
+                    'returned volume should have a name, got: '
+                    + JSON.stringify(testVolume.name));
+            }
 
             t.end();
         };
@@ -53,15 +55,25 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     function volumeReadyWaiter(t) {
         var expectedState = 'ready';
 
+        if (!testVolume) {
+            t.fail('no volume to wait on when we expected one');
+            t.end();
+            return;
+        }
+
         mod_testVolumes.waitForTransitionToState(CLIENT, testVolume.id,
             expectedState, function onTransition() {
                 CLIENT.get('/my/volumes/' + testVolume.id,
                     function onGetVolume(getVolumeErr, req, res, volume) {
                         t.ifErr(getVolumeErr,
                             'getting newly created volume should succeed');
-                        t.equal(volume.state, expectedState,
-                            'volume should have transitioned to state \'' +
+                        t.ok(volume, 'response should not be empty');
+
+                        if (volume) {
+                            t.equal(volume.state, expectedState,
+                                'volume should have transitioned to state \'' +
                                 expectedState + '\'');
+                        }
 
                         t.end();
                     });
@@ -107,21 +119,6 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             volumeReadyWaiter(t);
     });
 
-    // second, create with empty string for a name (results should be same)
-
-    test('creating volume with no name',
-        function (t) {
-            CLIENT.post('/my/volumes', {
-                name: '',
-                type: 'tritonnfs'
-            }, onVolumeCreatedCreator(t));
-    });
-
-    test('volume should eventually transition to state \'ready\'',
-        function (t) {
-            volumeReadyWaiter(t);
-    });
-
     test('deleting volumes should be successful', function (t) {
         vasync.forEachParallel({
             func: function deleteVolume(volume, done) {
@@ -135,6 +132,29 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             },
             inputs: createdVolumes
         }, function deleteDone(err) {
+            t.end();
+        });
+    });
+
+    test('creating volumes with invalid names', function (t) {
+        /*
+         * 'x'.repeat(257) generates a volume name that is one character too
+         * long, as the max length for volume names is 256 characters.
+         */
+        var INVALID_NAMES = ['', '-foo', '.foo', 'x'.repeat(257)];
+        vasync.forEachParallel({
+            func: function createVolume(volumeName, done) {
+                CLIENT.post('/my/volumes', {
+                    type: 'tritonnfs',
+                    name: volumeName
+                }, function onVolCreated(volCreatErr) {
+                    t.ok(volCreatErr, 'creating volume with name ' +
+                        volumeName + ' should error, got: ' + volCreatErr);
+                    done();
+                });
+            },
+            inputs: INVALID_NAMES
+        }, function invalidVolsCreated(err) {
             t.end();
         });
     });

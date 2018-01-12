@@ -8984,7 +8984,7 @@ Volumes are represented as objects that share a common set of properties:
 --------     | -------- | --------------- |
 id         | String   | The UUID of the volume itself
 owner_uuid | String   | The UUID of the volume's owner. In the example of a NFS shared volume, the owner is the user who created the volume
-name       | String   | The volume's name. It must be unique for a given user. It must match the regular expression `/^[a-zA-Z0-9][a-zA-Z0-9_\.\-]+$/`. There is no limit on the length of a volume's name
+name       | String   | The volume's name. It must be unique for a given user. It must match the regular expression `/^[a-zA-Z0-9][a-zA-Z0-9_\.\-]+$/`. The maximum length for a volume's name is 256 characters. Trying to create or update a volume with a name longer than 256 characters will result in an error
 type       | String   | Identifies the volume's type. There is currently one possible value for this property: `tritonnfs`. Additional types may be added in the future, and they can all have different sets of [type specific properties](#type-specific-properties)
 create_timestamp | String | A timestamp that indicates the time at which the volume was created
 state      | String   | `creating`, `ready`, `deleting`, `deleted` or `failed`. Indicates in which state the volume currently is. `failed` volumes are still persisted to Moray for troubleshooting/debugging purposes. See the section [Volumes state machine](#volumes-state-machine) for a diagram and further details about the volumes' state machine
@@ -9161,7 +9161,7 @@ volumes support has been explicitly enabled. By default, it is disabled._
 
 Param       | Type         | Mandatory | Description
 ----------- | ------------ |-----------|--------------------------------------
-name        | String       | No        | The desired name for the volume. If missing, a unique name for the current user will be generated
+name        | String       | No        | The desired name for the volume. If missing, a unique name for the current user will be generated. The maximum length of a volume name is 256 characters, trying to create a volume with a name longer than 256 characters will generate an error
 size        | Number       | No        | The desired minimum storage capacity for that volume in mebibytes. Default value is 10240 mebibytes (10 gibibytes)
 type        | String       | Yes       | The type of volume. Currently only `'tritonnfs'` is supported
 networks    | Array        | Yes       | A list of UUIDs representing networks on which the volume is reachable. These networks must be fabric networks owned by the user sending the request
@@ -9241,7 +9241,7 @@ shared volume:
 Param | Type   | Description
 ----- | -------| ----------------------------------------
 id    | String | The UUID of the volume object
-name  | String | The new name of the volume with id `id`
+name  | String | The new name of the volume with id `id`. Must be <= 256 characters in length. Sending a name longer than 256 characters will generate an error
 
 Sending any other input parameter will result in an error. Updating other
 properties of a volume, such as the networks it's attached to, must be performed

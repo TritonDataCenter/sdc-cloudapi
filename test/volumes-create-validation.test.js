@@ -141,6 +141,11 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                         invalidNetworks;
                     var actualErrMsg;
 
+                    if (!Array.isArray(invalidNetworks)) {
+                        expectedErrorMsg =
+                            'Invalid networks: networks must be an array';
+                    }
+
                     if (volCreationErr) {
                         actualErrMsg = volCreationErr.message;
                     }

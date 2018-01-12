@@ -10,6 +10,7 @@
 
 var assert = require('assert-plus');
 var test = require('tape').test;
+var vasync = require('vasync');
 var verror = require('verror');
 
 var common = require('./common');
@@ -108,7 +109,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             });
     });
 
-    test('updating newly created volume\'s name should succeed', function (t) {
+    test('updating newly-created volume\'s name should succeed', function (t) {
         CLIENT.post('/my/volumes/' + testVolume.id, {
             name: testVolumeSecondName
         }, function onVolumeRenamed(volUpdateErr) {
@@ -117,6 +118,29 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             t.end();
         });
     });
+
+    test('updating newly-created volume\'s name with invalid name should fail',
+        function (t) {
+            /*
+             * 'x'.repeat(257) generates a volume name that is one character too
+             * long, as the max length for volume names is 256 characters.
+             */
+            var INVALID_NAMES = ['', '-foo', '.foo', 'x'.repeat(257)];
+            vasync.forEachParallel({
+                func: function createVolume(volumeName, done) {
+                    CLIENT.post('/my/volumes/' + testVolume.id, {
+                        name: volumeName
+                    }, function onVolCreated(volCreatErr) {
+                        t.ok(volCreatErr, 'updating volume with name ' +
+                            volumeName + ' should error, got: ' + volCreatErr);
+                        done();
+                    });
+                },
+                inputs: INVALID_NAMES
+            }, function invalidVolsCreated(err) {
+                t.end();
+            });
+        });
 
     test('listing volumes should only include new name', function (t) {
         CLIENT.get('/my/volumes',
