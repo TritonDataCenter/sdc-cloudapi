@@ -494,7 +494,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                         t.ok(machine.state, 'should have state, got: '
                             + machine.state + ' (try ' + attempt + ')');
                         state = machine.state;
-                        if (state === 'deleted') {
+                        if (state === 'deleted' || state === 'failed') {
                             t.end();
                         } else {
                             setTimeout(getState, 5000);
