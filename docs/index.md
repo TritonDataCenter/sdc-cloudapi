@@ -908,6 +908,12 @@ The set of supported *API versions* is given in the ping endpoint:
 
 The section describes API changes in CloudAPI versions.
 
+## 8.9.0
+
+- The plugin interface has changed. preProvision/postProvision hooks have been
+  replaced with allowProvision/postProvision and an expanded API. This is a
+  change invisible to CloudAPI REST consumers.
+
 ## 8.8.0
 
 - CreateMachine now takes brand from the package's `brand` parameter if brand is

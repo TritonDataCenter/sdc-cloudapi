@@ -11,15 +11,15 @@ markdown2extras: tables, code-friendly, cuddled-lists
 -->
 
 <!--
-    Copyright (c) 2014, Joyent, Inc.
+    Copyright (c) 2018, Joyent, Inc.
 -->
 
 # Overview
 
 CloudAPI is the customer-facing API that supports the Customer Portal, as well
-as direct API requests from customers using either the SmartDataCenter CLI or
-custom tooling.  CloudAPI is a REST service written in node.js, and typically
-runs on the head node.  This document describes configuration and
+as direct API requests from customers using either the Triton CLIs (e.g.
+node-triton) or custom tooling.  CloudAPI is a REST service written in node.js,
+and typically runs on the head node.  This document describes configuration and
 troubleshooting for the CloudAPI service.
 
 ## Customer Documentation
@@ -27,13 +27,16 @@ troubleshooting for the CloudAPI service.
 For the end-user documentation, please visit
 [CloudAPI documentation](./index.html).
 
+
 # Layout
 
-CloudAPI is installed in its own zone on the head node.  The name of the zone
-is `cloudapi`.  Within the cloudapi zone, the relevant software is installed
-under `/opt/smartdc/cloudapi`. CloudAPI is installed as an SMF service, so
-log output is placed in:
+CloudAPI is installed in its own zone on the head node, although it is not
+installed by default.  The name of the zone is usually `cloudapi0`.  Within the
+cloudapi zone, the relevant software is installed under `/opt/smartdc/cloudapi`.
+CloudAPI is installed as an SMF service, so log output is placed in:
 `/var/svc/log/smartdc-application-cloudapi\:cloudapi-808*.log`
+
+These paths can be easily retrieved with `svcs -L cloudapi`.
 
 The CloudAPI configuration file lives at
 `/opt/smartdc/cloudapi/etc/cloudapi.cfg`.
@@ -45,18 +48,18 @@ Some aspects of cloudapi are configured via the "metadata" attribute in the
 "cloudapi" service (of the "sdc" application) in SAPI. This is a list of those
 knobs.
 
-| Metadata Key                                  | Type    | Description                                      |
-| --------------------------------------------- | ------- | ------------------------------------------------ |
-| **CLOUDAPI_READONLY**                         | Boolean | Default false. Used to put cloudapi into read-only mode for DC maintenance. |
-| **CLOUDAPI_DATACENTERS**                      | String  | The response for the 'ListDatacenters' endpoint. |
-| **CLOUDAPI_SERVICES**                         | String  | The response for the 'ListServices' endpoint. See discussion below. |
-| **CLOUDAPI_PLUGINS**                          | Array   | See "Plugins" section below.                     |
-| **CLOUDAPI_BLEEDING_EDGE_FEATURES**           | Array   | See "Bleeding Edge Features" section below.      |
-| **CLOUDAPI_BLEEDING_EDGE_LOGIN_WHITELIST**    | Array   | See "Bleeding Edge Features" section below.      |
-| **CLOUDAPI_THROTTLE_WHITELIST**               | Array   | See "Throttles" section below.                   |
-| **CLOUDAPI_MULTIPLE_PUB_NETWORKS**            | Boolean | Default false. Whether machines can be provisioned with more than one public network. |
-| **CLOUDAPI_TEST_MODE**                        | Boolean | Default false. Disable some security checks to make testing easier. |
-| **CLOUDAPI_IGNORE_APPROVED_FOR_PROVISIONING** | Boolean | Default false. Allow provisioning for users even if they have not been given permission. |
+**Metadata Key**                          | **Type** | **Description**
+----------------------------------------- | -------  | ------------------------------------------------
+CLOUDAPI_READONLY                         | Boolean  | Default false. Used to put cloudapi into read-only mode for DC maintenance.
+CLOUDAPI_DATACENTERS                      | String   | The response for the 'ListDatacenters' endpoint.
+CLOUDAPI_SERVICES                         | String   | The response for the 'ListServices' endpoint. See discussion below.
+CLOUDAPI_PLUGINS                          | Array    | See "Plugins" section below.
+CLOUDAPI_BLEEDING_EDGE_FEATURES           | Array    | See "Bleeding Edge Features" section below.
+CLOUDAPI_BLEEDING_EDGE_LOGIN_WHITELIST    | Array    | See "Bleeding Edge Features" section below.
+CLOUDAPI_THROTTLE_WHITELIST               | Array    | See "Throttles" section below.
+CLOUDAPI_MULTIPLE_PUB_NETWORKS            | Boolean  | Default false. Whether machines can be provisioned with more than one public network.
+CLOUDAPI_TEST_MODE                        | Boolean  | Default false. Disable some security checks to make testing easier.
+CLOUDAPI_IGNORE_APPROVED_FOR_PROVISIONING | Boolean  | Default false. Allow provisioning for users even if they have not been given permission.
 
 For example, the 'docker' service could be added to CLOUDAPI_SERVICES as
 follows.
@@ -134,27 +137,26 @@ section will explain the configuration file.
         },
         "plugins": [
             {
-                "name": "capi_limits",
+                "name": "provision_limits",
                 "enabled": false,
                 "config": {
-                    "datacenter": "coal",
-                    "defaults": {
-                        "smartos": 1,
-                        "nodejs": 1,
-                        "ubuntu": 1
-                    }
+                    "defaults": [
+                        {"check": "os", "os": "smartos", "value": 1},
+                        {"check": "brand", "brand": "lx", "by": "ram", "value": 8192}
+                    ]
                 }
             }, {
                 "name": "machine_email",
                 "enabled": false,
                 "config": {
-                    "datacenter": "coal",
                     "smtp": {
                         "host": "127.0.0.1",
                         "port": 25,
-                        "use_authentication": false,
-                        "user": "",
-                        "pass": ""
+                        "secureConnection": false,
+                        "auth": {
+                            "user": "",
+                            "pass": ""
+                        }
                     },
                     "from": "nobody@joyent.com",
                     "subject": "Your SmartDataCenter machine is provisioning",
@@ -207,13 +209,13 @@ This portion of the configuration file tells CloudAPI how to start up, and what
 datacenter this instance is bound to (along with what other datacenters this
 instance should redirect to).
 
-| Field        | Type    | Description                                         |
-| ------------ | ------- | --------------------------------------------------- |
-| port         | Number  | What SSL port to listen on                          |
-| certificate  | String  | Path to a PEM encoded SSL certificate; can be relative to /opt/smartdc/cloudapi |
-| key          | String  | Path to a PEM encoded private key for the SSL certificate; can be relative to /opt/smartdc/cloudapi |
-| read_only    | Boolean | When set to true, the API will deny all the POST/PUT/DELETE requests. Provided for review right after upgrading Smart DataCenter |
-| datacenters  | Object  | A k/v pairing of other DC's to URL's this instance should answer with |
+**Field**    | **Type** | **Description**
+------------ | -------- | ------------------------------------------------------
+port         | Number   | What SSL port to listen on
+certificate  | String   | Path to a PEM encoded SSL certificate; can be relative to /opt/smartdc/cloudapi
+key          | String   | Path to a PEM encoded private key for the SSL certificate; can be relative to /opt/smartdc/cloudapi
+read_only    | Boolean  | When set to true, the API will deny all the POST/PUT/DELETE requests. Provided for review right after upgrading Triton
+datacenters  | Object   | A k/v pairing of other DC's to URL's this instance should answer with
 
 
 ## Bleeding Edge Features
@@ -252,12 +254,13 @@ set the features and whitelist.
 The `ufds` config block tells CloudAPI how to communicate with UFDS, and what
 cache settings to use.
 
-| Field        | Type   | Description                                          |
-| ------------ | ------ | ---------------------------------------------------- |
-| url          | URL    | The fully-qualified URL where UFDS lives             |
-| bindDN       | String | The DN to bind to UFDS LDAP server with              |
-| bindPassword | String | The password to bind to UFDS LDAP server with        |
-| cache        | Object | Controls the UFDS client cache size and the time to expire it |
+**Field**    | **Type** | **Description**
+------------ | -------- | ------------------------------------------------------
+url          | URL      | The fully-qualified URL where UFDS lives
+bindDN       | String   | The DN to bind to UFDS LDAP server with
+bindPassword | String   | The password to bind to UFDS LDAP server with
+cache        | Object   | Controls the UFDS client cache size and the time to expire it
+
 
 ## VMAPI
 
@@ -272,10 +275,11 @@ cache settings to use.
 The `vmapi` config block tells CloudAPI how to communicate with VMAPI, and what
 cache settings to use.
 
-| Field | Type   | Description                                                 |
-| ----- | ------ | ----------------------------------------------------------- |
-| url   | URL    | The fully-qualified URL where VMAPI lives                   |
-| cache | Object | Controls the VMAPI client cache size and the time to expire it, (in seconds) |
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------------------------------------------------
+url       | URL      | The fully-qualified URL where VMAPI lives
+cache     | Object   | Controls the VMAPI client cache size and the time to expire it (in seconds)
+
 
 ## WFAPI
 
@@ -290,10 +294,11 @@ cache settings to use.
 The `wfapi` config block tells CloudAPI how to communicate with Workflow API, and what
 cache settings to use.
 
-| Field | Type   | Description                                                 |
-| ----- | ------ | ----------------------------------------------------------- |
-| url   | URL    | The fully-qualified URL where WFAPI lives                   |
-| cache | Object | Controls the WFAPI client cache size and the time to expire it, (in seconds) |
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------------------------------------------------
+url       | URL      | The fully-qualified URL where WFAPI lives
+cache     | Object   | Controls the WFAPI client cache size and the time to expire it (in seconds)
+
 
 ## CNAPI
 
@@ -309,10 +314,10 @@ cache settings to use.
 The `cnapi` config block tells CloudAPI how to communicate with CNAPI, and what
 cache settings to use.
 
-| Field | Type   | Description                                                 |
-| ----- | ------ | ----------------------------------------------------------- |
-| url   | URL    | The fully-qualified URL where CNAPI lives                   |
-| cache | Object | Controls the CNAPI client cache size and the time to expire it, (in seconds) |
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------------------------------------------------
+url       | URL      | The fully-qualified URL where CNAPI lives
+cache     | Object   | Controls the CNAPI client cache size and the time to expire it (in seconds)
 
 
 ## CA
@@ -321,12 +326,13 @@ cache settings to use.
         "url": "http://10.99.99.24:23181"
       },
 
-The `ca` config block tells CloudAPI how to communicate with Cloud Analytics, and what
-cache settings to use.
+The `ca` config block tells CloudAPI how to communicate with Cloud Analytics,
+and what cache settings to use.
 
-| Field | Type | Description                                                   |
-| ----- | ---- | ------------------------------------------------------------- |
-| url   | URL  | The fully-qualified URL where CA lives                        |
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------------------------------------------------
+url       | URL      | The fully-qualified URL where CA lives
+
 
 ## NAPI
 
@@ -342,10 +348,10 @@ cache settings to use.
 The `napi` config block tells CloudAPI how to communicate with NAPI, and what
 cache settings to use.
 
-| Field | Type   | Description                                                 |
-| ----- | ------ | ----------------------------------------------------------- |
-| url   | URL    | The fully-qualified URL where NAPI lives                    |
-| cache | Object | Controls the NAPI client cache size and the time to expire it, (in seconds) |
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------------------------------------------------
+url       | URL      | The fully-qualified URL where NAPI lives
+cache     | Object   | Controls the NAPI client cache size and the time to expire it (in seconds)
 
 
 ## FWAPI
@@ -362,10 +368,10 @@ cache settings to use.
 The `fwapi` config block tells CloudAPI how to communicate with FWAPI, and what
 cache settings to use.
 
-| Field | Type   | Description                                                 |
-| ----- | ------ | ----------------------------------------------------------- |
-| url   | URL    | The fully-qualified URL where FWAPI lives                   |
-| cache | Object | Controls the FWAPI client cache size and the time to expire it, (in seconds) |
+**Field** | **Type** | Description
+--------- | -------- | ---------------------------------------------------------
+url       | URL      | The fully-qualified URL where FWAPI lives
+cache     | Object   | Controls the FWAPI client cache size and the time to expire it (in seconds)
 
 
 ## IMGAPI
@@ -381,38 +387,43 @@ cache settings to use.
 The `imgapi` config block tells CloudAPI how to communicate with IMGAPI, and
 what cache settings to use.
 
-| Field | Type   | Description                                                 |
-| ----- | ------ | ----------------------------------------------------------- |
-| url   | URL    | The fully-qualified URL where IMGAPI lives                  |
-| cache | Object | Controls the IMGAPI client cache size and the time to expire it, (in seconds) |
-
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------------------------------------------------
+url       | URL      | The fully-qualified URL where IMGAPI lives
+cache     | Object   | Controls the IMGAPI client cache size and the time to expire it (in seconds)
 
 
 ## Plugins
 
+The `plugins` section is present so that CloudAPI can perform custom actions
+**before** and **after** provisioning happens in your environment, as well as
+various other filtering actions that may be useful. These plugins are
+dynamically loaded by CloudAPI at startup time.
+
+An example configuration:
+
         "plugins": [
             {
-                "name": "capi_limits",
+                "name": "provision_limits",
                 "enabled": false,
                 "config": {
-                    "datacenter": "coal",
-                    "defaults": {
-                        "smartos": 1,
-                        "nodejs": 1,
-                        "ubuntu": 1
-                    }
+                    "defaults": [
+                        {"check": "os", "os": "smartos", "value": 1},
+                        {"check": "brand", "brand": "lx", "by": "ram", "value": 8192}
+                    ]
                 }
             }, {
                 "name": "machine_email",
                 "enabled": false,
                 "config": {
-                    "datacenter": "coal",
                     "smtp": {
                         "host": "127.0.0.1",
                         "port": 25,
-                        "use_authentication": false,
-                        "user": "",
-                        "pass": ""
+                        "secureConnection": false,
+                        "auth": {
+                            "user": "",
+                            "pass": ""
+                        }
                     },
                     "from": "nobody@joyent.com",
                     "subject": "Your SmartDataCenter machine is provisioning",
@@ -421,22 +432,16 @@ what cache settings to use.
             }
         ],
 
+For information on writing a plugin, see [Plugin System](#plugin-system).
+By default, CloudAPI ships with some example plugins to limit provisioning based
+on number of customer machines, or resouces used by customer machines, as well
+as providing a free tier of machines for customers to use.
 
-
-The `plugins` section is present so that CloudAPI can perform custom actions
-**before** and **after** provisioning happens in your environment.  The
-different `plugins` can define either `preProvision` hooks, `postProvision`
-hooks, or both. These plugins are dynamically loaded by CloudAPI at startup
-time.  For information on writing a plugin, see
-[Provisioning Plugins](#provisioning-plugins).  By default, CloudAPI ships with
-some example plugins to limit provisioning based on number of customer machines,
-RAM used by customer machines, ...
-
-| Field   | Type    | Description                                              |
-| ------- | ------- | -------------------------------------------------------- |
-| name    | String  | Name of the plugin. Assumption is that the .js file containing the plugin is at `/opt/smartdc/cloudapi/plugins/${name}.js` |
-| enabled | Boolean | Whether or not this plugin should be loaded              |
-| config  | Object  | A free-form object that gets passed into your plugin at creation time |
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------------------------------------------------
+name      | String   | Name of the plugin. Assumption is that the .js file containing the plugin is at `/opt/smartdc/cloudapi/plugins/${name}.js`
+enabled   | Boolean  | Whether or not this plugin should be loaded
+config    | Object   | A free-form object that gets passed into your plugin at creation time
 
 
 ## Throttles
@@ -490,24 +495,24 @@ portal is allowed unrestricted access.
 
 The given keys that can be configured in the throttling configuration:
 
-| Key         | Description                                                    |
-| ----------- | -------------------------------------------------------------- |
-| account     | /account specific throttling                                   |
-| analytics   | /analytics specific throttling                                 |
-| audit       | /audit specific throttling                                     |
-| config      | /config specific throttling                                    |
-| datacenters | /datacenters specific throttling                               |
-| datasets    | /images specific throttling (originally /datasets)             |
-| keys        | /keys specific throttling                                      |
-| machines    | /machines specific throttling                                  |
-| networks    | /networks specific throttling                                  |
-| nics        | /nics specific throttling                                      |
-| packages    | /packages specific throttling                                  |
-| policies    | /policies specific throttling                                  |
-| services    | /services specific throttling                                  |
-| resources   | Role tagging of resources                                      |
-| roles       | /roles specific throttling                                     |
-| users       | /users specific throttling                                     |
+**Key**     | **Description**
+----------- | ------------------------------------------------------------------
+account     | /account specific throttling
+analytics   | /analytics specific throttling
+audit       | /audit specific throttling
+config      | /config specific throttling
+datacenters | /datacenters specific throttling
+datasets    | /images specific throttling (originally /datasets)
+keys        | /keys specific throttling
+machines    | /machines specific throttling
+networks    | /networks specific throttling
+nics        | /nics specific throttling
+packages    | /packages specific throttling
+policies    | /policies specific throttling
+services    | /services specific throttling
+resources   | Role tagging of resources
+roles       | /roles specific throttling
+users       | /users specific throttling
 
 These configurations can live in either the `ipThrottles` or `userThrottles`
 section (or both).  Note that in `ipThrottles`, the type `ip` is literally
@@ -516,102 +521,59 @@ balancer/reverse-proxy, you'll literally be throttling that device, as
 opposed to the end user (which probably isn't what you want).  Instead, set
 the type to `xff` to throttle on the `X-Forwarded-For` header.
 
-# Provisioning Plugins
 
-In order to facilitate checking a customer for the ability to provision via
-arbitrary systems (i.e., your favorite ERP system here), CloudAPI supports a
-pre-provisioning "hook" that is invoked before CreateMachine actually calls out
-to VMAPI.  Additionally, there is support for a 'post' provisioning plugin, so
-that you can send emails, or update DNS records.
+# Plugin System
 
-An assumption is that the .js file containing a plugin with name `${name}`
-is at `/opt/smartdc/cloudapi/plugins/${name}.js`.
+The plugin system (defined in `lib/plugin-manager.js`) is provided by both
+CloudAPI and sdc-docker, and both have an identical interface. The plugin system
+allows modifying CloudAPI (or sdc-docker) behaviour without modifying CloudAPI
+itself.
 
-As described above, there is the ability to define a free-form configuration for
-your plugin.
+This is a list of currently-supported plugin hooks. If a plugin exports a
+function with the following names, it will be called by CloudAPI to modify
+associated REST calls during operation.
+
+**Hook**                 | **Description**
+------------------------ | -----------------------------------------------------
+allowProvision           | Determine whether a provision should be allowed to proceed.
+postProvision            | Perform an action after a successful provision.
+filterListNetworks       | Filter networks before returning them to a CloudAPI client.
+filterGetNetworksOrPools | Similar to above, but used in a different context in sdc-docker.
+findOwnerExternalNetwork | Modify which networks are selected as external, particularly during provisioning. Used in sdc-docker.
+
+CloudAPI provides plugin hooks with the following functions and data:
+
+**Handle**     | **Type**  | **Description**
+-------------- | --------- | ---------------------------------------------------
+log            | Object    | The restify logger that will let you write into the CloudAPI SMF log
+datacenterName | String    | Name of this CloudAPI instance's datacenter
+service        | String    | Which service this is, in case plugin behaviour should differ between cloudapi and sdc-docker
+NotAuthorizedError        | Class    | Restify's error class
+getNapiNetworksForAccount | Function | Get details about networks useable by current account
+getActiveVmsForAccount    | Function | Get active VMs belonging to current account
+getImage                  | Function | Get the details about a particular image
+listImages                | Function | Get a list of images
 
 For details on writing a plugin, you should be familiar with
 [node.js](http://nodejs.org/), [restify](https://github.com/restify/node-restify),
-and the internal SmartDataCenter APIs.  For a reference plugin, see
-`/opt/smartdc/cloudapi/plugins/capi_limits.js` or
-`/opt/smartdc/cloudapi/plugins/machine_email.js`.
-
-In order to write a plugin, you need to define a file that at minimum has what's
-below (this is the equivalent of the "dummy" hook):
-
-    module.exports = {
-
-      /**
-       * Creates a pre-provisioning hook.
-       *
-       * Config is the JS object that was converted from the
-       * free-form config object that is defined in config.json.
-       *
-       * This function must return a restify filter that is run as part
-       * of a restify "pre" chain.
-       *
-       * @param {Object} config free-form config from config.json.
-       * @return {Function} restify 'pre' filter.
-       */
-      preProvision: function(config) {
-
-        return function(req, res, next) {
-          return next();
-        };
-      };
-
-      /**
-       * Creates a post-provisioning hook.
-       *
-       * Config is the JS object that was converted from the
-       * free-form config object that is defined in config.json.
-       *
-       * This function must return a restify filter that is run as part
-       * of a restify "post" chain.
-       *
-       * @param {Object} config free-form config from config.json.
-       * @return {Function} restify 'post' filter.
-       */
-      postProvision: function(config) {
-
-        return function(req, res, next) {
-          return next();
-        };
-      };
-
-    };
-
-The real handiness comes in on the `req` object; CloudAPI will provide you with
-the following handles:
-
-| Handle  | Type   | Description                                               |
-| ------- | ------ | --------------------------------------------------------- |
-| ufds    | Object | An UFDS client; see node\_modules/sdc-clients/lib/ufds.js for more details    |
-| vmapi   | Object | A VMAPI client; see node\_modules/sdc-clients/lib/vmapi.js for more details   |
-| napi    | Object | A NAPI client; see node\_modules/sdc-clients/lib/napi.js for more details     |
-| imgapi  | Object | A IMGAPI client; see node\_modules/sdc-clients/lib/imgapi.js for more details |
-| account | Object | A complete JS object of the current requested account's UFDS object  |
-| dataset | Object | The current dataset that is attempted to be provisioned   |
-| package | Object | The current package that is attempted to be provisioned   |
-| log     | Object | The restify logger that will let you write into the CloudAPI SMF log |
-
+and the internal Triton APIs.  For a reference plugin, see
+`/opt/smartdc/cloudapi/plugins/free_tier.js` or
+`/opt/smartdc/cloudapi/plugins/machine_email.js`. Also see [Appendix
+B](#appendix-b).
 
 Additionally, you can require in your plugin file any of the NPM modules
-available for CloudAPI itself. See `/opt/smartdc/cloudapi/package.json` for
-the complete list of available modules additional to the default NodeJS set.
+available for CloudAPI/sdc-docker itself. See
+`/opt/smartdc/cloudapi/package.json` for the complete list of available modules
+additional to the default NodeJS set.
 
 For more information, inspect the source code of
-`/opt/smartdc/cloudapi/plugins/capi_limits.js`.
+`/opt/smartdc/cloudapi/plugins/free_tier.js`. For a more complicated
+example, see `/opt/smartdc/cloudapi/plugins/provision_limits.js`. The API itself
+is documented in `/opt/smartdc/cloudapi/lib/plugin-manager.js`
 
-
-# Post Provisioning Plugins
-
-In addition to all items available to you in the `preProvision` hook, there will
-additionally be a `res.machine` object, which is the provisioned machine, on the
-response.
-
-For more information, inspect the source code of
-`/opt/smartdc/cloudapi/plugins/machine_email.js`.
+An assumption is that the .js file containing a plugin with name `${name}`
+is at `/opt/smartdc/cloudapi/plugins/${name}.js`. Absolute paths can also be
+provided as the name, in case a custom plugin lives elsewhere on the filesystem.
 
 
 # LogLevels
@@ -644,82 +606,27 @@ Log messages can be traced using `bunyan -p cloudapi` as explained in
 [Bunyan DTrace Examples](https://github.com/trentm/node-bunyan#dtrace-examples)
 
 
-# Specifying or overriding plugins configuration using UFDS
-
-It's possible to specify CloudAPI's plugins configuration using UFDS, for
-example:
-
-        sdc-ldap add << EOD
-        dn: cn=provision_limits, ou=config, o=smartdc
-        cn: provision_limits
-        datacenter: coal
-        defaults: {"image": "any", "check": "image", "by": "machines", "value": 4}
-        defaults: {"image": "windows", "check": "image", "by": "machines", "value": -1}
-        enabled: true
-        svc: cloudapi
-        objectclass: config
-        EOD
-
-Of course, plugins config can be specified either using the cloudapi config
-file, or just using UFDS as above. Please note that **any value specified for
-a given plugin using UFDS will automatically override the configuration
-specified for such plugin in cloudapi's configuration file**.
-
-Given the most usual operations once a limit has been created are adding,
-replacing or removing concrete entries, the following are examples of how to do
-this using ufds:
-
-
-### Add a new default limit to plugin config:
-
-        sdc-ldap modify << EOD
-        dn: cn=provision_limits, ou=config, o=smartdc
-        changetype: modify
-        add: defaults
-        defaults: {"image": "any", "check": "image", "by": "ram", "value": 8192}
-        EOD
-
-
-### Remove a default limit from plugin config:
-
-        sdc-ldap modify << EOD
-        dn: cn=provision_limits, ou=config, o=smartdc
-        changetype: modify
-        delete: defaults
-        defaults: {"image": "any", "check": "image", "by": "ram", "value": 8192}
-        EOD
-
-
-### Replace an existing default limit from plugin config (delete + add):
-
-
-        sdc-ldap modify << EOD
-        dn: cn=provision_limits, ou=config, o=smartdc
-        changetype: modify
-        delete: defaults
-        defaults: {"image": "any", "check": "image", "by": "machines", "value": 4}
-        -
-        add: defaults
-        defaults: {"image": "any", "check": "image", "by": "machines", "value": 8}
-        EOD
-
-
 # Appendix A: Provision Limits Plugin
 
-CloudAPI version 7.0 comes with a **Provisioning Limits** plugin, which
-provides more options and flexibility regarding the limits CloudAPI will check
-before allowing the provision of a new machine for a given customer.
+CloudAPI comes with a **Provisioning Limits** plugin, which provides several
+options for limits that CloudAPI will check before allowing the provision of a
+new machine for a given customer.
+
+Limits are either for all accounts or for a specific account. It is possible to
+limit an account based on three sums: total number of account VMs, total sum of
+those VMs' RAM, and/or the total sum of those VM's disk quota. Each of these
+three sums can be optionally constrainted by: VM brand, VM OS (specifically, the
+"os" attribute in the VM's image), and/or VM image name.
 
 The following is the configuration fragment expected in the plugins section of
-CloudAPI config file in order to enable and set the different options for this
-plugin:
+CloudAPI config file (usually set through SAPI) in order to enable and set the
+different options for this plugin:
 
 
      {
           "name": "provisioning_limits",
           "enabled": true,
           "config": {
-              "datacenter": ${dc_name} (String),
               "defaults": [{
                   "os": ${image_os} (String),
                   "image": ${image_name} (String),
@@ -730,165 +637,199 @@ plugin:
           }
       }
 
+Here are some examples of what can be added to defaults (or through UFDS,
+described later):
+
+    { "value": 200,  "by": "quota" }
+    { "value": 1024, "by": "ram", "check": "os",    "os": "windows" }
+    { "value": 25 }
+    { "value": 100,               "check": "brand", "brand": "lx" }
+    { "value": 8192, "by": "ram", "check": "image", "image": "base64-lts" }
+    { "value": 50,                "check": "os",    "os": "any" }
+
 Possible values for every config member are:
 
-| Name       | Type   | Description       | Possible values |
-| ---------- | ------ | ----------------- | --------------- |
-| datacenter | String | `datacenter` name | Name of the datacenter. |
-| os         | String | Value for Image `os`. | Usually, this will be one of `windows`, `linux`, `smartos`, `bsd` or `any`. See [IMGAPI os values](https://github.com/joyent/sdc-imgapi/blob/master/docs/index.md#manifest-os) |
-| image      | String | Value for Image `name`. | This will be one of `windows`, the different `linux` flavors, different `smartos` based datasets or `any`. See [IMGAPI possible values for image names](https://github.com/joyent/sdc-imgapi/blob/master/docs/index.md#manifest-name) |
-| check      | String | Either "image" or "os" | See explanation below |
-| by         | String | The name of the value this limit will be based into. Note that "machines" means "number of machines" | "ram", "quota", or "machines" |
-| value      | Number | A value for the previous "by" member | Negative Integer, Zero, or Positive Integer |
+**Name**   | **Type** | **Description**         | **Possible values**
+---------- | -------- | ----------------------- | ------------------------------
+os         | String   | Value for Image `os`.   | Usually, this will be one of `windows`, `linux`, `smartos`, `bsd` or `any`. See [IMGAPI os values](https://github.com/joyent/sdc-imgapi/blob/master/docs/index.md#manifest-os)
+image      | String   | Value for Image `name`. | This will be one of `windows`, the different `linux` flavors, different `smartos` based datasets or `any`. See [IMGAPI possible values for image names](https://github.com/joyent/sdc-imgapi/blob/master/docs/index.md#manifest-name)
+check      | String   | Either "image" or "os"  | See explanation below
+by         | String   | The name of the value this limit will be based on. Note that "machines" means "number of machines" | "ram", "quota", or "machines"
+value      | Number   | A value for the previous "by" member | Negative Integer, Zero, or Positive Integer
 
-Note that the values `os` or `image` can be omitted depending on the value
-given to `check`. Only the value specified for `check` must be present for
-a limit.
+Now the specifics.
 
-For example, the following is a valid limit:
+Limit comes in the following JSON format:
+    { "value": <number> }
 
-         "os": "linux",
-         "check": "os",
-         "by": "ram",
-         "value": 51200
+Where <number> is either a number, or a 10-base string encoding of a number.
+E.g. 10 or "10". 0 and -1 have special meanings: 0 means unlimited, and -1
+prevents all matching provisions.
 
-Thi just means "make sure that when the operating system for the machine
-being provisioned is linux, the total ram used by this customer will not
-exceed 51200MiB", and (given it's omitted) we can omit the "whatever is the
-dataset name for the image: centos, ubuntu, ...".
+By default, a limit counts the number of VMs across a datacenter. So to set
+the maximum number of VMs for an account across a datacenter to 25, use:
+    { "value": 25 }
 
-You can specify as many "defaults" entries as you want. For example, the
-following config fragment means:
+We can modify what the "value" counts by adding a "by" clause:
+    { "value": <number>, "by": "<dimension>" }
 
-> *Disallow provisioning any windows machine and for any other image, allow
-> provisioning machines until RAM reaches a limit of 51200, whatever is the
-> operating system for these images.*
+Where currently-supported dimensions are "ram" (in MiB) or "quota" (in GiB).
+It's possible to use something beyond "ram" and "quota" (e.g. "count"), but
+that will be ignored and treated as the default: counting the number of VMs
+across a datacenter; this is for compatibility with cloudapi's old plugin.
+
+As an example, to limit the total amount of RAM an account can use across a
+datacenter to 10240MiB, use the following limit:
+    { "value": 10240, "by": "ram" }
+
+It's possible to constrain a limit to specific VM brands, image names or
+operating systems, instead of the entire datacenter. This is done with the
+"check" attribute. It comes in three forms:
+    { ..., "check": "brand", "brand": "<VM brand>" }
+    { ..., "check": "image", "image": "<name of image>" }
+    { ..., "check": "os", "os": "<name of image operating system>" }
+
+So to limit the total amount of RAM used by VMs running Windows images to
+8192MiB:
+    { "value": 8192, "by": "ram", "check": "os", "os": "windows" }
+
+You can use "any" in place of the image OS or name, or the VM brand. Like so:
+    { "value" 25, "check": "image", "image": "any" }
+
+"any" flags in "image" or "os" are commonly added by adminui, yet while "any"
+is supported, its effect is the same as not using "check" in the first place.
+E.g. these two are equivalent, both limiting the amount of disk used across
+an entire datacenter to 900GiB:
+    { "value": 900, "by": "quota", "check": "os", "os": "any" }
+    { "value": 900, "by": "quota" }
+
+Several limits can apply to the same account at once. All the examples above
+were meant as one-liners, but adding several limits to an account will work
+as desired. Each limit is applied to a new provision, and if any of the
+limits, the provision is rejected.
+
+As an example, to allow an account to have up to 25 VMs, a maximum of
+25600MiB RAM and 2.5TiB disk across the datacenter, and specifically only
+allow them to use 2048MiB RAM for the heretical penguin-loving Linux,
+add the following four limits to the account:
+    { "value": 25 }
+    { "value": 25600, "by": "ram" }
+    { "value": 2560, "by": "quota" }
+    { "value": 2048, "by": "ram", "check": "os", "os": "other" }
+
+There are two places that limits can be stored, and this is also reflected in
+their use case:
+
+1. sapi, both for sdc-docker and cloudapi. This is where default limits and
+   categories of limits for large numbers of users are kept. These limits
+   typically rarely change.
+2. ufds, which is for individual accounts. These are used to add exceptions
+   to the defaults and categories stored in sapi.
+
+A typical use-case is to prevent all accounts from using more than a limited
+amount of RAM of VMs across a datacenter, until their account has been vetted
+by support (e.g. credit card number isn't fraudulent). After vetting, the
+limit is bumped substantially. In this use-case, small limits would be set in
+sdc-docker's and cloudapi's sapi configuration to serve as defaults. Once
+support has vetted the account, they can add a limit in ufds for that account
+to override the defaults, thus bumping the amount of RAM or VMs the account
+can provision.
+
+Limits are added to CloudAPI through sapi by adding a configuration for
+this CloudAPI plugin:
+
+    CLOUDAPI_UUID=$(sdc-sapi /services?name=cloudapi | json -Ha uuid)
+    sdc-sapi /services/$CLOUDAPI_UUID -X PUT -d '{
+        "metadata": {
+            "CLOUDAPI_PLUGINS": "[{\"name\":\"provision_limits\", \
+            \"enabled\": true,\"config\":{\"defaults\":[{\"value\":2 }]}}]"
+        }
+    }'
+
+If you do this for cloudapi, you are strongly recommended to do the same for
+sdc-docker:
+
+    DOCKER_UUID=$(sdc-sapi /services?name=docker | json -Ha uuid)
+    sdc-sapi /services/$DOCKER_UUID -X PUT -d '{
+        "metadata": {
+            "DOCKER_PLUGINS": "[{\"name\":\"provision_limits\", \
+            \"enabled\": true,\"config\":{\"defaults\":[{\"value\":2 }]}}]"
+        }
+    }'
+
+Looking at this plugin's configuration:
+    { "defaults": [<limits>] }
+
+Limits in "defaults" are applied to all provisions unless specifically
+overridden with a ufds limit. Additional categories can be added in the
+plugin's configuration, and their names are up to you. E.g.:
+
+    {
+        "defaults": [
+            { "value": 2 },
+            { "value": 1024, "by": "ram" }
+        ]
+        "small": [
+            { "value": 20 },
+            { "value": 10, "check": "brand", "brand": "kvm" },
+            { "value": 327680, "by": "ram" },
+            { "value": 2000, "by": "quota" }
+        ]
+        "whale": [
+            { "value": 10000 },
+            { "value": 327680000, "by": "ram" },
+            { "value": 1000000, "by" :"quota" }
+        ]
+    }
+
+The above configuration has defaults which are applied to all accounts that
+do not have a category set in "tenant" (see below). There are two added
+category of users: "small" and "whale". The "small" category allows accounts
+to have up to 20 VMs, up to 10 KVM instances, and a total of 320GiB RAM and
+2000GiB disk across the datacenter. The "whale" category is much, much
+higher.
+
+Which category an account falls in is determined by the "tenant" attribute on
+that account in ufds. If the attribute is blank or absent (or a category
+that doesn't exist in the configuration), the account uses "defaults" limits.
+If the attribute is present and matches a category in the plugin
+those are the limits used. For example, this account is a whale:
+
+    $ sdc-ufds search '(login=megacorp)' | json tenant
+    whale
+
+To override any of these defaults or categories in ufds, add a capilimit
+entry. It takes the general form of:
+
+    sdc-ufds add '
+    {
+      "dn": "dclimit=$DATACENTER, uuid=$ACCOUNT_UUID, ou=users, o=smartdc",
+      "datacenter": "$DATACENTER",
+      "objectclass": "capilimit",
+      "limit": ["<JSON limit>", "<JSON limit>", ...]
+    }'
+
+One last, more complete, config example:
+
+> *Disallow provisioning any windows machine. For any other OS, allow
+> provisioning machines until RAM reaches a limit of 51200.*
 
     "plugins": [
         {
             "name": "provision_limits",
-            "enabled": false,
+            "enabled": true,
             "config": {
-                "datacenter": "DATACENTER_NAME",
                 "defaults":[{
-                   "os": "any",
-                   "dataset": "any",
-                   "check": "os",
                    "by": "ram",
                    "value": 51200
                 }, {
+                   "check": "os",
                    "os": "windows",
-                   "dataset": "windows",
-                   "check": "dataset",
-                   "by": "machines",
                    "value": -1
                 }]
             }
         },
 
-
-This plugin makes use of UFDS 'capilimit' LDAP object to declare individual
-customers limits. Expected format for limit objects is similar to the format
-used by the "capi\_limits" plugin, but allowing to specify either a number of
-machines, or RAM, or disk quota, to establish the limit.
-
-When the value given to the attribute "by" is either "ram" or "quota",
-the limit specified for these values is expected to be in Megabytes.
-
-Note that, depending on the value of the "check" member, the plugin will
-either check the limits against the image family (centos, ubuntu, ...),
-like the "capi\_limits" plugin does when the value is "image", or will
-just check by image operating system when the given value is "os".
-
-Please take into consideration that any limit defined for a particular
-customer in UFDS will override a default limit with the same rules and
-different values, despite the fact the global limit may or not be more
-restrictive than the customer-specific one.
-
-Some examples:
-
-      dn: dclimit=coal, uuid=36fa9832-b836-455d-ac05-c586512019e4, ou=users, o=smartdc
-      datacenter: coal
-      objectclass: capilimit
-      limit: {
-          image: smartos
-          check: image
-          by: machines
-          value: 1
-      }
-
-This would be a different configuration, which would limit provisioning by disk
-"quota", and take a value of Infinity for the current customer:
-
-      dn: dclimit=coal, uuid=24c0ee76-9313-4a2c-b6e7-c46dbf769f00, ou=users, o=smartdc
-      datacenter: coal
-      objectclass: capilimit
-      limit: {
-          os: linux
-          check: os
-          by: quota
-          value: 0
-      }
-
-And, finally, here is an example of the same plugin limiting provisions by 50 GB
-of "ram":
-
-      dn: dclimit=coal, uuid=4e4f53d0-613e-463e-965f-1c1a50c0d8e1, ou=users, o=smartdc
-      datacenter: coal
-      objectclass: capilimit
-      limit: {
-          image: windows
-          os: windows
-          check: os
-          by: ram
-          value: 51200
-      }
-
-Note that, as with "capi\_limits", a "value" of zero means unlimited quota.
-
-Also, note that it is perfectly possible to specify several limits which may be
-related to the same image/os. For example, check that there are a maximum of
-three machines with the given image/os, and a total RAM of 2048MB, in a way that
-three machines of 512MB each would be perfectly valid, but four machines will
-not, nor will two machines of 1024MB each.
-
-In those cases where there could be more than one limit related to the same
-os/image, or even there are "catch all" limits which may also apply, **all the
-limits must be satisfied**, with the following exceptions:
-
-- When a "catch all" limit has been specified for a given customer, none of the
-global limits will be applied. ("os": "any" or "image": "any").
-- When a global "catch all" limit exists, but there is a specific limit for
-a customer, which will be applied to the current image/os, the global limit
-will not be applied.
-
-These rules are intended to allow things like:
-
-- Define a global limits for all customers, for example, restrict globally to
-either 2 machines or 2048GiB of RAM.
-- Then, for each customer, be able to override these settings for the
-specific images, using either number of machines, RAM or disk quota, depending
-on different factors (e.g. licenses).
-
-Finally, there's a possibility to define two different limits which have
-exactly the same meaning: those where you specify a value of "any" for image
-and for os. For example, the following limits would apply always:
-
-    os: any
-    check: os
-    by: whatever
-    value: something
-
-and the equivalent "catch all" limit for "image":
-
-    image: any
-    check: image
-    by: whatever
-    value: something_else
-
-On these cases, assuming that the "by" value is the same in both limits, both
-values must be satisfied, which in practice means that the most restrictive
-value is applied.
 
 ### Adding limits using UFDS:
 
@@ -899,35 +840,123 @@ The following is an example of adding provisioning limits using ufds:
     datacenter: coal
     objectclass: capilimit
     limit: {"os": "smartos", "check": "os", "by": "ram", "value": "8192"}
-    limit: {"os": "any", "check": "os", "by": "machines", "value": "4"}
+    limit: {"os": "any", "check": "os", "value": "4"}
     EOD
 
-You can also modify existing capilimit entries (even the old ones used for
-capi\_limits plugin), and those would also be perfectly valid provisioning\_limits:
+You can also modify existing capilimit entries. The following would modify an
+entry, add some extra limits to the customer:
 
-So, for example, if you have an existing limit like:
-
+    sdc-ldap modify << EOD
     dn: dclimit=coal, uuid=d7425eee-bbb1-4abf-b2b8-95ac1eee832f, ou=users, o=smartdc
-    base: 10
-    datacenter: coal
-    objectclass: capilimit
+    changetype: modify
+    add: limit
+    limit: {"os": "smartos", "check": "os", "by": "ram", "value": "8192"}
+    -
+    add: limit
+    limit: {"os": "any", "check": "os", "value": "4"}
+    EOD
 
-The following would modify it in order to add some extra limits for the
-customer, without removing the "old" limit of 10 machines of `base` image:
 
-        sdc-ldap modify << EOD
-        dn: dclimit=coal, uuid=d7425eee-bbb1-4abf-b2b8-95ac1eee832f, ou=users, o=smartdc
-        changetype: modify
-        add: limit
-        limit: {"os": "smartos", "check": "os", "by": "ram", "value": "8192"}
-        -
-        add: limit
-        limit: {"os": "any", "check": "os", "by": "machines", "value": "4"}
-        EOD
+# Appendix B: Upgrading Plugins
 
-(As shown, it's exactly the same if the "value of value" is specified using a
-string or a number; the plugin will take care of converting it into a number
-when necessary).
+For CloudAPI 8.9.0, the plugin interface was updated to a portable and more
+stable interface. Plugins written to this interface are far less likely to break
+as CloudAPI's internals change, and the same plugin will work in both CloudAPI
+and sdc-docker.
+
+
+## Configuration
+
+Configuration of plugins has not changed, with two minor exceptions:
+
+* capi_limits no longer exists. It has long been superceeded by the
+  provision_limits plugin. If you are using capi_limits, replace capi_limits
+  in your configuration and replace the names with image filters. Here is an
+  example:
+
+  capi_limits:
+
+    "name": "capi_limits",
+    "enabled": true,
+    "config": {
+        "datacenter": "coal",
+        "defaults": {
+            "smartos": 20,
+            "nodejs": 25,
+            "ubuntu": 15
+        }
+    }
+
+  Equivalent provision_limits:
+
+    "name": "provision_limits",
+    "enabled": true,
+    "config": {
+        "defaults": [
+            { "check": "image", "image": "smartos", "value": 20 },
+            { "check": "image", "image": "nodejs",  "value": 25 },
+            { "check": "image", "image": "ubuntu",  "value": 15 }
+        ]
+    }
+
+* As you may have noticed in the example above, `datacenter` is no longer
+  needed. CloudAPI and sdc-docker already know which datacenter they are in,
+  so a `datacenter` attribute in a plugin configuration is ignored.
+
+
+## Code
+
+The changes required by most code is comparatively small. When a plugin is
+initialized, it received two arguments (api and cfg) instead of the one (cfg).
+`api` is the interface through which all interactions initiated by the plugin
+are made to CloudAPI. `cfg` behaves as it did before.
+
+The function signature of the function returned by the initializer function
+has changed as well. The returned function used to take `req`, `res`, and
+a callback; this was convenient, but unstable, subject to changing CloudAPI
+internals. Now returned functions take `opts` and a callback. The `opts` passed
+to a function are defined by what they do (i.e. allowProvision, postProvision,
+findOwnerExternalNetwork, and other hooks that are defined in
+lib/plugin-manager.js).
+
+Old style:
+
+    function exampleOldInitializer(cfg) {
+        var defaults = cfg.defaults;
+        return function oldCallback(req, res, next) {
+            ...
+            next();
+        }
+    }
+
+New style:
+
+    function exampleNewInitializer(api, cfg) {
+        var defaults = cfg.defaults;
+        return function newCallback(opts, next) {
+            ...
+            next();
+        }
+    }
+
+Available `api` calls are listed in
+[Provisioning Plugins](#provisioning-plugins). For even more detailed
+information, see `lib/plugin-manager.js`.
+
+Lastly, checking the URL and HTTP method is no longer required in a plugin.
+Whereas before a plugin might be called when PUTing a machine, not just POSTing,
+plugins are called within strict contexts. So something like this is now
+unnecessary:
+
+    // Do nothing if we are not provisioning (OLD STYLE)
+    if (!(/\/machines$/.test(req.url) &&
+        req.method.toUpperCase() === 'POST')) {
+        return next();
+    }
+
+For all of this in action, see `/opt/smartos/cloudapi/plugins/free_tier.js`. It
+is a simple example to understand.
+
 
 <p style="min-height: 31px; margin-top: 60px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0">
 <a rel="license" href="http://creativecommons.org/licenses/by-nd/3.0/"><img alt="Creative Commons License" style="border-width:0;float:left;margin:4px 8px 0 0;" src="https://i.creativecommons.org/l/by-nd/3.0/88x31.png" /></a> <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Text" property="dct:title" rel="dct:type">Joyent CloudAPI Administrator's Guide</span> by <a xmlns:cc="http://creativecommons.org/ns#" href="http://www.joyent.com" property="cc:attributionName" rel="cc:attributionURL">Joyent, Inc.</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nd/3.0/">Creative Commons Attribution-NoDerivs 3.0 Unported License</a>.
