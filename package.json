@@ -13,7 +13,7 @@
         "url": "git+ssh://git@github.com:joyent/sdc-cloudapi.git"
     },
     "dependencies": {
-        "vasync": "1.6.4",
+        "vasync": "2.2.0",
         "filed": "0.0.7",
         "http-signature": "1.1.0",
         "mime": "1.2.7",
@@ -27,7 +27,7 @@
         "sdc-clients": "10.4.0",
         "ufds": "1.3.0",
         "semver": "5.4.1",
-        "nodemailer": "0.3.29",
+        "nodemailer": "0.7.1",
         "clone": "0.1.5",
         "assert-plus": "1.0.0",
         "asn1": "0.1.11",

@@ -187,15 +187,7 @@ test('Create machine with inactive package', function (t) {
 
     CLIENT.post('/my/machines', obj, function (err, req, res, body) {
         t.ok(err, 'POST /my/machines with inactive package error');
-        var cfg = common.getCfg();
-        var capi_limits = cfg.plugins.filter(function (p) {
-            return (p.name === 'capi_limits');
-        })[0];
-        if (capi_limits.enabled) {
-            t.equal(res.statusCode, 403);
-        } else {
-            t.equal(res.statusCode, 409);
-        }
+        t.equal(res.statusCode, 409);
         t.end();
     });
 });
