@@ -9082,6 +9082,9 @@ a VM).
 _Available only for CloudAPI services running in datacenters for which NFS
 volumes support has been explicitly enabled. By default, it is disabled._
 
+By default (if the request doesn't include the `state` and `predicate`
+parameters), volumes in state === `'failed'` are not included in the response.
+
 ### Input
 
 Param       | Type         | Description
@@ -9090,7 +9093,7 @@ name        | String       | Allows filtering volumes by name
 predicate   | String       | URL-encoded JSON string representing an object that can be used to build a LDAP filter. This LDAP filter can search for volumes on arbitrary indexed properties. More details below
 size        | String       | Allows filtering volumes by size, e.g `size=10240`
 state       | String       | Allows filtering volumes by state, e.g `state=failed`
-| type      | String       | Allows filtering volumes by type, e.g `tritonnfs`
+type        | String       | Allows filtering volumes by type, e.g `tritonnfs`
 
 #### Searching by name
 
