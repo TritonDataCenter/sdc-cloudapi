@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2017, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 /*
@@ -22,6 +22,7 @@ var libuuid = require('libuuid');
 var util = require('util');
 var fs = require('fs');
 var vasync = require('vasync');
+var VError = require('verror');
 
 var UFDS = require('ufds');
 var VMAPI = require('sdc-clients').VMAPI;
@@ -1048,8 +1049,79 @@ function napiDeleteNicTagByName(opts, cb) {
     });
 }
 
-// --- Library
 
+
+/**
+ * Wait for an image to go one of a set of specific states.
+ *
+ * @param {Object} options
+ *      - {Object} imgapiClient
+ *      - {String} id - image UUID
+ *      - {Array of String} states - desired state
+ *      - {Number} interval (optional) - Time in ms to poll. Default is 1000ms.
+ * @param {Function} cb - `function (err, image, res)`
+ *      Called when state is reached or on error.
+ *
+ * Dev Note: Adapted from waitForImageStates from node-triton/lib/cloudapi2.js.
+ */
+function _waitForImageStates(opts, cb) {
+    assert.object(opts.imgapiClient, 'opts.imgapiClient');
+    assert.uuid(opts.id, 'opts.id');
+    assert.arrayOfString(opts.states, 'opts.states');
+    assert.optionalNumber(opts.interval, 'opts.interval');
+    assert.func(cb, 'cb');
+    var interval = (opts.interval === undefined ? 1000 : opts.interval);
+    assert.ok(interval > 0, 'interval must be a positive number');
+
+    function poll() {
+        opts.imgapiClient.getImage(opts.id, function (err, img, res) {
+            if (err) {
+                cb(err, null, res);
+                return;
+            }
+            if (opts.states.indexOf(img.state) !== -1) {
+                cb(null, img, res);
+                return;
+            }
+            setTimeout(poll, interval);
+        });
+    }
+
+    setImmediate(poll);
+}
+
+/*
+ * Wait for the given image ID to transition to 'active' or 'failed'. An
+ * `err` is returned if it goes to 'failed'.
+ */
+function waitForImageCreate(client, imgId, cb) {
+    assert.object(client, 'client');
+    assert.uuid(imgId, 'imgId');
+    assert.func(cb, 'cb');
+
+    _waitForImageStates({
+        imgapiClient: client.imgapi,
+        id: imgId,
+        states: ['active', 'failed']
+    }, function (err, img) {
+        if (err) {
+            cb(err);
+            return;
+        } else if (img.state === 'active') {
+            cb(null, img);
+        } else {
+            assert.equal(img.state, 'failed');
+            var failedErr = new VError('failed to create image %s (%s@%s)%s',
+                img.id, img.name, img.version,
+                (img.error ? util.format(': (%s) %s',
+                    img.error.code, img.error.message): ''));
+            cb(failedErr, img);
+        }
+    });
+}
+
+
+// --- Library
 
 module.exports = {
     setup: setup,
@@ -1079,6 +1151,8 @@ module.exports = {
     napiDeleteNicTagByName: napiDeleteNicTagByName,
     napiDeleteNetworkByName: napiDeleteNetworkByName,
     napiDeletePoolByName: napiDeletePoolByName,
+
+    waitForImageCreate: waitForImageCreate,
 
     sdc_128_package: SDC_128_PACKAGE,
 

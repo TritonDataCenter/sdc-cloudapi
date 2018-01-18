@@ -12,7 +12,7 @@ markdown2extras: tables, code-friendly
 -->
 
 <!--
-    Copyright 2017, Joyent, Inc.
+    Copyright (c) 2018, Joyent, Inc.
 -->
 
 
@@ -39,12 +39,11 @@ documentation does not cover. For more information about Triton visit
 Any content formatted as follows is a command-line example that you can run from
 a shell:
 
-    $ sdc-listmachines
+    $ triton instance list
 
 All other examples and information are formatted like so:
 
     GET /my/machines HTTP/1.1
-
 
 
 
@@ -90,7 +89,6 @@ node-triton is newer and easier to use, while node-smartdc is more stable and
 complete, but both CLIs are supported. These docs will provide examples for
 both, although node-triton will be omitted where it does not yet support that
 functionality.
-
 
 
 
@@ -229,13 +227,9 @@ size.  You can get the list of available packages using the
 [ListPackages](#ListPackages) section below for a detailed explanation of these
 commands.
 
-Once you have the package and image ids, to provision a new instance:
+Once you have the package and image names (or IDs), to provision a new instance:
 
     $ triton instance create $image $package
-
-or
-
-    $ sdc-createmachine --image=$image --package=$package
 
 For example:
 
@@ -251,10 +245,6 @@ also pass the name of the image or the package instead of their id.
 Retrieve the status of your new instance by:
 
     $ triton instance get $instance_id
-
-or
-
-    $ sdc-getmachine $instance_id
 
 For example:
 
@@ -754,7 +744,7 @@ communicating with CloudAPI:
 
         curl -s -k -i \
             -H 'Accept: application/json' \
-            -H "accept-version: ~8" \
+            -H "accept-version: ~9||~8||~7" \
             -H "Date: $now" \
             -H "Authorization: Signature keyId=\"/$SDC_ACCOUNT/keys/id_rsa\",algorithm=\"rsa-sha256\" $signature" \
             "$@" "$url"
@@ -847,48 +837,49 @@ range, they can leverage the codes above.
 
 A CloudAPI endpoint has two relevant version values: the code version and the
 "API version". The former includes the full `major.minor.patch` version value
-of the deployed server and, as of CloudAPI v8.3.0, is available in the "Server"
+of the deployed server and, as of CloudAPI v8.3.0, is available in the "server"
 header of all responses:
 
-    Server: cloudapi/8.3.1
+    server: cloudapi/8.3.1
 
-The *API* version is only changed for major versions, e.g. API version "8.0.0"
-is used for all 8.x code versions. (Older CloudAPI v7 would bump the API version
+The *API* version is only changed for major versions, e.g. API version "9.0.0"
+is used for all 9.x code versions. (Older CloudAPI v7 would bump the API version
 at the minor version level.)
 
 All requests to CloudAPI must specify an acceptable API [version
 range](https://github.com/npm/node-semver#ranges) via the 'Accept-Version' (or
 for backward compatibility the 'Api-Version') header. For example:
 
-    Accept-Version: ~8              // accept any 8.x version
-    Accept-Version: 7.0.0           // require exactly this version
-    Accept-Version: ~8||~7          // accept 8.x or 7.x
+    Accept-Version: ~9              // accept any 8.x version
+    Accept-Version: 7.3.0           // require exactly this version
+    Accept-Version: ~9||~8||~7      // accept 9x or 8.x or 7.x
     Accept-Version: *               // the latest version (wild west)
 
 For new applications using CloudAPI SDKs, it is recommended that one explicitly
-accept a particular major version, e.g. `Accept-Version: ~8`, so that
+accept a particular major version, e.g. `Accept-Version: ~9`, so that
 future CloudAPI backward incompatible changes (always done with a *major*
 version bump) don't break your application.
 
 The [`triton` tool](https://github.com/joyent/node-triton) uses
-`Accept-Version: ~8||~7` by default. Users can restrict the API version via the
-`triton --accept-version=RANGE ...` option. The older `sdc-*` tools from
+`Accept-Version: ~9||~8||~7` by default. Users can restrict the API version
+via the `triton --accept-version=RANGE ...` option. The older `sdc-*` tools from
 node-smartdc similarly use `~8||~7` by default, and users can restrict the API
 version via the `SDC_API_VERSION=RANGE` environment variable or the
-`--api-version=RANGE` option to each command.
+`--api-version=RANGE` option to each command. However, overriding the requested
+API version is generally only useful for debugging.
 
 The set of supported *API versions* is given in the ping endpoint:
 
     GET /ping
     accept: application/json
-    accept-version: ~8
+    accept-version: ~9
     ...
 
     HTTPS/1.1 200 OK
-    server: cloudapi/8.3.0
+    server: cloudapi/9.0.0
     content-type: application/json
     ...
-    api-version: 8.0.0
+    api-version: 9.0.0
 
     {
         "ping": "pong",
@@ -898,7 +889,8 @@ The set of supported *API versions* is given in the ping endpoint:
                 "7.1.0",
                 "7.2.0",
                 "7.3.0",
-                "8.0.0"
+                "8.0.0",
+                "9.0.0"
             ]
         }
     }
@@ -907,6 +899,16 @@ The set of supported *API versions* is given in the ping endpoint:
 # Versions
 
 The section describes API changes in CloudAPI versions.
+
+## 9.0.0
+
+- [Backward incompatible] [CreateImageFromMachine](#CreateImageFromMachine) has
+  changed the default behavior from creating incremental images to creating
+  *non*-incremental images. An optional `incremental` boolean param was added.
+  Use `incremental=true` to get the old behavior.
+
+  Version 6 of the node-triton library has been updated to use the new default.
+  Older node-triton will still get the old behavior.
 
 ## 8.5.0
 
@@ -3236,6 +3238,7 @@ state        | String   | The current state of the image. One of 'active', 'unac
 tags         | Object   | An object of key/value pairs that allows clients to categorize images by any given criteria
 eula         | String   | URL of the End User License Agreement (EULA) for the image
 acl          | Array    | Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.
+origin       | UUID     | If the image is incremental, this field is the UUID of the image on which this image is built. An incremental image only includes the difference from the origin image.
 error        | Object   | If `state=="failed"`, resulting from [CreateImageFromMachine](#CreateImageFromMachine) failure, then there may be an error object of the form `{"code": "<string error code>", "message": "<string desc>"}`
 error.code   | String   | A CamelCase string code for this error, e.g. "PrepareImageDidNotRun". See [GetImage](#GetImage) docs for a table of error.code values
 error.message| String   | A short description of the image creation failure
@@ -3343,6 +3346,7 @@ state        | String   | The current state of the image. One of 'active', 'unac
 tags         | Object   | An object of key/value pairs that allows clients to categorize images by any given criteria
 eula         | String   | URL of the End User License Agreement (EULA) for the image
 acl          | Array    | Access Control List. An array of account UUIDs given access to a private image. The field is only relevant to private images.
+origin       | UUID     | If the image is incremental, this field is the UUID of the image on which this image is built. An incremental image only includes the difference from the origin image.
 error        | Object   | If `state=="failed"`, resulting from [CreateImageFromMachine](#CreateImageFromMachine) failure, then there may be an error object of the form `{"code": "<string error code>", "message": "<string desc>"}`
 error.code   | String   | A CamelCase string code for this error, e.g. "PrepareImageDidNotRun". See [GetImage](#GetImage) docs for a table of error.code values
 error.message| String   | A short description of the image creation failure
@@ -3566,13 +3570,14 @@ Create a new custom image from an instance.  The typical process is:
 
 ### Inputs
 
-All inputs except `machine` are image manifest fields as defined by
-[the IMGAPI docs](https://images.joyent.com/docs/#image-manifests).  Note that
-not all fields listed there can be specified here.
+All inputs except `machine` and `incremental` are image manifest fields as
+defined by [the IMGAPI docs](https://images.joyent.com/docs/#image-manifests).
+Note that not all fields listed there are exposed here.
 
 **Field**   | **Type** | **Required?** | **Description**
 ----------- | -------- | ------------- | ---------------
 machine     | UUID     | Yes | The prepared and stopped instance UUID from which the image is to be created
+incremental | Boolean  | No  | Whether the created image is incremental, i.e. only includes the difference from the instance image. See discussion below. (Added in v9.0.0. Defaults to false in v9.0.0 and later. The default was *true* in earlier versions.)
 name        | String   | Yes | The name of the custom image, e.g. "my-image". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-name) for details
 version     | String   | Yes | The version of the custom image, e.g. "1.0.0". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-version) for details
 description | String   | No  | The image [description](https://images.joyent.com/docs/#manifest-description)
@@ -3580,6 +3585,26 @@ homepage    | String   | No  | The image [homepage](https://images.joyent.com/do
 eula        | String   | No  | The image [eula](https://images.joyent.com/docs/#manifest-eula)
 acl         | String   | No  | The image [acl](https://images.joyent.com/docs/#manifest-acl)
 tags        | String   | No  | The image [tags](https://images.joyent.com/docs/#manifest-tags)
+
+
+#### incremental
+
+A Triton image may be incremental or not. An incremental image only includes the
+file system differences from its origin image. This means that the image can
+be smaller. However, it also means that there is a dependency between the
+incremental image and its origin image. This dependency chain adds some
+complexity for [image export](#ExportImage),
+[cross-account image cloning](#CloneImageToAccount), and
+[cross-datacenter image copying](#CopyImageFromDc). As well, because machine
+instances are often [spread across servers](#affinity-rules) in a datacenter,
+the reduced size of incremental images does not always translate to faster
+provisions.
+
+As a result, it is recommended that most users *not* create
+incremental custom images, unless they have a good use case for it. As of
+CloudAPI version 9.0.0, the default behavior is that created custom images
+are non-incremental. In earlier versions, all custom images were incremental.
+To get the old behavior, pass `incremental=true` to this endpoint.
 
 ### Returns
 
@@ -3618,11 +3643,7 @@ NotAvailable   | Typically this indicates that image creation is not supported f
 
 ### Example CLI Command
 
-    $ triton image create a44f2b9b-e7af-f548-b0ba-4d9270423f1a my-custom-image 1.0.0
-
-or
-
-    $ sdc-createimagefrommachine --machine=a44f2b9b-e7af-f548-b0ba-4d9270423f1a --name=my-custom-image --imageVersion=1.0.0
+    $ triton image create my-customized-machine my-image 1.0.0
 
 #### Example HTTP Request
 
@@ -3630,37 +3651,27 @@ or
     Authorization: ...
     Host: api.example.com
     Accept: application/json
-    Api-Version: ~8
+    Accept-Version: ~9
 
     {
       "machine": "a44f2b9b-e7af-f548-b0ba-4d9270423f1a",
-      "name": "my-custom-image",
+      "name": "my-image",
       "version": "1.0.0"
     }
 
 #### Example HTTP Response
 
     HTTP/1.1 201 Created
-    x-joyent-jobid: 0b30ef20-d622-436a-9c30-7376ba7d904c
-    Location: /admin/images/b87616a2-7a49-4e02-a71d-2e0ce5a2f037
-    Content-Type: application/json
-    Content-Length: 125
-    Access-Control-Allow-Origin: *
-    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
-    Access-Control-Allow-Methods: GET, HEAD, POST
-    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
-    Connection: Keep-Alive
-    Content-MD5: 2sEZ45LmhRiretMPn5sqVA==
-    Date: Thu, 21 Jan 2016 08:00:09 GMT
-    Server: Joyent Triton 8.0.0
-    Api-Version: 8.0.0
-    Request-Id: 88af23b0-f952-11e2-8f2c-fff0ec35f4ce
-    Response-Time: 160
+    ...
+    server: cloudapi/9.0.0
+    api-version: 9.0.0
+    request-id: 88af23b0-f952-11e2-8f2c-fff0ec35f4ce
+    response-time: 160
 
     {
         "id": "62306cd7-7b8a-c5dd-d44e-8491c83b9974",
-        "name": "my-custom-image",
-        "version": "1.2.3",
+        "name": "my-image",
+        "version": "1.0.0",
         "requirements": {},
         "owner": "47034e57-42d1-0342-b302-00db733e8c8a",
         "public": false,

@@ -5,7 +5,7 @@
 #
 
 #
-# Copyright 2017 Joyent, Inc.
+# Copyright (c) 2018, Joyent, Inc.
 #
 
 #
@@ -171,6 +171,7 @@ images_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/images.70.test.js
 	$(NODE_EXEC) $(TAP) test/images.80.test.js
 	$(NODE_EXEC) $(TAP) test/images.test.js
+	$(NODE_EXEC) $(TAP) test/images-create.test.js
 
 keys_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/keys.test.js

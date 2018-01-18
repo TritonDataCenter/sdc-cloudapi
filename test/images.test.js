@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 var test = require('tape').test;
@@ -89,7 +89,7 @@ function getInaccessibleImage(client) {
 
 
 test('setup', function (t) {
-    common.setup({clientApiTestVersion: '~8.0'},
+    common.setup({clientApiTestVersion: '~9'},
             function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
