@@ -47,85 +47,6 @@ function deleteKeypair(cb) {
     });
 }
 
-/*
- * Make the image with name "imageName" provisionable. If it's imported and not
- * public, it makes the image public.
- *
- * @params {String} imageName (required): the name of the image to make
- *   provisionable
- * @params {Function} callback (required): called at the end of the process as
- *   callback(err, provisionableImgObject)
- *
- * where "provisionableImgObject" represents an image with an "id" property that
- * stores its UUID.
- */
-function makeImageProvisionable(imageName, callback) {
-    assert.string(imageName, 'imageName');
-    assert.func(callback, 'callback');
-
-    var context = {};
-
-    vasync.pipeline({arg: context, funcs: [
-        function listImportedImages(ctx, next) {
-            CLIENT.get('/my/images?name=' + imageName,
-                function onListImportedImages(listImagesErr, req, res, images) {
-                    var err = listImagesErr;
-
-                    if (!images || images.length === 0) {
-                        err = new Error('Could not find image with name: ' +
-                            imageName);
-                    }
-
-                    ctx.images = images;
-                    next(err);
-                });
-
-        },
-        /*
-         * When images are imported into a DC's IMGAPI because they're an origin
-         * image for another image imported from updates.joyent.com, their
-         * "public" attribute is set to false, which makes them
-         * non-provisionable. In this case, we just update that public property
-         * to "true".
-         */
-        function ensureOneImportedImgIsPublic(ctx, next) {
-            var firstImage;
-            var publicImages;
-
-            assert.optionalArrayOfObject(ctx.images, 'ctx.images');
-
-            if (ctx.images && ctx.images.length > 0) {
-                publicImages = ctx.images.filter(function isPublic(image) {
-                    return image.public;
-                });
-
-                if (publicImages.length > 0) {
-                    ctx.provisionableImage = publicImages[0];
-                    next();
-                } else {
-                    firstImage = ctx.images[0];
-                    firstImage.public = true;
-                    CLIENT.imgapi.updateImage(firstImage.uuid, firstImage,
-                        CLIENT.account.uuid,
-                        function onImageUpdated(updateImgErr) {
-                            if (updateImgErr) {
-                                next(updateImgErr);
-                                return;
-                            }
-
-                            ctx.provisionableImage = firstImage;
-                            next();
-                        });
-                }
-            } else {
-                next();
-            }
-        }
-    ]}, function onAllDone(err) {
-        callback(err, context.provisionableImage);
-    });
-}
-
 if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     console.log('experimental_cloudapi_nfs_shared_volumes setting not ' +
         'enabled, skipping tests');
@@ -256,7 +177,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
         var IMG_NAMES = [TEST_IMAGE_LX, TEST_IMAGE_KVM, TEST_IMAGE_SMARTOS];
 
         vasync.forEachParallel({
-            func: makeImageProvisionable,
+            func: common.makeImageProvisionable.bind(null, CLIENT),
             inputs: IMG_NAMES
         }, function onAllImgsSetupDone(imgsSetupErr, results) {
             var idx;

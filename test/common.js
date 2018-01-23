@@ -1048,6 +1048,94 @@ function napiDeleteNicTagByName(opts, cb) {
     });
 }
 
+/*
+ * Make the already imported image with name "imageName" provisionable by making
+ * it public.
+ *
+ * @param {Object} client (required): a CloudAPI client instance as passed to
+ *   common.setup's callback's second parameter.
+ *
+ * @param {String} imageName (required): the name of the image to make
+ *   provisionable
+ *
+ * @param {Function} callback (required): called at the end of the process as
+ *   callback(err, provisionableImgObject)
+ *
+ * where "provisionableImgObject" represents an image with an "id" property that
+ * stores its UUID.
+ */
+function makeImageProvisionable(client, imageName, callback) {
+    assert.object(client, 'client');
+    assert.string(imageName, 'imageName');
+    assert.func(callback, 'callback');
+
+    var context = {};
+
+    vasync.pipeline({arg: context, funcs: [
+        function listImportedImages(ctx, next) {
+            client.get('/my/images?name=' + imageName,
+                function onListImportedImages(listImagesErr, req, res, images) {
+                    if (listImagesErr) {
+                        next(listImagesErr);
+                        return;
+                    }
+
+                    if (!images || images.length === 0) {
+                        next(new Error('Could not find image with name: ' +
+                            imageName));
+                        return;
+                    }
+
+                    ctx.images = images;
+                    next();
+                });
+
+        },
+        /*
+         * When images are imported into a DC's IMGAPI because they're an origin
+         * image for another image imported from updates.joyent.com, their
+         * "public" attribute is set to false, which makes them
+         * non-provisionable. In this case, we just update that public property
+         * to "true".
+         */
+        function ensureOneImportedImgIsPublic(ctx, next) {
+            var firstImage;
+            var publicImages;
+
+            assert.optionalArrayOfObject(ctx.images, 'ctx.images');
+
+            if (ctx.images && ctx.images.length > 0) {
+                publicImages = ctx.images.filter(function isPublic(image) {
+                    return image.public;
+                });
+
+                if (publicImages.length > 0) {
+                    ctx.provisionableImage = publicImages[0];
+                    next();
+                } else {
+                    firstImage = ctx.images[0];
+                    firstImage.public = true;
+                    client.imgapi.updateImage(firstImage.uuid, firstImage,
+                        client.account.uuid,
+                        function onImageUpdated(updateImgErr) {
+                            if (updateImgErr) {
+                                next(updateImgErr);
+                                return;
+                            }
+
+                            ctx.provisionableImage = firstImage;
+                            next();
+                        });
+                }
+            } else {
+                next();
+            }
+        }
+    ]}, function onAllDone(err) {
+        callback(err, context.provisionableImage);
+    });
+}
+
 // --- Library
 
 
@@ -1084,5 +1172,7 @@ module.exports = {
 
     getCfg: function () {
         return CONFIG;
-    }
+    },
+
+    makeImageProvisionable: makeImageProvisionable
 };

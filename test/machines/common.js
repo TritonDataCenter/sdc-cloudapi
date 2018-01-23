@@ -5,10 +5,10 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
-var assert = require('assert');
+var assert = require('assert-plus');
 var sprintf = require('util').format;
 var common = require('../common');
 
@@ -54,7 +54,7 @@ function checkJob(client, id, callback) {
 
 
 function waitForJob(client, id, callback) {
-    assert.ok(client);
+    assert.object(client, 'client');
     // console.log('waiting for job with uuid: %s', uuid);
     checkJob(client, id, function (err, ready) {
         if (err) {
@@ -156,6 +156,48 @@ function waitForRunningMachine(client, machineUuid, cb) {
     });
 }
 
+function waitForDeletedMachine(client, machineUuid, cb) {
+    assert.object(client, 'client');
+    assert.uuid(machineUuid, 'machineUuid');
+    assert.func(cb, 'cb');
+
+    var MAX_NUM_ATTEMPTS = 20;
+    var numAttempts = 0;
+    var POLL_DELAY_MS = 5000;
+
+    function getMachineState() {
+        if (numAttempts > MAX_NUM_ATTEMPTS) {
+            cb(new Error('maximum number of attempts reached: ' + numAttempts +
+                '/' + MAX_NUM_ATTEMPTS));
+            return;
+        }
+
+        numAttempts++;
+        client.get('/my/machines/' + machineUuid,
+            function onGetMachine(getMachineErr, req, res, machine) {
+                /*
+                 * 410 means the VM was deleted.
+                 */
+                if (getMachineErr) {
+                    if (getMachineErr.statusCode === 410 &&
+                        machine && machine.state === 'deleted') {
+                        cb(null, machine);
+                    } else {
+                        cb(getMachineErr);
+                    }
+                } else {
+                    if (machine && (machine.state === 'deleted' ||
+                        machine.state === 'failed')) {
+                            cb(null, machine);
+                    } else {
+                        setTimeout(getMachineState, POLL_DELAY_MS);
+                    }
+                }
+            });
+    }
+
+    getMachineState();
+}
 
 // TODO: This sucks. The first network here might NOT be provisionable: It
 // might be junk from an earlier failed test.
@@ -228,6 +270,7 @@ module.exports = {
     waitForJob: waitForJob,
     waitForWfJob: waitForWfJob,
     waitForRunningMachine: waitForRunningMachine,
+    waitForDeletedMachine: waitForDeletedMachine,
 
     TAG_KEY: TAG_KEY,
     TAG_VAL: TAG_VAL,
