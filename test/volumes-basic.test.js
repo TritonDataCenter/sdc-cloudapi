@@ -112,9 +112,8 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     'volume should have state \'' + expectedState + '\'');
                 t.equal(testVolume.vm_uuid, undefined,
                     'vm_uuid property should not be present in the response');
-                t.ok(ISO_DATE_STRING_RE.test(testVolume.create_timestamp),
-                    'create_timestamp field should match ' +
-                        ISO_DATE_STRING_RE);
+                t.ok(ISO_DATE_STRING_RE.test(testVolume.created),
+                    'created field should match ' + ISO_DATE_STRING_RE);
 
                 t.end();
             });
@@ -141,10 +140,9 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     'vm_uuid property should not be present in the response');
 
                 createTimestamp =
-                    volumesWithNewlyCreatedVolumeName[0].create_timestamp;
+                    volumesWithNewlyCreatedVolumeName[0].created;
                 t.ok(ISO_DATE_STRING_RE.test(createTimestamp),
-                    'create_timestamp field should match ' +
-                        ISO_DATE_STRING_RE);
+                    'created field should match ' + ISO_DATE_STRING_RE);
 
                 t.end();
             });
@@ -161,9 +159,8 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     'volume name should be \'' + testVolumeName + '\'');
                 t.equal(testVolume.vm_uuid, undefined,
                     'vm_uuid property should not be present in the response');
-                t.ok(ISO_DATE_STRING_RE.test(testVolume.create_timestamp),
-                    'create_timestamp field should match ' +
-                        ISO_DATE_STRING_RE);
+                t.ok(ISO_DATE_STRING_RE.test(testVolume.created),
+                    'created field should match ' + ISO_DATE_STRING_RE);
 
                 t.end();
             });

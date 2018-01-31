@@ -8986,7 +8986,7 @@ id         | String   | The UUID of the volume itself
 owner_uuid | String   | The UUID of the volume's owner. In the example of a NFS shared volume, the owner is the user who created the volume
 name       | String   | The volume's name. It must be unique for a given user. It must match the regular expression `/^[a-zA-Z0-9][a-zA-Z0-9_\.\-]+$/`. The maximum length for a volume's name is 256 characters. Trying to create or update a volume with a name longer than 256 characters will result in an error
 type       | String   | Identifies the volume's type. There is currently one possible value for this property: `tritonnfs`. Additional types may be added in the future, and they can all have different sets of [type specific properties](#type-specific-properties)
-create_timestamp | String | A timestamp that indicates the time at which the volume was created
+created    | String | A timestamp that indicates the time at which the volume was created
 state      | String   | `creating`, `ready`, `deleting`, `deleted` or `failed`. Indicates in which state the volume currently is. `failed` volumes are still persisted to Moray for troubleshooting/debugging purposes. See the section [Volumes state machine](#volumes-state-machine) for a diagram and further details about the volumes' state machine
 networks   | Array of string | A list of network UUIDs that represents the networks on which this volume can be reached
 refs       | Array of string | A list of VM UUIDs that reference this volume
@@ -8999,7 +8999,7 @@ Here's an example of a volume object in JSON format:
   "owner_uuid": "some-uuid",
   "name": "foo",
   "type": "tritonnfs",
-  "create_timestamp": "2017-11-16T17:31:56.763Z",
+  "created": "2017-11-16T17:31:56.763Z",
   "state": "created",
   "networks": [
     "bf6960ac-97e3-47b6-9fe0-bc12c47db78a"
@@ -9039,7 +9039,7 @@ A `'tritonnfs'` volume can be represented as following:
   "owner_uuid": "some-uuid",
   "name": "foo",
   "type": "tritonnfs",
-  "create_timestamp": "2017-11-16T17:31:56.763Z",
+  "created": "2017-11-16T17:31:56.763Z",
   "state": "created",
   "size": 10240,
   "networks": [
