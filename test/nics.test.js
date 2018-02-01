@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2017, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 /*
@@ -154,6 +154,31 @@ function deleteFixtures(t, fixtures, cb) {
                 });
             }
         },
+        function getSecondTestInstId(ctx, next) {
+            if (fixtures && fixtures.secondInstId) {
+                ctx.secondInstId = fixtures.secondInstId;
+                next();
+                return;
+            }
+
+            CLIENT.vmapi.listVms({
+                state: 'active',
+                alias: FIXTURE_DATA.inst.name + '2'
+            }, function onListVms(err, vms) {
+                t.ifError(err, 'listVms for vm ' + FIXTURE_DATA.inst.name +
+                    2);
+                if (err) {
+                    next(err);
+                } else if (vms.length === 0) {
+                    next();
+                } else {
+                    ctx.secondInstId = vms[0].uuid;
+                    t.equal(vms.length, 1, 'found a match: ' +
+                        ctx.secondInstId);
+                    next();
+                }
+            });
+        },
         function deleteTestInst(ctx, next) {
             if (!ctx.instId) {
                 next();
@@ -176,6 +201,35 @@ function deleteFixtures(t, fixtures, cb) {
             }
             waitForJob(CLIENT, ctx.deleteJobUuid, function (err) {
                 t.ifError(err, 'waitForJob ' + ctx.deleteJobUuid);
+                next(err);
+            });
+        },
+        function deleteSecondTestInst(ctx, next) {
+            var secondInstId = ctx.secondInstId;
+
+            if (!secondInstId) {
+                next();
+                return;
+            }
+            CLIENT.vmapi.deleteVm({uuid: secondInstId}, function (err,
+                job) {
+                t.ifError(err, 'deleteSecondTestInst ' + secondInstId);
+                if (job) {
+                    ctx.deleteJobUuid2 = job.job_uuid;
+                    t.ok(ctx.deleteJobUuid2,
+                        'delete job uuid: ' + ctx.deleteJobUuid2);
+                }
+                next(err);
+            });
+        },
+        function waitTilSecondMachineDeleted(ctx, next) {
+            var deleteJobUuid2 = ctx.deleteJobUuid2;
+            if (!deleteJobUuid2) {
+                next();
+                return;
+            }
+            waitForJob(CLIENT, deleteJobUuid2, function (err) {
+                t.ifError(err, 'waitForJob ' + deleteJobUuid2);
                 next(err);
             });
         },
@@ -206,7 +260,8 @@ function deleteFixtures(t, fixtures, cb) {
                 nicTags.push(fixtures.internal.nicTag.name);
             }
 
-            removeTagsFromServer(t, nicTags, ctx.server, function (err, job) {
+            common.removeTagsFromServer(nicTags, ctx.server, CLIENT,
+                function (err, job) {
                 t.ifError(err, 'remove NIC tags from server: '
                     + nicTags);
 
@@ -305,9 +360,9 @@ function createFixtures(t, cb) {
                 nicTags.push(fixtures.internal.nicTag.name);
             }
 
-            addNicTagsToServer(t, nicTags, fixtures.server,
+            common.addNicTagsToServer(nicTags, fixtures.server, CLIENT,
                     function (err, job) {
-                t.ifError(err);
+                t.ifError(err, 'add NIC tags to server: ' + nicTags);
                 waitForJob(CLIENT, job.job_uuid, function (err2) {
                     t.ifError(err2);
                     next();
@@ -343,6 +398,39 @@ function createFixtures(t, cb) {
             machinesCommon.waitForRunningMachine(CLIENT, fixtures.instId,
                     function (err) {
                 t.ifError(err, 'waitForRunningMachine ' + fixtures.instId);
+                next(err);
+            });
+        },
+
+        function createSecondTestInst(_, next) {
+            common.getTestImage(CLIENT, function onGetTestImage(err, image) {
+                t.ifError(err, 'getTestImage');
+                if (err) {
+                    next(err);
+                    return;
+                }
+
+                var obj = {
+                    image: image.id,
+                    package: SDC_128.name,
+                    name: FIXTURE_DATA.inst.name + 2,
+                    server_uuid: fixtures.server.uuid,
+                    firewall_enabled: true
+                };
+                machinesCommon.createMachine(t, CLIENT, obj,
+                        function onCreateMachine(err2, instId) {
+                    t.ifError(err2, 'createSecondTestInst');
+                    fixtures.secondInstId = instId;
+                    next(err2);
+                });
+            });
+        },
+
+        function waitForTestSecondInst(_, next) {
+            machinesCommon.waitForRunningMachine(CLIENT, fixtures.secondInstId,
+                    function onWaitForMachine(err) {
+                t.ifError(err, 'waitForRunningMachine ' +
+                    fixtures.secondInstId);
                 next(err);
             });
         },
@@ -538,53 +626,6 @@ function deleteTestNetwork(t, data, fixture, cb) {
 }
 
 
-function externalNicMacFromServer(server) {
-    var ifaces = server.sysinfo['Network Interfaces'];
-    var nic = Object.keys(ifaces).map(function (iname) {
-        return ifaces[iname];
-    }).filter(function (iface) {
-        return iface['NIC Names'].indexOf('external') !== -1;
-    })[0];
-    return nic['MAC Address'];
-}
-
-
-/*
- * Add the given NIC tags to the server's external NIC.
- *
- * Calls back with `function (err, job)` where `job` is the the CNAPI
- * NicUpdate response body (i.e. `job.job_uuid` is the workflow job UUID).
- */
-function addNicTagsToServer(t, nicTags, server, callback) {
-    var args = {
-        action: 'update',
-        nics: [ {
-            mac: externalNicMacFromServer(server),
-            nic_tags_provided: nicTags
-        } ]
-    };
-    CLIENT.cnapi.updateNics(server.uuid, args, function (err, body, res) {
-        t.ifError(err);
-        callback(null, body);
-    });
-}
-
-
-function removeTagsFromServer(t, nicTags, server, callback) {
-    var args = {
-        action: 'delete',
-        nics: [ {
-            mac: externalNicMacFromServer(server),
-            nic_tags_provided: nicTags
-        } ]
-    };
-    CLIENT.cnapi.updateNics(server.uuid, args, function (err, body, res) {
-        t.ifError(err);
-        callback(null, body);
-    });
-}
-
-
 function getErr(t, path, expectedErr) {
     CLIENT.get(path, function (err, req, res, body) {
         t.equal(res.statusCode, expectedErr.statusCode);
@@ -766,7 +807,7 @@ function waitTilNicDeleted(t, apiPath) {
 
         CLIENT.get(apiPath, function (err, req, res, nic) {
             if (err) {
-                t.equal(err.statusCode, 404);
+                t.equal(err.statusCode, 404, 'NIC path 404');
                 t.end();
             } else {
                 setTimeout(check, 5000);
@@ -1786,6 +1827,9 @@ test('nics', function (tt) {
             t.ok(fabricNetwork, format('fabricNetwork %s (%s)',
                 fabricNetwork.id, fabricNetwork.name));
 
+            t.ok(fabricNetworkIp, format('using fabrickNetworkIp %s',
+                fabricNetworkIp));
+
             var path = '/my/machines/' + fixtures.instId + '/nics';
             var networkParams = {
                 ipv4_uuid: fabricNetwork.id,
@@ -1807,9 +1851,143 @@ test('nics', function (tt) {
         });
     });
 
+    tt.test('  Add fabric network NIC with in use ip', FABRIC_TEST_OPTS,
+        function (t) {
+        CLIENT.get('/my/networks', function (err, req, res, networks) {
+            t.ifError(err);
+
+            var fabricNetwork = networks.filter(function (net) {
+                return net.fabric;
+            })[0];
+            t.ok(fabricNetwork, format('fabricNetwork %s (%s)',
+                fabricNetwork.id, fabricNetwork.name));
+
+            var path = '/my/machines/' + fixtures.secondInstId + '/nics';
+            var networkParams = {
+                ipv4_uuid: fabricNetwork.id,
+                ipv4_ips: [ fabricNetworkIp ]
+            };
+            var args = { network: networkParams };
+            CLIENT.post(path, args, function onNicCreate(nicCreateErr,
+                nicCreateReq, nicCreateRes, nic) {
+                var expectedErr = {
+                    jse_info: {},
+                    jse_shortmsg: '',
+                    message: 'Invalid parameters',
+                    statusCode: 422,
+                    restCode: 'InvalidParameters',
+                    name: 'InvalidParametersError',
+                    body: {
+                        code: 'InvalidParameters',
+                        errors: [
+                            {
+                                field: 'ip',
+                                code: 'UsedBy',
+                                message: 'IP in use'
+                            }
+                        ],
+                        message: 'Invalid parameters'
+                    }
+                };
+
+                postErr(t, path, args, expectedErr);
+            });
+        });
+    });
+
+
     tt.test('  Remove NIC using fabric network and ip', FABRIC_TEST_OPTS,
             function (t) {
+        t.ok(instNic, 'instNic okay to remove');
+        if (!instNic) {
+            t.end();
+            return;
+        }
         removeNic(t, fixtures.instId, instNic);
+    });
+
+
+    // ---- Invalid IPs tests (actually testing vmapi/napi errors)
+
+    tt.test('  Add fabric network NIC with ip not in subnet', FABRIC_TEST_OPTS,
+        function (t) {
+        var fakeIp = '1.2.3.4'; // gross - we hope subnet doesn't actually match
+        CLIENT.get('/my/networks', function onGetNetworks(err, req, res,
+            networks) {
+            t.ifError(err);
+
+            var fabricNetwork = networks.filter(function (net) {
+                return net.fabric;
+            })[0];
+            t.ok(fabricNetwork, format('fabricNetwork %s (%s)',
+                fabricNetwork.id, fabricNetwork.name));
+
+            var path = '/my/machines/' + fixtures.secondInstId + '/nics';
+            var networkParams = {
+                ipv4_uuid: fabricNetwork.id,
+                ipv4_ips: [ fakeIp ]
+            };
+            var args = { network: networkParams };
+            CLIENT.post(path, args, function onNicCreate(nicCreateErr,
+                nicCreateReq, nicCreateRes, nic) {
+                var expectedErr = {
+                    jse_info: {},
+                    jse_shortmsg: '',
+                    message: 'cannot validate ' + fakeIp +
+                        ': IP is not in subnet',
+                    statusCode: 404,
+                    restCode: 'ResourceNotFound',
+                    name: 'ResourceNotFoundError',
+                    body: {
+                        code: 'ResourceNotFound',
+                        message: 'cannot validate ' + fakeIp +
+                            ': IP is not in subnet'
+                    }
+                };
+
+                postErr(t, path, args, expectedErr);
+            });
+        });
+    });
+
+    tt.test('  Add fabric network NIC with invalid ip', FABRIC_TEST_OPTS,
+        function (t) {
+        CLIENT.get('/my/networks', function onGetNetworks(err, req, res,
+            networks) {
+            t.ifError(err);
+
+            var fabricNetwork = networks.filter(function (net) {
+                return net.fabric;
+            })[0];
+            t.ok(fabricNetwork, format('fabricNetwork %s (%s)',
+                fabricNetwork.id, fabricNetwork.name));
+
+            var path = '/my/machines/' + fixtures.secondInstId + '/nics';
+            var networkParams = {
+                ipv4_uuid: fabricNetwork.id,
+                ipv4_ips: [ '111' + fabricNetworkIp ]
+            };
+            var args = { network: networkParams };
+            CLIENT.post(path, args, function onNicCreate(nicCreateErr,
+                nicCreateReq, nicCreateRes, nic) {
+                var expectedErr = {
+                    jse_info: {},
+                    jse_shortmsg: '',
+                    message: 'cannot validate ' + '111' + fabricNetworkIp +
+                        ': Invalid IP address',
+                    statusCode: 404,
+                    restCode: 'ResourceNotFound',
+                    name: 'ResourceNotFoundError',
+                    body: {
+                        code: 'ResourceNotFound',
+                        message: 'cannot validate ' + '111' + fabricNetworkIp +
+                            ': Invalid IP address'
+                    }
+                };
+
+                postErr(t, path, args, expectedErr);
+            });
+        });
     });
 
 

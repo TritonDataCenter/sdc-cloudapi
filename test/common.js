@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2017, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 /*
@@ -1048,6 +1048,75 @@ function napiDeleteNicTagByName(opts, cb) {
     });
 }
 
+
+function externalNicMacFromServer(server) {
+    assert.object(server, 'server');
+    assert.object(server.sysinfo, 'server.sysinfo');
+
+    var mac;
+    var ifaces = server.sysinfo['Network Interfaces'];
+    assert.object(ifaces, 'ifaces');
+
+    var nic = Object.keys(ifaces).map(function (iname) {
+        return ifaces[iname];
+    }).filter(function findExternalNic(iface) {
+        assert.object(iface, 'iface');
+        var nicNames = iface['NIC Names'];
+        assert.arrayOfString(nicNames, 'nicNames');
+        return nicNames.indexOf('external') !== -1;
+    })[0];
+
+    assert.object(nic, 'nic');
+    mac = nic['MAC Address'];
+    assert.string(mac, 'mac');
+
+    return mac;
+}
+
+
+/*
+ * Add the given NIC tags to the server's external NIC.
+ *
+ * Calls back with `function (err, job)` where `job` is the the CNAPI
+ * NicUpdate response body (i.e. `job.job_uuid` is the workflow job UUID).
+ */
+function addNicTagsToServer(nicTags, server, client, callback) {
+    assert.arrayOfString(nicTags, 'nicTags');
+    assert.object(server, 'server');
+    assert.object(client, 'client');
+    assert.func(callback, 'callback');
+
+    var args = {
+        action: 'update',
+        nics: [ {
+            mac: externalNicMacFromServer(server),
+            nic_tags_provided: nicTags
+        } ]
+    };
+    client.cnapi.updateNics(server.uuid, args, function (err, body, res) {
+        callback(err, body);
+    });
+}
+
+
+function removeTagsFromServer(nicTags, server, client, callback) {
+    assert.arrayOfString(nicTags, 'nicTags');
+    assert.object(server, 'server');
+    assert.object(client, 'client');
+    assert.func(callback, 'callback');
+
+    var args = {
+        action: 'delete',
+        nics: [ {
+            mac: externalNicMacFromServer(server),
+            nic_tags_provided: nicTags
+        } ]
+    };
+    client.cnapi.updateNics(server.uuid, args, function (err, body, res) {
+        callback(err, body);
+    });
+}
+
 /*
  * Make the already imported image with name "imageName" provisionable by making
  * it public.
@@ -1167,6 +1236,10 @@ module.exports = {
     napiDeleteNicTagByName: napiDeleteNicTagByName,
     napiDeleteNetworkByName: napiDeleteNetworkByName,
     napiDeletePoolByName: napiDeletePoolByName,
+
+    // common functions to add/remove nic tags in tests
+    addNicTagsToServer: addNicTagsToServer,
+    removeTagsFromServer: removeTagsFromServer,
 
     sdc_128_package: SDC_128_PACKAGE,
 

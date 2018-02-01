@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2017, Joyent, Inc.
+ * Copyright 2018, Joyent, Inc.
  */
 
 var util = require('util');
@@ -91,8 +91,14 @@ var SDC_512 = {
 var SERVER_UUID;
 var IMAGE_UUID;
 var MACHINE_UUID;
-var NETWORK_UUID;
-var NETWORK_IP = '10.99.66.50';
+var NETWORK1_UUID;
+var NETWORK2_UUID;
+var NETWORK1_IP = '10.99.66.50';
+var NETWORK2_IP = '10.99.67.50';
+
+var TEST_SERVER;
+var NIC_TAG;
+var NIC_TAG_NAME = 'cloudapi_test_machines_nictag';
 
 var CLIENTS;
 var CLIENT;
@@ -147,10 +153,53 @@ test('setup', function (t) {
 
 
 test('Get test server', function (t) {
-    common.getTestServer(CLIENT, function (err, testServer) {
+    common.getTestServer(CLIENT, function onGetTestServer(err, testServer) {
         t.ifError(err);
+        TEST_SERVER = testServer;
         SERVER_UUID = testServer.uuid;
         t.end();
+    });
+});
+
+test('Create nic tag', function (t) {
+    CLIENT.napi.getNicTag(NIC_TAG_NAME, function onGetNicTag(err, nicTag) {
+        if (err) {
+            if (err.statusCode === 404) {
+                createNicTag();
+            } else {
+                t.ifError(err, 'getNicTag');
+                t.end();
+            }
+        } else {
+            NIC_TAG = nicTag;
+            t.end();
+        }
+    });
+
+    function createNicTag() {
+        CLIENT.napi.createNicTag(NIC_TAG_NAME, function onCreateNicTag(err,
+            nicTag) {
+            t.ifError(err, 'createNicTag: nicTag ' + NIC_TAG_NAME);
+            NIC_TAG = nicTag;
+            t.end();
+        });
+    }
+});
+
+test('Add nic tag to test server', function (t) {
+    if (!NIC_TAG) {
+        t.end();
+        return;
+    }
+    var nicTags = [NIC_TAG_NAME];
+
+    common.addNicTagsToServer(nicTags, TEST_SERVER, CLIENT,
+        function onAddNicTagsToServer(addNicTagsErr, job) {
+        t.ifError(addNicTagsErr, 'add NIC tags to server: ' + nicTags);
+        waitForJob(CLIENT, job.job_uuid, function (jobErr) {
+            t.ifError(jobErr);
+            t.end();
+        });
     });
 });
 
@@ -1564,15 +1613,14 @@ test('Create Machine using network and IP', function (t) {
     CLIENT.napi.createNetwork(netDetails, function (err, net) {
         t.ifError(err);
 
-        NETWORK_UUID = net.uuid;
+        NETWORK1_UUID = net.uuid;
 
         obj.networks = [
             {
-                ipv4_uuid: NETWORK_UUID,
-                ipv4_ips: [ NETWORK_IP ]
+                ipv4_uuid: NETWORK1_UUID,
+                ipv4_ips: [ NETWORK1_IP ]
             }
         ];
-
 
         machinesCommon.createMachine(t, CLIENT, obj, function (_, machineUuid) {
             MACHINE_UUID = machineUuid;
@@ -1596,7 +1644,7 @@ test('Verify the machines IP', function (t) {
         t.ifError(err);
 
         var found = nics.some(function nicHasIp(n) {
-            return n.ip === NETWORK_IP;
+            return n.ip === NETWORK1_IP;
         });
 
         t.ok(found, 'nic with correct ip found');
@@ -1612,8 +1660,8 @@ test('Create Machine using network and in use IP', function (t) {
         server_uuid: SERVER_UUID,
         networks: [
             {
-                ipv4_uuid: NETWORK_UUID,
-                ipv4_ips: [ NETWORK_IP ]
+                ipv4_uuid: NETWORK1_UUID,
+                ipv4_ips: [ NETWORK1_IP ]
             }
         ]
     };
@@ -1660,7 +1708,7 @@ test('CreateMachine using network and invalid number of ips', function (t) {
         server_uuid: SERVER_UUID,
         networks: [
             {
-                ipv4_uuid: NETWORK_UUID,
+                ipv4_uuid: NETWORK1_UUID,
                 // IP set to any value just for this test
                 ipv4_ips: ['10.99.66.10', '10.99.66.10']
             }
@@ -1676,19 +1724,134 @@ test('CreateMachine using network and invalid number of ips', function (t) {
         t.deepEqual(body, {
             code: 'InvalidArgument',
             message: 'ipv4_ips: network with ipv4_uuid ' +
-                    NETWORK_UUID + ' should contain a single IP array'
+                    NETWORK1_UUID + ' should contain a single IP array'
         });
 
         t.end();
     });
 });
 
+test('Create Machine using multiple networks and IPs', function (t) {
+    var netDetails = {
+        name: 'machines-test-network-and-ip-2',
+        vlan_id: 97,
+        subnet: '10.99.67.0/24',
+        provision_start_ip: '10.99.67.5',
+        provision_end_ip: '10.99.67.250',
+        nic_tag: NIC_TAG_NAME,
+        owner_uuids: [CLIENT.account.uuid]
+    };
 
-test('Destroy machines-test-network-and-ip network', function (t) {
-    CLIENT.napi.deleteNetwork(NETWORK_UUID,
+    var obj = {
+        image: IMAGE_UUID,
+        package: SDC_128.name,
+        server_uuid: SERVER_UUID
+    };
+
+    CLIENT.napi.createNetwork(netDetails, function (err, net) {
+        t.ifError(err);
+
+        NETWORK2_UUID = net.uuid;
+
+        obj.networks = [
+            {
+                ipv4_uuid: NETWORK1_UUID,
+                ipv4_ips: [ NETWORK1_IP ]
+            },
+            {
+                ipv4_uuid: NETWORK2_UUID,
+                ipv4_ips: [ NETWORK2_IP ]
+            }
+        ];
+
+
+        machinesCommon.createMachine(t, CLIENT, obj, function (_, machineUuid) {
+            MACHINE_UUID = machineUuid;
+            t.end();
+        });
+
+    });
+});
+
+
+test('Wait For Running Machine provisioned with multiple IPs', waitForRunning);
+
+
+test('Verify the machines IPs', function (t) {
+    var params = {
+        belongs_to_uuid: MACHINE_UUID,
+        belongs_to_type: 'zone'
+    };
+
+    CLIENT.napi.listNics(params, function napiListNics(err, nics) {
+        t.ifError(err);
+
+        t.equal(nics.length, 2, 'machine has 2 NICs');
+
+        var ip1 = nics.some(function nicHasIp1(n) {
+            return n.ip === NETWORK1_IP;
+        });
+
+        var ip2 = nics.some(function nicHasIp2(n) {
+            return n.ip === NETWORK2_IP;
+        });
+
+        t.ok(ip1, 'nic with ip ' + NETWORK1_IP + ' found');
+        t.ok(ip2, 'nic with ip ' + NETWORK2_IP + ' found');
+        t.end();
+    });
+});
+
+
+test('Destroy machine created with multiple IPs', function (t) {
+    CLIENT.vmapi.deleteVm({
+        uuid: MACHINE_UUID,
+        owner_uuid: CLIENT.account.uuid
+    }, function (err, job) {
+        t.ifError(err, 'Deleting machine ' + MACHINE_UUID);
+
+        waitForJob(CLIENT, job.job_uuid, function (deleteJobErr) {
+            t.ifError(deleteJobErr, 'waiting for job ' + job.job_uuid);
+            t.end();
+        });
+    });
+});
+
+
+test('Destroy machines-test-network-and-ip network-1', function (t) {
+    CLIENT.napi.deleteNetwork(NETWORK1_UUID,
         function napiDeleteNetwork(err, res) {
         t.ifError(err);
         t.end();
+    });
+});
+
+
+test('Destroy machines-test-network-and-ip network-2', function (t) {
+    CLIENT.napi.deleteNetwork(NETWORK2_UUID,
+        function napiDeleteNetwork(err, res) {
+        t.ifError(err);
+        t.end();
+    });
+});
+
+
+test('Remove test server nic tag', function (t) {
+    if (!NIC_TAG) {
+        t.end();
+        return;
+    }
+    var nicTags = [NIC_TAG_NAME];
+
+    common.removeTagsFromServer(nicTags, TEST_SERVER, CLIENT,
+        function (err, job) {
+        t.ifError(err, 'remove NIC tags from server: '
+            + nicTags);
+
+        waitForJob(CLIENT, job.job_uuid, function (jobErr) {
+            t.ifError(jobErr, 'waitForJob ' + job.job_uuid);
+            t.end();
+        });
     });
 });
 
