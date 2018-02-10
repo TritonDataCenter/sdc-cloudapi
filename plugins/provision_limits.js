@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 /*
@@ -290,7 +290,7 @@ module.exports = {
                         allVms = vms.map(function (vm) {
                             images.filter(function (i) {
                                 if (i.uuid === vm.image_uuid ||
-                                    (vm.brand === 'kvm' &&
+                                    (['bhyve', 'kvm'].indexOf(vm.brand) > -1 &&
                                     i.uuid === vm.disks[0].image_uuid)) {
                                     vm.image_name = i.name;
                                     vm.os = i.os;
