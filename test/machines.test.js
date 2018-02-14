@@ -1628,6 +1628,7 @@ test('Create Machine using network and in use IP', function (t) {
             code: 'InvalidParameters',
             message: 'Invalid parameters',
             errors: [ {
+                field: 'ip',
                 code: 'UsedBy',
                 message: 'IP in use'
             } ]
