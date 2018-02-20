@@ -12,7 +12,7 @@ markdown2extras: tables, code-friendly
 -->
 
 <!--
-    Copyright 2017, Joyent, Inc.
+    Copyright 2018, Joyent, Inc.
 -->
 
 
@@ -355,7 +355,7 @@ so that you do not need to select individual settings, such as RAM or disk size.
 
 ## Managing SSH keys
 
-For instance which don't have a `brand` of `kvm` (see
+For instances which don't have a `brand` of `kvm` or `bhyve` (see
 `triton instance list -o id,brand` or `sdc-listmachines`), you can manage the
 SSH keys that allow logging into the instance via CloudAPI.  For example, to
 rotate keys:
@@ -376,9 +376,9 @@ To use the new key, you will need to update the environment variables:
 At this point you could delete your other key from the system; see
 [Cleaning Up](#cleaning-up) for a quick example.
 
-You cannot manage the SSH keys of instances with a `brand` of `kvm`. Hardware
-virtual machines are static, and whatever keys were in your account at instance
-creation time are used, provided the OS inside KVM is a *nix.
+You cannot manage the SSH keys of instances with a `brand` of `kvm` or `bhyve`.
+Hardware virtual machines are static, and whatever keys were in your account at
+instance creation time are used, provided the OS inside KVM is a *nix.
 
 
 ## Creating Analytics
@@ -907,6 +907,12 @@ The set of supported *API versions* is given in the ping endpoint:
 # Versions
 
 The section describes API changes in CloudAPI versions.
+
+### 8.6.0
+
+- CreateMachine now accepts the `brand` field for specifying the brand of the
+  instance to create. This is currently only useful when provisioning a
+  virtualmachine in a datacenter that supports both kvm (default) and bhyve.
 
 ## 8.5.0
 
@@ -4290,18 +4296,18 @@ characters only).
 Your instance will initially be not available for login (Triton must provision
 and boot it); you can poll [GetMachine](#GetMachine) for its status.  When the
 `state` field is equal to `running`, you can log in.  If the instance is a
-`brand` other than `kvm`, you can usually use any of the SSH keys managed
-under the [keys section](#keys) of CloudAPI to login as any POSIX user on the
-OS.  You can add/remove keys over time, and the instance will automatically work
-with that set.
+`brand` other than `kvm` or `bhyve`, you can usually use any of the SSH keys
+managed under the [keys section](#keys) of CloudAPI to login as any POSIX user
+on the OS.  You can add/remove keys over time, and the instance will
+automatically work with that set.
 
-If the the instance has a brand `kvm`, and of a UNIX-derived OS (e.g. Linux),
-you *must* have keys uploaded before provisioning; that entire set of keys will
-be written out to `/root/.ssh/authorized_keys` in the new instance, and you can
-SSH in using one of those keys.  Changing the keys over time under your account
-will not affect a running hardware virtual machine in any way; those keys are
-statically written at provisioning-time only, and you will need to manually
-manage them on the instance itself.
+If the the instance has a brand `kvm` or `bhyve`, and of a UNIX-derived OS (e.g.
+Linux), you *must* have keys uploaded before provisioning; that entire set of
+keys will be written out to `/root/.ssh/authorized_keys` in the new instance,
+and you can SSH in using one of those keys.  Changing the keys over time under
+your account will not affect a running hardware virtual machine in any way;
+those keys are statically written at provisioning-time only, and you will need
+to manually manage them on the instance itself.
 
 If the image you create an instance from is set to generate passwords for you,
 the username/password pairs will be returned in the metadata response as a
@@ -4347,6 +4353,7 @@ be changed later within the instance, if desired.
 
 **Field** | **Type** | **Description**
 --------- | -------- | ---------------
+brand     | String   | Optionally specify brand for this instance. Currently only useful to distinguish between bhyve and kvm in datacenters that support both. Possible values: "bhyve", "joyent", "kvm".
 name      | String   | Friendly name for this instance; default is the first 8 characters of the machine id. If the name includes the string {{shortId}}, any instances of that tag within the name will be replaced by the first 8 characters of the machine id.
 package   | String   | Id of the package to use on provisioning, obtained from [ListPackages](#ListPackages)
 image     | String   | The image UUID (the "id" field in [ListImages](#ListImages))
@@ -4805,8 +4812,8 @@ or
 Resize an instance to a new [package](#packages) (a.k.a. instance type).
 
 Resizing is only supported for containers (instances which are not hardware
-virtual machines -- they have `brand=kvm`). Hardware virtual machines cannot
-be resized.
+virtual machines -- they have `brand=kvm` or `brand=bhyve`). Hardware virtual
+machines cannot be resized.
 
 Resizing is not guaranteed to work, especially when resizing upwards in
 resources. It is best-effort, and may fail. Resizing downwards will usually
@@ -5053,7 +5060,7 @@ snapshots, you can boot the instance from a previous snapshot.
 
 Snapshots are not usable with other instances; they are a point-in-time snapshot
 of the current instance. Snapshots can also only be taken of instances that are
-*not* of brand 'kvm'.
+*not* of brand 'kvm' or 'bhyve'.
 
 Since instance instances use a copy-on-write filesystem, snapshots take up
 increasing amounts of space as the filesystem changes over time. There is a
