@@ -908,9 +908,13 @@ test('ListMachines (filter by docker true)', function (t) {
         t.equal(res.statusCode, 200);
         common.checkHeaders(t, res.headers);
 
-        body.forEach(function (vm) {
-            t.equal(vm.docker, true);
-        });
+        t.ok(body, 'should have a body');
+
+        if (body) {
+            body.forEach(function (vm) {
+                t.equal(vm.docker, true);
+            });
+        }
 
         t.end();
     });
