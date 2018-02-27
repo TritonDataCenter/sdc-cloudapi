@@ -4055,6 +4055,7 @@ ips         | Array[String] | The IP addresses this instance has
 networks    | Array[String] | The network UUIDs of the nics this instance has
 primaryIp   | String   | The IP address of the primary NIC of this instance. The "primary" NIC is used to determine the default gateway for an instance. Commonly it is also on an external network (i.e. accessible on the public internet) and hence usable for SSH'ing into an instance, but not always. (Note: In future Triton versions it will be possible to have multiple IPv4 and IPv6 addresses on a particular NIC, at which point the current definition of `primaryIp` will be ambiguous and will need to change.)
 firewall_enabled | Boolean  | Whether firewall rules are enforced on this instance
+deletion_protection | Boolean | Whether an instance is destroyable. See [Deletion Protection](#deletion-protection)
 compute_node | String  | UUID of the server on which the instance is located
 package     | String   | The id or name of the package used to create this instance
 
@@ -4372,6 +4373,7 @@ locality  | Object   | (Deprecated in CloudAPI v8.3.0.) Optionally object of [lo
 metadata.$name | String | An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata."
 tag.$name | String   | An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag."
 firewall_enabled | Boolean | Completely enable or disable firewall for this instance. Default is false
+deletion_protection | Boolean | Whether an instance is destroyable. See [Deletion Protection](#deletion-protection). Default is false
 volumes   | Array    | A list of objects representing volumes to mount when the newly created machine boots
 
 #### volumes
@@ -5063,7 +5065,7 @@ or
 
 
 
-## EnableDeletionProtection (POST /:login/machines/:id?action=enable_deletion_protection)
+## EnableMachineDeletionProtection (POST /:login/machines/:id?action=enable_deletion_protection)
 
 Enable [Deletion Protection](#deletion-protection) on an instance. An instance
 can no longer be destroyed until the protection is disabled.
@@ -5117,7 +5119,7 @@ MissingParameter | If `action` wasn't provided
     Transfer-Encoding: chunked
 
 
-## DisableDeletionProtection (POST /:login/machines/:id?action=disable_deletion_protection)
+## DisableMachineDeletionProtection (POST /:login/machines/:id?action=disable_deletion_protection)
 
 Disable [Deletion Protection](#deletion-protection) on an instance. An instance
 can be destroyed after it is disabled.
@@ -6139,8 +6141,8 @@ Using node-smartdc:
 
 Allows you to completely destroy an instance.
 
-An instance cannot be destroyed so long as [Instance
-Protection](#instance-protection) is enabled on that instance.
+An instance cannot be destroyed so long as [Deletion
+Protection](#deletion-protection) is enabled on that instance.
 
 ### Inputs
 
@@ -6289,10 +6291,20 @@ such an instance, the above attribute needs to be set to false first.
 
 The attribute can be set during instance creation (see
 [CreateMachine](#CreateMachine)), or added later (see
-[EnableDeletionProtection](#EnableDeletionProtection)). The instance then cannot
-be destroyed until the attribute is set to false, although all other operations
-will still work. To destroy the instance, first call
-[DisableDeletionProtection](#DisableDeletionProtection)) on the instance.
+[EnableMachineDeletionProtection](#EnableMachineDeletionProtection)). The
+instance then cannot be destroyed until the attribute is set to false, although
+all other operations will still work. To destroy the instance, first call
+[DisableMachineDeletionProtection](#DisableMachineDeletionProtection)) on the
+instance.
+
+### CLI Commands
+
+    $ triton instance create 62aaa296 0ea54d9d --deletion-protection
+
+    $ triton instance disable-deletion-protection 9985bc81
+
+    $ triton instance enable-deletion-protection 9985bc81
+
 
 
 # Analytics
