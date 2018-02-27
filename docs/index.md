@@ -908,7 +908,7 @@ The set of supported *API versions* is given in the ping endpoint:
 
 The section describes API changes in CloudAPI versions.
 
-### 8.6.0
+## 8.6.0
 
 - CreateMachine now accepts the `brand` field for specifying the brand of the
   instance to create. This is currently only useful when provisioning a
