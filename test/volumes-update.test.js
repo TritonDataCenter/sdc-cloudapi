@@ -127,12 +127,12 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
              */
             var INVALID_NAMES = ['', '-foo', '.foo', 'x'.repeat(257)];
             vasync.forEachParallel({
-                func: function createVolume(volumeName, done) {
+                func: function updateVolume(volumeName, done) {
                     CLIENT.post('/my/volumes/' + testVolume.id, {
                         name: volumeName
-                    }, function onVolCreated(volCreatErr) {
-                        t.ok(volCreatErr, 'updating volume with name ' +
-                            volumeName + ' should error, got: ' + volCreatErr);
+                    }, function onVolUpdated(volUpdateErr) {
+                        t.ok(volUpdateErr, 'updating volume with name ' +
+                            volumeName + ' should error, got: ' + volUpdateErr);
                         done();
                     });
                 },
@@ -140,6 +140,16 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             }, function invalidVolsCreated(err) {
                 t.end();
             });
+        });
+
+    test('updating newly-created volume with no param should succeed',
+        function (t) {
+            CLIENT.post('/my/volumes/' + testVolume.id, {},
+                function onVolUpdated(volUpdateErr) {
+                    t.ifErr(volUpdateErr,
+                        'updating volume with no param should succeed');
+                    t.end();
+                });
         });
 
     test('listing volumes should only include new name', function (t) {
