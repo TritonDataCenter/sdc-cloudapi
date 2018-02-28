@@ -908,6 +908,12 @@ The set of supported *API versions* is given in the ping endpoint:
 
 The section describes API changes in CloudAPI versions.
 
+
+## 8.7.0
+
+- CreateMachine no longer accepts the `brand` field for specifying the brand
+  of the instance to create.
+
 ## 8.6.0
 
 - CreateMachine now accepts the `brand` field for specifying the brand of the
@@ -4357,7 +4363,6 @@ be changed later within the instance, if desired.
 
 **Field** | **Type** | **Description**
 --------- | -------- | ---------------
-brand     | String   | Optionally specify brand for this instance. Currently only useful to distinguish between bhyve and kvm in datacenters that support both. Possible values: "bhyve", "joyent", "kvm".
 name      | String   | Friendly name for this instance; default is the first 8 characters of the machine id. If the name includes the string {{shortId}}, any instances of that tag within the name will be replaced by the first 8 characters of the machine id.
 package   | String   | Id of the package to use on provisioning, obtained from [ListPackages](#ListPackages)
 image     | String   | The image UUID (the "id" field in [ListImages](#ListImages))
