@@ -1088,7 +1088,7 @@ function (t) {
         t.ok(err, 'delete error expected');
         t.equal(res.statusCode, 409, 'http code');
         t.deepEqual(body, {
-            code: 'MachineUndeletableError',
+            code: 'CannotDestroyMachineError',
             message: 'Instance has "deletion_protection" enabled, ' +
                 'preventing deletion'
         }, 'check error message');
