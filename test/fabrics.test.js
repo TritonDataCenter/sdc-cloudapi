@@ -253,7 +253,7 @@ function findNetInList(t, params, callback) {
 
     var accountUuid = CLIENT.account.uuid;
 
-    findViewableNetworks(t, accountUuid, function (err, nets) {
+    findViewableNetworks(t, accountUuid, function (_err, nets) {
         var viewableUuids = getViewableUuids(t, nets, accountUuid);
 
         CLIENT.get('/my/networks', afterFindInList.bind(null, t,
@@ -307,7 +307,7 @@ function findViewableNetworks(t, accountUuid, cb) {
 /**
  * Find a fabric VLAN in a user's list
  */
-function findVLANinList(t, params, callback) {
+function findVLANinList(t, params) {
     assert.object(t, 't');
     assert.object(params, 'params');
     assert.number(params.vlan_id, 'params.vlan_id');
@@ -541,7 +541,7 @@ test('VLANs', TEST_OPTS, function (tt) {
 
     tt.test('delete non-existent fabric VLAN', function (t) {
         CLIENT.del('/my/fabrics/default/vlans/999',
-                function (err, req, res, body) {
+                function (err, req, res) {
             t.ok(err, 'expected error');
 
             if (err) {
@@ -577,7 +577,7 @@ test('create VLAN: invalid', TEST_OPTS, function (t) {
 
     function _createInvalidVLAN(data, cb) {
         CLIENT.post('/my/fabrics/default/vlans', data[0],
-                function (err, req, res, body) {
+                function (err, req, res) {
 
             t.ok(err, 'expected error: ' + JSON.stringify(data[0]));
             if (err) {
@@ -615,7 +615,7 @@ test('update VLAN: invalid', TEST_OPTS, function (t) {
 
     function _updateInvalidVLAN(data, cb) {
         CLIENT.put('/my/fabrics/default/vlans/' + PARAMS.vlan.vlan_id, data[0],
-                function (err, req, res, body) {
+                function (err, req, res) {
 
             t.ok(err, 'expected error: ' + JSON.stringify(data[0]));
             if (err) {
@@ -860,16 +860,77 @@ test('networks', TEST_OPTS, function (tt) {
         };
 
         OTHER.post(fmt('/my/fabrics/default/vlans/%d/networks',
-                PARAMS.vlan.vlan_id), params, function (err, req, res, body) {
-            checkNotFound(t, err, req, res, body);
-            t.end();
-        });
+            PARAMS.vlan.vlan_id), params, function (err, req, res, body) {
+                checkNotFound(t, err, req, res, body);
+                t.end();
+            });
     });
 
 
+    tt.test('update fabric network: nets[0] - valid', function (t) {
+        var params = {
+            name: 'network_0_updated',
+            description: 'network_0_updated',
+            routes: { '172.16.0.0/16': '10.4.1.1'},
+            resolvers: [ '8.8.4.4' ],
+            provision_start_ip: '10.4.1.2',
+            provision_end_ip: '10.4.255.252'
+        };
+        CLIENT.put(fmt('/my/fabrics/default/vlans/%d/networks/%s',
+            PARAMS.vlan.vlan_id, nets[0]), params,
+            function (err, req, res) {
+                t.ifErr(err, 'update fabric networks nets[0]');
+
+                t.equal(res.statusCode, 200, 'updated nets[0]');
+                common.checkHeaders(t, res.headers);
+                common.checkReqId(t, res.headers);
+                t.end();
+            });
+    });
+
+
+    tt.test('update fabric network: nets[0] - invalid', function (t) {
+        var params = {
+            gateway: '10.4.1.2'
+        };
+        CLIENT.put(fmt('/my/fabrics/default/vlans/%d/networks/%s',
+            PARAMS.vlan.vlan_id, nets[0]), params,
+            function (err, req, res) {
+                t.ok(err, 'expected error');
+                if (err) {
+                    t.equal(err.message,
+                        'property "gateway": unsupported property',
+                        'error message');
+                    t.equal(res.statusCode, 409, 'statusCode');
+                    t.equal(err.restCode, 'InvalidArgument', 'restCode');
+                }
+                t.end();
+            });
+    });
+
+
+    tt.test('update fabric network: nets[1] - valid', function (t) {
+        var params = {
+            name: 'network_1_updated',
+            routes: { '172.16.0.0/16': '10.5.1.1'},
+            resolvers: [ '8.8.4.4' ],
+            provision_start_ip: '10.5.1.2',
+            provision_end_ip: '10.5.255.252'
+        };
+        CLIENT.put(fmt('/my/fabrics/default/vlans/%d/networks/%s',
+            PARAMS.vlan.vlan_id, nets[1]), params,
+            function (err, req, res) {
+                t.ifErr(err, 'update fabric networks nets[1]');
+
+                t.equal(res.statusCode, 200, 'updated nets[1]');
+                common.checkHeaders(t, res.headers);
+                common.checkReqId(t, res.headers);
+                t.end();
+            });
+    });
+
     tt.end();
 });
-
 
 test('create fabric network: invalid', TEST_OPTS, function (t) {
     var base = {
@@ -936,7 +997,7 @@ test('create fabric network: invalid', TEST_OPTS, function (t) {
 
     function _createInvalidNet(data, cb) {
         CLIENT.post(fmt('/my/fabrics/default/vlans/%d/networks',
-                PARAMS.vlan.vlan_id), data[0], function (err, req, res, body) {
+                PARAMS.vlan.vlan_id), data[0], function (err, req, res) {
 
             t.ok(err, 'expected error: ' + JSON.stringify(data[0]));
             if (err) {
@@ -1060,7 +1121,7 @@ test('default fabric', TEST_OPTS, function (tt) {
         var net = CREATED.nets[0];
 
         CLIENT.del(fmt('/my/fabrics/default/vlans/%d/networks/%s',
-                net.vlan_id, net.id), function (err, req, res, body) {
+                net.vlan_id, net.id), function (err, req, res) {
             t.ok(err, 'delete network');
             common.checkHeaders(t, res.headers);
             common.checkReqId(t, res.headers);

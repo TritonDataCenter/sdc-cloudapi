@@ -8497,6 +8497,96 @@ ResourceNotFound | If `:login`, `:vlan_id` or `:id` does not exist
 
 
 
+## UpdateFabricNetwork (PUT /:login/fabrics/default/vlans/:vlan_id/networks/:id)
+
+### Inputs
+
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+name         | String   | The network name; must be unique (optional)
+description  | String   | Description of this network (optional)
+provision_start_ip| String | The first IP on the network that may be assigned (optional)
+provision_end_ip  | String | The last IP on the network that may be assigned (optional)
+resolvers    | String   | Optional resolver IP addresses (optional)
+routes       | Routes Object| Optional Static routes for hosts on this network (optional)
+
+### Returns
+
+Network Object:
+
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+id           | UUID     | Unique id for this network
+name         | String   | The network name
+public       | Boolean  | Whether this a public or private (rfc1918) network
+fabric       | Boolean  | Whether this network is created on a fabric
+description  | String   | Description of this network (optional)
+subnet       | String   | A CIDR formatted string that describes the network
+provision_start_ip| String | The first IP on the network that may be assigned
+provision_end_ip  | String | The last IP on the network that may be assigned
+gateway      | String   | Optional Gateway IP address
+resolvers    | String   | Resolver IP addresses
+routes       | Routes Object| Optional Static routes for hosts on this network
+internet_nat | Boolean  | Provision internet NAT zone on gateway address
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
+
+### CLI Command
+
+    $sdc-fabric network update 17dbc20a-2782-4e88-90f0-4d4a1bb0501f -n "updatenet" --resolvers="8.8.4.4" --routes='{"172.16.10.1/24":"192.168.128.1"}' --description="updated description" 
+
+#### Example Request
+
+    PUT /login/fabrics/default/vlans/2/networks/17dbc20a-2782-4e88-90f0-4d4a1bb0501f HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~7.3
+
+    {
+      "name": "updatenet",
+      "description": "updated description",
+      "resolvers": [
+        "8.8.8.8"
+      ],
+      "routes": {
+        "172.16.10.0/24": "192.16.128.1"
+      }
+    }
+
+#### Example Response
+
+    HTTP/1.1 201 Created
+    Content-Type: application/json
+    Server: Joyent Triton 7.3.0
+    Api-Version: 7.3.0
+
+    {
+      "id": "17dbc20a-2782-4e88-90f0-4d4a1bb0501f",
+      "name": "newnet",
+      "public": false,
+      "fabric": true,
+      "description": "updated description",
+      "gateway": "192.168.128.1",
+      "internet_nat": true,
+      "provision_end_ip": "192.168.131.250",
+      "provision_start_ip": "192.168.128.5",
+      "resolvers": [
+        "8.8.4.4"
+      ],
+      "routes": {
+        "172.16.10.1/24": "192.168.128.1"
+      },
+      "subnet": "192.168.128.0/22",
+      "vlan_id": 2
+    }
+
 ## DeleteFabricNetwork (DELETE /:login/fabrics/default/vlans/:vlan_id/networks/:id)
 
 Deletes the specified Network. Note that no instances may be provisioned on the
