@@ -908,6 +908,12 @@ The set of supported *API versions* is given in the ping endpoint:
 
 The section describes API changes in CloudAPI versions.
 
+## 8.8.0
+
+- CreateMachine now takes brand from the package's `brand` parameter if brand is
+  not specified by the image, and ensures that package and image brand
+  requirements do not conflict.
+- Fixed some bugs in the `brand` handling for packages.
 
 ## 8.7.0
 

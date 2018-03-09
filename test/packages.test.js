@@ -5,11 +5,15 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
-var test = require('tape').test;
 var util = require('util');
+
+var semver = require('semver');
+var test = require('tape').test;
+var vasync = require('vasync');
+
 var common = require('./common');
 
 var checkNotFound = common.checkNotFound;
@@ -20,43 +24,62 @@ var checkNotFound = common.checkNotFound;
 
 // May or not be created by previous test run or whatever else:
 var SDC_512 = {
-    uuid: '4667d1b8-0bc7-466c-bf62-aae98ba5efa9',
-    name: 'sdc_512_no_ownership',
-    version: '1.0.0',
-    max_physical_memory: 512,
-    quota: 20480,
-    max_swap: 1024,
-    cpu_cap: 150,
-    max_lwps: 2000,
-    zfs_io_priority: 10,
-    'default': false,
-    vcpus: 2,
     active: true,
-    owner_uuids: ['b99598ca-d56c-4374-8fdd-32e60f4d1592']
+    cpu_cap: 150,
+    'default': false,
+    max_lwps: 2000,
+    max_physical_memory: 512,
+    max_swap: 1024,
+    name: 'sdc_512_no_ownership',
+    owner_uuids: ['b99598ca-d56c-4374-8fdd-32e60f4d1592'],
+    quota: 20480,
+    uuid: '4667d1b8-0bc7-466c-bf62-aae98ba5efa9',
+    vcpus: 2,
+    version: '1.0.0',
+    zfs_io_priority: 10
 };
 
 // this differs from SDC_512 because the CLIENT's uuid is never added to
 // owner_uuids in setup
 var SDC_512_NO_PERMISSION = {
-    uuid: '495971fd-3488-46da-b10f-61a088f03e39',
-    name: 'sdc_512_no_permission',
-    version: '1.0.0',
-    max_physical_memory: 512,
-    quota: 20480,
-    max_swap: 1024,
-    cpu_cap: 150,
-    max_lwps: 2000,
-    zfs_io_priority: 10,
-    'default': false,
-    vcpus: 2,
     active: true,
-    owner_uuids: ['b99598ca-d56c-4374-8fdd-32e60f4d1592']
+    cpu_cap: 150,
+    'default': false,
+    max_lwps: 2000,
+    max_physical_memory: 512,
+    max_swap: 1024,
+    name: 'sdc_512_no_permission',
+    owner_uuids: ['b99598ca-d56c-4374-8fdd-32e60f4d1592'],
+    quota: 20480,
+    uuid: '495971fd-3488-46da-b10f-61a088f03e39',
+    vcpus: 2,
+    version: '1.0.0',
+    zfs_io_priority: 10
+};
+
+var SDC_512_BHYVE_BRAND = {
+    active: true,
+    brand: 'bhyve',
+    cpu_cap: 150,
+    'default': false,
+    max_lwps: 2000,
+    max_physical_memory: 512,
+    max_swap: 1024,
+    name: 'sdc_512_bhyve',
+    owner_uuids: ['b99598ca-d56c-4374-8fdd-32e60f4d1592'],
+    quota: 20480,
+    uuid: '93b2d408-1fb5-11e8-89ae-7fcbf72c69f8',
+    vcpus: 2,
+    version: '1.0.0',
+    zfs_io_priority: 10
 };
 
 var CLIENTS;
 var CLIENT;
 var SERVER;
 
+var CREATED_SDC_512_BHYVE_BRAND = false;
+var PAPI_VERSION;
 var VIEWABLE_PACKAGE_NAMES;
 var VIEWABLE_PACKAGE_UUIDS;
 
@@ -104,37 +127,100 @@ function searchAndCheck(query, t, checkAttr) {
 
 
 test('setup', function (t) {
-    common.setup(function (_, clients, server) {
+    common.setup(function (ignoredErr, clients, server) {
+        var viewablePkgs = [];
+
         CLIENTS = clients;
         CLIENT  = clients.user;
         SERVER  = server;
 
         SDC_512.owner_uuids.push(CLIENT.account.uuid);
+        SDC_512_BHYVE_BRAND.owner_uuids.push(CLIENT.account.uuid);
 
-        common.addPackage(CLIENT, SDC_512, function (err) {
-            common.addPackage(CLIENT, SDC_512_NO_PERMISSION, function (err2) {
-                CLIENT.papi.list({}, {}, function (err3, pkgs) {
-                    if (err || err2 || err3) {
-                        throw err || err2 || err3;
+        function createPackage(pkg, cb) {
+            common.addPackage(CLIENT, pkg, function _onAdd(err) {
+                t.ifError(err, 'create package ' + pkg.uuid +
+                    ' (' + pkg.name + ')');
+                cb(err);
+            });
+        }
+
+        vasync.pipeline({
+            funcs: [
+                function _checkPapiVersion(_, cb) {
+                    CLIENT.papi.client.get('/ping',
+                        function _onPing(err, req, res) {
+
+                        if (err) {
+                            cb(err);
+                            return;
+                        }
+
+                        PAPI_VERSION = res.headers['api-version'];
+                        t.equal(typeof (PAPI_VERSION), 'string',
+                            'should have api-version header');
+                        if (typeof (PAPI_VERSION) !== 'string') {
+                            // default to first ever version if we can't detect
+                            PAPI_VERSION = '7.0.0';
+                        }
+
+                        t.ok(PAPI_VERSION, 'PAPI version is ' + PAPI_VERSION);
+
+                        cb();
+                    });
+                },
+                function _add512(_, cb) {
+                    createPackage(SDC_512, cb);
+                },
+                function _add512NoPermission(_, cb) {
+                    createPackage(SDC_512_NO_PERMISSION, cb);
+                },
+                function _add512Bhyve(_, cb) {
+                    // 7.1.0 added support for pkg.brand
+                    if (semver.lt(PAPI_VERSION, '7.1.0')) {
+                        t.ok(true, 'skipping "brand" test on ancient PAPI');
+                        cb();
+                        return;
                     }
 
-                    var accUuid = CLIENT.account.uuid;
-                    var viewablePkgs = pkgs.filter(function (pkg) {
-                        var owners = pkg.owner_uuids;
-                        return !owners || owners.indexOf(accUuid) !== -1;
+                    CREATED_SDC_512_BHYVE_BRAND = true;
+                    createPackage(SDC_512_BHYVE_BRAND, cb);
+                },
+                function _listPackages(_, cb) {
+                    var accUuid;
+
+                    CLIENT.papi.list({}, {}, function _onList(err, pkgs) {
+                        if (err) {
+                            cb(err);
+                            return;
+                        }
+
+                        accUuid = CLIENT.account.uuid;
+                        viewablePkgs = pkgs.filter(function (pkg) {
+                            var owners = pkg.owner_uuids;
+                            return !owners || owners.indexOf(accUuid) !== -1;
+                        });
+
+                        cb();
                     });
 
-                    VIEWABLE_PACKAGE_UUIDS = viewablePkgs.map(function (pkg) {
-                        return pkg.uuid;
-                    });
+                }
+            ]
+        },
+        function _addedPackages(err) {
+            if (err) {
+                throw err;
+            }
 
-                    VIEWABLE_PACKAGE_NAMES = viewablePkgs.map(function (pkg) {
-                        return pkg.name;
-                    });
-
-                    t.end();
-                });
+            VIEWABLE_PACKAGE_UUIDS = viewablePkgs.map(function (pkg) {
+                return pkg.uuid;
             });
+
+            VIEWABLE_PACKAGE_NAMES = viewablePkgs.map(function (pkg) {
+                return pkg.name;
+            });
+
+            t.end();
         });
     });
 });
@@ -153,6 +239,45 @@ test('ListPackages OK', function (t) {
         });
         t.end();
     });
+});
+
+
+test('search packages by brand', function _searchBrand(t) {
+    if (!CREATED_SDC_512_BHYVE_BRAND) {
+        t.ok(true, 'skipping brand tests against ancient PAPI');
+        t.end();
+        return;
+    }
+    CLIENT.get('/my/packages?brand=' + SDC_512_BHYVE_BRAND.brand,
+        function _onGet(err, req, res, body) {
+            var foundCreated = false;
+            t.ifError(err);
+
+            t.equal(res.statusCode, 200, 'HTTP code should be 200');
+            common.checkHeaders(t, res.headers);
+
+            t.ok(Array.isArray(body), 'body should be an array of packages');
+            t.ok(body.length > 0, 'should have at least 1 package');
+
+            // All results to our search should have brand=bhyve. We might have
+            // found some other packages that we didn't create, but as long as
+            // they have brand=bhyve, that's fine. We also want to make sure we
+            // also found the one we created.
+
+            body.forEach(function (p) {
+                if (p.id === SDC_512_BHYVE_BRAND.uuid) {
+                    foundCreated = true;
+                }
+                t.equal(p.brand, SDC_512_BHYVE_BRAND.brand, 'package ' +
+                    p.name + ' has brand=' + SDC_512_BHYVE_BRAND.brand);
+            });
+
+            t.equal(foundCreated, true, 'should have found the package we ' +
+                'created (' + SDC_512_BHYVE_BRAND.name + ') with brand=' +
+                SDC_512_BHYVE_BRAND.brand);
+
+            t.end();
+        });
 });
 
 
@@ -288,17 +413,35 @@ test('GetPackage 404', function (t) {
 });
 
 
-test('teardown', function (t) {
-    common.deletePackage(CLIENT, SDC_512, function (err) {
-        t.ifError(err);
+test('teardown', function _teardown(t) {
 
-        common.deletePackage(CLIENT, SDC_512_NO_PERMISSION, function (err2) {
-            t.ifError(err2);
+    function deletePackage(pkg, cb) {
+        common.deletePackage(CLIENT, pkg, function _onDel(err) {
+            t.ifError(err, 'delete package ' + pkg.uuid +
+                ' (' + pkg.name + ')');
+            cb(err);
+        });
+    }
 
-            common.teardown(CLIENTS, SERVER, function (err3) {
-                t.ifError(err3, 'teardown success');
-                t.end();
-            });
+    vasync.pipeline({
+        funcs: [
+            function _delete512(_, cb) {
+                deletePackage(SDC_512, cb);
+            }, function _delete512NoPermission(_, cb) {
+                deletePackage(SDC_512_NO_PERMISSION, cb);
+            }, function _delete512Bhyve(_, cb) {
+                if (!CREATED_SDC_512_BHYVE_BRAND) {
+                    cb();
+                    return;
+                }
+                deletePackage(SDC_512_BHYVE_BRAND, cb);
+            }
+        ]
+    }, function _onDeleted(err) {
+        t.ifError(err, 'teardown');
+        common.teardown(CLIENTS, SERVER, function _onTeardown(teardownErr) {
+            t.ifError(teardownErr, 'common.teardown');
+            t.end();
         });
     });
 });
