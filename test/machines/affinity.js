@@ -52,6 +52,19 @@ function (suite, client, other, imgUuid, pkgUuid, headnodeUuid, cb) {
     });
 
 
+    // Same as above, but using a regular expression
+    suite.test('CreateMachine with affinity "container==/^' + CONTAINER_PREFIX +
+        '/"', function (t) {
+
+        var args = createArgs('container==/^' + CONTAINER_PREFIX + '/');
+
+        client.post('/my/machines', args, function (err, req, res, body) {
+            t.ok(err, 'VM with false affinity should fail');
+            t.end();
+        });
+    });
+
+
     // This should work: no container with name 'sdccloudapitest_affinity_*'.
     // This behaviour was changed in DAPI-306.
     suite.test('CreateMachine with affinity "container!=' + CONTAINER_PREFIX +
