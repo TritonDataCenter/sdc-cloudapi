@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2017, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 var assert = require('assert-plus');
@@ -112,9 +112,17 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     test('updating newly-created volume\'s name should succeed', function (t) {
         CLIENT.post('/my/volumes/' + testVolume.id, {
             name: testVolumeSecondName
-        }, function onVolumeRenamed(volUpdateErr) {
+        }, function onVolumeRenamed(volUpdateErr, req, res, updatedVol) {
             t.ifErr(volUpdateErr, 'renaming volume ' + testVolumeName + ' to ' +
                 testVolumeSecondName + ' should succeed');
+
+            t.ok(updatedVol, 'response should not be empty');
+            if (updatedVol) {
+                t.equal(updatedVol.name, testVolumeSecondName,
+                    'name of updated volume should be: ' +
+                        testVolumeSecondName + ', got: ' + updatedVol.name);
+            }
+
             t.end();
         });
     });
@@ -145,9 +153,17 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     test('updating newly-created volume with no param should succeed',
         function (t) {
             CLIENT.post('/my/volumes/' + testVolume.id, {},
-                function onVolUpdated(volUpdateErr) {
+                function onVolUpdated(volUpdateErr, req, res, updatedVol) {
                     t.ifErr(volUpdateErr,
                         'updating volume with no param should succeed');
+
+                t.ok(updatedVol, 'response should not be empty');
+                if (updatedVol) {
+                    t.equal(updatedVol.name, testVolumeSecondName,
+                        'name of updated volume should be: ' +
+                            testVolumeSecondName + ', got: ' + updatedVol.name);
+                }
+
                     t.end();
                 });
         });
