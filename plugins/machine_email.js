@@ -5,139 +5,101 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright (c) 2014, Joyent, Inc.
  */
 
-/*
- * Sends an email after a VM/container has been successfully provisioned.
- *
- * To configure this plugin, provide the following configuration attributes:
- *
- * - from: email address that will be in the From field send to the client.
- * - subject: what the subject line will be.
- * - text: what the body of the email will be.
- *
- * In addition, the transport (sendmail or direct SMTP) requires configuration.
- * To send through Sendmail, add the following attribute:
- *
- * - sendmail: {
- *     path: full path to sendmail binary
- * }
- *
- * To send through SMTP:
- *
- * - smtp: {
- *     host: hostname of SMTP server
- *     secureConnection: true to use SSL,
- *     port: SMTP port,
- *     auth: {
- *         user: ...
- *         pass: ...
- *     }
- * }
- *
- * A full example, using sendmail:
- *
- * {
- *     "name": "machine_email",
- *     "enabled": true,
- *     "config": {
- *         "from": "sender@example.com",
- *         "subject": "A new container has been provisioned",
- *         "text": "All toasty and ready for use!",
- *         "sendmail": {
- *             "path": "/usr/sbin/sendmail"
- *         }
- *     }
- * }
- *
- * This is added to CLOUDAPI_PLUGINS and DOCKER_PLUGINS, serialized to JSON,
- * and PUT to cloudapi's and sdc-docker's sapi services.
- *
- * E.g. for cloudapi:
- *
- * sdc-sapi /services/$(sdc-sapi /services?name=cloudapi | json -Ha uuid) -X PUT
- * -d '{
- *    "metadata": {
- *         "CLOUDAPI_PLUGINS": "[{\"name\":\"machine_email\",\"enabled\":true, \
- *         \"config\":{\"from\":\"sender@example.com\",\"subject\": \
- *         \"A new container has been provisioned\",\"text\": \
- *         \"All toasty and ready for use!\", \
- *         \"sendmail\":{\"path\":\"/usr/sbin/sendmail\"}}}]"
- *    }
- * }'
- */
-
-
-var assert = require('assert-plus');
+var assert = require('assert');
+var util = require('util');
+var restify = require('restify');
 var nodemailer = require('nodemailer');
-
 
 // --- Globals
 
+var EMAIL = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i;
 
-var EMAIL_RE = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i;
-
-
-/*
- * Given a provision, send an email to the client who provisioned.
- *
- * Calls cb(). No error will ever be returned.
- */
-function postProvisionEmail(api, cfg) {
-    assert.object(api, 'api');
-    assert.object(api.log, 'api.log');
-    assert.object(cfg, 'cfg');
-    assert.object(cfg.smtp || cfg.sendmail || cfg.test,
-        'cfg.smtp || cfg.sendmaili || cfg.test');
-    assert.string(cfg.from, 'cfg.from');
-    assert.ok(EMAIL_RE.test(cfg.from), 'cfg.from (email) is required');
-    assert.string(cfg.subject, 'cfg.subject');
-    assert.string(cfg.text, 'cfg.text');
-
-    var log = api.log;
-    var from = cfg.from;
-    var subject = cfg.subject;
-    var text = cfg.text;
-
-    var transport;
-    if (cfg.smtp) {
-        transport = nodemailer.createTransport('SMTP', cfg.smtp);
-    } else if (cfg.sendmail) {
-        assert.string(cfg.sendmail.path, 'cfg.sendmail.path');
-        transport = nodemailer.createTransport('SENDMAIL', cfg.sendmail.path);
-    } else {
-        transport = cfg.test; // for testing purposes
-    }
-
-    return function sendPostProvisionEmail(opts, cb) {
-        assert.object(opts, 'opts');
-        assert.object(opts.account, 'opts.account');
-        assert.string(opts.account.email, 'opts.account.email');
-        assert.func(cb, 'cb');
-
-        log.debug('Running', sendPostProvisionEmail.name);
-
-        var to = opts.account.email;
-
-        transport.sendMail({
-            from: from,
-            to: to,
-            subject: subject,
-            text: text
-        }, function sendMailCb(err) {
-            if (err) {
-                log.error({ err: err }, 'Email failure');
-            } else {
-                log.info('Email sent');
-            }
-
-            cb();
-        });
-    };
-}
-
+// --- Exported API
 
 module.exports = {
-    postProvision: postProvisionEmail
+  /**
+   * Creates a (post) provisioning hook.
+   *
+   * Config is the JS object that was converted from the
+   * free-form config object that is defined in config.json.
+   *
+   * This function must return a restify filter that is run as part
+   * of a restify "main" chain.
+   *
+   * @param {Object} configuration object for the selected nodemailer
+   *                 transport. Transport can be one of "smtp" or "sendmail",
+   *                 and such member should be present on the config object.
+   *
+   *                 SMTP example:
+   *
+   *                 smtp: {
+   *                     service: 'Gmail', // use well known service
+   *                     auth: {
+   *                        user: 'test.nodemailer@gmail.com',
+   *                        pass: 'Nodemailer123'
+   *                     }
+   *                 }
+   *
+   *                 Sendmail example:
+   *
+   *                 sendmail: '/usr/sbin/sendmail'
+   *
+   * @return {Function} restify filter
+   */
+    postProvision: function (cfg) {
+
+        if (!cfg || typeof (cfg) !== 'object') {
+            throw new TypeError('config (cfg) is required');
+        }
+        var transport;
+
+        if (cfg.smtp && typeof (cfg.smtp) === 'object') {
+            nodemailer.SMTP = cfg.smtp;
+            transport = nodemailer.createTransport('SMTP', cfg.smtp);
+        } else if (cfg.sendmail && typeof (cfg.sendmail) === 'string') {
+            transport = nodemailer.createTransport('Sendmail', cfg.sendmail);
+        } else {
+            throw new TypeError('cfg.smtp or cfg.sendmail is required');
+        }
+
+        if (!cfg.from || typeof (cfg.from) !== 'string' ||
+            !EMAIL.test(cfg.from)) {
+            throw new TypeError('cfg.from is required (email)');
+        }
+
+        if (!cfg.subject || typeof (cfg.subject) !== 'string') {
+            throw new TypeError('cfg.subject is required (string)');
+        }
+        if (!cfg.text || typeof (cfg.text) !== 'string') {
+            throw new TypeError('cfg.text is required (string)');
+        }
+
+        return function (req, res, next) {
+            assert.ok(req.account);
+            assert.ok(req.log);
+
+            var message = {
+                from: cfg.from,
+                to: req.account.email,
+                subject: cfg.subject,
+                text: cfg.text
+            };
+
+            transport.sendMail(message, function (error) {
+                if (error) {
+                    req.log.error({
+                        err: error
+                    }, 'Email failure');
+                } else {
+                    req.log.info('Email sent');
+                }
+
+                return next();
+
+            });
+        };
+    }
 };
