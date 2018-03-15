@@ -111,7 +111,7 @@ function deletionProtectionTests(suite, client, other, machineUuid, cb) {
             function getCb(err, req, res, body) {
 
             t.ifError(err, 'GetMachine error');
-            t.equal(body.deletion_protection, undefined, 'deletion_protection');
+            t.equal(body.deletion_protection, false, 'deletion_protection');
 
             t.end();
         });
