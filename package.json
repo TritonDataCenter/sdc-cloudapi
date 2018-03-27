@@ -37,6 +37,7 @@
         "sdc-clients": "10.4.0",
         "semver": "5.4.1",
         "strsplit": "1.0.0",
+        "triton-metrics": "0.1.0",
         "ufds": "1.3.0",
         "vasync": "2.2.0",
         "verror": "1.10.0",

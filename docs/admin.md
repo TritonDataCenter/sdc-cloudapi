@@ -606,6 +606,11 @@ Log messages can be traced using `bunyan -p cloudapi` as explained in
 [Bunyan DTrace Examples](https://github.com/trentm/node-bunyan#dtrace-examples)
 
 
+# Metrics
+
+CloudAPI exposes metrics via [node-triton-metrics](https://github.com/joyent/node-triton-metrics) on `http://<ADMIN_IP>:<config.port + 800>/metrics`. For example, if the CloudAPI servers are running on port 8081 and 8082, then a metrics server would be exposed on `http://<ADMIN_IP>:8881/metrics` and `http://<ADMIN_IP>:8882/metrics`.
+
+
 # Appendix A: Provision Limits Plugin
 
 CloudAPI comes with a **Provisioning Limits** plugin, which provides several

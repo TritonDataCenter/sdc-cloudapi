@@ -4,6 +4,10 @@
         "level": "info"
     },
     "datacenter_name": "{{{datacenter_name}}}",
+    "serviceName": "{{SERVICE_NAME}}",
+    "instanceUuid": "{{auto.ZONENAME}}",
+    "serverUuid": "{{auto.SERVER_UUID}}",
+    "adminIp": "{{auto.ADMIN_IP}}",
     "read_only": {{{CLOUDAPI_READONLY}}},
     {{#DC_MAINT_MESSAGE}}
     "dc_maint_message": "{{{DC_MAINT_MESSAGE}}}",

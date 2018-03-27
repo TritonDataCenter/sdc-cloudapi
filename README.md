@@ -33,7 +33,7 @@ A CloudAPI server should be running in a cloudapi zone after running the
 sdcadm command above. Alternatively, a more manual approach is:
 
     git clone git@github.com:joyent/sdc-cloudapi.git
-    cd cloudapi
+    cd sdc-cloudapi
     git submodule update --init
     make all
     node main.js -f ./etc/cloudapi.config.json
