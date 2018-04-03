@@ -908,6 +908,11 @@ The set of supported *API versions* is given in the ping endpoint:
 
 The section describes API changes in CloudAPI versions.
 
+## 8.10.0
+
+- GetImage now includes information about the brand requirements in the
+  `requirements.brand` member of the returned JSON.
+
 ## 8.9.0
 
 - The plugin interface has changed. preProvision/postProvision hooks have been
@@ -3252,6 +3257,11 @@ os           | String   | The underlying operating system for this image
 version      | String   | The version for this image
 type         | String   | What kind of image this is. The values differ after v8.0.0+
 requirements | Object   | Contains a grouping of various minimum requirements for provisioning an instance with this image. For example 'password' indicates that a password must be provided
+requirements.max_ram | String | Indicates the maximum RAM requirement that must be provided in the VM manifest to provision a VM based on this image.
+requirements.max_memory | String | Indicates the maximum RAM requirement that must be provided in the VM manifest to provision a VM based on this image.
+requirements.min_ram | String | Indicates the minimum RAM requirement that must be provided in the VM manifest to provision a VM based on this image.
+requirements.min_memory | String | Indicates the minimum RAM requirement that must be provided in the VM manifest to provision a VM based on this image.
+requirements.brand | String | Indicates which brand has to be used in the VM manifest to provision a VM based on this image.
 homepage     | String   | The URL for a web page with more detailed information for this image
 files        | Array    | An array of image files that make up each image. Currently only a single file per image is supported
 files[0].compression | String | The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'
@@ -3359,6 +3369,11 @@ os           | String   | The underlying operating system for this image
 version      | String   | The version for this image
 type         | String   | What kind of image this is. The values differ after v8.0.0+
 requirements | Object   | Contains a grouping of various minimum requirements for provisioning an instance with this image. For example 'password' indicates that a password must be provided
+requirements.max_ram | String | Indicates the maximum RAM requirement that must be provided in the VM manifest to provision a VM based on this image.
+requirements.max_memory | String | Indicates the maximum RAM requirement that must be provided in the VM manifest to provision a VM based on this image.
+requirements.min_ram | String | Indicates the minimum RAM requirement that must be provided in the VM manifest to provision a VM based on this image.
+requirements.min_memory | String | Indicates the minimum RAM requirement that must be provided in the VM manifest to provision a VM based on this image.
+requirements.brand | String | Indicates which brand has to be used in the VM manifest to provision a VM based on this image.
 homepage     | String   | The URL for a web page with more detailed information for this image
 files        | Array    | An array of image files that make up each image. Currently only a single file per image is supported
 files[0].compression | String | The type of file compression used for the image file. One of 'bzip2', 'gzip', 'none'
