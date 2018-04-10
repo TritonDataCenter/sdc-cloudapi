@@ -989,3 +989,117 @@ function (t) {
 
     t.end();
 });
+
+
+test('modifyProvisionNetworks',
+function (t) {
+    var manager = getManager();
+
+    var called = 0;
+    manager.hooks.modifyProvisionNetworks = [
+        function (opts, next) {
+            called += 1;
+            t.deepEqual({
+                account: {},
+                networks: [ {} ],
+                req_id: 'f54db238-43bd-11e8-b7d1-42004d19d401'
+            }, opts, 'opts');
+            next();
+        },
+        function (opts, next) {
+            called += 1;
+            t.deepEqual({
+                account: {},
+                networks: [ {} ],
+                req_id: 'f54db238-43bd-11e8-b7d1-42004d19d401'
+            }, opts, 'opts');
+            next();
+        }
+    ];
+
+    manager.modifyProvisionNetworks({
+        account: {},
+        networks: [ {} ],
+        req_id: 'f54db238-43bd-11e8-b7d1-42004d19d401'
+    }, function extCb(err) {
+        t.ifError(err, 'err');
+        t.equal(called, 2, 'both funcs called');
+
+        t.end();
+    });
+});
+
+
+test('modifyProvisionNetworks - no plugins',
+function (t) {
+    var manager = getManager();
+    manager.hooks.modifyProvisionNetworks = [];
+
+    manager.modifyProvisionNetworks({
+        account: {},
+        networks: [ {} ],
+        req_id: 'f54db238-43bd-11e8-b7d1-42004d19d401'
+    }, function extCb(err) {
+        t.ifError(err, 'err');
+        t.end();
+    });
+});
+
+
+test('modifyProvisionNetworks - badargs',
+function (t) {
+    var manager = getManager();
+
+    try {
+        manager.modifyProvisionNetworks();
+        t.fail('exception not thrown');
+    } catch (e) {
+        t.deepEqual(e.message, 'opts (object) is required', 'e.message');
+        t.deepEqual(e.expected, 'object', 'e.expected');
+        t.deepEqual(e.actual, 'undefined', 'e.actual');
+    }
+
+    try {
+        manager.modifyProvisionNetworks({});
+        t.fail('exception not thrown');
+    } catch (e) {
+        t.deepEqual(e.message, 'opts.account (object) is required',
+            'e.message');
+        t.deepEqual(e.expected, 'object', 'e.expected');
+        t.deepEqual(e.actual, 'undefined', 'e.actual');
+    }
+
+    try {
+        manager.modifyProvisionNetworks({ account: {} });
+        t.fail('exception not thrown');
+    } catch (e) {
+        t.deepEqual(e.message, 'opts.networks ([object]) is required',
+            'e.message');
+        t.deepEqual(e.expected, '[object]', 'e.expected');
+        t.deepEqual(e.actual, 'undefined', 'e.actual');
+    }
+
+    try {
+        manager.modifyProvisionNetworks({ account: {}, networks: [] });
+        t.fail('exception not thrown');
+    } catch (e) {
+        t.deepEqual(e.message, 'opts.req_id (uuid) is required', 'e.message');
+        t.deepEqual(e.expected, 'uuid', 'e.expected');
+        t.deepEqual(e.actual, 'undefined', 'e.actual');
+    }
+
+    try {
+        manager.modifyProvisionNetworks({
+            account: {},
+            networks: [],
+            req_id: 'f54db238-43bd-11e8-b7d1-42004d19d401'
+        });
+        t.fail('exception not thrown');
+    } catch (e) {
+        t.deepEqual(e.message, 'cb (func) is required', 'e.message');
+        t.deepEqual(e.expected, 'func', 'e.expected');
+        t.deepEqual(e.actual, 'undefined', 'e.actual');
+    }
+
+    t.end();
+});
