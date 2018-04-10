@@ -908,6 +908,11 @@ The set of supported *API versions* is given in the ping endpoint:
 
 The section describes API changes in CloudAPI versions.
 
+## 8.11.0
+
+- Added a new API method to the plugin interface: modifyProvisionNetworks. This
+  can be used to modify network arguments sent in the vmapi provision call.
+
 ## 8.10.0
 
 - GetImage now includes information about the brand requirements in the
