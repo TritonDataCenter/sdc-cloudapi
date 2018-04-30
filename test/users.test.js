@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 /*
@@ -135,7 +135,7 @@ function checkKey(t, key) {
 
 
 test('setup', function (t) {
-    common.setup(function (_, clients, server) {
+    common.setup({ clientApiVersion: '~8' }, function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
         SUB_CLIENT = clients.subuser;
@@ -369,7 +369,10 @@ test('create another user', function (t) {
 
         SUB_USER_2 = body;
 
-        t.end();
+        /* Sleep for 10 sec to let mahi replicate. */
+        setTimeout(function () {
+            t.end();
+        }, 10000);
     });
 });
 
@@ -1056,6 +1059,273 @@ test('delete role', function (t) {
     });
 });
 
+test('create role v9 - v8 style', function (t) {
+    var role_uuid = libuuid.create();
+    var name = 'a' + role_uuid.substr(0, 7);
+
+    var entry = {
+        name: name,
+        members: [SUB_LOGIN_2, OTHER.login]
+    };
+
+    var opts = {
+        path: '/my/roles',
+        headers: {
+            'accept-version': '~9'
+        }
+    };
+    CLIENT.post(opts, entry, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.name, 'InvalidArgumentError');
+        t.equal(res.statusCode, 409);
+        t.ok(body);
+        t.end();
+    });
+});
+
+test('create role v9 - nulls', function (t) {
+    var role_uuid = libuuid.create();
+    var name = 'a' + role_uuid.substr(0, 7);
+
+    var entry = {
+        name: name,
+        members: [null, null]
+    };
+
+    var opts = {
+        path: '/my/roles',
+        headers: {
+            'accept-version': '~9'
+        }
+    };
+    CLIENT.post(opts, entry, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.name, 'InvalidArgumentError');
+        t.equal(res.statusCode, 409);
+        t.ok(body);
+        t.end();
+    });
+});
+
+test('create role v9 - inner arrays', function (t) {
+    var role_uuid = libuuid.create();
+    var name = 'a' + role_uuid.substr(0, 7);
+
+    var entry = {
+        name: name,
+        members: [[SUB_LOGIN_2], [OTHER.login]]
+    };
+
+    var opts = {
+        path: '/my/roles',
+        headers: {
+            'accept-version': '~9'
+        }
+    };
+    CLIENT.post(opts, entry, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.name, 'InvalidArgumentError');
+        t.equal(res.statusCode, 409);
+        t.ok(body);
+        t.end();
+    });
+});
+
+test('create role v9 - extra props', function (t) {
+    var role_uuid = libuuid.create();
+    var name = 'a' + role_uuid.substr(0, 7);
+
+    var entry = {
+        name: name,
+        members: [
+            {
+                type: 'subuser',
+                foobar: 'bar',
+                login: SUB_LOGIN_2,
+                default: false
+            }
+        ]
+    };
+
+    var opts = {
+        path: '/my/roles',
+        headers: {
+            'accept-version': '~9'
+        }
+    };
+    CLIENT.post(opts, entry, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.name, 'InvalidArgumentError');
+        t.equal(res.statusCode, 409);
+        t.ok(body);
+        t.ok(/foobar/.test(body.message));
+        t.end();
+    });
+});
+
+test('create role v9 - missing type', function (t) {
+    var role_uuid = libuuid.create();
+    var name = 'a' + role_uuid.substr(0, 7);
+
+    var entry = {
+        name: name,
+        members: [
+            {
+                login: SUB_LOGIN_2,
+                default: 'false'
+            }
+        ]
+    };
+
+    var opts = {
+        path: '/my/roles',
+        headers: {
+            'accept-version': '~9'
+        }
+    };
+    CLIENT.post(opts, entry, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.name, 'InvalidArgumentError');
+        t.equal(res.statusCode, 409);
+        t.ok(body);
+        t.ok(/type/.test(body.message));
+        t.end();
+    });
+});
+
+test('create role v9 - stringified', function (t) {
+    var role_uuid = libuuid.create();
+    var name = 'a' + role_uuid.substr(0, 7);
+
+    var entry = {
+        name: name,
+        members: [
+            {
+                type: 'subuser',
+                login: SUB_LOGIN_2,
+                default: 'false'
+            }
+        ]
+    };
+
+    var opts = {
+        path: '/my/roles',
+        headers: {
+            'accept-version': '~9'
+        }
+    };
+    CLIENT.post(opts, entry, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.name, 'InvalidArgumentError');
+        t.equal(res.statusCode, 409);
+        t.ok(body);
+        t.ok(/default/.test(body.message));
+        t.end();
+    });
+});
+
+test('create role v9', function (t) {
+    var role_uuid = libuuid.create();
+    var name = 'a' + role_uuid.substr(0, 7);
+
+    var entry = {
+        name: name,
+        members: [
+            {
+                type: 'subuser',
+                login: SUB_LOGIN_2,
+                default: false
+            },
+            {
+                type: 'account',
+                login: OTHER.login,
+                default: true
+            }
+        ],
+        policies: [
+            {
+                id: POLICY_UUID
+            }
+        ]
+    };
+
+    var opts = {
+        path: '/my/roles',
+        headers: {
+            'accept-version': '~9'
+        }
+    };
+    CLIENT.post(opts, entry, function (err, req, res, body) {
+        t.ifError(err);
+        t.ok(body);
+        t.equal(res.statusCode, 201);
+        common.checkHeaders(t, res.headers);
+        checkRole(t, body);
+
+        ROLE_UUID = body.id;
+        ROLE_NAME = body.name;
+
+        t.end();
+    });
+});
+
+test('get role (by UUID)', function (t) {
+    CLIENT.get('/my/roles/' + ROLE_UUID, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.equal(body.id, ROLE_UUID);
+        t.deepEqual(body.members, [SUB_LOGIN_2]);
+        t.deepEqual(body.default_members, []);
+        t.deepEqual(body.policies, [POLICY_NAME]);
+        t.end();
+    });
+});
+
+test('get role v9 (by UUID)', function (t) {
+    var opts = {
+        path: '/my/roles/' + ROLE_UUID,
+        headers: {
+            'accept-version': '~9'
+        }
+    };
+    CLIENT.get(opts, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.strictEqual(body.id, ROLE_UUID, 'role UUID matches');
+        t.ok(Array.isArray(body.members), 'members is an array');
+        t.strictEqual(typeof (body.members[0]), 'object',
+            'members[0] is object');
+        t.strictEqual(body.members.length, 2, '2 members present');
+        body.members.forEach(function (member) {
+            if (member.type === 'subuser') {
+                t.strictEqual(member.login, SUB_LOGIN_2);
+            } else if (member.type === 'account') {
+                t.strictEqual(member.login, OTHER.login);
+            }
+        });
+        t.ok(Array.isArray(body.policies), 'policies is an array');
+        t.strictEqual(typeof (body.policies[0]), 'object',
+            'policies[0] is object');
+        t.strictEqual(body.policies[0].id, POLICY_UUID, 'policy uuid');
+        t.strictEqual(body.policies[0].name, POLICY_NAME, 'policy name');
+        t.end();
+    });
+});
+
+test('delete role', function (t) {
+    var url = '/my/roles/' + ROLE_UUID;
+
+    CLIENT.del(url, function (err, req, res) {
+        t.ifError(err);
+        t.equal(res.statusCode, 204);
+        common.checkHeaders(t, res.headers);
+        t.end();
+    });
+});
 
 test('delete second role', function (t) {
     var url = '/my/roles/' + ROLE_UUID_2;
