@@ -33,7 +33,7 @@
         "mime": "1.2.7",
         "nodemailer": "0.7.1",
         "nopt": "2.0.0",
-        "restify": "4.3.0",
+        "restify": "4.3.3",
         "sdc-clients": "10.4.0",
         "semver": "5.4.1",
         "strsplit": "1.0.0",
