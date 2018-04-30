@@ -523,18 +523,28 @@ These account users can additionally be organized using [Roles](#roles):
       "id": "ff578c1f-bad5-4d3c-8880-2f76745f2511",
       "name": "devs",
       "members": [
-        "bob",
-        "fred",
-        "pedro"
-      ],
-      "default_members": [
-        "bob",
-        "fred"
+        {
+          "type": "subuser",
+          "id": "985e0ed4-9994-4303-8c43-6c92b7988167",
+          "login": "bob",
+          "default": true
+        },
+        {
+          "type": "subuser",
+          "id": "0cc38461-787a-4c05-a3f3-352a4d55541f",
+          "login": "fred",
+          "default": false
+        }
       ],
       "policies": [
-        "createMachine",
-        "resizeMachine",
-        "createImageFromMachine"
+        {
+          "id": "2104c53f-2e33-4393-9320-a6521d5ef2dc",
+          "name": "createMachine"
+        },
+        {
+          "id": "e8bdd555-eef0-4c1c-83be-93c443b59e3e",
+          "name": "restart instances"
+        }
       ]
     }
 
@@ -907,6 +917,14 @@ The set of supported *API versions* is given in the ping endpoint:
 # Versions
 
 The section describes API changes in CloudAPI versions.
+
+## 9.0.0
+
+- New object-based format for Roles: the "members" and "policies" properties
+  are now arrays of objects describing their values, rather than arrays of
+  strings as they were before. The "default_members" array is replaced by the
+  "default" boolean property on the objects. You can still elect to use the old
+  interface by using a lower `Accept-Version` than `9.0.0`.
 
 ## 8.11.0
 
@@ -2083,8 +2101,23 @@ Array of role objects.  Each role object has the following fields:
 id        | UUID     | Unique id for this role
 name      | String   | The role name
 policies  | Array    | This account's policies which this role obeys (Optional)
-members   | Array    | This account's user logins this role applies to (Optional)
-default_members | Array | This account's user logins this role applies to by default (Optional)
+members   | Array    | This account's users this role applies to (Optional)
+
+The `policies` Array contains objects with the following fields:
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+id        | UUID     | Unique id for this policy
+name      | String   | The policy name
+
+The `members` Array contains objects with the following fields:
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+type      | String   | Either `"subuser"` or `"account"`
+id        | UUID     | Unique id for this user
+login     | String   | Login name of this user
+default   | Boolean  | If `true`, the user is a default member of the role
 
 ### Errors
 
@@ -2102,7 +2135,7 @@ ResourceNotFound | If `:account` does not exist
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
-    Api-Version: ~8
+    Accept-Version: ~9
     Authorization: Signature keyId...
 
 ### Example Response
@@ -2117,8 +2150,8 @@ ResourceNotFound | If `:account` does not exist
     Connection: Keep-Alive
     Content-MD5: cxF+Tamx+GkSloXKYHvX/Q==
     Date: Tue, 19 Jan 2016 10:54:05 GMT
-    Server: Joyent Triton 8.0.0
-    Api-Version: 8.0.0
+    Server: cloudapi/9.0.0
+    Api-Version: 9.0.0
     Request-Id: f2a9bf40-be9a-11e5-820f-3bf7c01a78db
     Response-Time: 4086
 
@@ -2127,13 +2160,18 @@ ResourceNotFound | If `:account` does not exist
         "name": "readable",
         "id": "e53b8fec-e661-4ded-a21e-959c9ba08cb2",
         "members": [
-          "foo"
-        ],
-        "default_members": [
-          "foo"
+          {
+            "type": "subuser",
+            "id": "267c1fa9-8247-4860-8b95-61ba6d5a5fb5",
+            "login": "foo",
+            "default": true
+          }
         ],
         "policies": [
-          "readinstance"
+          {
+            "id": "92914b4f-79bf-4664-bc3b-b6dbb424263f",
+            "name": "readinstance"
+          }
         ]
       }
     ]
@@ -2154,8 +2192,23 @@ Get an account role (`:role`) by `id` or `name`.
 id        | UUID     | Unique id for this role
 name      | String   | The role name
 policies  | Array    | This account's policies which this role obeys (Optional)
-members   | Array    | This account's user logins this role applies to (Optional)
-default_members| Array | This account's user logins this role applies to by default (Optional)
+members   | Array    | This account's users this role applies to (Optional)
+
+The `policies` Array contains objects with the following fields:
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+id        | UUID     | Unique id for this policy
+name      | String   | The policy name
+
+The `members` Array contains objects with the following fields:
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+type      | String   | Either `"subuser"` or `"account"`
+id        | UUID     | Unique id for this user
+login     | String   | Login name of this user
+default   | Boolean  | If `true`, the user is a default member of the role
 
 ### Errors
 
@@ -2173,7 +2226,7 @@ ResourceNotFound | If `:account` or `:role` do not exist
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
-    Api-Version: ~8
+    Accept-Version: ~9
     Authorization: Signature keyId...
 
 ### Example Response
@@ -2188,8 +2241,8 @@ ResourceNotFound | If `:account` or `:role` do not exist
     Connection: Keep-Alive
     Content-MD5: Sr2lbN/2Jhl7q1VsGV63xg==
     Date: Tue, 19 Jan 2016 11:00:08 GMT
-    Server: Joyent Triton 8.0.0
-    Api-Version: 8.0.0
+    Server: cloudapi/9.0.0
+    Api-Version: 9.0.0
     Request-Id: cd193de0-be9b-11e5-b9fe-8768cab09198
     Response-Time: 1268
 
@@ -2197,13 +2250,18 @@ ResourceNotFound | If `:account` or `:role` do not exist
       "name": "readable",
       "id": "e53b8fec-e661-4ded-a21e-959c9ba08cb2",
       "members": [
-        "foo"
-      ],
-      "default_members": [
-        "foo"
+        {
+          "type": "subuser",
+          "id": "267c1fa9-8247-4860-8b95-61ba6d5a5fb5",
+          "login": "foo",
+          "default": true
+        }
       ],
       "policies": [
-        "readinstance"
+        {
+          "id": "92914b4f-79bf-4664-bc3b-b6dbb424263f",
+          "name": "readinstance"
+        }
       ]
     }
 
@@ -2219,7 +2277,24 @@ Create a new role for your account.
 name      | String   | The role's name
 policies  | Array    | This account's policies to be given to this role (Optional)
 members   | Array    | This account's user logins to be added to this role (Optional)
-default_members | Array | This account's user logins to be added to this role and have it enabled by default (Optional)
+
+The `policies` Array contains objects with the following fields (either `id` or
+`name` is required, both may be supplied but if so only `id` will be used):
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+id        | UUID     | Unique id for this policy (either id or name required)
+name      | String   | The policy name (either id or name required)
+
+The `members` Array contains objects with the following fields (either `id` or
+`login` is required, both may be supplied but if so only `id` will be used):
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+type      | String   | Either `"subuser"` or `"account"`
+id        | UUID     | Unique id for this user (either id or login required)
+login     | String   | Login name of this user (either id or login required)
+default   | Boolean  | If `true`, the user is a default member of the role (Optional)
 
 ### Returns
 
@@ -2230,8 +2305,7 @@ Account role.
 id        | UUID     | Unique id for this role
 name      | String   | The role name
 policies  | Array    | This account's policies which this role obeys (Optional)
-members   | Array    | This account's user logins this role applies to (Optional)
-default_members| Array | This account's user logins this role applies to by default (Optional)
+members   | Array    | This account's users this role applies to (Optional)
 
 ### Errors
 
@@ -2244,6 +2318,8 @@ MissingParameter | If you didn't send a `name`
 ResourceNotFound | If `:account` does not exist
 
 ### CLI Command:
+
+Note that the CLI command uses the older v7.x/v8.x API.
 
     $ sdc-role create --name=readable --members=foo --default-members=foo --policies=readinstance
 
@@ -2260,15 +2336,14 @@ JSON are also acceptable formats for `--members`, `--default-members` and
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
-    Api-Version: ~8
+    Accept-Version: ~9
     Content-Length: 40
     Authorization: Signature keyId...
 
     {
         "name": "readable",
-        "members": ["foo"],
-        "default_members": ["foo"],
-        "policies": ["readinstance"]
+        "members": [{"type": "subuser", "login": "foo", "default": true}],
+        "policies": [{"name": "readinstance"}]
     }
 
 ### Example Response
@@ -2284,8 +2359,8 @@ JSON are also acceptable formats for `--members`, `--default-members` and
     Connection: Keep-Alive
     Content-MD5: JC584Ys8XLt9OsqeKzFGRA==
     Date: Tue, 19 Jan 2016 11:49:25 GMT
-    Server: Joyent Triton 8.0.0
-    Api-Version: 8.0.0
+    Server: cloudapi/9.0.0
+    Api-Version: 9.0.0
     Request-Id: af9adf10-bea2-11e5-820f-3bf7c01a78db
     Response-Time: 1017
 
@@ -2293,13 +2368,18 @@ JSON are also acceptable formats for `--members`, `--default-members` and
       "name": "readable",
       "id": "e53b8fec-e661-4ded-a21e-959c9ba08cb2",
       "members": [
-        "foo"
-      ],
-      "default_members": [
-        "foo"
+        {
+          "type": "subuser",
+          "id": "267c1fa9-8247-4860-8b95-61ba6d5a5fb5",
+          "login": "foo",
+          "default": true
+        }
       ],
       "policies": [
-        "readinstance"
+        {
+          "id": "7bde94da-e279-4c74-86bc-1b0b046f7fc4",
+          "name": "readinstance"
+        }
       ]
     }
 
@@ -2314,8 +2394,25 @@ Modifies an account role.  Anything but `id` can be modified.
 --------- | -------- | --------------
 name      | String   | The role's name
 policies  | Array    | This account's policies to be given to this role (Optional)
-members   | Array    | This account's user logins to be added to this role (Optional)
-default_members | Array | This account's user logins to be added to this role and have it enabled by default (Optional)
+members   | Array    | This account's users to be added to this role (Optional)
+
+The `policies` Array contains objects with the following fields (either `id` or
+`name` is required, both may be supplied but if so only `id` will be used):
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+id        | UUID     | Unique id for this policy (either id or name required)
+name      | String   | The policy name (either id or name required)
+
+The `members` Array contains objects with the following fields (either `id` or
+`login` is required, both may be supplied but if so only `id` will be used):
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+type      | String   | Either `"subuser"` or `"account"`
+id        | UUID     | Unique id for this user (either id or login required)
+login     | String   | Login name of this user (either id or login required)
+default   | Boolean  | If `true`, the user is a default member of the role (Optional)
 
 ### Returns
 
@@ -2326,8 +2423,7 @@ Account role
 id        | UUID     | Unique id for this role
 name      | String   | The role name
 policies  | Array    | This account's policies which this role obeys (Optional)
-members   | Array    | This account's user logins this role applies to (Optional)
-default_members| Array | This account's user logins this role applies to by default (Optional)
+members   | Array    | This account's users this role applies to (Optional)
 
 ### Errors
 
@@ -2349,12 +2445,15 @@ ResourceNotFound | If `:account` does not exist
     Accept: application/json
     Content-Type: application/json
     Host: api.example.com
-    Api-Version: ~8
+    Api-Version: ~9
     Content-Length: 40
     Authorization: Signature keyId...
 
     {
-        "members": ["foo", "bar"]
+        "members": [
+          {"type": "subuser", "login": "foo", "default": true},
+          {"type": "subuser", "login": "bar"}
+        ]
     }
 
 ### Example Response
@@ -2369,8 +2468,8 @@ ResourceNotFound | If `:account` does not exist
     Connection: Keep-Alive
     Content-MD5: Sr2lbN/2Jhl7q1VsGV63xg==
     Date: Tue, 19 Jan 2016 13:31:13 GMT
-    Server: Joyent Triton 8.0.0
-    Api-Version: 8.0.0
+    Server: cloudapi/9.0.0
+    Api-Version: 9.0.0
     Request-Id: e8534140-beb0-11e5-b819-3f29fab5fc3a
     Response-Time: 1310
 
@@ -2378,14 +2477,24 @@ ResourceNotFound | If `:account` does not exist
       "name": "readable",
       "id": "e53b8fec-e661-4ded-a21e-959c9ba08cb2",
       "members": [
-        "foo",
-        "bar"
-      ],
-      "default_members": [
-        "foo"
+        {
+          "type": "subuser",
+          "id": "267c1fa9-8247-4860-8b95-61ba6d5a5fb5",
+          "login": "foo",
+          "default": true
+        },
+        {
+          "type": "subuser",
+          "id": "383a466a-be93-4664-9625-a876ff655c4c",
+          "login": "bar",
+          "default": false
+        }
       ],
       "policies": [
-        "readinstance"
+        {
+          "id": "7bde94da-e279-4c74-86bc-1b0b046f7fc4",
+          "name": "readinstance"
+        }
       ]
     }
 

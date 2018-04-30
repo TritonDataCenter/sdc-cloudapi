@@ -129,7 +129,7 @@ function checkInstrumentation(t, inst, justCreated) {
 
 
 test('setup', function (t) {
-    common.setup(function (_, clients, server) {
+    common.setup({ clientApiVersion: '~8' }, function (_, clients, server) {
         CLIENTS = clients;
         CLIENT  = clients.user;
         OTHER   = clients.other;

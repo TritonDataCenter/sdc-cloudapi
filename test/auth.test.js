@@ -42,7 +42,7 @@ var ROLE_UUID;
 
 
 test('setup', function (t) {
-    common.setup(function (_, clients, server) {
+    common.setup({ clientApiVersion: '~8' }, function (_, clients, server) {
         CLIENTS = clients;
         SERVER  = server;
 
