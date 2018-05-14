@@ -160,7 +160,6 @@ sdc_log_rotation_add cloudapi-8081 /var/svc/log/*cloudapi-8081.log 1g
 sdc_log_rotation_add cloudapi-8082 /var/svc/log/*cloudapi-8082.log 1g
 sdc_log_rotation_add cloudapi-8083 /var/svc/log/*cloudapi-8083.log 1g
 sdc_log_rotation_add cloudapi-8084 /var/svc/log/*cloudapi-8084.log 1g
-sdc_log_rotation_add cloudapi /var/log/cloudapi.log 1g
 sdc_log_rotation_setup_end
 
 # All done, run boilerplate end-of-setup
