@@ -918,6 +918,11 @@ The set of supported *API versions* is given in the ping endpoint:
 
 The section describes API changes in CloudAPI versions.
 
+## 9.2.0
+
+- Added new ImportImageFromDC API method to allow an image to be copied to
+  another DC in the same cloud.
+
 ## 9.1.0
 
 - Added [Clone Image](#CloneImage). This can be used to create a your own copy
@@ -3836,6 +3841,96 @@ or
         "state": "creating"
     }
 
+
+## ImportImageFromDC (POST /:login/images?action=import-from-dc)
+
+This will copy the image with `id` from the source `dc` datacenter into this DC.
+The copied image will retain all fields (e.g. id, published_at) as the original
+image has. All incremental images in the origin chain will also be copied.
+
+You can use [triton datacenters](#ListDatacenters) to view the list of
+datacenter names in the current cloud.
+
+### Inputs
+
+The following query parameters are required, these parameters will be used to
+identify the image to be copied.
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+dc        | String   | The dc name from where the image will be copied from.
+id        | UUID     | The id of the image to be copied.
+
+### Returns
+
+On success, an Image object is returned. See [GetImage](#GetImage) for the
+fields that are returned in the image object.
+
+### Errors
+
+For general errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+Some typical and specific errors for this endpoint:
+
+**Error Code** | **Description**
+-------------- | ---------------
+ImageUuidAlreadyExistsError | The image with `id` already exists in this DC.
+UnauthorizedError | If the source image is an admin owned image.
+OriginIsNotActiveError | If one of the incremental (origin)) images is not activated.
+
+
+<!-- TODO: integrate these errors into the general table above -->
+
+### Example CLI Command
+
+    $ triton image copy 7eed8e50-e452-428d-9131-bf056aa911bd us-west-1
+
+#### Example HTTP Request
+
+    POST /my/images?action=import-from-dc&dc=us-west-1&id=7eed8e50-e452-428d-9131-bf056aa911bd HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Api-Version: ~9
+
+    {}
+
+#### Example HTTP Response
+
+    HTTP/1.1 201 Created
+    Content-Type: application/json
+    Content-Length: 125
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: 2sEZ45LmhRiretMPn5sqVA==
+    Date: Thu, 21 Jan 2018 08:00:09 GMT
+    Server: Joyent Triton 9.1.0
+    Api-Version: 9.0.0
+    Request-Id: 49af23b0-f952-11e2-8f2c-fff0ec35f4ce
+    Response-Time: 460
+
+    {
+      "id": "7eed8e50-e452-428d-9131-bf056aa911bd",
+      "name": "myimage",
+      "version": "1.4.0",
+      "os": "smartos",
+      "requirements": {},
+      "type": "zone-dataset",
+      "description": "A custom image used to test stuff.",
+      "files": [
+        {
+          "compression": "gzip",
+          "sha1": "3bebb6ae2cdb26eef20cfb30fdc4a00a059a0b7b",
+          "size": 110742036
+        }
+      ],
+      "published_at": "2015-02-28T10:50:42Z",
+      "owner": "930896af-bf8c-48d4-885c-6573a94b1853",
+      "public": false,
+      "state": "active"
+    }
 
 ## UpdateImage (POST /:login/images/:id?action=update)
 
@@ -10609,6 +10704,7 @@ Sample code for generating the `Authorization` header (and `Date` header):
 [sdc-updatemachinemetadata](#UpdateMachineMetadata)|-|Allows you to update the metadata for a given instance.
 [sdc-user](#users)|-|Add, update and remove account users and their keys.
 -|trion image clone|Clone a shared image.
+-|[triton image copy](#ImportImageFromDC)|Copy an image into another DC.
 -|triton info|Print an account summary.
 -|triton instance ip|Print the primary IP of the given instance.
 -|triton instance ssh|SSH to the primary IP of an instance.
