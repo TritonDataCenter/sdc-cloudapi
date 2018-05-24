@@ -10,7 +10,7 @@
 
 var assert = require('assert-plus');
 var libuuid = require('libuuid');
-var test = require('tape').test;
+var test = require('@smaller/tap').test;
 var util = require('util');
 
 var common = require('./common');

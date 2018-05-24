@@ -5,11 +5,11 @@
  */
 
 /*
- * Copyright (c) 2015, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 var util = require('util');
-var test = require('tape').test;
+var test = require('@smaller/tap').test;
 var common = require('./common');
 var uuid = common.uuid;
 var machinesCommon = require('./machines/common');
@@ -169,6 +169,8 @@ test('networks: invalid formats', function (tt) {
         ], 'ipv4_count can only be set to 1');
     });
 
+
+    tt.end();
 });
 
 

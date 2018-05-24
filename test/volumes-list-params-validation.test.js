@@ -5,12 +5,12 @@
  */
 
 /*
- * Copyright (c) 2017, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 var assert = require('assert-plus');
 var libuuid = require('libuuid');
-var test = require('tape').test;
+var test = require('@smaller/tap').test;
 var querystring = require('querystring');
 var vasync = require('vasync');
 
@@ -104,6 +104,8 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     t.end();
                 });
         });
+
+        tt.end();
     });
 
     test('listing nfs shared volumes with invalid query parameters',
@@ -180,6 +182,8 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     t.end();
                 });
             });
+
+        tt.end();
     });
 
     // copied from sdc-volapi test/integration/list-with-params.test.js
@@ -529,5 +533,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                 t.end();
             });
         });
+
+        tt.end();
     });
 }

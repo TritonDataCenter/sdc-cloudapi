@@ -5,12 +5,12 @@
  */
 
 /*
- * Copyright 2016, Joyent, Inc.
+ * Copyright 2018, Joyent, Inc.
  */
 
 var assert = require('assert-plus');
 var format = require('util').format;
-var test = require('tape').test;
+var test = require('@smaller/tap').test;
 var vasync = require('vasync');
 
 var common = require('./common');
@@ -643,5 +643,7 @@ test('networks', function (tt) {
             t.end();
         });
     });
+
+    tt.end();
 
 });

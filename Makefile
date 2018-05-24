@@ -25,7 +25,7 @@ NAME		:= cloudapi
 #
 # Tools
 #
-TAP		:= ./node_modules/.bin/tape
+TAP		:= ./node_modules/.bin/tap
 
 #
 # Files

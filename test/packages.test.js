@@ -11,7 +11,7 @@
 var util = require('util');
 
 var semver = require('semver');
-var test = require('tape').test;
+var test = require('@smaller/tap').test;
 var vasync = require('vasync');
 
 var common = require('./common');

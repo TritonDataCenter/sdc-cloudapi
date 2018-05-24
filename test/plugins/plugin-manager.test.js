@@ -12,7 +12,7 @@ var bunyan = require('bunyan');
 var clients = require('sdc-clients');
 var fs = require('fs');
 var restify = require('restify');
-var test = require('tape').test;
+var test = require('@smaller/tap').test;
 
 var PluginManager = require('../../lib/plugin-manager');
 

@@ -5,13 +5,13 @@
  */
 
 /*
- * Copyright (c) 2017, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 var util = require('util');
 var crypto = require('crypto');
 var Keyapi = require('keyapi');
-var test = require('tape').test;
+var test = require('@smaller/tap').test;
 var restify = require('restify');
 var vasync = require('vasync');
 

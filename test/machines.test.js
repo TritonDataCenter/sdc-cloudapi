@@ -9,7 +9,7 @@
  */
 
 var util = require('util');
-var test = require('tape').test;
+var test = require('@smaller/tap').test;
 var restify = require('restify');
 var vasync = require('vasync');
 

@@ -15,7 +15,7 @@
  * test common during test setup.
  */
 
-var test = require('tape').test;
+var test = require('@smaller/tap').test;
 var libuuid = require('libuuid');
 var util = require('util');
 var common = require('./common');

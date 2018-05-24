@@ -13,7 +13,7 @@
  */
 
 var assert = require('assert-plus');
-var test = require('tape').test;
+var test = require('@smaller/tap').test;
 var util = require('util');
 var vasync = require('vasync');
 
@@ -1950,6 +1950,7 @@ test('nics', function (tt) {
         });
     });
 
+
     tt.test('  Add fabric network NIC with invalid ip', FABRIC_TEST_OPTS,
         function (t) {
         CLIENT.get('/my/networks', function onGetNetworks(err, req, res,
@@ -2001,4 +2002,7 @@ test('nics', function (tt) {
             });
         });
     });
+
+
+    tt.end();
 });

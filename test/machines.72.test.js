@@ -5,11 +5,11 @@
  */
 
 /*
- * Copyright (c) 2015, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 var util = require('util');
-var test = require('tape').test;
+var test = require('@smaller/tap').test;
 var restify = require('restify');
 var httpSignature = require('http-signature');
 var common = require('./common');
@@ -316,7 +316,7 @@ test('sub-user tests', function (t) {
             }, obj, function (err, req, res, body) {
                 t4.ifError(err, 'POST /my/machines error');
                 t4.equal(res.statusCode, 201, 'POST /my/machines status');
-                common.checkHeaders(t, res.headers);
+                common.checkHeaders(t4, res.headers);
                 t4.equal(res.headers.location,
                     util.format('/%s/machines/%s', CLIENT.login, body.id));
                 t4.ok(body, 'POST /my/machines body');
@@ -334,7 +334,7 @@ test('sub-user tests', function (t) {
         t.test('Wait For Running', function (t5) {
             machinesCommon.waitForRunningMachine(cli, SUB_MACHINE_UUID,
                                                 function (err) {
-                t.ifError(err);
+                t5.ifError(err);
 
                 if (err) {
                     // Skip machine tests when machine creation fails

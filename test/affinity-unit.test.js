@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2017, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 /*
@@ -15,8 +15,8 @@
 
 var assert = require('assert-plus');
 var bunyan = require('bunyan');
-var deepEqual = require('tape/node_modules/deep-equal');
-var test = require('tape').test;
+var deepEqual = require('@smaller/tap/node_modules/tsame');
+var test = require('@smaller/tap').test;
 var util = require('util');
 var VError = require('verror');
 var XRegExp = require('xregexp');
@@ -306,4 +306,6 @@ test('affinity-unit', function (tt) {
 
         t.end();
     });
+
+    tt.end();
 });

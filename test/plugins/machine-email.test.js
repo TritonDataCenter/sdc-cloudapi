@@ -8,7 +8,7 @@
  * Copyright (c) 2018, Joyent, Inc.
  */
 
-var test = require('tape').test;
+var test = require('@smaller/tap').test;
 var plugin = require('../../plugins/machine_email');
 
 

@@ -9,7 +9,7 @@
  */
 
 var util = require('util');
-var test = require('tape').test;
+var test = require('@smaller/tap').test;
 var common = require('./common');
 var uuid = common.uuid;
 var machinesCommon = require('./machines/common');

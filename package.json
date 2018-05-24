@@ -44,7 +44,7 @@
         "xregexp": "3.1.0"
     },
     "devDependencies": {
-        "tape": "3.5.0",
+        "@smaller/tap": "11.1.4-1.0.0",
         "smartdc": "8.1.0"
     },
     "sdcDependencies": {

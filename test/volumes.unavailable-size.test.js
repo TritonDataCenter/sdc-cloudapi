@@ -5,11 +5,11 @@
  */
 
 /*
- * Copyright (c) 2017, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 var assert = require('assert-plus');
-var test = require('tape').test;
+var test = require('@smaller/tap').test;
 var vasync = require('vasync');
 var verror = require('verror');
 

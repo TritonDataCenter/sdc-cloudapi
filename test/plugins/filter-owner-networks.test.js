@@ -8,7 +8,7 @@
  * Copyright (c) 2018, Joyent, Inc.
  */
 
-var test = require('tape').test;
+var test = require('@smaller/tap').test;
 var clone = require('jsprim').deepCopy;
 var plugin = require('../../plugins/filter_owner_networks');
 

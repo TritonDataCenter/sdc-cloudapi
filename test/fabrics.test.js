@@ -5,13 +5,13 @@
  */
 
 /*
- * Copyright (c) 2017, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 var assert = require('assert-plus');
 var clone = require('clone');
 var fmt = require('util').format;
-var test = require('tape').test;
+var test = require('@smaller/tap').test;
 var vasync = require('vasync');
 
 var common = require('./common');
@@ -554,6 +554,7 @@ test('VLANs', TEST_OPTS, function (tt) {
         });
     });
 
+    tt.end();
 });
 
 
@@ -864,6 +865,9 @@ test('networks', TEST_OPTS, function (tt) {
             t.end();
         });
     });
+
+
+    tt.end();
 });
 
 
@@ -1134,6 +1138,9 @@ test('default fabric', TEST_OPTS, function (tt) {
             t.end();
         });
     });
+
+
+    tt.end();
 });
 
 
@@ -1196,6 +1203,7 @@ test('teardown', TEST_OPTS, function (tt) {
         });
     });
 
+
     tt.test('client and server teardown', function (t) {
         common.teardown(CLIENTS, SERVER, function (err) {
             t.ifError(err, 'teardown success');
@@ -1203,4 +1211,6 @@ test('teardown', TEST_OPTS, function (tt) {
         });
     });
 
+
+    tt.end();
 });

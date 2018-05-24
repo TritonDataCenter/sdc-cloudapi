@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2018, Joyent, Inc.
  */
 
 /*
@@ -15,7 +15,7 @@
  * here by listing the CA zone.
  */
 
-var test   = require('tape').test;
+var test   = require('@smaller/tap').test;
 var util   = require('util');
 var common = require('./common');
 
