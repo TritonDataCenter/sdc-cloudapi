@@ -155,7 +155,7 @@ interact with CloudAPI using either node-triton or node-smartdc:
   See [Role Based Access Control](#rbac-users-roles-policies).
 * `SDC_TESTING`: If using a self-signed SSL certificate, set this to 1.
 
-An example for `SDC_URL` is `https://us-west-1.api.joyentcloud.com`.  Each
+An example for `SDC_URL` is `https://us-west-1.api.joyent.com`.  Each
 datacenter in a cloud has its own CloudAPI endpoint; a different cloud that uses
 Triton would have a different URL.
 
@@ -3197,7 +3197,7 @@ or
     Response-Time: 958
 
     {
-      "us-west-1": "https://us-west-1.api.joyentcloud.com"
+      "us-west-1": "https://us-west-1.api.joyent.com"
     }
 
 
@@ -4478,11 +4478,13 @@ More generally, the metadata keys can be set either at the time of instance
 creation, or after the fact.  You must either pass in plain-string values, or a
 JSON-encoded string.  On metadata retrieval, you will get a JSON object back.
 
-Networks can be specified using the networks attribute. If it is absent from
-the input, the instance will default to attaching to one externally-accessible
-network (it will have one public IP), and one internally-accessible network from
-the datacenter network pools.  It is possible to have an instance attached to
-only an internal network, or both public and internal, or just external.
+Networks can be specified using the networks attribute. It is possible to have
+an instance attached to an internal network, external network or both. If the
+networks attribute is absent from the input, the instance will be attached to
+one externally-accessible network (i.e. assigned a public IP), and any one of
+internal/private networks. If the account owns or has access to multiple private
+networks, it will be important to include the desired network(s) in the request
+payload instead of letting the system assign the network automatically.
 
 Be aware that CreateMachine does not return IP addresses or networks.  To
 obtain the IP addresses and networks of a newly-provisioned instance, poll
@@ -7307,7 +7309,7 @@ and `port` is a valid port number.
 
 The rule should have `tag` or `vm` in the FROM or TO target. The following are some possibilities:
 
-### Allow incoming http traffic to an instance:
+### Allow incoming HTTP traffic to an instance:
 
     {
         "enabled": true,
@@ -7319,6 +7321,13 @@ The rule should have `tag` or `vm` in the FROM or TO target. The following are s
     {
         "enabled": true,
         "rule": "FROM vm 0abeae82-c040-4080-ac60-b60d3e3890a7 TO subnet 10.99.99.0/24 BLOCK tcp port 25"
+    }
+
+### Block incoming TCP traffic from all instances to a certain range of ports:
+
+    {
+        "enabled": true,
+        "rule": "FROM any TO vm 0abeae82-c040-4080-ac60-b60d3e3890a7 BLOCK tcp ports 40000 - 65535"
     }
 
 ### Allow an IP HTTP and HTTPS access to all instances tagged www or testwww:
