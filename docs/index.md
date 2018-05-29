@@ -920,8 +920,8 @@ The section describes API changes in CloudAPI versions.
 
 ## 9.2.0
 
-- Added new ImportImageFromDC API method to allow an image to be copied to
-  another DC in the same cloud.
+- Added new ImportImageFromDatacenter API method to allow an image to be copied
+  to another datacenter in the same cloud.
 
 ## 9.1.0
 
@@ -3842,11 +3842,12 @@ or
     }
 
 
-## ImportImageFromDC (POST /:login/images?action=import-from-dc)
+## ImportImageFromDatacenter (POST /:login/images?action=import-from-datacenter)
 
-This will copy the image with `id` from the source `dc` datacenter into this DC.
-The copied image will retain all fields (e.g. id, published_at) as the original
-image has. All incremental images in the origin chain will also be copied.
+This will copy the image with `id` from the source `datacenter` into this
+datacenter. The copied image will retain all fields (e.g. id, published_at) as
+the original image. All incremental images in the origin chain will also be
+copied.
 
 You can use [triton datacenters](#ListDatacenters) to view the list of
 datacenter names in the current cloud.
@@ -3856,10 +3857,10 @@ datacenter names in the current cloud.
 The following query parameters are required, these parameters will be used to
 identify the image to be copied.
 
-**Field** | **Type** | **Description**
---------- | -------- | ---------------
-dc        | String   | The dc name from where the image will be copied from.
-id        | UUID     | The id of the image to be copied.
+**Field**  | **Type** | **Description**
+---------  | -------- | ---------------
+datacenter | String   | The datacenter name from where the image will be copied from.
+id         | UUID     | The id of the image to be copied.
 
 ### Returns
 
@@ -3873,9 +3874,9 @@ Some typical and specific errors for this endpoint:
 
 **Error Code** | **Description**
 -------------- | ---------------
-ImageUuidAlreadyExistsError | The image with `id` already exists in this DC.
-UnauthorizedError | If the source image is an admin owned image.
-OriginIsNotActiveError | If one of the incremental (origin)) images is not activated.
+ImageUuidAlreadyExistsError | The image with `id` already exists in this datacenter.
+UnauthorizedError | If the source image is owned by the admin.
+OriginIsNotActiveError | If one of the incremental (origin) images is not activated.
 
 
 <!-- TODO: integrate these errors into the general table above -->
@@ -3886,7 +3887,7 @@ OriginIsNotActiveError | If one of the incremental (origin)) images is not activ
 
 #### Example HTTP Request
 
-    POST /my/images?action=import-from-dc&dc=us-west-1&id=7eed8e50-e452-428d-9131-bf056aa911bd HTTP/1.1
+    POST /my/images?action=import-from-datacenter&datacenter=us-west-1&id=7eed8e50-e452-428d-9131-bf056aa911bd HTTP/1.1
     Authorization: ...
     Host: api.example.com
     Accept: application/json
