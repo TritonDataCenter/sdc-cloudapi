@@ -5,7 +5,7 @@
 #
 
 #
-# Copyright 2017 Joyent, Inc.
+# Copyright 2018 Joyent, Inc.
 #
 
 #
@@ -50,7 +50,7 @@ CLEAN_FILES	+= node_modules cscope.files
 
 # The prebuilt sdcnode version we want. See
 # "tools/mk/Makefile.node_prebuilt.targ" for details.
-NODE_PREBUILT_VERSION=v4.9.0
+NODE_PREBUILT_VERSION=v6.14.0
 ifeq ($(shell uname -s),SunOS)
 	NODE_PREBUILT_IMAGE=18b094b0-eb01-11e5-80c1-175dac7ddf02
 	NODE_PREBUILT_TAG=zone
