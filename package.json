@@ -17,6 +17,7 @@
         "aperture-config": "git+https://github.com/joyent/aperture-config.git#master",
         "asn1": "0.1.11",
         "assert-plus": "1.0.0",
+        "backoff": "2.5.0",
         "bunyan": "1.8.1",
         "clone": "0.1.5",
         "ctype": "0.5.2",
