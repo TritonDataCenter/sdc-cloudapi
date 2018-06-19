@@ -4327,7 +4327,9 @@ been purged from Triton.
 
 ### Inputs
 
-* None
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+credentials | Boolean  | Whether to include the generated credentials for instances, if present. Defaults to false.
 
 ### Returns
 
