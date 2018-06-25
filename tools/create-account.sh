@@ -6,7 +6,7 @@
 #
 
 #
-# Copyright (c) 2014, Joyent, Inc.
+# Copyright (c) 2018, Joyent, Inc.
 #
 
 #
@@ -32,7 +32,7 @@ HOST=$1
 [[ -n ${SSH} ]] || SSH=ssh
 [[ -n ${SCP} ]] || SCP=scp
 
-FINGERPRINT=`ssh-keygen -l -f ~/.ssh/id_rsa.pub | awk '{print $2}' | tr -d '\n'`
+FINGERPRINT=`ssh-keygen -l -E md5 -f ~/.ssh/id_rsa.pub| awk '{print $2}' | tr -d '\n'|cut -c 5-`
 
 cat << EOM > /tmp/account.ldif
 dn: uuid=cc71f8bb-f310-4746-8e36-afd7c6dd2895, ou=users, o=smartdc

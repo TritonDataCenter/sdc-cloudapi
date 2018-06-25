@@ -131,7 +131,7 @@ in your local setup. Assuming you want to test RBAC in COAL, you'll need to:
         SDC_URL=https://<IP of cloudapi zone>
         SDC_TESTING=true
         SDC_ACCOUNT=account
-        SDC_KEY_ID=`ssh-keygen -l -f ~/.ssh/id_rsa.pub | awk '{print $2}' | tr -d '\n'`
+        SDC_KEY_ID=`ssh-keygen -l -E md5 -f ~/.ssh/id_rsa.pub| awk '{print $2}' | tr -d '\n'|cut -c 5-`
 
 And, in order to operate as the account user instead, you just need to add the
 ENV var:
