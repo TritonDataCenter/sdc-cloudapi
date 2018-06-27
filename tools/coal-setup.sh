@@ -6,7 +6,7 @@
 #
 
 #
-# Copyright (c) 2014, Joyent, Inc.
+# Copyright (c) 2018, Joyent, Inc.
 #
 
 #
@@ -35,6 +35,7 @@ function fatal {
     exit 1
 }
 
+
 function cleanup {
     true
 }
@@ -46,22 +47,49 @@ function errexit {
 }
 
 
+function create_test_128_package {
+    if [[ $(sdc-papi /packages?name=test_128 | json -H) != "[]" ]]; then
+        echo "Package test_128 already exists; won't create"
+        return 0;
+    fi
+
+    sdc-papi /packages -X POST -d '{
+        "cpu_cap": 100,
+        "max_lwps": 1000,
+        "max_physical_memory": 128,
+        "max_swap": 256,
+        "name": "test_128",
+        "quota": 12288,
+        "zfs_io_priority": 10,
+        "active": true,
+        "default": false,
+        "vcpus": 1,
+        "version": "1.0.0"
+    }' | json -H
+}
+
+
 function install_image {
-  [[ $# -ge 1 ]] || fatal "install_image requires at least 1 argument"
-  local img_uuid=$1
-  local admin_uuid=$(bash /lib/sdc/config.sh -json | json ufds_admin_uuid)
-  local manifest=${img_uuid}.imgmanifest
+    [[ $# -ge 1 ]] || fatal "install_image requires at least 1 argument"
+    local img_uuid=$1
+    local admin_uuid=$(bash /lib/sdc/config.sh -json | json ufds_admin_uuid)
+    local manifest=${img_uuid}.imgmanifest
 
-  cd /var/tmp
-  [[ -f ${manifest} ]] || joyent-imgadm get $img_uuid > "${manifest}.tmp"
-  [[ -f $(ls $img_uuid-file.*) ]] || joyent-imgadm get-file -O $img_uuid
+    if /opt/smartdc/bin/sdc-imgadm get $img_uuid; then
+        echo "Image $img_uuid already exists; won't install"
+        return 0;
+    fi
 
-  json -f "${manifest}.tmp" -e "this.owner = '$admin_uuid'" > $manifest
+    cd /var/tmp
+    [[ -f ${manifest} ]] || joyent-imgadm get $img_uuid > "${manifest}.tmp"
+    [[ -f $(ls $img_uuid-file.*) ]] || joyent-imgadm get-file -O $img_uuid
 
-  /opt/smartdc/bin/sdc-imgadm import \
+    json -f "${manifest}.tmp" -e "this.owner = '$admin_uuid'" > $manifest
+
+    /opt/smartdc/bin/sdc-imgadm import \
         -m /var/tmp/${manifest} \
         -f /var/tmp/${img_uuid}-file.* \
-    && rm /var/tmp/${manifest} /var/tmp/${manifest}.tmp /var/tmp/${img_uuid}-file.*
+      && rm /var/tmp/${manifest} /var/tmp/${manifest}.tmp /var/tmp/${img_uuid}-file.*
 }
 
 
@@ -97,23 +125,14 @@ sdcadm post-setup common-external-nics
 echo "# Setup NAT and Docker"
 sdcadm post-setup docker
 
+echo "# Setup cloudapi"
+sdcadm post-setup cloudapi
+
 # TODO: how to offer alternative to hook up to remote Manta?
 hack_imgapi_to_allow_local_custom_images
 
 echo "# Create test_128 package"
-sdc-papi /packages -X POST -d '{
-    "cpu_cap": 100,
-    "max_lwps": 1000,
-    "max_physical_memory": 128,
-    "max_swap": 256,
-    "name": "test_128",
-    "quota": 12288,
-    "zfs_io_priority": 10,
-    "active": true,
-    "default": false,
-    "vcpus": 1,
-    "version": "1.0.0"
-}' | json -H
+create_test_128_package
 
 # Current the cloudapi test suite assumes the following image is installed:
 #   minimal-64-lts (latest version)
@@ -121,7 +140,7 @@ sdc-papi /packages -X POST -d '{
 image_uuid=`joyent-imgadm list name=minimal-64-lts -o uuid|tail -1`
 install_image ${image_uuid}
 
-# setup fabrics
+echo "# Setup fabrics"
 if [[ "$(sdc-napi /nic_tags | json -H -c 'this.name==="sdc_underlay"')" == "[]" ]]; then
     sdc-napi /nic_tags -X POST -d '{"name": "sdc_underlay"}'
 fi
@@ -163,7 +182,13 @@ EOM
     sdcadm post-setup fabrics -c /tmp/fabrics.cfg
 fi
 
+echo "# Enable volapi"
+sdcadm post-setup volapi
+sdcadm experimental nfs-volumes cloudapi
+sdcadm experimental nfs-volumes docker
+
 if ! $(nictagadm exists sdc_underlay 2>/dev/null); then
+    echo "# Enable external and underlay nics"
     external_nic=$(sdc-sapi /applications?name=sdc | json -H 0.metadata.external_nic)
     sdc-napi /nics/$(echo $external_nic | sed -e 's/://g') \
         -d '{"nic_tags_provided": ["external","sdc_underlay"]}' -X PUT
