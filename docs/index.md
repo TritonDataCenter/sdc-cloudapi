@@ -918,6 +918,18 @@ The set of supported *API versions* is given in the ping endpoint:
 
 The section describes API changes in CloudAPI versions.
 
+## 9.1.0
+
+- Added [Clone Image](#CloneImage). This can be used to create a your own copy
+  of an image owned by another account that has been shared with you (via
+  `triton image share`).
+
+- [Backward incompatible] Shared images will no longer be provisioned by default
+  when an `Accept-Version` of `~9` or higher is used. You will need to
+  explicitly add the `allow_shared_images` param to CreateMachine (which is what
+  `triton create --allow-shared-images` does). Older versions of the
+  CreateMachine interface will allow the provisioning of shared images.
+
 ## 9.0.0
 
 - New object-based format for Roles: the "members" and "policies" properties
@@ -3926,6 +3938,85 @@ ResourceNotFound | If `:login` or `:id` does not exist
 
 
 
+## CloneImage (POST /:login/images/:id?action=clone)
+
+Creates an independent copy of the source image. The `login` account must be on
+the source image ACL to be able to make an image clone.
+
+The resulting cloned image will have the same properties as the source image,
+but the cloned image will have a different id, it will be owned by the `login`
+account and the image will have an empty ACL.
+
+All incremental images in the image origin chain that are not operator images
+(i.e. are not owned by admin) will also be cloned, though all cloned incremental
+images will have state `disabled` so that they are not visible in the default
+image listings.
+
+### Inputs
+
+None.
+
+### Returns
+
+A cloned image object. See [GetImage](#GetImage) docs for the image fields
+returned.
+
+### Errors
+
+For general errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+Some typical and specific errors for this endpoint:
+
+**Error Code**     | **Description**
+------------------ | ---------------
+ResourceNotFound   | If `:login` or `:id` does not exist.
+NotImageOwnerError | If your account is not the owner of the image.
+ImageNotShared     | When the given image is not shared with your account.
+
+### Example CLI Command
+
+    $ triton image clone eca995fe-b904-11e3-b05a-83a4899322dc
+
+#### Example HTTP Request
+
+    POST /my/images/eca995fe-b904-11e3-b05a-83a4899322dc?action=clone HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Api-Version: ~8
+
+#### Example HTTP Response
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Content-Length: 125
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: 2sEZ45LmhRiretMPn5sqVA==
+    Date: Thu, 21 Jan 2016 08:00:09 GMT
+    Server: Joyent Triton 8.0.0
+    Api-Version: 8.0.0
+    Request-Id: f8e43c60-b904-11e3-93b7-1f685001b0c3
+    Response-Time: 135
+
+    {
+      "id": "4ca995fe-b904-11e3-b05a-83a4899322dc",
+      "name": "some-image",
+      "version": "1.0.0",
+      "os": "smartos",
+      "requirements": {},
+      "type": "zone-dataset",
+      "published_at": "2017-11-25T17:44:54Z",
+      "owner": "77034e57-42d1-0342-b302-00db733e8c8a",
+      "public": true,
+      "state": "active"
+    }
+
+
+
+
 # Packages
 
 [Packages](#packages-description) are named collections of resources that are
@@ -4519,6 +4610,7 @@ metadata.$name | String | An arbitrary set of metadata key/value pairs can be se
 tag.$name | String   | An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag."
 firewall_enabled | Boolean | Completely enable or disable firewall for this instance. Default is false
 deletion_protection | Boolean | Whether an instance is destroyable. See [Deletion Protection](#deletion-protection). Default is false
+allow_shared_images | Boolean | Whether to allow provisioning from a shared image. Default is false
 volumes   | Array    | A list of objects representing volumes to mount when the newly created machine boots
 
 #### volumes
@@ -10516,6 +10608,7 @@ Sample code for generating the `Authorization` header (and `Date` header):
 [sdc-updateimage](#UpdateImage)|-|Update metadata about an image.
 [sdc-updatemachinemetadata](#UpdateMachineMetadata)|-|Allows you to update the metadata for a given instance.
 [sdc-user](#users)|-|Add, update and remove account users and their keys.
+-|trion image clone|Clone a shared image.
 -|triton info|Print an account summary.
 -|triton instance ip|Print the primary IP of the given instance.
 -|triton instance ssh|SSH to the primary IP of an instance.

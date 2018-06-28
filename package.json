@@ -1,7 +1,7 @@
 {
     "name": "cloudapi",
     "description": "SmartDataCenter CloudAPI",
-    "version": "9.0.0",
+    "version": "9.1.0",
     "author": "Joyent (joyent.com)",
     "private": true,
     "engines": {
@@ -35,7 +35,7 @@
         "nodemailer": "0.7.1",
         "nopt": "2.0.0",
         "restify": "4.3.3",
-        "sdc-clients": "11.1.0",
+        "sdc-clients": "11.2.0",
         "semver": "5.4.1",
         "strsplit": "1.0.0",
         "triton-metrics": "0.1.0",
