@@ -881,24 +881,27 @@ future CloudAPI backward incompatible changes (always done with a *major*
 version bump) don't break your application.
 
 The [`triton` tool](https://github.com/joyent/node-triton) uses
-`Accept-Version: ~8||~7` by default. Users can restrict the API version via the
+`Accept-Version: ~9||~8` by default. Users can restrict the API version via the
 `triton --accept-version=RANGE ...` option. The older `sdc-*` tools from
-node-smartdc similarly use `~8||~7` by default, and users can restrict the API
+node-smartdc use `~8||~7` by default, and users can restrict the API
 version via the `SDC_API_VERSION=RANGE` environment variable or the
 `--api-version=RANGE` option to each command.
 
+# Ping
+
 The set of supported *API versions* is given in the ping endpoint:
 
-    GET /ping
+    GET /--ping
     accept: application/json
     accept-version: ~8
     ...
 
     HTTPS/1.1 200 OK
-    server: cloudapi/8.3.0
+    server: cloudapi/9.2.0
     content-type: application/json
     ...
     api-version: 8.0.0
+    Triton-Datacenter-Name: us-west-1
 
     {
         "ping": "pong",
@@ -913,6 +916,7 @@ The set of supported *API versions* is given in the ping endpoint:
         }
     }
 
+Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 # Versions
 
@@ -922,6 +926,8 @@ The section describes API changes in CloudAPI versions.
 
 - Added new ImportImageFromDatacenter API method to allow an image to be copied
   to another datacenter in the same cloud.
+- Added a `Triton-Datacenter-Name` response header to [Ping](#Ping) and
+  [ListDatacenters](#ListDatacenters) responses.
 
 ## 9.1.0
 
@@ -3167,6 +3173,8 @@ Provides a list of all datacenters this cloud is aware of.
 An object where the keys are the datacenter name, and the value is the URL
 endpoint of that datacenter's CloudAPI.
 
+Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
+
 **Field**       | **Type** | **Description**
 --------------- | -------- | ---------------
 $datacentername | URL      | location of the datacenter
@@ -3208,7 +3216,8 @@ or
     Connection: Keep-Alive
     Content-MD5: Ju6/xjora7HcwoGG8a8CyA==
     Date: Thu, 21 Jan 2016 05:29:22 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
+    Triton-Datacenter-Name: us-west-1
     Api-Version: 8.0.0
     Request-Id: ec8bd1a0-bfff-11e5-acb9-49a3959d8bb3
     Response-Time: 958
