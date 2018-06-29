@@ -44,6 +44,7 @@ test('ListDatacenters OK', function (t) {
         common.checkHeaders(t, res.headers);
         t.equal(res.statusCode, 200);
         t.ok(body[DC_NAME]);
+        t.equal(res.headers['triton-datacenter-name'], DC_NAME);
         t.end();
     });
 });
