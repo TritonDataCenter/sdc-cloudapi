@@ -3845,8 +3845,8 @@ or
 ## ImportImageFromDatacenter (POST /:login/images?action=import-from-datacenter)
 
 This will copy the image with `id` from the source `datacenter` into this
-datacenter. The copied image will retain all fields (e.g. id, published_at) as
-the original image. All incremental images in the origin chain will also be
+datacenter. The copied image will retain all fields (e.g. `id`, `published_at`)
+as the original image. All incremental images in the origin chain will also be
 copied.
 
 You can use [triton datacenters](#ListDatacenters) to view the list of
@@ -3907,7 +3907,7 @@ OriginIsNotActiveError | If one of the incremental (origin) images is not activa
     Connection: Keep-Alive
     Content-MD5: 2sEZ45LmhRiretMPn5sqVA==
     Date: Thu, 21 Jan 2018 08:00:09 GMT
-    Server: Joyent Triton 9.1.0
+    Server: Joyent Triton 9.2.0
     Api-Version: 9.0.0
     Request-Id: 49af23b0-f952-11e2-8f2c-fff0ec35f4ce
     Response-Time: 460
