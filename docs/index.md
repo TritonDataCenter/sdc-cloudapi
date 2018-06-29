@@ -3907,7 +3907,7 @@ OriginIsNotActiveError | If one of the incremental (origin) images is not activa
     Connection: Keep-Alive
     Content-MD5: 2sEZ45LmhRiretMPn5sqVA==
     Date: Thu, 21 Jan 2018 08:00:09 GMT
-    Server: Joyent Triton 9.2.0
+    Server: cloudapi/9.2.0
     Api-Version: 9.0.0
     Request-Id: 49af23b0-f952-11e2-8f2c-fff0ec35f4ce
     Response-Time: 460
@@ -10705,7 +10705,7 @@ Sample code for generating the `Authorization` header (and `Date` header):
 [sdc-updatemachinemetadata](#UpdateMachineMetadata)|-|Allows you to update the metadata for a given instance.
 [sdc-user](#users)|-|Add, update and remove account users and their keys.
 -|trion image clone|Clone a shared image.
--|[triton image copy](#ImportImageFromDC)|Copy an image into another DC.
+-|[triton image copy](#ImportImageFromDatacenter)|Copy an image into another DC.
 -|triton info|Print an account summary.
 -|triton instance ip|Print the primary IP of the given instance.
 -|triton instance ssh|SSH to the primary IP of an instance.
