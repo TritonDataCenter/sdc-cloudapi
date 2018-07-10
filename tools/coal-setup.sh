@@ -134,6 +134,9 @@ hack_imgapi_to_allow_local_custom_images
 echo "# Create test_128 package"
 create_test_128_package
 
+echo "# Import dev-sample-data, used by some tests"
+sdcadm post-setup dev-sample-data
+
 # Current the cloudapi test suite assumes the following image is installed:
 #   minimal-64-lts (latest version)
 # Note: Keep in sync with test/common.js#getBaseImage().
@@ -185,7 +188,12 @@ fi
 echo "# Enable volapi"
 sdcadm post-setup volapi
 sdcadm experimental nfs-volumes cloudapi
+sdcadm experimental nfs-volumes cloudapi-automount
 sdcadm experimental nfs-volumes docker
+sdcadm experimental nfs-volumes docker-automount
+
+echo "# Enable cns"
+sdcadm post-setup cns
 
 if ! $(nictagadm exists sdc_underlay 2>/dev/null); then
     echo "# Enable external and underlay nics"
