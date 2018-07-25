@@ -5,7 +5,7 @@
 -->
 
 <!--
-    Copyright 2016, Joyent, Inc.
+    Copyright 2018, Joyent, Inc.
 -->
 
 # sdc-cloudapi
@@ -59,47 +59,47 @@ cloudapi zone, the config file is created - and automatically updated - by the
 
 Before testing, you need to create an environment the tests can operate in,
 on the headnode you're using for tests. Assuming that you'll be testing using
-COAL's Headnode, and that you've already created a cloudapi zone on that
+COAL's headnode, and that you've already created a cloudapi zone on that
 headnode, the easiest way to prepare the headnode for CloudAPI testing will be
 running the following from the global zone:
 
     /zones/`vmadm lookup -1 alias=cloudapi0`/root/opt/smartdc/cloudapi/tools/coal-setup.sh
 
 This script will hack DAPI for headnode provisioning, update imgapi to allow
-local custom images, and install some images required for testing.
+local custom images, and install some services, images packages required for
+thorough testing.
 
-Once you've completed this process you can run:
+Once you've completed this process, run the following from within the cloudapi
+zone:
+
+    ./test/runtests
+
+The `runtests` script does a safety check for a canary file before attempting
+to run any tests, to prevent unwanted writes. If the canary is not found,
+`runtests` will let you know; create (e.g. using touch) the file and rerun
+`runtests`.
+
+To run a specific test file, and not the entire test suite, use the -f flag
+with runtests. For example:
+
+    ./test/runtests -f nics.test.js
+
+This will run test/nics.test.js. If you want to run multiple test files, -f
+effectively globs too:
+
+    ./test/runtests -f machines
+
+This will run all the machines\* test files in test/.
+
+It is possible to run the test suite outside of a cloudapi zone, but this is
+an increasingly unbeaten path. If you are so inclined, then ensure that
+`./etc/cloudapi.cfg` is set up appropriately and execute:
 
     make test
 
-or, individually:
-
-    make account_test
-    make analytics_test
-    make auth_test
-    make datacenters_test
-    make datasets_test
-    make fabrics_test
-    make images_test
-    make keys_test
-    make machines_test
-    make networks_test
-    make nics_test
-    make packages_test
-    make services_test
-    make users_test
-
-There are some requirements to run the test suites, in the form of environment
-variables. The following is a list of these variables and their default values:
-
-- `LOG_LEVEL`: Tests log level. Default `info`.
-- `POLL_INTERVAL`: Value used to check for a vm status change, in milisecs.
-  By default, 500 miliseconds.
-- `SDC_SETUP_TESTS`: The tests are running versus an existing SDC setup. (No
-need to boot a server instance, since there's one already running).
-
-Also, the contents of the aforementioned `./etc/cloudapi.cfg` file should have
-been properly set.
+But your life will be simpler if you stick to a cloudapi zone and use the
+`runtests` script; various config settings and environmental flags are set by
+`runtests` automatically.
 
 
 ## Image management
