@@ -6553,7 +6553,6 @@ job records have not been purged from Triton.
 **Field**  | **Type** | **Description**
 ---------- | -------- | ---------------
 action     | String   | The name of the action
-parameters | Object   | The original set of parameters sent when the action was requested
 success    | String   | Either "yes" or "no", depending on the action's success
 caller     | Object   | Account requesting the action
 time       | Date (ISO8601) | When the action finished
