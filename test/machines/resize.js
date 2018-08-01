@@ -70,9 +70,8 @@ function (suite, client, other, machine, pkgDown, pkgSame, pkgUp, cb) {
 
 
     suite.test('Resize Machine to same package', function (t) {
-        t.ok(pkgSame, 'Resize same package OK');
+        t.ok(pkgSame, 'Resize same package OK: package ' + pkgSame.name);
 
-        console.log('Resizing to package: %s', pkgSame.name);
         client.post('/my/machines/' + machine, {
             action: 'resize',
             'package': pkgSame.uuid
@@ -88,9 +87,8 @@ function (suite, client, other, machine, pkgDown, pkgSame, pkgUp, cb) {
     });
 
     suite.test('Resize Machine down', function (t) {
-        t.ok(pkgDown, 'Resize down package OK');
+        t.ok(pkgDown, 'Resize down package OK: package ' + pkgDown.name);
 
-        console.log('Resizing to package: %s', pkgDown.name);
         client.post('/my/machines/' + machine, {
             action: 'resize',
             'package': pkgDown.uuid
