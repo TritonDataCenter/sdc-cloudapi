@@ -7,7 +7,7 @@
 #
 
 #
-# Copyright (c) 2014, Joyent, Inc.
+# Copyright (c) 2018, Joyent, Inc.
 #
 
 export PS4='[\D{%FT%TZ}] ${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
@@ -161,6 +161,9 @@ sdc_log_rotation_add cloudapi-8082 /var/svc/log/*cloudapi-8082.log 1g
 sdc_log_rotation_add cloudapi-8083 /var/svc/log/*cloudapi-8083.log 1g
 sdc_log_rotation_add cloudapi-8084 /var/svc/log/*cloudapi-8084.log 1g
 sdc_log_rotation_setup_end
+
+# Add metadata for cmon-agent discovery
+mdata-put metricPorts 8881,8882,8883,8884
 
 # All done, run boilerplate end-of-setup
 sdc_setup_complete
