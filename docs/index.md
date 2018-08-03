@@ -7499,48 +7499,52 @@ You can manage Firewall Rules for your instances through CloudAPI.
 
 In general, the firewall rule is composed of the following pieces:
 
-    FROM <target a> TO <target b> <action> <protocol> <port>
+    FROM <target a> TO <target b> <action> <protocol> <port> [<priority>]
 
-where `target` can be one of `wildcard`, `ip`, `subnet`, `tag` or `vm`, `action`
-is either `ALLOW` or `BLOCK`, `protocol` will be one of `tcp`, `udp` and `icmp`,
-and `port` is a valid port number.
+where
 
-The rule should have `tag` or `vm` in the FROM or TO target. The following are some possibilities:
+* `target` will be one of `any`, `all vms`, `ip`, `subnet`, `tag` or `vm`
+* `action` is either `ALLOW` or `BLOCK`
+* `protocol` will be one of `tcp`, `udp` or `icmp`
+* `port` is a valid port number or range (e.g. `port 22`, `ports 8000 - 8999`)
+* `priority` is a number between 0 and 100 (default is 0, the lowest priority)
+
+The use of `priority` is available only with fwapi `FWRULE_VERSION` 4 or above. See
+fwapi [documentation](https://github.com/joyent/sdc-fwapi/blob/master/docs/index.md)
+for more information.
+
+The rule should have `tag`, `vm` or `all vms` in the FROM or TO target. The
+following are some possibilities:
 
 ### Allow incoming HTTP traffic to an instance:
 
-    {
-        "enabled": true,
-        "rule": "FROM any TO vm 0abeae82-c040-4080-ac60-b60d3e3890a7 ALLOW tcp port 80"
-    }
+    FROM any TO vm 0abeae82-c040-4080-ac60-b60d3e3890a7 ALLOW tcp port 80
 
 ### Block outgoing SMTP traffic from an instance to a subnet:
 
-    {
-        "enabled": true,
-        "rule": "FROM vm 0abeae82-c040-4080-ac60-b60d3e3890a7 TO subnet 10.99.99.0/24 BLOCK tcp port 25"
-    }
+    FROM vm 0abeae82-c040-4080-ac60-b60d3e3890a7 TO subnet 10.99.99.0/24 BLOCK tcp port 25
 
 ### Block incoming TCP traffic from all instances to a certain range of ports:
 
-    {
-        "enabled": true,
-        "rule": "FROM any TO vm 0abeae82-c040-4080-ac60-b60d3e3890a7 BLOCK tcp ports 40000 - 65535"
-    }
+    FROM any TO vm 0abeae82-c040-4080-ac60-b60d3e3890a7 BLOCK tcp ports 40000 - 65535
 
 ### Allow an IP HTTP and HTTPS access to all instances tagged www or testwww:
 
-    {
-        "enabled": true,
-        "rule": "FROM ip 10.99.99.7 TO (tag www OR tag testwww) ALLOW tcp (port 80 AND port 443)"
-    }
+    FROM ip 10.99.99.7 TO (tag www OR tag testwww) ALLOW tcp (port 80 AND port 443)
 
 ### Allow syslog traffic from instances tagged with group=web to instances tagged with group=mon:
 
-    {
-        "enabled": true,
-        "rule": "FROM tag group=www TO tag group=mon ALLOW udp port 514"
-    }
+    FROM tag group=www TO tag group=mon ALLOW udp port 514
+
+### Allow traffic from anyone but 10.20.30.0/24 to access an MTA:
+
+    FROM any TO tag mta ALLOW tcp PORT 25
+    FROM subnet 10.20.30.0/24 TO tag mta BLOCK tcp PORT 25 PRIORITY 1
+
+### Block all outbound traffic, overriding the default outbound policy, except for SSH:
+
+    FROM all vms TO any BLOCK tcp PORT all
+    FROM all vms TO any ALLOW tcp PORT 22 PRIORITY 1
 
 
 ## ListFirewallRules (GET /:login/fwrules)
