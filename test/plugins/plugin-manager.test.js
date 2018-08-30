@@ -27,6 +27,7 @@ var CLIENTS;
 var CONFIG;
 var LOG;
 var ACCOUNT;
+var UUID = '0ea51402-ac4a-11e8-8c57-e3cbc467d267';
 
 
 // --- Helpers
@@ -1094,6 +1095,201 @@ function (t) {
             networks: [],
             req_id: 'f54db238-43bd-11e8-b7d1-42004d19d401'
         });
+        t.fail('exception not thrown');
+    } catch (e) {
+        t.deepEqual(e.message, 'cb (func) is required', 'e.message');
+        t.deepEqual(e.expected, 'func', 'e.expected');
+        t.deepEqual(e.actual, 'undefined', 'e.actual');
+    }
+
+    t.end();
+});
+
+
+test('allowResize - pass',
+function (t) {
+    var manager = getManager();
+
+    var called = 0;
+    manager.hooks.allowResize = [
+        function (opts, next) {
+            called += 1;
+            t.deepEqual(opts, {
+                account: {},
+                vm: { uuid: UUID },
+                image: {},
+                pkg: {},
+                req_id: '03a19052-f9e0-11e7-bc63-1b41742f3bd0'
+            }, 'opts');
+            t.equal(typeof (next), 'function', 'next');
+            next();
+        },
+        function (opts, next) {
+            called += 1;
+            t.deepEqual(opts, {
+                account: {},
+                vm: { uuid: UUID },
+                image: {},
+                pkg: {},
+                req_id: '03a19052-f9e0-11e7-bc63-1b41742f3bd0'
+            }, 'opts');
+            t.equal(typeof (next), 'function', 'next');
+            next();
+        }
+    ];
+
+    manager.allowResize({
+        account: {},
+        vm: { id: UUID },
+        image: {},
+        pkg: {},
+        req_id: '03a19052-f9e0-11e7-bc63-1b41742f3bd0'
+    }, function extCb(err) {
+        t.ifErr(err, 'err');
+        t.equal(called, 2, 'two funcs called');
+        t.end();
+    });
+});
+
+
+test('allowResize - fail',
+function (t) {
+    var manager = getManager();
+
+    var called = 0;
+    manager.hooks.allowResize = [
+        function (opts, next) {
+            called += 1;
+            t.deepEqual(opts, {
+                account: {},
+                vm: { uuid: UUID },
+                image: {},
+                pkg: {},
+                req_id: '03a19052-f9e0-11e7-bc63-1b41742f3bd0'
+            }, 'opts');
+            t.equal(typeof (next), 'function', 'next');
+            next(new Error());
+        },
+        function (opts, next) {
+            called += 1;
+            t.fail('code should be unreachable');
+            next();
+        }
+    ];
+
+    manager.allowResize({
+        account: {},
+        vm: { id: UUID },
+        image: {},
+        pkg: {},
+        req_id: '03a19052-f9e0-11e7-bc63-1b41742f3bd0'
+    }, function extCb(err) {
+        t.ok(err, 'err');
+        t.equal(called, 1, 'one func called');
+        t.end();
+    });
+});
+
+
+test('allowResize - no plugins',
+function (t) {
+    var manager = getManager();
+    manager.hooks.allowResize = [];
+
+    manager.allowResize({
+        account: {},
+        vm: { id: UUID },
+        image: {},
+        pkg: {},
+        req_id: '03a19052-f9e0-11e7-bc63-1b41742f3bd0'
+    }, function extCb(err) {
+        t.ifErr(err, 'err');
+        t.end();
+    });
+});
+
+
+test('allowResize - badargs',
+function (t) {
+    var manager = getManager();
+
+    try {
+        manager.allowResize(undefined, function () {});
+        t.fail('exception not thrown');
+    } catch (e) {
+        t.deepEqual(e.message, 'opts (object) is required', 'e.message');
+        t.deepEqual(e.expected, 'object', 'e.expected');
+        t.deepEqual(e.actual, 'undefined', 'e.actual');
+    }
+
+    try {
+        manager.allowResize({}, function () {});
+        t.fail('exception not thrown');
+    } catch (e) {
+        t.deepEqual(e.message, 'opts.account (object) is required',
+            'e.message');
+        t.deepEqual(e.expected, 'object', 'e.expected');
+        t.deepEqual(e.actual, 'undefined', 'e.actual');
+    }
+
+    try {
+        manager.allowResize({
+            account: {}
+        }, function () {});
+        t.fail('exception not thrown');
+    } catch (e) {
+        t.deepEqual(e.message, 'opts.vm (object) is required', 'e.message');
+        t.deepEqual(e.expected, 'object', 'e.expected');
+        t.deepEqual(e.actual, 'undefined', 'e.actual');
+    }
+
+    try {
+        manager.allowResize({
+            account: {},
+            vm: {}
+        }, function () {});
+        t.fail('exception not thrown');
+    } catch (e) {
+        t.deepEqual(e.message, 'opts.image (object) is required', 'e.message');
+        t.deepEqual(e.expected, 'object', 'e.expected');
+        t.deepEqual(e.actual, 'undefined', 'e.actual');
+    }
+
+    try {
+        manager.allowResize({
+            account: {},
+            vm: {},
+            image: {}
+        }, function () {});
+        t.fail('exception not thrown');
+    } catch (e) {
+        t.deepEqual(e.message, 'opts.pkg (object) is required', 'e.message');
+        t.deepEqual(e.expected, 'object', 'e.expected');
+        t.deepEqual(e.actual, 'undefined', 'e.actual');
+    }
+
+    try {
+        manager.allowResize({
+            account: {},
+            vm: {},
+            image: {},
+            pkg: {}
+        }, function () {});
+        t.fail('exception not thrown');
+    } catch (e) {
+        t.deepEqual(e.message, 'opts.req_id (uuid) is required', 'e.message');
+        t.deepEqual(e.expected, 'uuid', 'e.expected');
+        t.deepEqual(e.actual, 'undefined', 'e.actual');
+    }
+
+    try {
+        manager.allowResize({
+            account: {},
+            vm: {},
+            image: {},
+            pkg: {},
+            req_id: '03a19052-f9e0-11e7-bc63-1b41742f3bd0'
+        }, undefined);
         t.fail('exception not thrown');
     } catch (e) {
         t.deepEqual(e.message, 'cb (func) is required', 'e.message');
