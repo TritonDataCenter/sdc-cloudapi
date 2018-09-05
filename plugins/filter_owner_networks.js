@@ -46,9 +46,7 @@
  */
 
 var assert = require('assert-plus');
-
-
-var EXTERNAL_NIC_TAG = 'external';
+var modNets = require('../lib/networks');
 
 
 /*
@@ -133,9 +131,7 @@ function findOwnerExternalNetwork(api, cfg) {
             });
 
             var external = owned.filter(function filterExternal(network) {
-                var tags = network.nic_tags_present;
-                return network.nic_tag === EXTERNAL_NIC_TAG ||
-                    (tags && tags.indexOf(EXTERNAL_NIC_TAG) !== -1);
+                return (modNets.isExternal(network));
             });
 
             if (external.length === 0) {

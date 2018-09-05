@@ -162,28 +162,11 @@ test('Get test server', function (t) {
 });
 
 test('Create nic tag', function (t) {
-    CLIENT.napi.getNicTag(NIC_TAG_NAME, function onGetNicTag(err, nicTag) {
-        if (err) {
-            if (err.statusCode === 404) {
-                createNicTag();
-            } else {
-                t.ifError(err, 'getNicTag');
-                t.end();
-            }
-        } else {
-            NIC_TAG = nicTag;
-            t.end();
-        }
+    getOrCreateNicTag(NIC_TAG_NAME, CLIENT, function onGetOrCreate(err, tag) {
+        t.ifError(err, 'createNicTag: nicTag ' + NIC_TAG_NAME);
+        NIC_TAG = tag;
+        t.end();
     });
-
-    function createNicTag() {
-        CLIENT.napi.createNicTag(NIC_TAG_NAME, function onCreateNicTag(err,
-            nicTag) {
-            t.ifError(err, 'createNicTag: nicTag ' + NIC_TAG_NAME);
-            NIC_TAG = nicTag;
-            t.end();
-        });
-    }
 });
 
 test('Add nic tag to test server', function (t) {
@@ -1240,6 +1223,237 @@ test('ListMachines destroyed', function (t) {
 });
 
 
+test('Create machine with external RAN network pool', function (t) {
+    var server;
+    var networkPoolUuid;
+    var machId;
+    var nets = {};
+    var networkUuids = [];
+    var nicTag = 'external_rack_e50';
+    var nicTagWrong = 'external_rack_error0';
+    var goodNet = 'machines-test-network-pool-rack-1';
+    var badNet = 'machines-test-network-pool-rack-2';
+
+    var networks = [
+        {
+            name: goodNet,
+            vlan_id: 97,
+            subnet: '10.99.55.0/24',
+            provision_start_ip: '10.99.55.5',
+            provision_end_ip: '10.99.55.250',
+            nic_tag: nicTag,
+            owner_uuids: []
+        },
+        {
+            name: badNet,
+            vlan_id: 98,
+            subnet: '10.99.67.0/24',
+            provision_start_ip: '10.99.67.5',
+            provision_end_ip: '10.99.67.250',
+            nic_tag: nicTagWrong,
+            owner_uuids: []
+        }
+    ];
+
+    function createNicTags(_, done) {
+        var nicTags = [nicTag, nicTagWrong];
+
+        vasync.forEachParallel({
+            func: function (tag, cb) {
+                getOrCreateNicTag(tag, CLIENT, function onGetOrCreate(err) {
+                    t.ifError(err, 'createNicTag: nicTag ' + tag);
+                    cb(err);
+                });
+            },
+            inputs: nicTags
+        }, function (createErr) {
+            t.ifError(createErr);
+            done(createErr);
+        });
+    }
+
+    function getTestServer(_, done) {
+        common.getTestServer(CLIENT, function onGetTestServer(err, testServer) {
+            t.ifError(err);
+            server = testServer;
+            done(err);
+        });
+    }
+
+    function assignNicTagToServer(_, done) {
+        common.addNicTagsToServer([nicTag], server, CLIENT,
+            function onAddNicTagsToServer(addNicTagsErr, job) {
+
+            t.ifError(addNicTagsErr, 'assign NIC tag to server: ' + nicTag);
+            waitForJob(CLIENT, job.job_uuid, function (jobErr) {
+                t.ifError(jobErr, 'wait for job assign NIC tag to server');
+                done(jobErr);
+            });
+        });
+    }
+
+    function createNetwork(params, done) {
+        CLIENT.napi.createNetwork(params, function (err, net) {
+            t.ifError(err, 'create network');
+            if (err) {
+                done(err);
+                return;
+            }
+            nets[net.name] = net.uuid;
+            networkUuids.push(net.uuid);
+            done();
+        });
+    }
+
+    function createNetworksForPool(_, done) {
+        vasync.forEachPipeline({
+            func: createNetwork,
+            inputs: networks
+        }, function (err, results) {
+            t.ifError(err, 'create networks for pool');
+            if (err) {
+                done(err);
+                return;
+            }
+            done();
+        });
+    }
+
+    function createPool(_, done) {
+        CLIENT.napi.createNetworkPool('external',
+            {networks: networkUuids}, function (err, net) {
+            if (err) {
+                done(err);
+                return;
+            }
+            networkPoolUuid = net.uuid;
+            done();
+        });
+    }
+
+    function runTest(_, done) {
+        var obj = {
+            image: IMAGE_UUID,
+            package: SDC_128.name,
+            firewall_enabled: true
+        };
+
+        // provision machine without specifying network (should pickup network
+        // from external network pool)
+        machinesCommon.createMachine(t, CLIENT, obj,
+            function (cErr, machineUuid) {
+
+            machId = machineUuid;
+
+            machinesCommon.waitForRunningMachine(CLIENT, machineUuid,
+                function (err) {
+                    t.ifError(err);
+
+                    if (err) {
+                        done(err);
+                        return;
+                    }
+                    machinesCommon.getMachine(t, CLIENT, machineUuid,
+                        function (gErr, machine) {
+                            t.ifError(gErr);
+                            t.ok(machine.networks.indexOf(nets[goodNet]) !== -1,
+                                'rack network exists');
+                            t.ok(machine.networks.indexOf(nets[badNet]) === -1,
+                                'alt network does not exist');
+                            done(gErr);
+                    });
+            });
+        });
+    }
+
+    vasync.pipeline({
+        funcs: [
+            createNicTags,
+            getTestServer,
+            assignNicTagToServer,
+            createNetworksForPool,
+            createPool,
+            runTest
+        ]
+    }, function (err, results) {
+        // This teardown intentionally plows past errors to make sure we don't
+        // leave behind any artifacts.
+        vasync.pipeline({ funcs: [
+            function deleteNetworkPool(_, done) {
+                if (!networkPoolUuid) {
+                    done();
+                    return;
+                }
+                CLIENT.napi.deleteNetworkPool(networkPoolUuid,
+                    function (delNetworkPoolErr, net) {
+
+                    t.ifError(delNetworkPoolErr, 'delete network pool');
+                    done();
+                });
+            },
+
+            // Machine must be deleted first because the network cannot be
+            // deleted while nics are still provisioned.
+            function deleteMach(_, done) {
+                if (!machId) {
+                    done();
+                    return;
+                }
+                CLIENT.del('/my/machines/' + machId, function (dErr, req, res) {
+                    t.ifError(err, 'DELETE /my/machines error');
+                    t.equal(res.statusCode, 204, 'DELETE /my/machines status');
+                    done();
+                });
+            },
+
+            function waitDeletedMach(_, done) {
+                if (!machId) {
+                    done();
+                    return;
+                }
+                machinesCommon.waitForDeletedMachine(CLIENT, machId,
+                    function (waitDelErr) {
+                        t.ifError(waitDelErr, 'wait for deleted machine');
+                        done();
+                });
+            },
+
+            function deleteNetwork(_, done) {
+                vasync.forEachParallel({
+                    func: function delNetwork(netUuid, cb) {
+                        CLIENT.napi.deleteNetwork(netUuid, function (dnErr) {
+                            t.ifError(dnErr);
+                            cb();
+                        });
+                    },
+                    inputs: networkUuids
+                }, function (delPipelineErr) {
+                    t.ifError(delPipelineErr);
+                    done();
+                });
+            },
+
+            function deleteNicTags(_, done) {
+                var nicTags = [nicTag];
+                common.removeTagsFromServer(nicTags, server, CLIENT,
+                    function (removeErr, job) {
+
+                    t.ifError(removeErr, 'remove NIC tags from server: '
+                        + nicTags);
+
+                    waitForJob(CLIENT, job.job_uuid, function (jobErr) {
+                        t.ifError(jobErr, 'waitForJob ' + job.job_uuid);
+                        done();
+                    });
+                });
+            }
+        ]}, function (tdErr, tdResults) {
+            t.ifError(tdErr, 'teardown error');
+            t.end();
+        });
+    });
+});
+
 test('CreateMachine using query args', function (t) {
     var query = '/my/machines?image=' + IMAGE_UUID +
                 '&package=' + SDC_128.name +
@@ -1814,7 +2028,6 @@ test('Create Machine using multiple networks and IPs', function (t) {
     });
 });
 
-
 test('Wait For Running Machine provisioned with multiple IPs', waitForRunning);
 
 
@@ -1916,6 +2129,26 @@ test('teardown', function (t) {
 
 // --- Helpers
 
+
+function getOrCreateNicTag(tagName, client, callback) {
+    client.napi.getNicTag(tagName, function onGetNicTag(err, nicTag) {
+        if (err) {
+            if (err.statusCode === 404) {
+                createNicTag();
+            } else {
+                callback(err);
+            }
+        } else {
+            callback(null, nicTag);
+        }
+    });
+
+    function createNicTag() {
+        client.napi.createNicTag(tagName, function onCreateNicTag(err, nicTag) {
+            callback(err, nicTag);
+        });
+    }
+}
 
 function waitForRunning(t) {
     machinesCommon.waitForRunningMachine(CLIENT, MACHINE_UUID, function (err) {
