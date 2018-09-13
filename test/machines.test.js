@@ -217,7 +217,7 @@ test('Create machine with inactive package', function (t) {
         server_uuid: SERVER_UUID
     };
 
-    CLIENT.post('/my/machines', obj, function (err, req, res, body) {
+    CLIENT.post('/my/machines', obj, function (err, req, res, _body) {
         t.ok(err, 'POST /my/machines with inactive package error');
         t.equal(res.statusCode, 409);
         t.end();
@@ -299,7 +299,7 @@ test('Create machine with too many public networks', function (t) {
                 t.end();
             });
 
-        } else if (nets.length == 1) {
+        } else if (nets.length === 1) {
             addNetwork(fakeNetwork, function (_, newNetUuid) {
                 createMachine(networkUuids.concat(newNetUuid), function () {
                     removeNetwork(newNetUuid, function () {
@@ -554,10 +554,10 @@ test('CreateMachine using network pool and an ip', function (t) {
 
     vasync.pipeline({
         funcs: [createNetworksForPool, createPool, runTest]
-    }, function (err, results) {
+    }, function (_err, results) {
         // Regardless of errors we should cleanup and end the test
         CLIENT.napi.deleteNetworkPool(networkPoolUuid,
-            function (delNetworkPoolErr, net) {
+            function (delNetworkPoolErr, _net) {
             t.ifError(delNetworkPoolErr);
 
             function deleteNetwork(netUuid, done) {
@@ -591,7 +591,7 @@ test('Create machine with invalid parameters', function (t) {
         server_uuid: '123456'
     };
 
-    CLIENT.post('/my/machines', obj, function (err, req, res, body) {
+    CLIENT.post('/my/machines', obj, function (err, req, res, _body) {
         t.ok(err, 'POST Create machine with invalid parameters');
         t.ok(/name/.test(err.message));
         t.notOk(/server/.test(err.message));
@@ -664,7 +664,7 @@ test('CreateMachine using image without permission', function (t) {
 // inside cloudapi conflict with simple updates of the existing user. That
 // implies skipping using the existing http client.
 test('CreateMachine without approved_for_provisioning', function (t) {
-    function attemptProvision(err, tmpAccount, signer, cb) {
+    function attemptProvision(err, _tmpAccount, signer, cb) {
         t.ifError(err);
 
         var httpClient = restify.createJsonClient({
@@ -846,11 +846,11 @@ test('ListMachines (filter by virtualmachine type)', function (t) {
         // list, but it's not a virtualmachine, so for now:
         t.equal(body.length, 0);
 
-        //body.forEach(function (m) {
-        //    checkMachine(t, m);
-        //    t.equal(m.type, 'virtualmachine');
-        //    t.equal(m.brand, 'kvm');
-        //});
+        // body.forEach(function (m) {
+        //     checkMachine(t, m);
+        //     t.equal(m.type, 'virtualmachine');
+        //     t.equal(m.brand, 'kvm');
+        // });
 
         t.end();
     });
@@ -1006,7 +1006,7 @@ test('Resize machine to inactive package', function (t) {
     CLIENT.post('/my/machines/' + MACHINE_UUID, {
         action: 'resize',
         package: SDC_256_INACTIVE.name
-    }, function (err, req, res, body) {
+    }, function (err, req, res, _body) {
         t.ok(err, 'Resize to inactive package error');
         t.equal(res.statusCode, 409, 'Resize to inactive pkg status');
         t.end();
@@ -1341,7 +1341,7 @@ test('Create machine with external RAN network pool', function (t) {
         // provision machine without specifying network (should pickup network
         // from external network pool)
         machinesCommon.createMachine(t, CLIENT, obj,
-            function (cErr, machineUuid) {
+            function (_cErr, machineUuid) {
 
             machId = machineUuid;
 
@@ -1385,7 +1385,7 @@ test('Create machine with external RAN network pool', function (t) {
                     return;
                 }
                 CLIENT.napi.deleteNetworkPool(networkPoolUuid,
-                    function (delNetworkPoolErr, net) {
+                    function (delNetworkPoolErr, _net) {
 
                     t.ifError(delNetworkPoolErr, 'delete network pool');
                     done();
@@ -1399,7 +1399,7 @@ test('Create machine with external RAN network pool', function (t) {
                     done();
                     return;
                 }
-                CLIENT.del('/my/machines/' + machId, function (dErr, req, res) {
+                CLIENT.del('/my/machines/' + machId, function (_err, req, res) {
                     t.ifError(err, 'DELETE /my/machines error');
                     t.equal(res.statusCode, 204, 'DELETE /my/machines status');
                     done();
@@ -1447,7 +1447,7 @@ test('Create machine with external RAN network pool', function (t) {
                     });
                 });
             }
-        ]}, function (tdErr, tdResults) {
+        ]}, function (tdErr, _tdResults) {
             t.ifError(tdErr, 'teardown error');
             t.end();
         });
@@ -2110,13 +2110,38 @@ test('Remove test server nic tag', function (t) {
 });
 
 
+test('Create Machine using "params.bootrom" without "bhyve"', function (t) {
+    var obj = {
+        image: IMAGE_UUID,
+        package: SDC_256.name,
+        name: 'a' + uuid().substr(0, 7),
+        locality: {
+            far: 'af4167f0-beda-4af9-9ae4-99d544499c14', // fake UUID
+            strict: true
+        },
+        server_uuid: SERVER_UUID,
+        deletion_protection: true,
+        firewall_enabled: true,
+        bootrom: true
+    };
+
+    CLIENT.post('/my/machines', obj, function (err, req, res, body) {
+        t.equal(err.statusCode, 409);
+        t.deepEqual(body, {
+            code: 'InvalidArgument',
+            message: 'Only bhyve VMs support "bootrom" option'
+        });
+        t.end();
+    });
+});
+
 test('teardown', function (t) {
     common.deletePackage(CLIENT, SDC_256, function (err) {
         common.deletePackage(CLIENT, SDC_256_INACTIVE, function (err2) {
             common.deletePackage(CLIENT, SDC_128_LINUX, function (err3) {
                 common.deletePackage(CLIENT, SDC_512, function (err4) {
                     common.teardown(CLIENTS, SERVER, function (err5) {
-                        t.ifError(err||err2||err3||err4||err5,
+                        t.ifError(err || err2 || err3 || err4 || err5,
                                 'teardown success');
                         t.end();
                     });
@@ -2211,7 +2236,7 @@ function searchAndCheck(query, t, checkAttr) {
 }
 
 
-function searchAndCheckOther(query, t, checkAttr) {
+function searchAndCheckOther(query, t, _checkAttr) {
     OTHER.get('/my/machines?' + query, function (err, req, res, body) {
         t.ifError(err);
         t.deepEqual(body, []);
