@@ -1314,6 +1314,14 @@ order to use it as a human-friendly alias, this attribute's presence is
 optional.  When it's not provided, the ssh key fingerprint will be used as the
 `name` instead.
 
+Keys can optionally be submitted along with a hardware attestation certificate
+signed by a trusted hardware manufacturer, which will be validated and
+processed. Keys generated in hardware devices which require some form of
+multi-factor authentication to sign requests (e.g. the device requires a PIN or
+Touch input) are marked by this mechanism and may be specially treated by
+Triton and Manta as providing a kind of 2-factor authentication (depending on
+administrator policy).
+
 For the following routes, the parameter placeholder `:key` can be replaced with
 with either the key's `name` or its `fingerprint`.  It's strongly recommended to
 use `fingerprint` when possible, since the `name` attribute does not have any
@@ -1337,6 +1345,15 @@ Array of key objects.  Each key object has the following fields:
 name        | String   | Name for this key
 fingerprint | String   | Key fingerprint
 key         | String   | Public key in OpenSSH format
+attested    | Boolean  | Indicates if the key has a hardware device attestation
+multifactor | Array[String] | Lists any additional factors required to use (if attested)
+
+Possible `multifactor` values:
+
+**Value**   | **Meaning**
+----------- | -----------
+pin         | Input of a PIN or password is required for key use
+touch       | Touch input (not authenticated -- i.e. not a fingerprint) is required for key use
 
 ### Errors
 
@@ -1403,6 +1420,15 @@ Retrieves the record for an individual key.
 name         | String   | Name for this key
 fingerprint  | String   | Key fingerprint
 key          | String   | OpenSSH formatted public key
+attested     | Boolean  | Indicates if the key has a hardware device attestation
+multifactor  | Array[String] | Lists any additional factors required to use (if attested)
+
+Possible `multifactor` values:
+
+**Value**   | **Meaning**
+----------- | -----------
+pin         | Input of a PIN or password is required for key use
+touch       | Touch input (not authenticated -- i.e. not a fingerprint) is required for key use
 
 ### Errors
 
@@ -1448,7 +1474,9 @@ or
     {
       "name": "barbar",
       "fingerprint": "03:7f:8e:ef:da:3d:3b:9e:a4:82:67:71:8c:35:2c:aa",
-      "key": "<...>"
+      "key": "<...>",
+      "attested": true,
+      "multifactor": ["pin"]
     }
 
 
@@ -1458,10 +1486,11 @@ Uploads a new OpenSSH key to Triton for use in HTTP signing and SSH.
 
 ### Inputs
 
-**Field** | **Type** | **Description**
---------- | -------- | ---------------
-name      | String   | Name for this key (optional)
-key       | String   | OpenSSH formatted public key
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+name        | String   | Name for this key (optional)
+key         | String   | OpenSSH formatted public key
+attestation | Array of String | PEM formatted attestation certificates
 
 ### Returns
 
@@ -1470,6 +1499,8 @@ key       | String   | OpenSSH formatted public key
 name        | String   | Name for this key
 fingerprint | String   | Key fingerprint
 key         | String   | OpenSSH formatted public key
+attested    | Boolean  | Indicates if the key has a hardware device attestation
+multifactor | Array[String] | Lists any additional factors required to use (if attested)
 
 ### Errors
 

@@ -28,6 +28,45 @@ var KEY_2 = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDY2qV5e2q8qb+kYtn' +
     'T9rilmEP154FX/bVsFHitmyyYgba+X90uIR8KGLFZ4eWJNPprJFnCWXrpY5bSOgcS9aWVgC' +
     'oH8sqHatNKUiQpZ4Lsqr+Z4fAf4enldx/KMW91iKn whatever@wherever.local';
 
+var KEY_3 = 'ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHA' +
+    'yNTYAAABBBEazmEPU22E0LgIzFjIJOIpujvWv3UNJ1lVNXYc89Bvm/yHD56UP9HQWRIPTBJ' +
+    'Zcbn5/37HhG5JU0CX6cxZxzmc= PIV_slot_9A@B47331299FC7AD6206BA47042A7CF269';
+var KEY_3_FP = 'a4:96:76:b6:10:cb:75:d6:84:52:f6:87:ad:83:9a:8f';
+
+var KEY_3_C1 = '-----BEGIN CERTIFICATE-----\n' +
+    'MIICQjCCASqgAwIBAgIPc9hpNjnyn+kces3syaD4MA0GCSqGSIb3DQEBCwUAMCEx\n' +
+    'HzAdBgNVBAMMFll1YmljbyBQSVYgQXR0ZXN0YXRpb24wIBcNMTYwMzE0MDAwMDAw\n' +
+    'WhgPMjA1MjA0MTcwMDAwMDBaMCUxIzAhBgNVBAMMGll1YmlLZXkgUElWIEF0dGVz\n' +
+    'dGF0aW9uIDlhMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAERrOYQ9TbYTQuAjMW\n' +
+    'Mgk4im6O9a/dQ0nWVU1dhzz0G+b/IcPnpQ/0dBZEg9MEllxufn/fseEbklTQJfpz\n' +
+    'FnHOZ6M8MDowEQYKKwYBBAGCxAoDAwQDBAMDMBMGCisGAQQBgsQKAwcEBQIDT43x\n' +
+    'MBAGCisGAQQBgsQKAwgEAgIBMA0GCSqGSIb3DQEBCwUAA4IBAQAXJi2Hx5WpfzMs\n' +
+    '/9RLDVAjnhVFBZgvqPoAf/BTcfGuI5+uBzNqMttPvETu2TeWPmts9JNJIy4yVy+x\n' +
+    'HNs1XeiJqlW82bekz8rGhcwe+tP7Ub/H2YgJrzkZMPEr+HrK2vu7Jj4Z03TtD0Z1\n' +
+    'L/6AqvaB/RUBhjWgXfqP91nxoWwWWm0wwttqDWQzyvjWus1YpO60ZI8kyCjLKMgx\n' +
+    '6kiB+sG3Wq0VRKpIdj885NunFUnjMCvM895H9sggTiw/mIoAMp7n77ymi2dbTGNI\n' +
+    'MT7SS6P1IFRmkRiSQizbfv8Pyedpumjwr17KfbOIKZjWNL8EexY50S3u7S6Fnp61\n' +
+    '8LIGjLAI\n' +
+    '-----END CERTIFICATE-----';
+var KEY_3_C2 = '-----BEGIN CERTIFICATE-----\n' +
+    'MIIC5jCCAc6gAwIBAgIJAKSFIqo0r65PMA0GCSqGSIb3DQEBCwUAMCsxKTAnBgNV\n' +
+    'BAMMIFl1YmljbyBQSVYgUm9vdCBDQSBTZXJpYWwgMjYzNzUxMCAXDTE2MDMxNDAw\n' +
+    'MDAwMFoYDzIwNTIwNDE3MDAwMDAwWjAhMR8wHQYDVQQDDBZZdWJpY28gUElWIEF0\n' +
+    'dGVzdGF0aW9uMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAq6kLFpvv\n' +
+    'Mcw+rBhaLUWAdXDHWLBsPxtZDUm5iehvzrsnb9g8YDqFAO9cvECZPUHu6sCBf3ZI\n' +
+    '5KlMvNVr4R8KYJPG/qrSjY7it82LK/eb3VqrL8+5DlTO7I31Xtd7kcOnVpzcwQaG\n' +
+    'djZEU/sIJdgGuQaMgf1jZ8o8qLjqHKbK20R7EsqyNAF+c+Q2g9/r+SMABwFqBxmK\n' +
+    'ZFadEIrFcwI9GG6vP8MCp8D3ov1tWkJ2TtbAHtbAxqpdpxqfENswVxhctbX9DL5J\n' +
+    'JCKvHlZKNETUqtThrpVMdcCIYfSMflTzE+sP5StSYFpuutfljGPaURq7Ilw3K9fR\n' +
+    'cFdMLtw1PCKYmwIDAQABoxUwEzARBgorBgEEAYLECgMDBAMEAwMwDQYJKoZIhvcN\n' +
+    'AQELBQADggEBAFKAWm3Dnt9HqPGypZyjgIE7HWrrahJiSxH9jTDxe/xxEMmyCPzR\n' +
+    'TjV/RfIQolK51LMCGgFWB2v6ZKcI8AP7J6lgjQ3TrFoQzyCWToK8neM32sFMUOE9\n' +
+    'FrTK9Bv/CGTJdE8qOkPg3kJ58hOud6HirmvfcqW2ztdMkBPf3tvyizRFizDcUaup\n' +
+    'NPip5QxHKaovQlTy+BlatIn+G58ZehbIyLqPGBd6B6mXoVa5Ul2hIcCBZy3oDqZR\n' +
+    'uQiwndNgHHCjD/rYYth5KwrmQvz4LfXkzfsVliP/tsCnp+KFg/lwyBlr88E/N0Rl\n' +
+    'J/tniMiDty+FH4BEu3LOBoJZLYMA4ZSNoIU=\n' +
+    '-----END CERTIFICATE-----';
+
 var CLIENTS;
 var CLIENT;
 var OTHER;
@@ -139,6 +178,59 @@ test('Create (named) key with duplicate name', function (t) {
     });
 });
 
+test('CreateKey (attested) wrong cert', function (t) {
+    var key = {
+        key: KEY_3,
+        attestation: [KEY_3_C2],
+        name: 'attest1'
+    };
+
+    CLIENT.post('/my/keys', key, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.statusCode, 409);
+        t.equal(err.restCode, 'InvalidArgument');
+        t.ok(err.message);
+
+        t.end();
+    });
+});
+
+test('CreateKey (attested) OK', function (t) {
+    var key = {
+        key: KEY_3,
+        attestation: [KEY_3_C1, KEY_3_C2],
+        name: 'attest2'
+    };
+
+    CLIENT.post('/my/keys', key, function (err, req, res, body) {
+        t.ifError(err);
+        t.ok(body);
+        t.equal(res.statusCode, 201);
+        common.checkHeaders(t, res.headers);
+        checkKey(t, body);
+        t.equal(body.name, key.name);
+        t.equal(body.fingerprint, KEY_3_FP);
+        t.strictEqual(body.attested, true);
+        t.deepEqual(body.multifactor, ['pin']);
+
+        CLIENT.get('/my/keys?sync=true', function (err2, req2, res2, body2) {
+            t.ifError(err2);
+            t.equal(res2.statusCode, 200);
+            common.checkHeaders(t, res2.headers);
+            t.ok(body2);
+            t.ok(body2.length);
+            var key_present = false;
+            body2.forEach(function (k) {
+                if (k.fingerprint === KEY_3_FP) {
+                    key_present = true;
+                }
+                checkKey(t, k);
+            });
+            t.ok(key_present);
+            t.end();
+        });
+    });
+});
 
 test('Attempt to create with invalid key', function (t) {
     var key = {
@@ -298,6 +390,16 @@ test('Cleanup Key', function (t) {
     });
 });
 
+test('Cleanup Key', function (t) {
+    var path = '/my/keys/' + encodeURIComponent(KEY_3_FP);
+
+    CLIENT.del(path, function (err, req, res) {
+        t.ifError(err);
+        t.equal(res.statusCode, 204);
+        common.checkHeaders(t, res.headers);
+        t.end();
+    });
+});
 
 test('GetKey 404', function (t) {
     CLIENT.get('/my/keys/' + common.uuid(), function (err) {
