@@ -54,6 +54,18 @@ var SDC_128_PACKAGE = {
     active: true
 };
 
+var KVM_128_PACKAGE = Object.assign({}, SDC_128_PACKAGE, {
+    uuid: 'e70c5264-b7e5-11e8-90a4-6b259cf00b80',
+    brand: 'kvm',
+    name: 'sdc_128_kvm'
+});
+
+var BHYVE_128_PACKAGE = Object.assign({}, SDC_128_PACKAGE, {
+    uuid: 'e83d57d2-b7e5-11e8-84bb-7be61e455e35',
+    brand: 'bhyve',
+    name: 'sdc_128_bhyve'
+});
+
 var PASSWD = 'secret123';
 var DEFAULT_CFG = path.join(__dirname, '..', '/etc/cloudapi.cfg');
 
@@ -1242,6 +1254,8 @@ module.exports = {
     removeTagsFromServer: removeTagsFromServer,
 
     sdc_128_package: SDC_128_PACKAGE,
+    kvm_128_package: KVM_128_PACKAGE,
+    bhyve_128_package: BHYVE_128_PACKAGE,
 
     getCfg: function () {
         return CONFIG;
