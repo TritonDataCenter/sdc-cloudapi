@@ -922,6 +922,15 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
+## 9.4.1
+
+- Added support for [CreateMachineDisk](#CreateMachineDisk),
+  [ResizeMachineDisk](#ResizeMachineDisk) and
+  [DeleteMachineDisk](#DeleteMachineDisk) for bhyve VMs; this only applies to
+  bhyve VMs that have flexible disk space enabled.
+  [GetMachineDisk](#GetMachineDisk) and [ListMachineDisks](#ListMachineDisks)
+  are also provided.
+
 ## 9.4.0
 - [CreateMachine](#CreateMachine) may pass disk quantity and size for bhyve
   instances. [GetMachine](#GetMachine) and [ListMachines](#ListMachcines)
@@ -4433,7 +4442,7 @@ firewall_enabled | Boolean  | Whether firewall rules are enforced on this instan
 deletion_protection | Boolean | Whether an instance is destroyable. See [Deletion Protection](#deletion-protection)
 compute_node | String  | UUID of the server on which the instance is located
 package     | String   | The id or name of the package used to create this instance
-flexible    | Boolean | Whether this instance uses the flexible_disk_space feature (bhyve)
+flexible    | Boolean | Whether this instance uses the flexible disk space feature (bhyve)
 free_space  | Number | The amount of space (MiB) that is not allocated to disks nor in use by snapshots of those disks. If snapshots are present, writes to disks may reduce this value (bhyve)
 
 ### Errors
@@ -4592,9 +4601,8 @@ firewall_enabled | Boolean  | Whether firewall rules are enforced on this instan
 compute_node | String  | UUID of the server on which the instance is located
 package     | String   | The id or name of the package used to create this instance
 dns_names   | Array[String] | DNS names of the instance (if the instance is using [CNS](https://docs.joyent.com/public-cloud/network/cns))
-flexible    | Boolean | Whether this instance uses the flexible_disk_space feature (bhyve)
+flexible    | Boolean | Whether this instance uses the flexible disk space feature (bhyve)
 free_space  | Number | The amount of space (MiB) that is not allocated to disks nor in use by snapshots of those disks. If snapshots are present, writes to disks may reduce this value (bhyve)
-
 
 Be aware that in the case of instances created with vmadm directly (i.e. not
 through CloudAPI), ips, networks, primaryIp and package may be in a different
@@ -4839,6 +4847,8 @@ metadata    | Object[String => String] | Any additional metadata this instance h
 package     | String   | The id or name of the package used to create this instance
 image       | String   | The image id this instance was provisioned with
 docker      | Boolean  | Whether this instance is a Docker container, if present
+flexible    | Boolean  | Whether this instance uses the flexible disk space feature (bhyve)
+free_space  | Number   | The amount of space (MiB) that is not allocated to disks nor in use by snapshots of those disks. If snapshots are present, writes to disks may reduce this value (bhyve)
 created     | ISO8601 date | When this instance was created
 updated     | ISO8601 date | When this instance's details was last updated
 
@@ -5912,6 +5922,369 @@ or
     Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
     Response-Time: 297
     Content-Length: 0
+
+
+## CreateMachineDisk (POST /:login/machines/:id/disks)
+
+**Interface is experimental; details may change in the future**
+
+Create a new disk for a bhyve VM.
+
+The sum of all disk sizes on a VM is limited by flexible disk space. This
+operation only applies for VMs that are currently stopped.
+
+### Inputs
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+pci_slot  | String   | Optional, PCI slot that the disk will fill
+size      | Number   | Size in MiB, or the string "remaining" to use up all remaining available space
+
+### Returns
+
+If no `pci_slot` argument was provided, then only a 202 (and no object) will
+be returned. You will need to poll [ListMachineDisks](#list-machine-disks)
+until a new disk appears (if successful). `pci_slot` will be automatically
+assigned in this case.
+
+If a `pci_slot` argument was provided, the `Location` header will be set, and
+200 (with object) will be returned:
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+id        | String   | This disk's UUID
+pci_slot  | String   | This disk's PCI slot
+size      | Number   | Size in MiB (before resize)
+boot      | Boolean  | If this is the VM's boot disk
+state     | String   | Current state of disk (i.e. 'creating')
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id`  does not exist
+InvalidArgument  | If `size` or `pci_slot` was invalid
+
+### CLI Command
+
+    $ triton cloudapi /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/disks \
+      -X POST -d '{"pci_slot":"0:4:1", "size": 1024}'
+
+### Example Request
+
+    POST /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/disks HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Content-Length: 12
+    Content-Type: application/x-www-form-urlencoded
+    Api-Version: ~9
+
+    pci_slot=0:4:1
+    size=1024
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Connection: close
+    Date: Tue, 05 Dec 2018 17:19:26 GMT
+    Server: Joyent Triton 9.4.0
+    Api-Version: 9.0.0
+    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    Response-Time: 754
+    Content-Type: application/json
+    Content-Length: 0
+
+    {
+      "id": "21f04764-1db8-47dc-acfd-2215f2b842e9",
+      "pci_slot": "0:4:1",
+      "size": 1024,
+      "boot": false,
+      "state": "creating"
+    }
+
+
+
+## ResizeMachineDisk (POST /:login/machines/:id/disks/:disk_id)
+
+**Interface is experimental; details may change in the future**
+
+Asynchronously resize an existing disk on a bhyve VM.
+
+The sum of all disk sizes on a VM is limited by flexible disk space. This
+operation only applies for VMs that are currently stopped.
+
+When resizing down, `dangerous_allow_shrink` must be set to `true` otherwise
+the resize will be rejected. Since shrinking a disk truncates any data within
+that disk, it can cause filesystem corruption and data loss if the guest
+operating system does not handle it appropriately and data on the disk hasn't
+been prepared properly beforehand.
+
+Since this is an asynchronous operation, resizing may take several seconds.
+Check the disk's state using [GetMachineDisk](#GetMachineDisk).
+
+### Inputs
+
+**Field**              | **Type** | **Description**
+---------------------- | -------- | ---------------
+size                   | Number   | Size in MiB
+dangerous_allow_shrink | Boolean  | Optional, whether a disk can reduce size
+
+### Returns
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+id        | String   | This disk's UUID
+pci_slot  | String   | This disk's PCI slot
+size      | Number   | Size in MiB (before resize)
+boot      | Boolean  | If this is the VM's boot disk
+state     | String   | Current state of disk (i.e. 'resizing')
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:id`, or `:disk_id` does not exist
+InvalidArgument  | If `size` or `dangerous_allow_shrink` was invalid
+
+### CLI Command
+
+    $ triton cloudapi /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/disks/21f04764-1db8-47dc-acfd-2215f2b842e9 \
+      -X POST -d '{"size": 2048}'
+
+### Example Request
+
+    POST /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/disks/21f04764-1db8-47dc-acfd-2215f2b842e9 HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Content-Length: 12
+    Content-Type: application/x-www-form-urlencoded
+    Api-Version: ~9
+
+    size=2048
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Connection: close
+    Date: Tue, 05 Dec 2018 17:19:26 GMT
+    Server: Joyent Triton 9.4.0
+    Api-Version: 9.0.0
+    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    Response-Time: 754
+    Content-Type: application/json
+    Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
+    Content-Length: 70
+
+    {
+      "id": "21f04764-1db8-47dc-acfd-2215f2b842e9",
+      "pci_slot": "0:4:1",
+      "size": 1024,
+      "boot": false,
+      "state": "resizing"
+    }
+
+
+## GetMachineDisk (GET /:login/machines/:id/disks/:disk_id)
+
+**Interface is experimental; details may change in the future**
+
+Fetch a specific disk on a bhyve VM.
+
+### Inputs
+
+* None
+
+### Returns
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+id        | String   | This disk's UUID
+pci_slot  | String   | This disk's PCI slot
+size      | Number   | Size in MiB
+boot      | Boolean  | If this is the VM's boot disk
+state     | String   | Current state of disk
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:id`, or `:disk_id` does not exist
+
+### CLI Command
+
+    $ triton cloudapi /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/disks/21f04764-1db8-47dc-acfd-2215f2b842e9
+
+### Example Request
+
+    GET /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/disks/21f04764-1db8-47dc-acfd-2215f2b842e9 HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Content-Length: 12
+    Content-Type: application/x-www-form-urlencoded
+    Api-Version: ~9
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Connection: close
+    Date: Tue, 05 Dec 2018 17:19:26 GMT
+    Server: Joyent Triton 9.4.0
+    Api-Version: 9.0.0
+    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    Response-Time: 754
+    Content-Type: application/json
+    Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
+    Content-Length: 74
+
+    {
+      "id": "21f04764-1db8-47dc-acfd-2215f2b842e9",
+      "pci_slot": "0:4:1",
+      "size": 2048,
+      "boot": false,
+      "state": "running",
+    }
+
+
+## ListMachineDisks (GET /:login/machines/:id/disks)
+
+**Interface is experimental; details may change in the future**
+
+List all disk on a bhyve VM.
+
+### Inputs
+
+* None
+
+### Returns
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+id        | String   | This disk's UUID
+pci_slot  | String   | This disk's PCI slot
+size      | Number   | Size in MiB
+boot      | Boolean  | If this is the VM's boot disk
+state     | String   | Current state of disk
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
+
+### CLI Command
+
+    $ triton cloudapi /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/disks
+
+### Example Request
+
+    GET /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/disks HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Content-Length: 12
+    Content-Type: application/x-www-form-urlencoded
+    Api-Version: ~9
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Connection: close
+    Date: Tue, 05 Dec 2018 17:19:26 GMT
+    Server: Joyent Triton 9.4.0
+    Api-Version: 9.0.0
+    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    Response-Time: 754
+    Content-Type: application/json
+    Content-MD5: qKVbfrhXVqh7Oni6Pub9Pw==
+    Content-Length: 74
+
+    [
+      {
+        "id": "2bb08ea6-1da0-11e9-adaa-23f0e1aab5d7",
+        "pci_slot": "0:4:0",
+        "size": 10240,
+        "boot": true,
+        "state": "running",
+      },
+      {
+        "id": "21f04764-1db8-47dc-acfd-2215f2b842e9",
+        "pci_slot": "0:4:1",
+        "size": 2048,
+        "boot": false,
+        "state": "running",
+      }
+    ]
+
+
+## DeleteMachineDisk (DELETE /:login/machines/:id/disks/:disk_id)
+
+**Interface is experimental; details may change in the future**
+
+Asynchronously delete a disk off a bhyve VM.
+
+Since this is an asynchronous operation, deletion may take several seconds.
+You can check the disk's state using [GetMachineDisk](#GetMachineDisk).
+
+### Inputs
+
+* None
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:id` or `:disk_id` does not exist
+
+### CLI Command
+
+    $ triton cloudapi /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/disks/21f04764-1db8-47dc-acfd-2215f2b842e9 -X DELETE
+
+### Example Request
+
+    DELETE /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/disks/21f04764-1db8-47dc-acfd-2215f2b842e9 HTTP/1.1
+    Authorization: ...
+    Host: api.example.com
+    Accept: application/json
+    Content-Length: 12
+    Content-Type: application/x-www-form-urlencoded
+    Api-Version: ~9
+
+### Example Response
+
+    HTTP/1.1 204 No Content
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Methods: GET, POST
+    Connection: close
+    Date: Tue, 05 Dec 2018 17:19:26 GMT
+    Server: Joyent Triton 9.4.0
+    Api-Version: 9.0.0
+    Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
+    Response-Time: 754
 
 
 ## UpdateMachineMetadata (POST /:login/machines/:id/metadata)
