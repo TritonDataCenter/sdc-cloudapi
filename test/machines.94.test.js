@@ -60,6 +60,7 @@ var CUSTOM_BHYVE_PACKAGES = [
 var BHYVE_IMAGE;
 var BHYVE_IMAGE_UUID;
 var BHYVE_MACHINE_UUID;
+var DISK_UUID;
 var CLIENT;
 var CLIENTS;
 var OTHER;
@@ -357,6 +358,202 @@ test('GetMachine has disks - no disks/inflexible disk package',
     });
 });
 
+test('ListMachineDisks has disks - no disks/inflexible disk package',
+    function listMachineDisksTest(t) {
+    if (!BHYVE_IMAGE_UUID) {
+        t.ok(true, 'No bhyve images. Test skipped');
+        t.end();
+        return;
+    }
+
+    var expectedDisks = [
+        {
+            boot: true,
+            pci_slot: '0:4:0',
+            size: BHYVE_IMAGE.image_size,
+            state: 'running'
+        },
+        {
+            boot: false,
+            pci_slot: '0:4:1',
+            size: BHYVE_128_INFLEXIBLE.quota,
+            state: 'running'
+        }
+    ];
+
+    CLIENT.get('/my/machines/' + BHYVE_MACHINE_UUID + '/disks',
+        function gotDisks(err, req, res, disks) {
+            t.ifError(err);
+
+            checkDisks(t, expectedDisks, disks);
+            t.ok(disks[0].id, 'disks[0].id');
+            t.ok(disks[1].id, 'disks[1].id');
+
+            DISK_UUID = disks[1].id;
+
+            t.end();
+    });
+});
+
+test('ListMachineDisks OTHER - no access',
+    function listMachineDisksTest(t) {
+    if (!BHYVE_IMAGE_UUID) {
+        t.ok(true, 'No bhyve images. Test skipped');
+        t.end();
+        return;
+    }
+
+    OTHER.get('/my/machines/' + BHYVE_MACHINE_UUID + '/disks',
+        function gotDisks(err, req, res, disks) {
+            t.ok(err, 'err');
+            t.equal(err.statusCode, 404, 'statusCode');
+            t.end();
+    });
+});
+
+test('GetMachineDisk has disk - no disks/inflexible disk package',
+    function getMachineDiskTest(t) {
+    if (!BHYVE_IMAGE_UUID) {
+        t.ok(true, 'No bhyve images. Test skipped');
+        t.end();
+        return;
+    }
+
+    var expectedDisks = [
+        {
+            boot: true,
+            pci_slot: '0:4:0',
+            size: BHYVE_IMAGE.image_size,
+            state: 'running'
+        },
+        {
+            boot: false,
+            pci_slot: '0:4:1',
+            size: BHYVE_128_INFLEXIBLE.quota,
+            state: 'running'
+        }
+    ];
+
+    CLIENT.get('/my/machines/' + BHYVE_MACHINE_UUID + '/disks/' + DISK_UUID,
+        function gotDisk(err, req, res, disk) {
+            t.ifError(err);
+
+            t.deepEqual(disk, {
+                id: DISK_UUID,
+                boot: false,
+                pci_slot: '0:4:1',
+                size: BHYVE_128_INFLEXIBLE.quota,
+                state: 'running'
+            });
+
+            t.end();
+    });
+});
+
+test('GetMachineDisks OTHER - no access',
+    function getMachineDisksOtherTest(t) {
+    if (!BHYVE_IMAGE_UUID) {
+        t.ok(true, 'No bhyve images. Test skipped');
+        t.end();
+        return;
+    }
+
+    OTHER.get('/my/machines/' + BHYVE_MACHINE_UUID + '/disks/' + DISK_UUID,
+        function gotDisk(err, req, res, disks) {
+            t.ok(err, 'err');
+            t.equal(err.statusCode, 404, 'statusCode');
+            t.end();
+    });
+});
+
+function stopMachine(t) {
+    if (!BHYVE_IMAGE_UUID) {
+        t.ok(true, 'No bhyve images. Test skipped');
+        t.end();
+        return;
+    }
+
+    CLIENT.post('/my/machines/' + BHYVE_MACHINE_UUID, {
+        action: 'stop'
+    }, function onStop(err) {
+        t.ifError(err, 'err');
+
+        CLIENT.vmapi.listJobs({
+            vm_uuid: BHYVE_MACHINE_UUID,
+            task: 'stop'
+        }, function listJobsCb(err2, jobs) {
+            t.ifError(err2, 'list jobs error');
+
+            var jobUuid = jobs[0].uuid;
+            machinesCommon.waitForJob(CLIENT, jobUuid, function onWaitCb(err3) {
+                t.ifError(err3, 'Check state error');
+                t.end();
+            });
+        });
+    });
+}
+
+test('Stop machine 1', stopMachine);
+
+test('CreateMachineDisk cannot resize disk - no disks/inflexible disk package',
+    function createMachineDiskTest(t) {
+    if (!BHYVE_IMAGE_UUID) {
+        t.ok(true, 'No bhyve images. Test skipped');
+        t.end();
+        return;
+    }
+
+    CLIENT.post('/my/machines/' + BHYVE_MACHINE_UUID + '/disks', {
+        size: 128
+    }, function createDisk(err, req, res, disk) {
+        t.ok(err);
+
+        t.equal(err.name, 'VmWithoutFlexibleDiskSizeError', 'disk.name');
+        t.equal(disk.code, 'VmWithoutFlexibleDiskSize', 'disk.code');
+
+        t.end();
+    });
+});
+
+test('ResizeMachineDisk cannot resize disk - no disks/inflexible disk package',
+    function resizeMachineDiskTest(t) {
+    if (!BHYVE_IMAGE_UUID) {
+        t.ok(true, 'No bhyve images. Test skipped');
+        t.end();
+        return;
+    }
+
+    CLIENT.post('/my/machines/' + BHYVE_MACHINE_UUID + '/disks/' + DISK_UUID, {
+        size: BHYVE_128_INFLEXIBLE.quota - 128
+    }, function resizeDisk(err, req, res, disk) {
+        t.ok(err);
+
+        t.equal(err.name, 'VmWithoutFlexibleDiskSizeError', 'disk.name');
+        t.equal(disk.code, 'VmWithoutFlexibleDiskSize', 'disk.code');
+
+        t.end();
+    });
+});
+
+test('DeleteMachineDisk cannot delete disk - no disks/inflexible disk package',
+    function deleteMachineDisk(t) {
+    if (!BHYVE_IMAGE_UUID) {
+        t.ok(true, 'No bhyve images. Test skipped');
+        t.end();
+        return;
+    }
+
+    CLIENT.del('/my/machines/' + BHYVE_MACHINE_UUID + '/disks/' + DISK_UUID,
+        function gotDisk(err, req, res, disk) {
+            t.ok(err);
+
+            t.equal(err.name, 'VmWithoutFlexibleDiskSizeError', 'disk.name');
+            t.equal(disk.code, 'VmWithoutFlexibleDiskSize', 'disk.code');
+
+            t.end();
+    });
+});
+
 test('Delete bhyve test vm - no disks/inflexible disk package',
     function (t) {
     if (!BHYVE_MACHINE_UUID) {
@@ -477,10 +674,12 @@ test('CreateMachine - Disks/flexible disk package', function (t) {
         return;
     }
 
+    DISK_UUID = 'dea91a7f-5fe3-4408-b25a-994c97a7975e';
+
     var obj = {
         disks: [
             { uuid: 'eea4e223-dee6-44dc-a7e1-71f996e534f0' },
-            { uuid: 'dea91a7f-5fe3-4408-b25a-994c97a7975e', size: 512},
+            { uuid: DISK_UUID, size: 512},
             { uuid: 'c41ce11e-bed2-45d2-bdb8-8dc889ed8ced', size: 'remaining' }
         ],
         image: BHYVE_IMAGE_UUID,
@@ -546,7 +745,7 @@ test('GetMachine has disks - Disks/flexible disk package', function (t) {
         },
         {
             size: 512,
-            uuid: 'dea91a7f-5fe3-4408-b25a-994c97a7975e'
+            uuid: DISK_UUID
         },
         {
             size: BHYVE_128_FLEXIBLE.quota - BHYVE_IMAGE.image_size - 512,
@@ -563,6 +762,244 @@ test('GetMachine has disks - Disks/flexible disk package', function (t) {
             t.deepEqual(body.disks, expectedDisks);
             t.end();
     });
+});
+
+test('Stop machine 2', stopMachine);
+
+test('ResizeMachineDisk OTHER - no access',
+    function resizeMachineDiskTest(t) {
+    if (!BHYVE_IMAGE_UUID) {
+        t.ok(true, 'No bhyve images. Test skipped');
+        t.end();
+        return;
+    }
+
+    OTHER.post('/my/machines/' + BHYVE_MACHINE_UUID + '/disks/' + DISK_UUID, {
+        size: 128
+    }, function resizeDisk(err, req, res, disk) {
+        t.ok(err, 'err');
+
+        t.equal(err.statusCode, 404, 'statusCode');
+        t.equal(err.name, 'ResourceNotFoundError');
+
+        t.end();
+    });
+});
+
+test('ResizeMachineDisk resize disk down - Disks/flexible disk package',
+    function resizeMachineDiskTest(t) {
+    if (!BHYVE_IMAGE_UUID) {
+        t.ok(true, 'No bhyve images. Test skipped');
+        t.end();
+        return;
+    }
+
+    CLIENT.post('/my/machines/' + BHYVE_MACHINE_UUID + '/disks/' + DISK_UUID, {
+        size: 128
+    }, function resizeDisk(err, req, res, disk) {
+        t.ok(err, 'err');
+
+        t.equal(err.name, 'ValidationFailedError', 'err.name');
+        t.equal(disk.errors[0].field, 'size', 'size');
+        t.equal(disk.errors[0].message,
+            'Reducing disk size is a dangerous operation');
+
+        t.end();
+    });
+});
+
+test('ResizeMachineDisk resize disk down 2 - Disks/flexible disk package',
+    function resizeMachineDiskTest(t) {
+    if (!BHYVE_IMAGE_UUID) {
+        t.ok(true, 'No bhyve images. Test skipped');
+        t.end();
+        return;
+    }
+
+    var path = '/my/machines/' + BHYVE_MACHINE_UUID + '/disks/' + DISK_UUID;
+
+    CLIENT.post(path, {
+        size: 128,
+        dangerous_allow_shrink: true
+    }, function resizeDisk(err, req, res, disk) {
+        t.ifError(err, 'err');
+
+        t.deepEqual(disk, {
+            id: DISK_UUID,
+            pci_slot: '0:4:1',
+            size: 512,
+            boot: false,
+            state: 'resizing'
+        }, 'disk');
+
+        poll();
+    });
+
+    var count = 0;
+    function poll() {
+        if (count > 10) {
+            t.fail('Failed to resize disk in time');
+            t.end();
+            return;
+        }
+
+        count += 1;
+
+        CLIENT.get(path, function getCb(err, req, res, disk) {
+            t.ifError(err, 'err');
+
+            if (disk.state !== 'stopped') {
+                setTimeout(poll, 2000);
+                return;
+            }
+
+            t.deepEqual(disk, {
+                id: DISK_UUID,
+                pci_slot: '0:4:1',
+                size: 128,
+                boot: false,
+                state: 'stopped'
+            }, 'disk');
+
+            t.end();
+        });
+    }
+});
+
+test('DeleteMachineDisk OTHER - no access',
+    function deleteMachineDiskTest(t) {
+    if (!BHYVE_IMAGE_UUID) {
+        t.ok(true, 'No bhyve images. Test skipped');
+        t.end();
+        return;
+    }
+
+    OTHER.del('/my/machines/' + BHYVE_MACHINE_UUID + '/disks/' + DISK_UUID,
+        function deleteDisk(err, req, res, disk) {
+        t.ok(err, 'err');
+
+        t.equal(err.statusCode, 404, 'statusCode');
+        t.equal(err.name, 'ResourceNotFoundError');
+
+        t.end();
+    });
+});
+
+test('DeleteMachineDisk delete disk - Disks/flexible disk package',
+    function deleteMachineDisk(t) {
+    if (!BHYVE_IMAGE_UUID) {
+        t.ok(true, 'No bhyve images. Test skipped');
+        t.end();
+        return;
+    }
+
+    var path = '/my/machines/' + BHYVE_MACHINE_UUID + '/disks/' + DISK_UUID;
+
+    CLIENT.del(path, function gotDisk(err, req, res, disk) {
+        t.ifError(err);
+        t.equal(res.statusCode, 204, 'statusCode');
+        poll();
+    });
+
+    var count = 0;
+    function poll() {
+        if (count > 10) {
+            t.fail('Failed to delete disk in time');
+            t.end();
+            return;
+        }
+
+        count += 1;
+
+        CLIENT.get(path, function getCb(err, req, res, disk) {
+            if (err && res.statusCode === 404) {
+                t.end();
+                return;
+            }
+
+            t.ifError(err, 'err');
+            t.deepEqual(disk, {
+                id: DISK_UUID,
+                pci_slot: '0:4:1',
+                size: 128,
+                boot: false,
+                state: 'deleting'
+            }, 'disk');
+
+            setTimeout(poll, 2000);
+        });
+    }
+});
+
+test('CreateMachineDisk OTHER - no access',
+    function createMachineDiskTest(t) {
+    if (!BHYVE_IMAGE_UUID) {
+        t.ok(true, 'No bhyve images. Test skipped');
+        t.end();
+        return;
+    }
+
+    OTHER.post('/my/machines/' + BHYVE_MACHINE_UUID + '/disks', {
+        pci_slot: '0:4:9',
+        size: 128
+    }, function createDisk(err, req, res, disk) {
+        t.ok(err);
+        t.equal(res.statusCode, 404, 'statusCode');
+        t.equal(err.name, 'ResourceNotFoundError', 'err.name');
+        t.end();
+    });
+});
+
+test('CreateMachineDisk - Disks/flexible disk package',
+    function createMachineDiskTest(t) {
+    if (!BHYVE_IMAGE_UUID) {
+        t.ok(true, 'No bhyve images. Test skipped');
+        t.end();
+        return;
+    }
+
+    CLIENT.post('/my/machines/' + BHYVE_MACHINE_UUID + '/disks', {
+        pci_slot: '0:4:4',
+        size: 256
+    }, function createDisk(err, req, res, disk) {
+        t.ifError(err, 'err');
+
+        DISK_UUID = disk.id;
+
+        poll();
+    });
+
+    var count = 0;
+    function poll() {
+        if (count > 10) {
+            t.fail('Failed to create disk in time');
+            t.end();
+            return;
+        }
+
+        count += 1;
+
+        var path = '/my/machines/' + BHYVE_MACHINE_UUID + '/disks/' + DISK_UUID;
+
+        CLIENT.get(path, function getCb(err, req, res, disk) {
+            if (res.statusCode === 404) {
+                setTimeout(poll, 2000);
+                return;
+            }
+
+            t.ifError(err, 'err');
+
+            t.deepEqual(disk, {
+                id: DISK_UUID,
+                pci_slot: '0:4:4',
+                size: 256,
+                boot: false,
+                state: 'stopped'
+            }, 'disk');
+
+            t.end();
+        });
+    }
 });
 
 test('Delete bhyve test vm - Disks/flexible disk package', function (t) {
