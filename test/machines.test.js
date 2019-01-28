@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2018, Joyent, Inc.
+ * Copyright 2019, Joyent, Inc.
  */
 
 var util = require('util');
@@ -1128,8 +1128,8 @@ test('machine audit', function (t) {
             'destroy', 'disable_deletion_protection', 'delete_snapshot',
             'rollback_snapshot', 'create_snapshot', 'replace_metadata',
             'remove_metadata', 'set_metadata', 'remove_tags', 'replace_tags',
-            'remove_tags', 'set_tags', 'resize', 'resize', 'reboot', 'start',
-            'stop', 'provision'
+            'remove_tags', 'set_tags', 'resize', 'resize', 'resize', 'reboot',
+            'start', 'stop', 'provision'
         ];
 
         for (var i = 0; i !== expectedJobs.length; i++) {

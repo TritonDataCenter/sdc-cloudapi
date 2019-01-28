@@ -5,10 +5,11 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2019, Joyent, Inc.
  */
 
 var common = require('../common');
+var vasync = require('vasync');
 var waitForJob = require('./common').waitForJob;
 
 var uuid = common.uuid;
@@ -99,6 +100,56 @@ function (suite, client, other, machine, pkgDown, pkgSame, pkgUp, cb) {
     });
 
     suite.test('Wait For Resized to down', function (t) {
+        waitAndCheckResize(t, pkgDown);
+    });
+
+    suite.test('Resize with private image (docker)', function (t) {
+        var imgapi = client.imgapi;
+        var img;
+
+        function getImage(ctx, next) {
+            client.vmapi.getVm({ uuid: machine }, function onGetVm(err, vm) {
+                t.ifError(err, 'GetVm error');
+
+                imgapi.getImage(vm.image_uuid, function onGetImage(err2, _img) {
+                    t.ifError(err2, 'GetImage error');
+                    img = _img;
+                    next(err);
+                });
+            });
+        }
+
+        function updateImage(ctx, next) {
+            imgapi.updateImage(img.uuid, {
+                public: false
+            }, next);
+        }
+
+        function resizeMachine(ctx, next) {
+            client.post('/my/machines/' + machine, {
+                action: 'resize',
+                'package': pkgDown.uuid
+            }, function onResize(err) {
+                t.ifError(err, 'Error resizing machine');
+                next(); // don't pass on err here so we can reset public later
+            });
+        }
+
+        function resetPublic(ctx, next) {
+            imgapi.updateImage(img.uuid, {
+                public: img.public
+            }, next);
+        }
+
+        vasync.pipeline({ funcs: [
+            getImage, updateImage, resizeMachine, resetPublic
+        ]}, function (err) {
+            t.ifError(err, 'Error during test');
+            t.end();
+        });
+    });
+
+    suite.test('Wait For resize with private image', function (t) {
         waitAndCheckResize(t, pkgDown);
     });
 
