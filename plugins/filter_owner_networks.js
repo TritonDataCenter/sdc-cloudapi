@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright (c) 2019, Joyent, Inc.
  */
 
 /*
@@ -46,7 +46,7 @@
  */
 
 var assert = require('assert-plus');
-var modNets = require('../lib/networks');
+var netconf = require('triton-netconfig');
 
 
 /*
@@ -131,7 +131,7 @@ function findOwnerExternalNetwork(api, cfg) {
             });
 
             var external = owned.filter(function filterExternal(network) {
-                return (modNets.isExternal(network));
+                return (netconf.isNetExternal(network));
             });
 
             if (external.length === 0) {
