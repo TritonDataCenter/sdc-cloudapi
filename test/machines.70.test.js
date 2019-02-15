@@ -320,7 +320,7 @@ test('Delete KVM tests', function (t) {
 
 
 test('Create bhyve machine', function (t) {
-    if (!BHYVE_MACHINE_UUID) {
+    if (!BHYVE_IMAGE_UUID) {
         t.end();
         return;
     }

@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2019, Joyent, Inc.
  */
 
 var common = require('../common');
@@ -93,6 +93,7 @@ module.exports = function (suite, client, other, machine, callback) {
                 t.ok(body.length, 'there are snapshots');
                 body.forEach(function (s) {
                     checkSnapshot(t, s);
+                    t.ok(s.size, 'snapshot size ok');
                 });
                 t.end();
             });
@@ -125,6 +126,7 @@ module.exports = function (suite, client, other, machine, callback) {
                 common.checkHeaders(t, res.headers);
                 t.ok(body, 'snapshot body');
                 checkSnapshot(t, body);
+                t.ok(body.size, 'snapshot size ok');
                 t.end();
             });
         } else {

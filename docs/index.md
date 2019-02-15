@@ -12,7 +12,7 @@ markdown2extras: tables, code-friendly
 -->
 
 <!--
-    Copyright 2018, Joyent, Inc.
+    Copyright 2019, Joyent, Inc.
 -->
 
 
@@ -921,6 +921,12 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 # Versions
 
 The section describes API changes in CloudAPI versions.
+
+## 9.4.0
+- [CreateMachine](#CreateMachine) may pass disk quantity and size for bhyve
+  instances. [GetMachine](#GetMachine) and [ListMachines](#ListMachcines)
+  returns information about these disks. [GetMachineSnapshot](#GetMachineSnapshot)
+  and [ListMachineSnapshots](#ListMachineSnapshots) includes snapshot size.
 
 ## 9.2.0
 
@@ -4414,6 +4420,7 @@ state       | String   | The current state of this instance (e.g. running)
 image       | String   | The image id this instance was provisioned with
 memory      | Number   | The amount of RAM this instance has (in MiB)
 disk        | Number   | The amount of disk this instance has (in MiB)
+disks       | Array    | An array of disk objects (bhyve)
 metadata    | Object[String => String] | Any additional metadata this instance has
 tags        | Object[String => String] | Any tags this instance has
 created     | ISO8601 date | When this instance was created
@@ -4426,6 +4433,8 @@ firewall_enabled | Boolean  | Whether firewall rules are enforced on this instan
 deletion_protection | Boolean | Whether an instance is destroyable. See [Deletion Protection](#deletion-protection)
 compute_node | String  | UUID of the server on which the instance is located
 package     | String   | The id or name of the package used to create this instance
+flexible    | Boolean | Whether this instance uses the flexible_disk_space feature (bhyve)
+free_space  | Number | The amount of space (MiB) that is not allocated to disks nor in use by snapshots of those disks. If snapshots are present, writes to disks may reduce this value (bhyve)
 
 ### Errors
 
@@ -4570,6 +4579,7 @@ state       | String   | The current state of this instance (e.g. running)
 image       | String   | The image id this instance was provisioned with
 memory      | Number   | The amount of RAM this instance has (in MiB)
 disk        | Number   | The amount of disk this instance has (in MiB)
+disks       | Array    | An array of disk objects (bhyve)
 metadata    | Object[String => String] | Any additional metadata this instance has
 tags        | Object[String => String] | Any tags this instance has
 created     | ISO8601 date | When this instance was created
@@ -4582,6 +4592,9 @@ firewall_enabled | Boolean  | Whether firewall rules are enforced on this instan
 compute_node | String  | UUID of the server on which the instance is located
 package     | String   | The id or name of the package used to create this instance
 dns_names   | Array[String] | DNS names of the instance (if the instance is using [CNS](https://docs.joyent.com/public-cloud/network/cns))
+flexible    | Boolean | Whether this instance uses the flexible_disk_space feature (bhyve)
+free_space  | Number | The amount of space (MiB) that is not allocated to disks nor in use by snapshots of those disks. If snapshots are present, writes to disks may reduce this value (bhyve)
+
 
 Be aware that in the case of instances created with vmadm directly (i.e. not
 through CloudAPI), ips, networks, primaryIp and package may be in a different
@@ -4748,6 +4761,7 @@ firewall_enabled | Boolean | Completely enable or disable firewall for this inst
 deletion_protection | Boolean | Whether an instance is destroyable. See [Deletion Protection](#deletion-protection). Default is false
 allow_shared_images | Boolean | Whether to allow provisioning from a shared image. Default is false
 volumes   | Array    | A list of objects representing volumes to mount when the newly created machine boots
+disks     | Array    | An array of disk objects to be created (bhyve)
 
 #### volumes
 
@@ -4779,6 +4793,35 @@ type       | String   | The type of the volume to mount (currently only `"triton
 mode       | String   | Determines the read/write mode for the volume to mount. Accepted values are `"ro"` (for read-only) and `"rw"` (for read-write). The default value is `"rw"`.
 mountpoint | String   | Specifies where the volume is mounted in the newly created machine's filesystem. It must start with a slash (`"/"`) and it must contain at least one character that is not `'/'`.
 
+#### disks
+The `disks` input parameter allows users to specify a list of disks to be provisioned when creating a bhyve instance. This parameter can only be specified if the package has its `flexible_disk` attribute set to `true`. The sum of the sizes of the disks may be no greater than the package quota.
+
+```
+"disks": [
+  {
+    "uuid": "eea4e223-dee6-44dc-a7e1-71f996e534f0",
+    "boot": true
+  },
+  {
+    "uuid": "dea91a7f-5fe3-4408-b25a-994c97a7975e",
+    "size": 512
+  },
+  {
+    "uuid": "c41ce11e-bed2-45d2-bdb8-8dc889ed8ced",
+    "size": "remaining"
+  }
+]
+```
+
+Each object of the `disks` array has the following layout
+
+**Field**  | **Type** | **Description**
+---------- | -------- | ---------------
+UUID       | UUID     | Unique id for this disk
+boot       | Boolean  | If `true`, this is the boot disk
+image      | UUID     | The image from which the disk was created
+size       | Integer  | The size of the disk in mebibytes or "remaining". If "remaining", size will be set to the difference between the package quota and sum of the other disks.
+
 ### Returns
 
 **Field**   | **Type** | **Description**
@@ -4790,6 +4833,7 @@ brand       | String   | (v8.0+) The type of instance (e.g. lx)
 state       | String   | The current state of this instance (e.g. running)
 memory      | Number   | The amount of RAM this instance has (in MiB)
 disk        | Number   | The amount of disk this instance has (in MiB)
+disks       | Array    | (v9.4.0+) One disk object per disk in the VM (bhyve only)
 ips         | Array[String] | The IP addresses this instance has
 metadata    | Object[String => String] | Any additional metadata this instance has
 package     | String   | The id or name of the package used to create this instance
@@ -4807,6 +4851,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 ResourceNotFound     | If `:login` does not exist
 InsufficientCapacity | There isn't enough capacity in this datacenter
 InvalidArgument      | If one of the input parameters was invalid
+MissingParameter     | If one of the input parameters was missing
 
 ### CLI Command
 
@@ -5700,6 +5745,7 @@ An array of snapshots:
 --------- | -------- | ---------------
 name      | String   | The name of this snapshot
 state     | String   | The current state of the snapshot
+size      | Number   | The size of the snapshot (MiB)
 
 ### Errors
 

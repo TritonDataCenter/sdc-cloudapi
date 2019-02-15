@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright (c) 2019, Joyent, Inc.
  */
 
 var assert = require('assert-plus');
@@ -83,6 +83,11 @@ function checkMachine(t, m) {
 
     if (m.state === 'running') {
         t.ok(m.primaryIp, 'checkMachine primaryIp ok');
+    }
+
+    if (m.brand === 'bhyve') {
+        t.ok(m.image, 'checkMachine image ok');
+        t.ok(m.disks, 'checkMachine disks ok');
     }
 
     // Sometimes test suites from other applications create zones with a
