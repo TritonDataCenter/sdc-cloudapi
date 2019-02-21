@@ -5,7 +5,7 @@
 #
 
 #
-# Copyright 2018 Joyent, Inc.
+# Copyright (c) 2019, Joyent, Inc.
 #
 
 #
@@ -61,13 +61,16 @@ else
 	NODE_EXEC=$(shell which node)
 endif
 
+ENGBLD_USE_BUILDIMAGE	= true
+ENGBLD_REQUIRE		:= $(shell git submodule update --init deps/eng)
+include ./deps/eng/tools/mk/Makefile.defs
+TOP ?= $(error Unable to access eng.git submodule Makefiles.)
 
-include ./tools/mk/Makefile.defs
 ifeq ($(shell uname -s),SunOS)
-	include ./tools/mk/Makefile.node_prebuilt.defs
+	include ./deps/eng/tools/mk/Makefile.node_prebuilt.defs
+	include ./deps/eng/tools/mk/Makefile.agent_prebuilt.defs
 endif
-include ./tools/mk/Makefile.smf.defs
-
+include ./deps/eng/tools/mk/Makefile.smf.defs
 
 #
 # Variables
@@ -75,16 +78,23 @@ include ./tools/mk/Makefile.smf.defs
 
 # Mountain Gorilla-spec'd versioning.
 
-
 ROOT                    := $(shell pwd)
-RELEASE_TARBALL         := $(NAME)-pkg-$(STAMP).tar.bz2
-RELSTAGEDIR                  := /tmp/$(STAMP)
+RELEASE_TARBALL         := $(NAME)-pkg-$(STAMP).tar.gz
+RELSTAGEDIR				:= /tmp/$(NAME)-$(STAMP)
+
+BASE_IMAGE_UUID = 04a48d7d-6bb5-4e83-8c3b-e60a99e0f48f
+BUILDIMAGE_NAME = $(NAME)
+BUILDIMAGE_DESC	= SDC CloudAPI
+BUILDIMAGE_PKGSRC = \
+	openssl-1.0.2o \
+	stud-0.3p53nb5 \
+ 	haproxy-1.6.2
+AGENTS		= amon config registrar
 
 #
 # Env vars
 #
 PATH	:= $(NODE_INSTALL)/bin:/opt/local/bin:${PATH}
-
 
 #
 # Repo-specific targets
@@ -105,9 +115,8 @@ clean-docs:
 	-$(RMTREE) $(DOC_CLEAN_FILES)
 clean:: clean-docs
 
-
 .PHONY: release
-release: check build docs
+release: check all docs
 	@echo "Building $(RELEASE_TARBALL)"
 	@mkdir -p $(RELSTAGEDIR)/root/opt/smartdc/cloudapi
 	@mkdir -p $(RELSTAGEDIR)/site
@@ -134,18 +143,14 @@ release: check build docs
 		$(TOP)/build/node \
 		$(TOP)/build/docs \
 		$(RELSTAGEDIR)/root/opt/smartdc/$(NAME)/build
-	(cd $(RELSTAGEDIR) && $(TAR) -jcf $(ROOT)/$(RELEASE_TARBALL) root site)
+	(cd $(RELSTAGEDIR) && $(TAR) -I pigz -cf $(ROOT)/$(RELEASE_TARBALL) root site)
 	@rm -rf $(RELSTAGEDIR)
 
 
 .PHONY: publish
 publish: release
-	@if [[ -z "$(BITS_DIR)" ]]; then \
-	  echo "error: 'BITS_DIR' must be set for 'publish' target"; \
-	  exit 1; \
-	fi
-	mkdir -p $(BITS_DIR)/$(NAME)
-	cp $(ROOT)/$(RELEASE_TARBALL) $(BITS_DIR)/$(NAME)/$(RELEASE_TARBALL)
+	mkdir -p $(ENGBLD_BITS_DIR)/$(NAME)
+	cp $(ROOT)/$(RELEASE_TARBALL) $(ENGBLD_BITS_DIR)/$(NAME)/$(RELEASE_TARBALL)
 
 .PHONY: test no_machines_test auth_test account_test datacenters_test datasets_test fabrics_test images_test keys_test networks_test nics_test machines_all_test machines_70_test machines_71_test machines_72_test machines_73_test machines_80_test machines_test packages_test populate_networks_test services_test users_test provision_limits_plugin_test plugins_test tests_test
 
@@ -222,11 +227,12 @@ provision_limits_plugin_test:
 
 plugins_test: provision_limits_plugin_test
 
-include ./tools/mk/Makefile.deps
+include ./deps/eng/tools/mk/Makefile.deps
 ifeq ($(shell uname -s),SunOS)
-	include ./tools/mk/Makefile.node_prebuilt.targ
+	include ./deps/eng/tools/mk/Makefile.node_prebuilt.targ
+	include ./deps/eng/tools/mk/Makefile.agent_prebuilt.targ
 endif
-include ./tools/mk/Makefile.smf.targ
-include ./tools/mk/Makefile.targ
+include ./deps/eng/tools/mk/Makefile.smf.targ
+include ./deps/eng/tools/mk/Makefile.targ
 
 sdc-scripts: deps/sdc-scripts/.git
