@@ -1,7 +1,7 @@
 {
     "name": "cloudapi",
     "description": "SmartDataCenter CloudAPI",
-    "version": "9.4.0",
+    "version": "9.4.2",
     "author": "Joyent (joyent.com)",
     "private": true,
     "engines": {

@@ -663,9 +663,9 @@ test('CreateMachine - Disks/flexible disk package', function (t) {
 
     var obj = {
         disks: [
-            { uuid: 'eea4e223-dee6-44dc-a7e1-71f996e534f0' },
-            { uuid: DISK_UUID, size: 512},
-            { uuid: 'c41ce11e-bed2-45d2-bdb8-8dc889ed8ced', size: 'remaining' }
+            { id: 'eea4e223-dee6-44dc-a7e1-71f996e534f0' },
+            { id: DISK_UUID, size: 512},
+            { id: 'c41ce11e-bed2-45d2-bdb8-8dc889ed8ced', size: 'remaining' }
         ],
         image: BHYVE_IMAGE_UUID,
         name: 'bhyve-disks-flex-package-test-' + process.pid,
@@ -726,15 +726,15 @@ test('GetMachine has disks - Disks/flexible disk package', function (t) {
             boot: true,
             image: BHYVE_IMAGE_UUID,
             size: BHYVE_IMAGE.image_size,
-            uuid: 'eea4e223-dee6-44dc-a7e1-71f996e534f0'
+            id: 'eea4e223-dee6-44dc-a7e1-71f996e534f0'
         },
         {
             size: 512,
-            uuid: DISK_UUID
+            id: DISK_UUID
         },
         {
             size: BHYVE_128_FLEXIBLE.quota - BHYVE_IMAGE.image_size - 512,
-            uuid: 'c41ce11e-bed2-45d2-bdb8-8dc889ed8ced'
+            id: 'c41ce11e-bed2-45d2-bdb8-8dc889ed8ced'
         }
     ];
 
@@ -1009,9 +1009,9 @@ test('CreateMachine - Disks sum to quota/flex disk package', function (t) {
 
     var obj = {
         disks: [
-            { uuid: 'eea4e223-dee6-44dc-a7e1-71f996e534f0', size: 14336 },
-            { uuid: 'dea91a7f-5fe3-4408-b25a-994c97a7975e', size: 512},
-            { uuid: 'c41ce11e-bed2-45d2-bdb8-8dc889ed8ced', size: 512 }
+            { id: 'eea4e223-dee6-44dc-a7e1-71f996e534f0', size: 14336 },
+            { id: 'dea91a7f-5fe3-4408-b25a-994c97a7975e', size: 512},
+            { id: 'c41ce11e-bed2-45d2-bdb8-8dc889ed8ced', size: 512 }
         ],
         image: BHYVE_IMAGE_UUID,
         name: 'bhyve-disks-max-test-' + process.pid,
@@ -1073,15 +1073,15 @@ test('GetMachine has disks - Disks sum to quota/flex disk package',
             boot: true,
             image: BHYVE_IMAGE_UUID,
             size: 14336,
-            uuid: 'eea4e223-dee6-44dc-a7e1-71f996e534f0'
+            id: 'eea4e223-dee6-44dc-a7e1-71f996e534f0'
         },
         {
             size: 512,
-            uuid: 'dea91a7f-5fe3-4408-b25a-994c97a7975e'
+            id: 'dea91a7f-5fe3-4408-b25a-994c97a7975e'
         },
         {
             size: 512,
-            uuid: 'c41ce11e-bed2-45d2-bdb8-8dc889ed8ced'
+            id: 'c41ce11e-bed2-45d2-bdb8-8dc889ed8ced'
         }
     ];
 
@@ -1120,9 +1120,9 @@ test('CreateMachine - Disks with remaining/flex disk package',
 
     var obj = {
         disks: [
-            { uuid: 'eea4e223-dee6-44dc-a7e1-71f996e534f0' },
-            { uuid: 'dea91a7f-5fe3-4408-b25a-994c97a7975e', size: 'remaining'},
-            { uuid: 'c41ce11e-bed2-45d2-bdb8-8dc889ed8ced', size: 512 }
+            { id: 'eea4e223-dee6-44dc-a7e1-71f996e534f0' },
+            { id: 'dea91a7f-5fe3-4408-b25a-994c97a7975e', size: 'remaining'},
+            { id: 'c41ce11e-bed2-45d2-bdb8-8dc889ed8ced', size: 512 }
         ],
         image: BHYVE_IMAGE_UUID,
         name: 'bhyve-disks-flex-package-test-' + process.pid,
@@ -1184,15 +1184,15 @@ test('GetMachine has disks - Disks with remaining/flex disk package',
             boot: true,
             image: BHYVE_IMAGE_UUID,
             size: BHYVE_IMAGE.image_size,
-            uuid: 'eea4e223-dee6-44dc-a7e1-71f996e534f0'
+            id: 'eea4e223-dee6-44dc-a7e1-71f996e534f0'
         },
         {
             size: BHYVE_128_FLEXIBLE.quota - BHYVE_IMAGE.image_size - 512,
-            uuid: 'dea91a7f-5fe3-4408-b25a-994c97a7975e'
+            id: 'dea91a7f-5fe3-4408-b25a-994c97a7975e'
         },
         {
             size: 512,
-            uuid: 'c41ce11e-bed2-45d2-bdb8-8dc889ed8ced'
+            id: 'c41ce11e-bed2-45d2-bdb8-8dc889ed8ced'
         }
     ];
 

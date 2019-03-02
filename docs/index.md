@@ -922,8 +922,13 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
-## 9.4.1
+## 9.4.2
+- The disks.\*.uuid parameter was renamed to disks.\*.id. This change impacts
+  [CreateMachine](#CreateMachine), [GetMachine](#GetMachine), and
+  [ListMachines](#ListMachines). Backwards incompatible with versions 9.4.0
+  and 9.4.1.
 
+## 9.4.1
 - Added support for [CreateMachineDisk](#CreateMachineDisk),
   [ResizeMachineDisk](#ResizeMachineDisk) and
   [DeleteMachineDisk](#DeleteMachineDisk) for bhyve VMs; this only applies to
@@ -933,7 +938,7 @@ The section describes API changes in CloudAPI versions.
 
 ## 9.4.0
 - [CreateMachine](#CreateMachine) may pass disk quantity and size for bhyve
-  instances. [GetMachine](#GetMachine) and [ListMachines](#ListMachcines)
+  instances. [GetMachine](#GetMachine) and [ListMachines](#ListMachines)
   returns information about these disks. [GetMachineSnapshot](#GetMachineSnapshot)
   and [ListMachineSnapshots](#ListMachineSnapshots) includes snapshot size.
 
@@ -4807,15 +4812,15 @@ The `disks` input parameter allows users to specify a list of disks to be provis
 ```
 "disks": [
   {
-    "uuid": "eea4e223-dee6-44dc-a7e1-71f996e534f0",
+    "id": "eea4e223-dee6-44dc-a7e1-71f996e534f0",
     "boot": true
   },
   {
-    "uuid": "dea91a7f-5fe3-4408-b25a-994c97a7975e",
+    "id": "dea91a7f-5fe3-4408-b25a-994c97a7975e",
     "size": 512
   },
   {
-    "uuid": "c41ce11e-bed2-45d2-bdb8-8dc889ed8ced",
+    "id": "c41ce11e-bed2-45d2-bdb8-8dc889ed8ced",
     "size": "remaining"
   }
 ]
@@ -4825,7 +4830,7 @@ Each object of the `disks` array has the following layout
 
 **Field**  | **Type** | **Description**
 ---------- | -------- | ---------------
-UUID       | UUID     | Unique id for this disk
+id         | UUID     | Unique id for this disk
 boot       | Boolean  | If `true`, this is the boot disk
 image      | UUID     | The image from which the disk was created
 size       | Integer  | The size of the disk in mebibytes or "remaining". If "remaining", size will be set to the difference between the package quota and sum of the other disks.
