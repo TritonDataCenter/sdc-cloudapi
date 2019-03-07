@@ -5,10 +5,9 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright (c) 2019, Joyent, Inc.
  */
 
-var util = require('util');
 var test = require('@smaller/tap').test;
 var common = require('./common');
 var uuid = common.uuid;
@@ -23,7 +22,6 @@ var SDC_128 = common.sdc_128_package;
 
 var IMAGE_UUID;
 var SERVER_UUID;
-var PROVISIONABLE_NET_UUID;
 var MACHINE_UUID;
 
 var CLIENTS;
@@ -137,6 +135,14 @@ test('ListMachines (filter by joyent brand) - other', function (t) {
 test('Deletion Protection tests', function (t) {
     var deletionProtectionTest = require('./machines/deletion_protection');
     deletionProtectionTest(t, CLIENT, OTHER, MACHINE_UUID, function () {
+        t.end();
+    });
+});
+
+
+test('Migrations tests', function (t) {
+    var testMigrations = require('./machines/migrations');
+    testMigrations(t, CLIENT, OTHER, MACHINE_UUID, function () {
         t.end();
     });
 });
