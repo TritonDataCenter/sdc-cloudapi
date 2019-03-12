@@ -844,6 +844,8 @@ The section describes API changes in CloudAPI versions.
 ## 9.5.0
 - Remove Cloud Analytics endpoints. Cloud Analytics has been removed from
   Triton. See [TRITON-884](https://smartos.org/bugview/TRITON-884) for details.
+- [CreateMachine](#CreateMachine)'s `affinity` rules now work with concurrent
+  provisions.
 
 ## 9.4.3
 - [ListPackages](#ListPackages) and [GetPackage](#GetPackage) include the
@@ -955,8 +957,6 @@ The section describes API changes in CloudAPI versions.
   Affinity rules (inspired by Docker Swarm affinity filters) allow a more
   powerful mechanism for controlling server placement of instances.
   This deprecates the `locality` field for "locality hints" on CreateMachine.
-  Limitation: Affinity rules currently do not properly consider *concurrent*
-  provisions (see [TRITON-9](https://smartos.org/bugview/TRITON-9)).
 
   This CloudAPI feature is comparable to [Triton's Docker placement affinity
   rules](https://apidocs.joyent.com/docker/features/placement).

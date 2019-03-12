@@ -5,11 +5,10 @@
  */
 
 /*
- * Copyright 2017, Joyent, Inc.
+ * Copyright 2019, Joyent, Inc.
  */
 
 var clone = require('clone');
-var format = require('util').format;
 var libuuid = require('libuuid');
 var machinesCommon = require('./common');
 
@@ -38,30 +37,49 @@ function (suite, client, other, imgUuid, pkgUuid, headnodeUuid, cb) {
         };
     }
 
+    function checkFail(t, _client, affinityStr) {
+        var args = createArgs(affinityStr);
+
+        _client.post('/my/machines', args, function postCb(err, req, res, vm) {
+            t.ok(err, 'err');
+            t.equal(err.name, 'NoAllocatableServersError');
+            t.end();
+        });
+    }
+
+
+    // this should fail due to bad syntax
+    suite.test('CreateMachine with bad-syntax affinity', function (t) {
+        var args = createArgs('container=!' + CONTAINER_PREFIX + '*');
+
+        client.post('/my/machines', args, function postCb(err, req, res, vm) {
+            t.ok(err, 'err');
+            t.ok(/not find operator in affinity/.test(err.message), 'err.msg');
+            t.equal(res.statusCode, 409);
+            t.end();
+        });
+    });
+
 
     // This should fail: no container with name 'sdccloudapitest_affinity_*'.
     suite.test('CreateMachine with affinity "container==' + CONTAINER_PREFIX +
         '*"', function (t) {
+        checkFail(t, client, 'container==' + CONTAINER_PREFIX + '*');
+    });
 
-        var args = createArgs('container==' + CONTAINER_PREFIX + '*');
 
-        client.post('/my/machines', args, function (err, req, res, body) {
-            t.ok(err, 'VM with false affinity should fail');
-            t.end();
-        });
+    // This should fail: no instance (different name for container) with name
+    // 'sdccloudapitest_affinity_*'.
+    suite.test('CreateMachine with affinity "instance==' + CONTAINER_PREFIX +
+        '*"', function (t) {
+        checkFail(t, client, 'instance==' + CONTAINER_PREFIX + '*');
     });
 
 
     // Same as above, but using a regular expression
     suite.test('CreateMachine with affinity "container==/^' + CONTAINER_PREFIX +
         '/"', function (t) {
-
-        var args = createArgs('container==/^' + CONTAINER_PREFIX + '/');
-
-        client.post('/my/machines', args, function (err, req, res, body) {
-            t.ok(err, 'VM with false affinity should fail');
-            t.end();
-        });
+        checkFail(t, client, 'container==/^' + CONTAINER_PREFIX + '/');
     });
 
 
@@ -89,20 +107,54 @@ function (suite, client, other, imgUuid, pkgUuid, headnodeUuid, cb) {
 
             client.del('/my/machines/' + VM_UUID, function (err2, req, res) {
                 t.ifError(err2, 'Cleanup test container');
-                t.end();
+
+                machinesCommon.waitForDeletedMachine(client, VM_UUID,
+                function waitCb(err3) {
+                    t.ifError(err3, 'Wait for deletion');
+                    t.end();
+                });
+            });
+        });
+    });
+
+
+    // same as above test, but with instance
+    suite.test('CreateMachine with affinity "instance!=' + CONTAINER_PREFIX +
+        '*"', function (t) {
+
+        var args = createArgs('instance!=' + CONTAINER_PREFIX + '*');
+
+        client.post('/my/machines', args, function (err, req, res, vm) {
+            t.ifError(err, 'VM affinity should succeed');
+            t.ok(vm, 'VM should be created');
+
+            VM_UUID = vm.id;
+
+            t.end();
+        });
+    });
+
+
+    suite.test('Wait for running, then clean up', function (t) {
+        machinesCommon.waitForRunningMachine(client, VM_UUID, function (err) {
+            t.ifError(err);
+
+            client.del('/my/machines/' + VM_UUID, function (err2, req, res) {
+                t.ifError(err2, 'Cleanup test container');
+
+                machinesCommon.waitForDeletedMachine(client, VM_UUID,
+                function waitCb(err3) {
+                    t.ifError(err3, 'Wait for deletion');
+                    t.end();
+                });
             });
         });
     });
 
 
     // This should fail: no container with label foo=bar2.
-    suite.test('CreateMachine with affinity "foo==bar2', function (t) {
-        var args = createArgs('foo==bar2');
-
-        client.post('/my/machines', args, function (err, req, res, vm) {
-            t.ok(err, 'VM with false affinity should fail');
-            t.end();
-        });
+    suite.test('CreateMachine with affinity "foo==bar2"', function (t) {
+        checkFail(t, client, 'foo==bar2');
     });
 
 
@@ -127,7 +179,12 @@ function (suite, client, other, imgUuid, pkgUuid, headnodeUuid, cb) {
 
             client.del('/my/machines/' + VM_UUID, function (err2, req, res) {
                 t.ifError(err2, 'Cleanup test container');
-                t.end();
+
+                machinesCommon.waitForDeletedMachine(client, VM_UUID,
+                function waitCb(err3) {
+                    t.ifError(err3, 'Wait for deletion');
+                    t.end();
+                });
             });
         });
     });
@@ -179,7 +236,12 @@ function (suite, client, other, imgUuid, pkgUuid, headnodeUuid, cb) {
 
             client.del('/my/machines/' + VM2_UUID, function (err2, req, res) {
                 t.ifError(err2, 'Cleanup test container');
-                t.end();
+
+                machinesCommon.waitForDeletedMachine(client, VM2_UUID,
+                function waitCb(err3) {
+                    t.ifError(err3, 'Wait for deletion');
+                    t.end();
+                });
             });
         });
     });
