@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright (c) 2019, Joyent, Inc.
  */
 
 var util = require('util');
@@ -74,11 +74,23 @@ var SDC_512_BHYVE_BRAND = {
     zfs_io_priority: 10
 };
 
+var SDC_512_BHYVE_FLEX = Object.assign({}, SDC_512_BHYVE_BRAND, {
+    disks: [
+        {},
+        {size: 512},
+        {size: 'remaining'}
+    ],
+    flexible_disk: true,
+    name: 'sdc_128_bhyve_flex_disks',
+    uuid: 'eaec9227-ad21-4cbe-a0ab-15cfa9b360f1'
+});
+
 var CLIENTS;
 var CLIENT;
 var SERVER;
 
 var CREATED_SDC_512_BHYVE_BRAND = false;
+var CREATED_SDC_512_BHYVE_FLEX = false;
 var PAPI_VERSION;
 var VIEWABLE_PACKAGE_NAMES;
 var VIEWABLE_PACKAGE_UUIDS;
@@ -186,6 +198,17 @@ test('setup', function (t) {
                     CREATED_SDC_512_BHYVE_BRAND = true;
                     createPackage(SDC_512_BHYVE_BRAND, cb);
                 },
+                function _add512BhyveFlex(_, cb) {
+                    // 7.2.0 added support for pkg.flexible_disk and pkg.disks
+                    if (semver.lt(PAPI_VERSION, '7.2.0')) {
+                        t.ok(true, 'skipping "flexible_disk" test');
+                        cb();
+                        return;
+                    }
+
+                    CREATED_SDC_512_BHYVE_FLEX = true;
+                    createPackage(SDC_512_BHYVE_FLEX, cb);
+                },
                 function _listPackages(_, cb) {
                     var accUuid;
 
@@ -278,6 +301,13 @@ test('search packages by brand', function _searchBrand(t) {
 
             t.end();
         });
+});
+
+
+test('search packages by flexible_disk', function (t) {
+    searchAndCheck('flexible_disk=true', t, function (pkg) {
+        t.equal(pkg.flexible_disk, true);
+    });
 });
 
 
@@ -414,7 +444,6 @@ test('GetPackage 404', function (t) {
 
 
 test('teardown', function _teardown(t) {
-
     function deletePackage(pkg, cb) {
         common.deletePackage(CLIENT, pkg, function _onDel(err) {
             t.ifError(err, 'delete package ' + pkg.uuid +
@@ -435,6 +464,12 @@ test('teardown', function _teardown(t) {
                     return;
                 }
                 deletePackage(SDC_512_BHYVE_BRAND, cb);
+            }, function _delete512BhyveFlex(_, cb) {
+                if (!CREATED_SDC_512_BHYVE_FLEX) {
+                    cb();
+                    return;
+                }
+                deletePackage(SDC_512_BHYVE_FLEX, cb);
             }
         ]
     }, function _onDeleted(err) {

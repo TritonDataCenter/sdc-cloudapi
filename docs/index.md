@@ -922,6 +922,10 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
+## 9.4.3
+- [ListPackages](#ListPackages) and [GetPackage](#GetPackage) include the
+  `flexible_disk` and `disks` attributes if they exist
+
 ## 9.4.2
 - The disks.\*.uuid parameter was renamed to disks.\*.id. This change impacts
   [CreateMachine](#CreateMachine), [GetMachine](#GetMachine), and
@@ -4188,16 +4192,17 @@ Provides a list of packages available in this datacenter.
 
 * The following are all optional inputs:
 
-**Field**  | **Type** | **Description**
----------- | -------- | ---------------
-name       | String   | The "friendly" name for this package
-memory     | Number   | How much memory will by available (in MiB)
-disk       | Number   | How much disk space will be available (in MiB)
-swap       | Number   | How much swap space will be available (in MiB)
-lwps       | Number   | Maximum number of light-weight processes (threads) allowed
-vcpus      | Number   | Number of vCPUs for this package
-version    | String   | The version of this package
-group      | String   | The group this package belongs to
+**Field**     | **Type** | **Description**
+------------- | -------- | ---------------
+name          | String   | The "friendly" name for this package
+memory        | Number   | How much memory will by available (in MiB)
+disk          | Number   | How much disk space will be available (in MiB)
+swap          | Number   | How much swap space will be available (in MiB)
+lwps          | Number   | Maximum number of light-weight processes (threads) allowed
+vcpus         | Number   | Number of vCPUs for this package
+version       | String   | The version of this package
+group         | String   | The group this package belongs to
+flexible_disk | Boolean  | Whether this is a flexible_disk package
 
 When any values are provided for one or more of the aforementioned inputs, the
 retrieved packages will match all of them.
@@ -4211,19 +4216,22 @@ package name.
 
 An array of objects, of the form:
 
-**Field**  | **Type** | **Description**
----------- | -------- | ---------------
-id         | UUID     | Unique id for this package
-name       | String   | The "friendly" name for this package
-memory     | Number   | How much memory will by available (in MiB)
-disk       | Number   | How much disk space will be available (in MiB)
-swap       | Number   | How much swap space will be available (in MiB)
-lwps       | Number   | Maximum number of light-weight processes (threads) allowed
-vcpus      | Number   | Number of vCPUs for this package
-version    | String   | The version of this package
-group      | String   | The group this package belongs to
-description | String  | A human-friendly description about this package
-default    | Boolean  | (deprecated) Whether this is the default package in this datacenter
+**Field**     | **Type** | **Description**
+------------- | -------- | ---------------
+id            | UUID     | Unique id for this package
+name          | String   | The "friendly" name for this package
+memory        | Number   | How much memory will by available (in MiB)
+disk          | Number   | How much disk space will be available (in MiB)
+swap          | Number   | How much swap space will be available (in MiB)
+lwps          | Number   | Maximum number of light-weight processes (threads) allowed
+vcpus         | Number   | Number of vCPUs for this package
+version       | String   | The version of this package
+group         | String   | The group this package belongs to
+description   | String   | A human-friendly description about this package
+disks         | Array    | The disks this package contains (Allowed when flexible_disk is `true`)
+flexible_disk | Boolean  | Whether this is a flexible_disk package (bhyve only)
+default       | Boolean  | (deprecated) Whether this is the default package in this datacenter
+
 
 ### Errors
 
@@ -4292,19 +4300,21 @@ Gets a package by `name` or `id`.
 
 ### Returns
 
-**Field**  | **Type** | **Description**
----------- | -------- | ---------------
-id         | UUID     | Unique id for this package
-name       | String   | The "friendly" name for this package
-memory     | Number   | How much memory will by available (in MiB)
-disk       | Number   | How much disk space will be available (in MiB)
-swap       | Number   | How much swap space will be available (in MiB)
-lwps       | Number   | Maximum number of light-weight processes (threads) allowed
-vcpus      | Number   | Number of vCPUs for this package
-version    | String   | The version of this package
-group      | String   | The group this package belongs to
-description | String  | A human-friendly description about this package
-default    | Boolean  | (deprecated) Whether this is the default package in this datacenter
+**Field**     | **Type** | **Description**
+------------- | -------- | ---------------
+id            | UUID     | Unique id for this package
+name          | String   | The "friendly" name for this package
+memory        | Number   | How much memory will by available (in MiB)
+disk          | Number   | How much disk space will be available (in MiB)
+swap          | Number   | How much swap space will be available (in MiB)
+lwps          | Number   | Maximum number of light-weight processes (threads) allowed
+vcpus         | Number   | Number of vCPUs for this package
+version       | String   | The version of this package
+group         | String   | The group this package belongs to
+description   | String   | A human-friendly description about this package
+disks         | Array    | The disks this package contains (Allowed when flexible_disk is `true`)
+flexible_disk | Boolean  | Whether this is a flexible_disk package (bhyve only)
+default       | Boolean  | (deprecated) Whether this is the default package in this datacenter
 
 ### Errors
 
