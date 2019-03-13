@@ -827,8 +827,8 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 The section describes API changes in CloudAPI versions.
 
 ## 9.5.0
-- Remove Cloud Analytics endpoints. Cloud Analytics has been deprecated.
-  See [TRITON-884](https://smartos.org/bugview/TRITON-884) for details.
+- Remove Cloud Analytics endpoints. Cloud Analytics has been removed from
+  Triton. See [TRITON-884](https://smartos.org/bugview/TRITON-884) for details.
 
 ## 9.4.2
 - The disks.\*.uuid parameter was renamed to disks.\*.id. This change impacts
