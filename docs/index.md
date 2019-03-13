@@ -814,7 +814,8 @@ The set of supported *API versions* is given in the ping endpoint:
                 "7.1.0",
                 "7.2.0",
                 "7.3.0",
-                "8.0.0"
+                "8.0.0",
+                "9.0.0"
             ]
         }
     }
@@ -824,6 +825,10 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 # Versions
 
 The section describes API changes in CloudAPI versions.
+
+## 9.5.0
+- Remove Cloud Analytics endpoints. Cloud Analytics has been deprecated.
+  See [TRITON-884](https://smartos.org/bugview/TRITON-884) for details.
 
 ## 9.4.2
 - The disks.\*.uuid parameter was renamed to disks.\*.id. This change impacts
