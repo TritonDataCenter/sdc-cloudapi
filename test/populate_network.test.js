@@ -12,7 +12,7 @@
  * Unlike other tests, here we make the client point at the admin user.
  * Adding zones missing network_uuid in the nics isn't simple in tests, but
  * headnode zones are created without them, so we're making use of that fact
- * here by listing the CA zone.
+ * here by listing the Amon zone.
  */
 
 var test   = require('@smaller/tap').test;
@@ -25,7 +25,7 @@ var common = require('./common');
 
 var KEY_NAME = 'cloudapi.test.key.delete.if.seen';
 
-var CA_ZONE;
+var AMON_ZONE;
 var FW_RULE;
 
 var CLIENTS;
@@ -89,13 +89,13 @@ test('ListMachines populates networks', function (t) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
 
-        CA_ZONE = body.filter(function (zone) {
-            return zone.name === 'ca0';
+        AMON_ZONE = body.filter(function (zone) {
+            return zone.name === 'amon0';
         })[0];
 
-        t.ok(CA_ZONE);
-        t.ok(CA_ZONE.networks);
-        t.equal(typeof (CA_ZONE.networks[0]), 'string');
+        t.ok(AMON_ZONE);
+        t.ok(AMON_ZONE.networks);
+        t.equal(typeof (AMON_ZONE.networks[0]), 'string');
 
         t.end();
     });
@@ -104,7 +104,7 @@ test('ListMachines populates networks', function (t) {
 
 
 test('GetMachine populates networks', function (t) {
-    CLIENT.get('/my/machines/' + CA_ZONE.id, function (err, req, res, body) {
+    CLIENT.get('/my/machines/' + AMON_ZONE.id, function (err, req, res, body) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
 
@@ -121,7 +121,7 @@ test('GetMachine populates networks', function (t) {
 test('Add firewall rule OK', function (t) {
     CLIENT.post('/my/fwrules', {
         description: 'rule from cloudapi test. Delete if found',
-        rule: 'FROM vm ' + CA_ZONE.id + ' TO subnet 10.99.99.0/24 ' +
+        rule: 'FROM vm ' + AMON_ZONE.id + ' TO subnet 10.99.99.0/24 ' +
                 'BLOCK tcp PORT 25'
     }, function (err, req, res, fwRule) {
         t.ifError(err);
@@ -144,7 +144,7 @@ test('ListFirewallRuleMachines populates networks', function (t) {
         t.equal(zones.length, 1);
 
         var zone = zones[0];
-        t.equal(zone.id, CA_ZONE.id);
+        t.equal(zone.id, AMON_ZONE.id);
         t.ok(typeof (zone.networks[0]), 'string');
 
         t.end();
@@ -185,7 +185,7 @@ test('Delete firewall rule OK', function (t) {
 test('ListFirewallRuleMachines populates networks - other', function (t) {
     OTHER.post('/my/fwrules', {
         description: 'rule from cloudapi test. Delete if found',
-        rule: 'FROM vm ' + CA_ZONE.id + ' TO subnet 10.99.99.0/24 ' +
+        rule: 'FROM vm ' + AMON_ZONE.id + ' TO subnet 10.99.99.0/24 ' +
                 'BLOCK tcp PORT 25'
     }, function (err, req, res, fwRule) {
         t.ifError(err);
