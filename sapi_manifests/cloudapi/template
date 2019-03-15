@@ -69,9 +69,6 @@
     "papi": {
         "url": "http://{{{papi_domain}}}"
     },
-    "ca": {
-        "url": "http://{{{ca_domain}}}:23181"
-    },
 {{#experimental_cloudapi_nfs_shared_volumes}}
     "volapi": {
         "url": "http://volapi.{{{datacenter_name}}}.{{{dns_domain}}}"
@@ -150,8 +147,7 @@
                     "rate": 0
                 }
             }
-        },
-        "analytics": false
+        }
     },
 
     {{^account_allowed_dcs}}

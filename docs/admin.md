@@ -132,9 +132,6 @@ section will explain the configuration file.
                 "expiry": 300
             }
         },
-        "ca": {
-            "url": "http://10.99.99.24:23181"
-        },
         "plugins": [
             {
                 "name": "provision_limits",
@@ -175,8 +172,7 @@ section will explain the configuration file.
                         "rate": 0
                     }
                 }
-            },
-            "analytics": false
+            }
         },
         "bleeding_edge_features": {
             "": false
@@ -320,19 +316,6 @@ url       | URL      | The fully-qualified URL where CNAPI lives
 cache     | Object   | Controls the CNAPI client cache size and the time to expire it (in seconds)
 
 
-## CA
-
-      "ca": {
-        "url": "http://10.99.99.24:23181"
-      },
-
-The `ca` config block tells CloudAPI how to communicate with Cloud Analytics,
-and what cache settings to use.
-
-**Field** | **Type** | **Description**
---------- | -------- | ---------------------------------------------------------
-url       | URL      | The fully-qualified URL where CA lives
-
 
 ## NAPI
 
@@ -469,17 +452,6 @@ example:
             "rate": 0
           }
         }
-      },
-      "analytics": {
-        "ip": true,
-        "burst": 100,
-        "rate": 10,
-        "overrides": {
-          "10.99.99.14": {
-            "burst": 0,
-            "rate": 0
-          }
-        }
       }
     }
 
@@ -487,18 +459,13 @@ This configuration tells CloudAPI to create one token bucket for all endpoints,
 and make it match on `ip`.  Allow a maximum burst rate of `9` requests from a
 single IP (assuming there are tokens), and refill the bucket at a rate of `3`
 tokens per second.  However, allow any requests coming from the portal to have
-an unlimited request rate.  Now, in addition to that, because the /analytics
-endpoint is likely to get polled at a high velocity (and can support the
-traffic), we create a second token bucket specific to the /analytics endpoints.
-Here, a single IP can burst to 100, and gets 10 tokens/second.  Again, the
-portal is allowed unrestricted access.
+an unlimited request rate.
 
 The given keys that can be configured in the throttling configuration:
 
 **Key**     | **Description**
 ----------- | ------------------------------------------------------------------
 account     | /account specific throttling
-analytics   | /analytics specific throttling
 audit       | /audit specific throttling
 config      | /config specific throttling
 datacenters | /datacenters specific throttling

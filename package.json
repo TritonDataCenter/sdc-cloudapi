@@ -1,7 +1,7 @@
 {
     "name": "cloudapi",
-    "description": "SmartDataCenter CloudAPI",
-    "version": "9.4.3",
+    "description": "Triton CloudAPI",
+    "version": "9.5.0",
     "author": "Joyent (joyent.com)",
     "private": true,
     "engines": {

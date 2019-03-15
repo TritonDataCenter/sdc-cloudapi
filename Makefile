@@ -218,9 +218,9 @@ tests_test: $(TAP)
 users_test: $(TAP)
 	$(NODE_EXEC) $(TAP) test/users.test.js
 
-test: auth_test account_test analytics_test datacenters_test datasets_test fabrics_test images_test keys_test networks_test packages_test populate_network_test services_test tests_test users_test nics_test machines_test
+test: auth_test account_test datacenters_test datasets_test fabrics_test images_test keys_test networks_test packages_test populate_network_test services_test tests_test users_test nics_test machines_test
 
-no_machines_test: auth_test account_test analytics_test datacenters_test datasets_test fabrics_test images_test keys_test networks_test packages_test populate_network_test services_test tests_test users_test
+no_machines_test: auth_test account_test datacenters_test datasets_test fabrics_test images_test keys_test networks_test packages_test populate_network_test services_test tests_test users_test
 
 provision_limits_plugin_test:
 	$(NODE_EXEC) $(TAP) test/provision_limits.test.javascript
