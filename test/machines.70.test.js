@@ -5,12 +5,13 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 
 var util = require('util');
 var test = require('@smaller/tap').test;
+var vasync = require('vasync');
 var common = require('./common');
 var uuid = common.uuid;
 var addPackage = common.addPackage;
@@ -227,16 +228,24 @@ test('KVM image', function (t) {
         // Do nothing if we haven't got a Linux image already imported
         if (body.length === 0) {
             console.log('No KVM images imported, skipping KVM provisioning');
-        } else {
-            var nonLxImages = body.filter(function avoidLx(img) {
-                return (img.type !== 'smartmachine');
-            });
-            const kvmImage = nonLxImages.pop();
-            KVM_IMAGE_UUID = kvmImage.id;
-            if (kvmImage.published_at >= '2018-08-19T00:00:00Z') {
-                BHYVE_IMAGE_UUID = KVM_IMAGE_UUID;
-            }
+            t.end();
+            return;
         }
+
+        var hvmImages = body.filter(function getHvm(img) {
+            return img.type === 'zvol';
+        });
+
+        KVM_IMAGE_UUID = hvmImages.filter(function getKvm(img) {
+            var reqr = img.requirements;
+            return !reqr || !reqr.brand || reqr.brand === 'kvm';
+        }).pop();
+
+        BHYVE_IMAGE_UUID = hvmImages.filter(function getBhyve(img) {
+            var reqr = img.requirements;
+            return !reqr || !reqr.brand || reqr.brand === 'bhyve';
+        }).pop();
+
         t.end();
     });
 });
@@ -412,14 +421,28 @@ test('Delete bhyve test vm', function (t) {
 
 
 test('teardown', function (t) {
-    common.deletePackage(CLIENT, common.kvm_128_package,
-        function delKvmPkg(err1) {
-        common.deletePackage(CLIENT, common.bhyve_128_package,
-            function delBhyvePkg(err2) {
-            common.teardown(CLIENTS, SERVER, function teardownClients(err3) {
-                t.ifError(err1 || err2 || err3, 'teardown success');
-                t.end();
+    var delPkgs = [];
+
+    if (KVM_IMAGE_UUID) {
+        delPkgs.push(common.kvm_128_package);
+    }
+
+    if (BHYVE_IMAGE_UUID) {
+        delPkgs.push(common.bhyve_128_package);
+    }
+
+    vasync.forEachPipeline({
+        inputs: delPkgs,
+        func: function deletePkg(pkg, next) {
+            common.deletePackage(CLIENT, pkg, function delCb(err) {
+                t.ifError(err, 'err deleting package');
+                next();
             });
+        }
+    }, function vasyncCb() {
+        common.teardown(CLIENTS, SERVER, function teardownClients(err) {
+            t.ifError(err, 'teardown success');
+            t.end();
         });
     });
 });

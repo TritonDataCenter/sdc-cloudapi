@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 var assert = require('assert-plus');
@@ -30,7 +30,7 @@ var KEY_FILENAME = '/tmp/cloudapi-test-key';
 /*
  * The test images below are imported via sdcadm post-setup dev-sample-data.
  */
-var TEST_IMAGE_KVM = 'ubuntu-certified-16.04';
+var TEST_IMAGE_HVM = 'ubuntu-certified-16.04';
 var TEST_IMAGE_LX = 'ubuntu-16.04';
 var TEST_IMAGE_NAMES_TO_UUID = {};
 var TEST_IMAGE_SMARTOS = 'minimal-64-lts';
@@ -174,7 +174,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
     // Ensure we have required images
     test('ensure images', function (t) {
-        var IMG_NAMES = [TEST_IMAGE_LX, TEST_IMAGE_KVM, TEST_IMAGE_SMARTOS];
+        var IMG_NAMES = [TEST_IMAGE_LX, TEST_IMAGE_HVM, TEST_IMAGE_SMARTOS];
 
         vasync.forEachParallel({
             func: common.makeImageProvisionable.bind(null, CLIENT),
@@ -590,12 +590,12 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
         }
     });
 
-    test('creating a KVM container using volume should fail', function (t) {
+    test('creating an HVM container using volume should fail', function (t) {
         var payload;
 
         payload = {
             metadata: {},
-            image: TEST_IMAGE_NAMES_TO_UUID[TEST_IMAGE_KVM],
+            image: TEST_IMAGE_NAMES_TO_UUID[TEST_IMAGE_HVM],
             package: testPackage.id,
             name: 'cloudapi-volume-kvm-' + libuuid.create().split('-')[0],
             firewall_enabled: false,
@@ -616,8 +616,11 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
         CLIENT.post('/my/machines', payload, function (err, req, res, body) {
             t.ok(err, 'expect VM create failure');
             t.equal(err.statusCode, 409, 'expected 409');
-            t.equal(err.message, 'volumes not yet supported with brand "kvm"',
-                'expected error due to unsupported kvm');
+
+            var msg = err.message;
+            t.ok(msg === 'volumes not yet supported with brand "kvm"' ||
+                msg === 'volumes not yet supported with brand "bhyve"',
+                'expected error due to unsupported HVM');
 
             t.end();
         });
