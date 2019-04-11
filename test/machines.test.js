@@ -585,16 +585,12 @@ test('Create machine with invalid parameters', function (t) {
         image: IMAGE_UUID,
         package: SDC_256.name,
         // Underscore will make name invalid:
-        name: '_a' + uuid().substr(0, 7),
-        // Obviously, not a valid UUID, but we don't want to notify customers
-        // about this:
-        server_uuid: '123456'
+        name: '_a' + uuid().substr(0, 7)
     };
 
     CLIENT.post('/my/machines', obj, function (err, req, res, _body) {
         t.ok(err, 'POST Create machine with invalid parameters');
-        t.ok(/name/.test(err.message));
-        t.notOk(/server/.test(err.message));
+        t.ok(err.message, 'Invalid name');
         t.end();
     });
 });
@@ -1902,6 +1898,7 @@ test('Create Machine using "params.bootrom" without "bhyve"', function (t) {
         t.end();
     });
 });
+
 
 test('teardown', function (t) {
     common.deletePackage(CLIENT, SDC_256, function (err) {
