@@ -21,7 +21,7 @@ var CONTAINER_PREFIX = 'sdccloudapitest_affinity_';
 // --- Tests
 
 module.exports =
-function (suite, client, other, imgUuid, pkgUuid, headnodeUuid, cb) {
+function affinityTests(suite, client, other, imgUuid, pkgUuid, cb) {
     var VM_UUID;
     var VM2_UUID;
 
@@ -31,7 +31,6 @@ function (suite, client, other, imgUuid, pkgUuid, headnodeUuid, cb) {
             image: imgUuid,
             package: pkgUuid,
             name: CONTAINER_PREFIX + libuuid.create().split('-')[0],
-            server_uuid: headnodeUuid,
             firewall_enabled: true,
             affinity: [affinity]
         };
