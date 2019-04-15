@@ -6,7 +6,7 @@
 #
 
 #
-# Copyright (c) 2015, Joyent, Inc.
+# Copyright 2019 Joyent, Inc.
 #
 
 #
@@ -98,10 +98,6 @@ OUTPUT_DIR=/var/tmp/cloudapitest
 echo "# Setup a clean output dir ($OUTPUT_DIR)."
 rm -rf /var/tmp/cloudapitest
 mkdir -p /var/tmp/cloudapitest
-
-# Gather DC setup info for the test files.
-echo "# Datacenter config:"
-echo "#     SDC_SSO_ADMIN_IP is $SDC_SSO_ADMIN_IP"
 
 cd $TOP
 

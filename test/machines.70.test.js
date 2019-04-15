@@ -24,7 +24,6 @@ var mod_config = require('../lib/config.js');
 
 var SDC_128 = common.sdc_128_package;
 
-var SERVER_UUID;
 var IMAGE_UUID;
 var MACHINE_UUID;
 
@@ -55,15 +54,6 @@ test('setup', function (t) {
 });
 
 
-test('Get test server', function (t) {
-    common.getTestServer(CLIENT, function (err, testServer) {
-        t.ifError(err);
-        SERVER_UUID = testServer.uuid;
-        t.end();
-    });
-});
-
-
 test('Get test image', function (t) {
     common.getTestImage(CLIENT, function (err, img) {
         t.ifError(err, 'getTestImage');
@@ -79,8 +69,7 @@ test('Create machine with invalid package', function (t) {
     var obj = {
         dataset: IMAGE_UUID,
         package: uuid().substr(0, 7),
-        name: 'a' + uuid().substr(0, 7),
-        server_uuid: SERVER_UUID
+        name: 'a' + uuid().substr(0, 7)
     };
 
     CLIENT.post('/my/machines', obj, function (err, req, res, _body) {
@@ -95,8 +84,7 @@ test('Create machine with invalid package', function (t) {
 test('CreateMachine w/o dataset fails', function (t) {
     var obj = {
         package: SDC_128.name,
-        name: 'a' + uuid().substr(0, 7),
-        server_uuid: SERVER_UUID
+        name: 'a' + uuid().substr(0, 7)
     };
 
     CLIENT.post('/my/machines', obj, function (err, req, res, _body) {
@@ -113,7 +101,6 @@ test('Create machine with invalid network', function (t) {
         dataset: IMAGE_UUID,
         package: SDC_128.name,
         name: 'a' + uuid().substr(0, 7),
-        server_uuid: SERVER_UUID,
         networks: [uuid()]
     };
 
@@ -132,7 +119,6 @@ test('CreateMachine', function (t) {
         image: IMAGE_UUID,
         package: SDC_128.name,
         name: 'a' + uuid().substr(0, 7),
-        server_uuid: SERVER_UUID,
         firewall_enabled: true
     };
 
@@ -271,7 +257,6 @@ test('Create KVM machine', function (t) {
             image: KVM_IMAGE_UUID,
             package: common.kvm_128_package.name,
             name: 'a' + uuid().substr(0, 7),
-            server_uuid: SERVER_UUID,
             brand: 'kvm'
         };
 
@@ -337,7 +322,6 @@ test('Create bhyve machine', function (t) {
         image: BHYVE_IMAGE_UUID,
         package: common.bhyve_128_package.name,
         name: 'a' + uuid().substr(0, 7),
-        server_uuid: SERVER_UUID,
         brand: 'bhyve'
     };
 

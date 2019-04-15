@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 /*
@@ -510,8 +510,6 @@ function loadServer(cb) {
 
         return cb(null, serverObj);
     }
-
-    CONFIG.test = true;
 
     return app.createServer(CONFIG, function (err, server) {
         if (err) {

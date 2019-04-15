@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 /*
@@ -382,7 +382,6 @@ function createFixtures(t, cb) {
                     image: image.id,
                     package: SDC_128.name,
                     name: FIXTURE_DATA.inst.name,
-                    server_uuid: fixtures.server.uuid,
                     firewall_enabled: true
                 };
                 machinesCommon.createMachine(t, CLIENT, obj,
@@ -414,7 +413,6 @@ function createFixtures(t, cb) {
                     image: image.id,
                     package: SDC_128.name,
                     name: FIXTURE_DATA.inst.name + 2,
-                    server_uuid: fixtures.server.uuid,
                     firewall_enabled: true
                 };
                 machinesCommon.createMachine(t, CLIENT, obj,

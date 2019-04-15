@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 var util = require('util');
@@ -22,7 +22,6 @@ var checkMachine = machinesCommon.checkMachine;
 var SDC_128 = common.sdc_128_package;
 
 var IMAGE_UUID;
-var SERVER_UUID;
 var PROVISIONABLE_NET_UUID;
 var MACHINE_UUID;
 
@@ -43,8 +42,7 @@ function provisionWithInvalidNetwork(t, networks, errMessage) {
         image: IMAGE_UUID,
         package: SDC_128.name,
         name: 'a' + uuid().substr(0, 7),
-        networks: networks,
-        server_uuid: SERVER_UUID
+        networks: networks
     };
 
     CLIENT.post({
@@ -70,15 +68,6 @@ test('setup', function (t) {
         OTHER   = clients.other;
         SERVER  = server;
 
-        t.end();
-    });
-});
-
-
-test('Get test server', function (t) {
-    common.getTestServer(CLIENT, function (err, testServer) {
-        t.ifError(err);
-        SERVER_UUID = testServer.uuid;
         t.end();
     });
 });
@@ -115,8 +104,7 @@ test('CreateMachine: new networks format', function (t) {
         name: 'a' + uuid().substr(0, 7),
         networks: [ {
             ipv4_uuid: PROVISIONABLE_NET_UUID
-        } ],
-        server_uuid: SERVER_UUID
+        } ]
     };
 
     machinesCommon.createMachine(t, CLIENT, obj, function (_, machineUuid) {

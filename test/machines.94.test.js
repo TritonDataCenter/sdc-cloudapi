@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2019, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 var test = require('@smaller/tap').test;
@@ -65,7 +65,6 @@ var CLIENT;
 var CLIENTS;
 var OTHER;
 var SERVER;
-var SERVER_UUID;
 
 function checkDisk(t, expectedDisk, actualDisk) {
     Object.keys(expectedDisk).forEach(function check(prop) {
@@ -147,20 +146,6 @@ test('add bhyve packages', function (t) {
     });
 });
 
-test('Get test server', function (t) {
-    if (!BHYVE_IMAGE_UUID) {
-        t.ok(true, 'No bhyve images. Test skipped');
-        t.end();
-        return;
-    }
-
-    common.getTestServer(CLIENT, function (err, testServer) {
-        t.ifError(err);
-        SERVER_UUID = testServer.uuid;
-        t.end();
-    });
-});
-
 test('CreateMachine - disks and no flexible_disk package', function (t) {
     if (!BHYVE_IMAGE_UUID) {
         t.ok(true, 'No bhyve images. Test skipped');
@@ -172,8 +157,7 @@ test('CreateMachine - disks and no flexible_disk package', function (t) {
         disks: [ {}, {size: 512} ],
         image: BHYVE_IMAGE_UUID,
         name: 'bhyve-inflexible-test-' + process.pid,
-        package: BHYVE_128_INFLEXIBLE.uuid,
-        server_uuid: SERVER_UUID
+        package: BHYVE_128_INFLEXIBLE.uuid
     };
 
     CLIENT.post('/my/machines', obj,
@@ -206,8 +190,7 @@ test('CreateMachine - 9 disks and flexible disk package', function (t) {
         ],
         image: BHYVE_IMAGE_UUID,
         name: 'bhyve-too-many-disks-test-' + process.pid,
-        package: BHYVE_128_FLEXIBLE.uuid,
-        server_uuid: SERVER_UUID
+        package: BHYVE_128_FLEXIBLE.uuid
     };
 
     CLIENT.post('/my/machines', obj,
@@ -236,8 +219,7 @@ test('CreateMachine - Multiple `remaining` disks',
         ],
         image: BHYVE_IMAGE_UUID,
         name: 'bhyve-invalid-remaining-test-' + process.pid,
-        package: BHYVE_128_FLEXIBLE.uuid,
-        server_uuid: SERVER_UUID
+        package: BHYVE_128_FLEXIBLE.uuid
     };
 
     CLIENT.post('/my/machines', obj,
@@ -264,8 +246,7 @@ test('CreateMachine - Disks size is greater than quota',
         ],
         image: BHYVE_IMAGE_UUID,
         name: 'bhyve-oversized-disks-test-' + process.pid,
-        package: BHYVE_128_FLEXIBLE.uuid,
-        server_uuid: SERVER_UUID
+        package: BHYVE_128_FLEXIBLE.uuid
     };
 
     CLIENT.post('/my/machines', obj,
@@ -287,8 +268,7 @@ test('CreateMachine - No disks/inflexible disk package', function (t) {
     var obj = {
         image: BHYVE_IMAGE_UUID,
         name: 'bhyve-no-disks-inflex-package-test-' + process.pid,
-        package: BHYVE_128_INFLEXIBLE.uuid,
-        server_uuid: SERVER_UUID
+        package: BHYVE_128_INFLEXIBLE.uuid
     };
 
     CLIENT.post('/my/machines', obj,
@@ -562,8 +542,7 @@ test('CreateMachine - No disks/package has disks', function (t) {
     var obj = {
         image: BHYVE_IMAGE_UUID,
         name: 'bhyve-package-test-' + process.pid,
-        package: BHYVE_128_FLEXIBLE_DISKS.uuid,
-        server_uuid: SERVER_UUID
+        package: BHYVE_128_FLEXIBLE_DISKS.uuid
     };
 
     CLIENT.post('/my/machines', obj,
@@ -669,8 +648,7 @@ test('CreateMachine - Disks/flexible disk package', function (t) {
         ],
         image: BHYVE_IMAGE_UUID,
         name: 'bhyve-disks-flex-package-test-' + process.pid,
-        package: BHYVE_128_FLEXIBLE.uuid,
-        server_uuid: SERVER_UUID
+        package: BHYVE_128_FLEXIBLE.uuid
     };
 
     CLIENT.post('/my/machines', obj,
@@ -1015,8 +993,7 @@ test('CreateMachine - Disks sum to quota/flex disk package', function (t) {
         ],
         image: BHYVE_IMAGE_UUID,
         name: 'bhyve-disks-max-test-' + process.pid,
-        package: BHYVE_128_FLEXIBLE.uuid,
-        server_uuid: SERVER_UUID
+        package: BHYVE_128_FLEXIBLE.uuid
     };
 
     CLIENT.post('/my/machines', obj,
@@ -1126,8 +1103,7 @@ test('CreateMachine - Disks with remaining/flex disk package',
         ],
         image: BHYVE_IMAGE_UUID,
         name: 'bhyve-disks-flex-package-test-' + process.pid,
-        package: BHYVE_128_FLEXIBLE.uuid,
-        server_uuid: SERVER_UUID
+        package: BHYVE_128_FLEXIBLE.uuid
     };
 
     CLIENT.post('/my/machines', obj,
@@ -1231,8 +1207,7 @@ test('CreateMachine - No disks/flexible disk package', function (t) {
     var obj = {
         image: BHYVE_IMAGE_UUID,
         name: 'bhyve-no-disks-flex-package-test-' + process.pid,
-        package: BHYVE_128_FLEXIBLE.uuid,
-        server_uuid: SERVER_UUID
+        package: BHYVE_128_FLEXIBLE.uuid
     };
 
     CLIENT.post('/my/machines', obj,
@@ -1327,8 +1302,7 @@ test('CreateMachine - Package has remaining boot disk', function (t) {
     var obj = {
         image: BHYVE_IMAGE_UUID,
         name: 'bhyve-remaining-test-' + process.pid,
-        package: BHYVE_128_FLEXIBLE_REMAINING.uuid,
-        server_uuid: SERVER_UUID
+        package: BHYVE_128_FLEXIBLE_REMAINING.uuid
     };
 
     CLIENT.post('/my/machines', obj,

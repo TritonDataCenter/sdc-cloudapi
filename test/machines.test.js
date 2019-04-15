@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2019, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 var util = require('util');
@@ -88,7 +88,6 @@ var SDC_512 = {
     active: true
 };
 
-var SERVER_UUID;
 var IMAGE_UUID;
 var MACHINE_UUID;
 var NETWORK1_UUID;
@@ -156,7 +155,6 @@ test('Get test server', function (t) {
     common.getTestServer(CLIENT, function onGetTestServer(err, testServer) {
         t.ifError(err);
         TEST_SERVER = testServer;
-        SERVER_UUID = testServer.uuid;
         t.end();
     });
 });
@@ -213,8 +211,7 @@ test('Create machine with inactive package', function (t) {
     var obj = {
         image: IMAGE_UUID,
         package: SDC_256_INACTIVE.name,
-        name: 'a' + uuid().substr(0, 7),
-        server_uuid: SERVER_UUID
+        name: 'a' + uuid().substr(0, 7)
     };
 
     CLIENT.post('/my/machines', obj, function (err, req, res, _body) {
@@ -230,7 +227,6 @@ test('Create machine with os mismatch', function (t) {
         image: IMAGE_UUID,
         package: SDC_128_LINUX.name,
         name: 'a' + uuid().substr(0, 7),
-        server_uuid: SERVER_UUID,
         firewall_enabled: true
     };
 
@@ -264,7 +260,6 @@ test('Create machine with too many public networks', function (t) {
             image: IMAGE_UUID,
             package: SDC_256.name,
             name: 'a' + uuid().substr(0, 7),
-            server_uuid: SERVER_UUID,
             firewall_enabled: true,
             networks: networkUuids
         };
@@ -321,7 +316,6 @@ test('CreateMachine using invalid networks', function (t) {
     var obj = {
         image: IMAGE_UUID,
         package: SDC_256.name,
-        server_uuid: SERVER_UUID,
         networks: ['8180ef72-40fa-4b86-915b-803bcf96b442'] // invalid
     };
 
@@ -351,8 +345,7 @@ test('CreateMachine using network without permissions', function (t) {
 
     var vmDetails = {
         image: IMAGE_UUID,
-        package: SDC_256.name,
-        server_uuid: SERVER_UUID
+        package: SDC_256.name
     };
 
     CLIENT.napi.createNetwork(netDetails, function (err, net) {
@@ -393,8 +386,7 @@ test('CreateMachine using public network and ip', function (t) {
 
     var vmDetails = {
         image: IMAGE_UUID,
-        package: SDC_256.name,
-        server_uuid: SERVER_UUID
+        package: SDC_256.name
     };
 
     CLIENT.napi.createNetwork(netDetails, function (err, net) {
@@ -434,7 +426,6 @@ test('CreateMachine using unknown network and an ip', function (t) {
     var vmDetails = {
         image: IMAGE_UUID,
         package: SDC_256.name,
-        server_uuid: SERVER_UUID,
         networks: [
             {
                 ipv4_uuid: networkUuid,
@@ -526,7 +517,6 @@ test('CreateMachine using network pool and an ip', function (t) {
         var vmDetails = {
             image: IMAGE_UUID,
             package: SDC_256.name,
-            server_uuid: SERVER_UUID,
             networks: [
                 {
                     ipv4_uuid: networkPoolUuid,
@@ -601,7 +591,6 @@ test('Create machine with invalid locality', function (t) {
         image: IMAGE_UUID,
         package: SDC_256.name,
         name: 'a' + uuid().substr(0, 7),
-        server_uuid: SERVER_UUID,
         locality: { near: 'asdasd' }
     };
 
@@ -637,8 +626,7 @@ test('CreateMachine using image without permission', function (t) {
 
         var obj = {
             image: inaccessibleImage.uuid,
-            package: SDC_256.name,
-            server_uuid: SERVER_UUID
+            package: SDC_256.name
         };
 
         return CLIENT.post('/my/machines', obj, function (er2, req, res, body) {
@@ -673,8 +661,7 @@ test('CreateMachine without approved_for_provisioning', function (t) {
 
         var obj = {
             image: IMAGE_UUID,
-            package: SDC_256.name,
-            server_uuid: SERVER_UUID
+            package: SDC_256.name
         };
 
         httpClient.post('/my/machines', obj, function (err2, req, res, body) {
@@ -713,7 +700,6 @@ test('CreateMachine', function (t) {
             far: 'af4167f0-beda-4af9-9ae4-99d544499c14', // fake UUID
             strict: true
         },
-        server_uuid: SERVER_UUID,
         deletion_protection: true,
         firewall_enabled: true
     };
@@ -1220,8 +1206,7 @@ test('ListMachines destroyed', function (t) {
 
 test('CreateMachine using query args', function (t) {
     var query = '/my/machines?image=' + IMAGE_UUID +
-                '&package=' + SDC_128.name +
-                '&server_uuid=' + SERVER_UUID;
+                '&package=' + SDC_128.name;
 
     CLIENT.post(query, {}, function (err, req, res, body) {
         t.ifError(err, 'POST /my/machines error');
@@ -1257,7 +1242,6 @@ test('CreateMachine using multiple same networks', function (t) {
         var obj = {
             image: IMAGE_UUID,
             package: SDC_128.name,
-            server_uuid: SERVER_UUID,
             networks: [networkUuid, networkUuid, networkUuid]
         };
 
@@ -1485,7 +1469,6 @@ test('CreateMachine with {{shortId}} in alias', function (t) {
         image: IMAGE_UUID,
         package: SDC_256.name,
         name: 'db-{{shortId}}-1.0',
-        server_uuid: SERVER_UUID,
         firewall_enabled: true
     };
 
@@ -1624,8 +1607,7 @@ test('Create Machine using network and IP', function (t) {
 
     var obj = {
         image: IMAGE_UUID,
-        package: SDC_128.name,
-        server_uuid: SERVER_UUID
+        package: SDC_128.name
     };
 
     CLIENT.napi.createNetwork(netDetails, function (err, net) {
@@ -1675,7 +1657,6 @@ test('Create Machine using network and in use IP', function (t) {
     var obj = {
         image: IMAGE_UUID,
         package: SDC_128.name,
-        server_uuid: SERVER_UUID,
         networks: [
             {
                 ipv4_uuid: NETWORK1_UUID,
@@ -1723,7 +1704,6 @@ test('CreateMachine using network and invalid number of ips', function (t) {
     var vmDetails = {
         image: IMAGE_UUID,
         package: SDC_256.name,
-        server_uuid: SERVER_UUID,
         networks: [
             {
                 ipv4_uuid: NETWORK1_UUID,
@@ -1762,8 +1742,7 @@ test('Create Machine using multiple networks and IPs', function (t) {
 
     var obj = {
         image: IMAGE_UUID,
-        package: SDC_128.name,
-        server_uuid: SERVER_UUID
+        package: SDC_128.name
     };
 
     CLIENT.napi.createNetwork(netDetails, function (err, net) {
@@ -1882,7 +1861,6 @@ test('Create Machine using "params.bootrom" without "bhyve"', function (t) {
             far: 'af4167f0-beda-4af9-9ae4-99d544499c14', // fake UUID
             strict: true
         },
-        server_uuid: SERVER_UUID,
         deletion_protection: true,
         firewall_enabled: true,
         bootrom: true

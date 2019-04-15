@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 var util = require('util');
@@ -22,7 +22,6 @@ var checkMachine = machinesCommon.checkMachine;
 var SDC_128 = common.sdc_128_package;
 
 var IMAGE_UUID;
-var SERVER_UUID;
 var PROVISIONABLE_NET_UUID;
 var MACHINE_UUID;
 
@@ -47,15 +46,6 @@ test('setup', function (t) {
 });
 
 
-test('Get test server', function (t) {
-    common.getTestServer(CLIENT, function (err, testServer) {
-        t.ifError(err);
-        SERVER_UUID = testServer.uuid;
-        t.end();
-    });
-});
-
-
 test('Get test image', function (t) {
     common.getTestImage(CLIENT, function (err, img) {
         t.ifError(err, 'getTestImage');
@@ -71,7 +61,6 @@ test('CreateMachine', function (t) {
         image: IMAGE_UUID,
         package: SDC_128.name,
         name: 'a' + uuid().substr(0, 7),
-        server_uuid: SERVER_UUID,
         firewall_enabled: true
     };
 

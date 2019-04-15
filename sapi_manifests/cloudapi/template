@@ -158,19 +158,6 @@
     {{/account_allowed_dcs}}
     "account_allowed_dcs_msg": "{{{account_allowed_dcs_msg}}}",
 
-    "bleeding_edge_features": {
-        {{#CLOUDAPI_BLEEDING_EDGE_FEATURES}}
-        "{{{.}}}": true,
-        {{/CLOUDAPI_BLEEDING_EDGE_FEATURES}}
-        "": false
-    },
-    "bleeding_edge_login_whitelist": {
-        {{#CLOUDAPI_BLEEDING_EDGE_LOGIN_WHITELIST}}
-        "{{{.}}}": true,
-        {{/CLOUDAPI_BLEEDING_EDGE_LOGIN_WHITELIST}}
-        "": false
-    },
-
     {{^fabric_cfg}}
     "fabrics_enabled": false,
     {{/fabric_cfg}}
@@ -198,10 +185,16 @@
     "experimental_cloudapi_automount_nfs_shared_volumes": {{{experimental_cloudapi_automount_nfs_shared_volumes}}},
     {{/experimental_cloudapi_automount_nfs_shared_volumes}}
 
-    {{^CLOUDAPI_TEST_MODE}}
-    "test": false
-    {{/CLOUDAPI_TEST_MODE}}
-    {{#CLOUDAPI_TEST_MODE}}
-    "test": {{{CLOUDAPI_TEST_MODE}}}
-    {{/CLOUDAPI_TEST_MODE}}
+    "bleeding_edge_features": {
+        {{#CLOUDAPI_BLEEDING_EDGE_FEATURES}}
+        "{{{.}}}": true,
+        {{/CLOUDAPI_BLEEDING_EDGE_FEATURES}}
+        "": false
+    },
+    "bleeding_edge_login_whitelist": {
+        {{#CLOUDAPI_BLEEDING_EDGE_LOGIN_WHITELIST}}
+        "{{{.}}}": true,
+        {{/CLOUDAPI_BLEEDING_EDGE_LOGIN_WHITELIST}}
+        "": false
+    }
 }

@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 var test = require('@smaller/tap').test;
@@ -186,10 +186,14 @@ test('CreateKey (attested) wrong cert', function (t) {
     };
 
     CLIENT.post('/my/keys', key, function (err, req, res, body) {
-        t.ok(err);
-        t.equal(err.statusCode, 409);
-        t.equal(err.restCode, 'InvalidArgument');
-        t.ok(err.message);
+        t.ok(err, 'expect error, got: ' + err);
+        if (err) {
+            t.equal(err.statusCode, 409,
+                'expect 409 status, got ' + err.statusCode);
+            t.equal(err.restCode, 'InvalidArgument', 'expect ');
+            t.ok(err.message, 'expect some error message, got ' +
+                JSON.stringify(err.message));
+        }
 
         t.end();
     });
