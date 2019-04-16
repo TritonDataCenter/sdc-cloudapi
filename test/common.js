@@ -32,7 +32,6 @@ var PAPI = require('sdc-clients').PAPI;
 var MAHI = require('mahi');
 var VOLAPI = require('sdc-clients').VOLAPI;
 
-var app = require('../lib').app;
 var apertureConfig = require('aperture-config').config;
 
 
@@ -503,24 +502,11 @@ function setupClient(version, serverUrl, user, keyId, keyPath, parentAcc, cb) {
 
 
 function loadServer(cb) {
-    if (process.env.SDC_SETUP_TESTS) {
-        var serverObj = {
-            url: process.env.SDC_SETUP_URL || 'https://127.0.0.1'
-        };
+    var serverObj = {
+        url: 'https://127.0.0.1'
+    };
 
-        return cb(null, serverObj);
-    }
-
-    return app.createServer(CONFIG, function (err, server) {
-        if (err) {
-            return cb(err);
-        }
-
-        return server.start(function () {
-            LOG.info('CloudAPI listening at %s', server.url);
-            cb(null, server);
-        });
-    });
+    cb(null, serverObj);
 }
 
 

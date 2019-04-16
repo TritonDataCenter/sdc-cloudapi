@@ -112,7 +112,7 @@ failed_test_names=
 set +o errexit
 set -o pipefail
 for t in ${test_files}; do
-    PATH=${NODE_INSTALL}/bin:${PATH} SDC_SETUP_TESTS=1 ${NODE_INSTALL}/bin/node \
+    PATH=${NODE_INSTALL}/bin:${PATH} ${NODE_INSTALL}/bin/node \
         --abort_on_uncaught_exception ${t} | tee -a ${OUTPUT_DIR}/cloudapi.tap
     if [[ $? != 0 ]]; then
         failed_test_names="${failed_test_names} ${t}"
