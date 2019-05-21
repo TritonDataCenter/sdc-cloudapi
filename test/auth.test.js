@@ -36,6 +36,7 @@ var SERVER;
 var POLICY_NAME;
 var ROLE_NAME;
 var ROLE_UUID;
+var XROLE_NAME;
 
 
 // --- Tests
@@ -52,6 +53,8 @@ test('setup', function (t) {
 
         ROLE_NAME   = CLIENT.role.name;
         POLICY_NAME = CLIENT.policy.name;
+
+        XROLE_NAME  = CLIENT.xrole.name;
 
         t.end();
     });
@@ -695,6 +698,26 @@ test('get /:account role-tag', function (t) {
 test('get /:account role-tag - other', function (t) {
     OTHER.get('/' + CLIENT.login, function (err, req, res, body) {
         checkNotAuthorized(t, err, req, res, body);
+        t.end();
+    });
+});
+
+
+test('get /:account/keys - other no xacct role', function (t) {
+    OTHER.get('/' + CLIENT.login + '/keys', function (err, req, res, body) {
+        checkNotAuthorized(t, err, req, res, body);
+        t.end();
+    });
+});
+
+test('get /:account/keys - other xacct role', function (t) {
+    OTHER.get('/' + CLIENT.login + '/keys?as-role=' + XROLE_NAME,
+        function (err, req, res, body) {
+
+        t.ifError(err, 'other xacct role keys err');
+        t.ok(body, 'other xacct role keys body');
+        t.ok(Array.isArray(body), 'resource is an array');
+        t.ok(body[0].fingerprint, 'resource array contains keys');
         t.end();
     });
 });

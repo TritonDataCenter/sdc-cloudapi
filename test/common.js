@@ -395,6 +395,47 @@ function createTestPolicy(client, cb) {
     });
 }
 
+function createXTestPolicy(client, cb) {
+    var entry = {
+        name: 'x-test-policy',
+        rule: [
+            'CAN listkeys and headkeys *'
+        ],
+        description: 'Policy used by test helper',
+        account: client.account.uuid
+    };
+
+    client.ufds.addPolicy(client.account.uuid, entry, function (err, policy) {
+        if (err) {
+            return cb(err);
+        }
+
+        client.xpolicy = policy;
+
+        return cb();
+    });
+}
+
+
+function createXTestRole(client, otherAccount, cb) {
+    var entry = {
+        name: 'x-test-role',
+        uniquemember: [otherAccount.dn],
+        memberpolicy: [client.xpolicy.dn],
+        account: client.account.uuid
+    };
+
+    client.ufds.addRole(client.account.uuid, entry, function (err, role) {
+        if (err) {
+            return cb(err);
+        }
+
+        client.xrole = role;
+
+        return cb();
+    });
+}
+
 
 function addUserKey(client, keyPath, cb) {
     var publicKey  = fs.readFileSync(keyPath + '.pub', 'ascii');
@@ -732,6 +773,12 @@ function setup(opts, cb) {
         },
         function setupRole(_, next) {
             createTestRole(userClient, subUserClient.account, next);
+        },
+        function setupXPolicy(_, next) {
+            createXTestPolicy(userClient, next);
+        },
+        function setupXRole(_, next) {
+            createXTestRole(userClient, otherUserClient.account, next);
         },
         function setupPackage(_, next) {
             addPackage(userClient, SDC_128_PACKAGE, next);
