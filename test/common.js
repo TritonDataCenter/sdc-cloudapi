@@ -830,6 +830,12 @@ function teardown(clients, server, cb) {
             ufds.deletePolicy(accUuid, userClient.policy.uuid, next);
         },
         function (_, next) {
+            ufds.deleteRole(accUuid, userClient.xrole.uuid, next);
+        },
+        function (_, next) {
+            ufds.deletePolicy(accUuid, userClient.xpolicy.uuid, next);
+        },
+        function (_, next) {
             deletePackage(userClient, SDC_128_PACKAGE, next);
         },
         function (_, next) {
