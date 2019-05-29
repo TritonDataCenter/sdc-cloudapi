@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 /*
@@ -16,7 +16,6 @@
  */
 
 var test   = require('@smaller/tap').test;
-var util   = require('util');
 var common = require('./common');
 
 

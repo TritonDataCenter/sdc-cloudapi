@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 var util = require('util');
@@ -44,7 +44,8 @@ function checkForbidden(t, err, req, res, body) {
 
 module.exports = function (suite, client, other, machine, callback) {
     if (!machine) {
-        return callback();
+        callback();
+        return;
     }
 
     // FireWall Rules:
@@ -56,6 +57,7 @@ module.exports = function (suite, client, other, machine, callback) {
         t.ok(rule.id, 'rule id ok');
         t.ok(rule.rule, 'rule text ok');
         t.ok(typeof (rule.enabled) !== 'undefined', 'rule enabled defined');
+        t.ok(typeof (rule.log) !== 'undefined', 'rule log defined');
     }
 
 
@@ -83,6 +85,7 @@ module.exports = function (suite, client, other, machine, callback) {
                 RULE_UUID = body.id;
                 t.equal(201, res.statusCode, 'Status Code');
                 t.equal(body.enabled, false, 'rule enabled');
+                t.equal(body.log, false, 'rule log');
                 t.end();
             } else {
                 t.end();
@@ -237,7 +240,7 @@ module.exports = function (suite, client, other, machine, callback) {
 
     suite.test('Get unexisting rule', function (t) {
         client.get(sprintf(RULE_URL, libuuid.create()),
-            function (err, req, res, body) {
+            function (err, req, res, _body) {
                 t.ok(err);
                 t.equal(404, res.statusCode);
                 t.end();
@@ -251,12 +254,14 @@ module.exports = function (suite, client, other, machine, callback) {
 
         if (RULE_UUID) {
             client.post(sprintf(RULE_URL, RULE_UUID), {
-                rule: NEW_RULE
+                rule: NEW_RULE,
+                log: true
             }, function (err, req, res, body) {
                 t.ifError(err);
                 t.equal(200, res.statusCode);
                 t.equal(body.rule, NEW_RULE);
                 t.equal(body.enabled, false);
+                t.equal(body.log, true);
                 t.end();
             });
         } else {
@@ -315,7 +320,7 @@ module.exports = function (suite, client, other, machine, callback) {
     suite.test('EnableRule', function (t) {
         if (RULE_UUID) {
             client.post(sprintf(RULE_URL, RULE_UUID) + '/enable', {
-            }, function (err, req, res, body) {
+            }, function (err, req, res, _body) {
                 t.ifError(err);
                 t.equal(200, res.statusCode);
                 t.end();
@@ -380,5 +385,5 @@ module.exports = function (suite, client, other, machine, callback) {
     });
 
 
-    return callback();
+    callback();
 };

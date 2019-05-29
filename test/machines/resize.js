@@ -5,14 +5,13 @@
  */
 
 /*
- * Copyright (c) 2019, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 var common = require('../common');
 var vasync = require('vasync');
 var waitForJob = require('./common').waitForJob;
 
-var uuid = common.uuid;
 var checkNotFound = common.checkNotFound;
 
 
@@ -25,12 +24,8 @@ function (suite, client, other, machine, pkgDown, pkgSame, pkgUp, cb) {
         return cb();
     }
 
-    suite.test('Resize Machine up on coal', function (t) {
+    suite.test('Resize Machine to insuficient capacity fails', function (t) {
         t.ok(pkgUp, 'Resize up package OK');
-
-        if (!common.getCfg().datacenters.coal) {
-            return t.end();
-        }
 
         return client.post('/my/machines/' + machine, {
             action: 'resize',
@@ -55,7 +50,6 @@ function (suite, client, other, machine, pkgDown, pkgSame, pkgUp, cb) {
             t.end();
         });
     });
-
 
     suite.test('Resize Machine to same package - other', function (t) {
         t.ok(pkgSame, 'Resize same package OK');

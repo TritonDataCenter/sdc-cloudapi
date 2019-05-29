@@ -73,13 +73,13 @@ var SDC_128_LINUX = {
     active: true
 };
 
-var SDC_512 = {
-    uuid: '58d1a02c-177e-4992-ac79-63a15230f57f',
-    name: 'sdc_512',
+var SDC_TOO_HIGH = {
+    uuid: '0233b490-7bdd-11e9-b08e-9b2fbabd6262',
+    name: 'sdc_too_high',
     version: '1.0.0',
-    max_physical_memory: 512,
-    quota: 10240,
-    max_swap: 1024,
+    max_physical_memory: 10240000,
+    quota: 102400000,
+    max_swap: 10240000,
     cpu_cap: 150,
     max_lwps: 2000,
     zfs_io_priority: 10,
@@ -142,7 +142,7 @@ test('setup', function (t) {
         }
 
         function addPackage4() {
-            addPackage(CLIENT, SDC_512, function (err) {
+            addPackage(CLIENT, SDC_TOO_HIGH, function (err) {
                 t.ifError(err, 'Add package error');
                 t.end();
             });
@@ -998,7 +998,7 @@ test('Resize machine to inactive package', function (t) {
 
 test('Resize machine tests', function (t) {
     var resizeTest = require('./machines/resize');
-    resizeTest(t, CLIENT, OTHER, MACHINE_UUID, SDC_128, SDC_256, SDC_512,
+    resizeTest(t, CLIENT, OTHER, MACHINE_UUID, SDC_128, SDC_256, SDC_TOO_HIGH,
             function () {
         t.end();
     });
@@ -1881,7 +1881,7 @@ test('teardown', function (t) {
     common.deletePackage(CLIENT, SDC_256, function (err) {
         common.deletePackage(CLIENT, SDC_256_INACTIVE, function (err2) {
             common.deletePackage(CLIENT, SDC_128_LINUX, function (err3) {
-                common.deletePackage(CLIENT, SDC_512, function (err4) {
+                common.deletePackage(CLIENT, SDC_TOO_HIGH, function (err4) {
                     common.teardown(CLIENTS, SERVER, function (err5) {
                         t.ifError(err || err2 || err3 || err4 || err5,
                                 'teardown success');
