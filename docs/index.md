@@ -1,7 +1,7 @@
 ---
 title: Joyent CloudAPI
 mediaroot: ./media
-apisections: Account, Keys, Config, Datacenters, Images, Packages, Instances, FirewallRules, Networks, Nics, Users, Roles, Policies, Services, User SSH Keys, Role Tags, Fabrics
+apisections: Account, Keys, Config, Datacenters, Images, Packages, Instances, FirewallRules, Networks, Nics, Users, Roles, Policies, Services, User SSH Keys, Role Tags, Fabrics, Migrations
 markdown2extras: tables, code-friendly
 ---
 
@@ -840,6 +840,10 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 # Versions
 
 The section describes API changes in CloudAPI versions.
+
+## 9.6.0
+- Added support for user-driven machine [Migrations](#migrations),
+  allowing the movement of machines between servers.
 
 ## 9.5.0
 - Remove Cloud Analytics endpoints. Cloud Analytics has been removed from
@@ -7034,6 +7038,439 @@ instance.
 
     $ triton instance enable-deletion-protection 9985bc81
 
+
+# Migrations
+
+Triton supports *incremental offline migrations* starting with CloudAPI version 9.6.0.
+
+It is possible to migrate (move a VM) to another CN using these APIs. See [RFD 34](https://github.com/joyent/rfd/blob/master/rfd/0034/README.md)
+for the background on how and why instance migration works the way it does.
+
+VM migration operates in three distinct phases, the `begin` phase creates a hidden target
+placeholder vm for which to migrate into, the `sync` phase will synchronize the underlying
+filesystems and the `switch` phase will shutdown the original source vm, perform a final
+filesystem synchronization, hide the original source VM and then enable and restart the target VM.
+
+A migration can be set to run all of these phases in one (_automatic_ migration) or
+these phases can each be run manually (_on demand_ migration).
+
+For any migration action (e.g. `begin`, `sync`, `switch` or `abort`) you can use the
+migration `watch` endpoint to show progress information for the running migration action
+
+## Migrate  (POST /:login/machines/:id/migrate)
+
+### Inputs
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+action    | String   | One of "begin", "sync", "switch", "automatic", "pause", "abort" or "watch".
+affinity  | Array    | Optional array of [affinity rules](#affinity-rules). Only apply when actions are "begin" or "automatic".
+
+### Returns
+
+**Field**            | **Type** | **Description**
+-------------------- | -------- | ---------------
+machine              | UUID     | UUID of the instance being migrated.
+automatic            | Boolean  | All the migration phases will run consecutively without user intervention.
+created\_timestamp   | String   | ISO timestamp for the creation of the migration request.
+phase                | String   | Current migration phase. One of "begin", "sync", "switch" or "finished". See [Migration phases](#migration-phases) below.
+state                | String   | Current migration state. See migration state below.
+progress\_history    | Array    | array of completed JSON progress events. See [Progress Events](#progress-Events) section for details.
+error                | String   | If a migration fails - this is the error message of why it failed.
+
+If the action is `watch` the response will return instead a collection of [Progress Events](#progress-Events).
+
+### Progress Events
+
+Progress events are sent when something important occurs during the migration.
+There are actually two styles of progress events - one for major events (and/or warnings) and one to show the sync progress (`bandwidth` and `eta`).
+
+**Field**                | **Type**           | **Description**
+------------------------ | ------------------ | -----------------
+type                     | String             | Type is "progress".
+phase                    | String             | Current phase. See [Migration phases](#migration-phases).
+state                    | String             | State is "running".
+current\_progress        | Number             | This is how much progress has been made. For the sync phase, this is the number of bytes that have been sent to the target.
+total\_progress          | Number             | This is total possible progress. For the sync phase, this is the number of bytes that will need to be sent to the target.
+message                  | String (optional)  | Additional description message for this task.
+error                    | String (optional)  | Error occurred in this task - this is the description for that error.
+started\_timestamp       | String (optional)  | The ISO timestamp when the phase was started.
+duration\_ms             | Number (optional)  | The number of milliseconds the phase has taken.
+eta\_ms                  | Number (optional)  | Estimate of the number of milliseconds until the task is completed.
+transfer\_bytes\_second  | Number (optional)  | The number of bytes being sent per second between the source and target instances during the "sync" phase.
+
+### Migration state
+
+The state the migration operation is currently in. It can be one of
+the following states:
+
+ **State**    | **Description**
+------------- | ----------------
+running       | Migration running, see also `progress_history`.
+paused        | The "begin" phase (and possibly "sync" phase) has been run - now waiting for a call to "sync" or the final call to "switch".
+aborted       | User or operator aborted the migration attempt.
+failed        | Migration operation could not complete, see "error".
+successful    | Migration was successfully completed.
+
+### Migration phases
+
+The workflow stage that the migration is currently running, one of:
+
+**Phase**  | **Description**
+---------- | ------------
+begin      | This phase starts the migration process, creates a new migration database entry and provisions the target instance.
+sync       | This phase synchronizes the zfs datasets of the source instance with the zfs datasets in the target instance (without stopping the instance).
+switch     | This phase stops the instance from running, synchronizes the zfs datasets of the source instance with the zfs datasets in the target instance, moves the NICs from the source to the target instance, moves control to the target instance and then restarts the target instance.
+abort      | This phase is used when aborting a migration.
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
+InvalidState     | The migration is in the wrong `state` to perform the requested `action`
+InvalidArgument  | If `action` was invalid, or `affinity` wasn't valid
+MissingParameter | If `action` wasn't provided
+
+### CLI Commands
+
+    $ triton instance migration begin eaabc951 -w
+    running: 1% reserving instance
+    Done - begin finished in 28.35352 seconds
+
+    $ triton instance migration list
+    SHORTID   PHASE   STATE       AGE
+    eaabc951  begin   paused      48s
+
+    $ triton instance migration sync eaabc951 -w
+    running: 1% syncing data
+    running: 100% 10.5MB/s
+    Done - sync finished in 12.25971 seconds
+
+    $ triton instance migration switch eaabc951 -w
+    running: 3% stopping the instance
+    running: 1% syncing data
+    running: 1% switching instances
+    running: 65% setting up the target filesystem
+    running: 75% hiding the original instance
+    running: 85% promoting the migrated instance
+    running: 90% removing sync snapshots
+    running: 95% starting the migrated instance
+    Done - switch finished in 40.28621 seconds
+
+    $ triton instance migration list
+    SHORTID   PHASE   STATE       AGE
+    eaabc951  switch  successful  26m
+
+### Example Request
+
+    POST /my/machines/eaabc951-7b16-421f-ff2b-ba67b12bb4bd/migrate HTTP/1.1
+    Host: api.example.com
+    date: Wed, 27 Mar 2019 20:10:25 GMT
+    authorization: ...
+    accept: application/json
+    content-type: application/json
+    user-agent: triton/7.0.1 (x64-darwin; node/6.10.3)
+    accept-version: ~9||~8
+    content-length: 18
+
+    {"action": "begin"}
+
+### Example Response
+
+    HTTP/1.1 201 Created
+    content-type: application/json
+    content-length: 171
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET, POST
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    connection: Keep-Alive
+    date: Wed, 27 Mar 2019 20:10:26 GMT
+    server: cloudapi/9.6.0
+    api-version: 9.0.0
+    request-id: e5fd786d-094a-4e99-a3bb-3b09f7193232
+    response-time: 440
+    x-request-processing-time: 443
+
+    {
+      "automatic":false,
+      "created_timestamp":"2019-03-27T20:10:26.101Z",
+      "phase":"begin",
+      "state":"running",
+      "vm_uuid":"eaabc951-7b16-421f-ff2b-ba67b12bb4bd",
+      "progress_history":[]
+    }
+
+### Example watch Request
+
+    POST /my/machines/eaabc951-7b16-421f-ff2b-ba67b12bb4bd/migrate?action=watch HTTP/1.1
+    Host: api.example.com
+    date: Wed, 27 Mar 2019 20:10:26 GMT
+    authorization: ...
+    accept: application/json
+    content-type: application/json
+    user-agent: triton/7.0.1 (x64-darwin; node/6.10.3)
+    accept-version: ~9||~8
+
+### Example watch Response
+
+    HTTP/1.1 200 OK
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET, POST
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    connection: Keep-Alive
+    date: Wed, 27 Mar 2019 20:10:26 GMT
+    server: cloudapi/9.6.0
+    api-version: 9.0.0
+    request-id: 2deba1bf-df9b-4a70-9bd9-d5d93cf8b4dc
+    response-time: 249
+    content-type: application/x-json-stream
+    transfer-encoding: chunked
+    x-request-received: 1553717426381
+    x-request-processing-time: 4330
+
+    {"type":"progress","current_progress":1,"message":"reserving instance","phase":"begin","state":"running","started_timestamp":"2019-03-27T20:10:30.265Z","total_progress":100,"duration_ms":441}
+
+    {"type":"end","phase":"begin","state":"paused"}
+
+## ListMigrations  (GET /:login/migrations)
+
+Retrieve a list of migrations
+
+### Inputs
+
+* None
+
+### Returns
+
+A list of migration objects. See [Migrate](#Migrate).
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+### CLI example
+
+    $ triton inst migration list
+
+### Example Request
+
+    GET /my/migrations HTTP/1.1
+    Host: api.example.com
+    date: Thu, 28 Mar 2019 11:18:44 GMT
+    authorization: ...
+    accept: application/json
+    user-agent: triton/7.0.1 (x64-darwin; node/6.10.3)
+    accept-version: ~9||~8
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    content-type: application/json
+    content-length: 5315
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    connection: Keep-Alive
+    content-md5: e9l3E/czYSTWo7RkCU47yw==
+    date: Thu, 28 Mar 2019 11:18:44 GMT
+    server: cloudapi/9.6.0
+    api-version: 9.0.0
+    request-id: 6154097a-3155-4de4-8dfc-63dfefaaa6ff
+    response-time: 207
+    x-request-received: 1553771924532
+    x-request-processing-time: 230
+
+    [
+      {
+        "automatic": true,
+        "created_timestamp": "2019-03-25T19:21:29.336Z",
+        "duration_ms": 25134,
+        "finished_timestamp": "2019-03-25T19:22:40.948Z",
+        "phase": "switch",
+        "state": "successful",
+        "progress_history": [
+          {
+            "type": "progress",
+            "current_progress": 100,
+            "duration_ms": 16077,
+            "finished_timestamp": "2019-03-25T19:21:51.959Z",
+            "message": "reserving instance",
+            "phase": "begin",
+            "state": "successful",
+            "started_timestamp": "2019-03-25T19:21:35.882Z",
+            "total_progress": 100
+          },
+          {
+            "type": "progress",
+            "current_progress": 100,
+            "duration_ms": 3676,
+            "finished_timestamp": "2019-03-25T19:21:58.485Z",
+            "message": "syncing data",
+            "phase": "sync",
+            "state": "successful",
+            "started_timestamp": "2019-03-25T19:21:54.809Z",
+            "total_progress": 100
+          },
+          {
+            "type": "progress",
+            "current_progress": 100,
+            "duration_ms": 2694,
+            "finished_timestamp": "2019-03-25T19:22:02.722Z",
+            "message": "syncing data",
+            "phase": "sync",
+            "state": "successful",
+            "started_timestamp": "2019-03-25T19:22:00.028Z",
+            "total_progress": 100
+          },
+          {
+            "type": "progress",
+            "current_progress": 100,
+            "duration_ms": 2687,
+            "finished_timestamp": "2019-03-25T19:22:33.427Z",
+            "message": "syncing data",
+            "phase": "sync",
+            "state": "successful",
+            "started_timestamp": "2019-03-25T19:22:30.740Z",
+            "total_progress": 100
+          },
+          {
+            "type": "progress",
+            "current_progress": 100,
+            "duration_ms": 5571,
+            "finished_timestamp": "2019-03-25T19:22:40.948Z",
+            "message": "switching instances",
+            "phase": "switch",
+            "state": "successful",
+            "started_timestamp": "2019-03-25T19:22:35.377Z",
+            "total_progress": 100
+          }
+        ],
+        "machine": "40c3c6ec-8be5-476a-ca35-c0ea2b0858e3"
+      },
+      ... more migration objects ...
+    ]
+
+## GetMigration  (GET /:login/migrations/:id)
+
+### Inputs
+
+None
+
+### Returns
+
+Migration object with the following fields:
+
+**Field**            | **Type** | **Description**
+-------------------- | -------- | ---------------
+machine              | UUID     | UUID of the instance being migrated.
+automatic            | Boolean  | All the migration phases will run consecutively without user intervention.
+created\_timestamp   | String   | ISO timestamp for the creation of the migration request.
+scheduled\_timestamp | String   | ISO timestamp for when the migration should commence.
+phase                | String   | Current migration phase. One of "begin", "sync", "switch" or "finished". See [Migration phases](#migration-phases) below.
+state                | String   | Current migration state. See migration state below.
+progress\_history    | Array    | array of completed JSON progress events. See [Progress Events](#progress-Events) section for details.
+error                | String   | If a migration fails - this is the error message of why it failed.
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+### CLI example
+
+    $ triton inst migration get
+
+### Example Request
+
+    GET /my/migrations/40c3c6ec-8be5-476a-ca35-c0ea2b0858e3 HTTP/1.1
+    Host: api.example.com
+    date: Thu, 28 Mar 2019 11:18:44 GMT
+    authorization: ...
+    accept: application/json
+    user-agent: triton/7.0.1 (x64-darwin; node/6.10.3)
+    accept-version: ~9||~8
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    content-type: application/json
+    date: Thu, 28 Mar 2019 11:18:44 GMT
+    server: cloudapi/9.6.0
+    api-version: 9.0.0
+    request-id: 6154097a-3155-4de4-8dfc-63dfefaaa6ff
+    ...
+
+    {
+      "automatic": true,
+      "created_timestamp": "2019-03-25T19:21:29.336Z",
+      "duration_ms": 25134,
+      "finished_timestamp": "2019-03-25T19:22:40.948Z",
+      "phase": "switch",
+      "state": "successful",
+      "progress_history": [
+        {
+          "type": "progress",
+          "current_progress": 100,
+          "duration_ms": 16077,
+          "finished_timestamp": "2019-03-25T19:21:51.959Z",
+          "message": "reserving instance",
+          "phase": "begin",
+          "state": "successful",
+          "started_timestamp": "2019-03-25T19:21:35.882Z",
+          "total_progress": 100
+        },
+        {
+          "type": "progress",
+          "current_progress": 100,
+          "duration_ms": 3676,
+          "finished_timestamp": "2019-03-25T19:21:58.485Z",
+          "message": "syncing data",
+          "phase": "sync",
+          "state": "successful",
+          "started_timestamp": "2019-03-25T19:21:54.809Z",
+          "total_progress": 100
+        },
+        {
+          "type": "progress",
+          "current_progress": 100,
+          "duration_ms": 2694,
+          "finished_timestamp": "2019-03-25T19:22:02.722Z",
+          "message": "syncing data",
+          "phase": "sync",
+          "state": "successful",
+          "started_timestamp": "2019-03-25T19:22:00.028Z",
+          "total_progress": 100
+        },
+        {
+          "type": "progress",
+          "current_progress": 100,
+          "duration_ms": 2687,
+          "finished_timestamp": "2019-03-25T19:22:33.427Z",
+          "message": "syncing data",
+          "phase": "sync",
+          "state": "successful",
+          "started_timestamp": "2019-03-25T19:22:30.740Z",
+          "total_progress": 100
+        },
+        {
+          "type": "progress",
+          "current_progress": 100,
+          "duration_ms": 5571,
+          "finished_timestamp": "2019-03-25T19:22:40.948Z",
+          "message": "switching instances",
+          "phase": "switch",
+          "state": "successful",
+          "started_timestamp": "2019-03-25T19:22:35.377Z",
+          "total_progress": 100
+        }
+      ],
+      "machine": "40c3c6ec-8be5-476a-ca35-c0ea2b0858e3"
+    }
 
 
 # FirewallRules
