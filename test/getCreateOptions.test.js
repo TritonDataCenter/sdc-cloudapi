@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 var fs = require('fs');
@@ -309,6 +309,43 @@ test('getCreateOptions blows up when pkg.brand and img.requirements.brand ' +
     }, /Package requires brand "kvm", but brand "bhyve" was selected/,
         'conflicting pkg.brand and img.requirements.brand should result in ' +
         'exception');
+
+    t.end();
+});
+
+test('getCreateOptions blows up when pkg.brand and img.type conflict',
+    function (t) {
+    var createOpts;
+    var req, req2;
+
+    req = buildReq({
+        img: IMAGES['ubuntu-bhyve-17.10-noBrandReq'],
+        pkg: {
+            brand: 'lx'
+        }
+    });
+
+    t.throws(function _getPayload() {
+        createOpts = getCreateOptions(req);
+        t.equal(createOpts, undefined, 'should not have createOpts');
+    // JSSTYLED
+    }, /Package requires brand "lx" and image.type is incompatible \("zvol"\)/,
+        'conflicting pkg.brand and img.type should result in exception');
+
+
+    req2 = buildReq({
+        img: IMAGES['smartos-1.6.3'],
+        pkg: {
+            brand: 'bhyve'
+        }
+    });
+
+    t.throws(function _getPayload2() {
+        createOpts = getCreateOptions(req2);
+        t.equal(createOpts, undefined, 'should not have createOpts');
+    // JSSTYLED
+    }, /Package requires brand "bhyve" and image.type is not "zvol"/,
+        'conflicting pkg.brand and img.type should result in exception');
 
     t.end();
 });
