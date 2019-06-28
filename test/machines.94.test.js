@@ -257,6 +257,33 @@ test('CreateMachine - Disks size is greater than quota', function (t) {
     });
 });
 
+test('CreateMachine - `remaining` disk w/o available size', function (t) {
+    if (!BHYVE_IMAGE_UUID) {
+        t.ok(true, 'No bhyve images. Test skipped');
+        t.end();
+        return;
+    }
+
+    var obj = {
+        disks: [
+            {},
+            { size: 5120 },
+            { size: 'remaining' }
+        ],
+        image: BHYVE_IMAGE_UUID,
+        name: 'bhyve-remaining-no-space-test-' + process.pid,
+        package: BHYVE_128_FLEXIBLE.uuid
+    };
+
+    CLIENT.post('/my/machines', obj,
+        function createdMachine(err, req, res, body) {
+            t.ok(err);
+            t.equal(err.statusCode, 409);
+            t.equal(body.code, 'ValidationFailed');
+            t.end();
+    });
+});
+
 function stopMachine(t) {
     if (!BHYVE_IMAGE_UUID) {
         t.ok(true, 'No bhyve images. Test skipped');
@@ -408,7 +435,6 @@ test('No disks/inflexible disk package', function (suite) {
         });
 
         tt.test('GetMachineDisk has disk', function getMachineDiskTest(t) {
-
             diskPath = vmPath + '/disks/' + DISK_UUID;
 
             CLIENT.get(diskPath, function gotDisk(err, req, res, disk) {
@@ -494,7 +520,6 @@ test('No disks/inflexible disk package', function (suite) {
     });
 
     suite.end();
-
 });
 
 
@@ -577,6 +602,7 @@ test('No disks/package has disks', function (suite) {
                     BHYVE_128_FLEXIBLE_DISKS.quota - body.free_space);
                 t.strictEqual(body.flexible, true);
                 t.equal(body.free_space, expectedFree);
+                t.ok(!body.quota, 'no "quota" for "bhyve" machines');
                 t.end();
         });
     });
@@ -609,7 +635,6 @@ test('Disks/flexible disk package', function (suite) {
     var diskPath, vmPath;
 
     suite.test('CreateMachine', function (t) {
-
         DISK_UUID = 'dea91a7f-5fe3-4408-b25a-994c97a7975e';
 
         var obj = {
@@ -924,7 +949,6 @@ test('Disks/flexible disk package', function (suite) {
                 t.equal(res.statusCode, 204, 'statusCode');
                 poll();
             });
-
         });
 
         tt.test('CreateMachineDisk - size remaining',
@@ -986,7 +1010,6 @@ test('Disks/flexible disk package', function (suite) {
     });
 
     suite.end();
-
 });
 
 
@@ -1199,7 +1222,6 @@ test('Disks with remaining/flex disk package', function (suite) {
     });
 
     suite.end();
-
 });
 
 
@@ -1292,7 +1314,6 @@ test('No disks/flexible disk package', function (suite) {
     });
 
     suite.end();
-
 });
 
 
@@ -1382,7 +1403,6 @@ test('Package has remaining boot disk', function (suite) {
     });
 
     suite.end();
-
 });
 
 test('teardown', function (t) {

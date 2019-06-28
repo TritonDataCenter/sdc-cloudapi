@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2019, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 var assert = require('assert-plus');
@@ -105,6 +105,10 @@ function checkMachine(t, m) {
     // t.ok(m.created, 'checkMachine created ok');
     // t.ok(m.updated, 'checkMachine updated ok');
     t.ok(typeof (m.disk) !== 'undefined', 'checkMachine disk');
+
+    if (m.type === 'virtualmachine') {
+        t.ok(typeof (m.quota) === 'undefined', 'checkMachine disk');
+    }
     t.ok(typeof (m.created) !== 'undefined', 'checkMachine created');
     t.ok(typeof (m.updated) !== 'undefined', 'checkMachine updated');
 }
@@ -231,7 +235,7 @@ function createMachine(t, client, obj, cb) {
         t.equal(res.headers.location,
             sprintf('/%s/machines/%s', client.login, body.id),
             'createMachine Location header');
-        t.ok(body, 'createMachine body' + (body ? ': '+body.id : ''));
+        t.ok(body, 'createMachine body' + (body ? ': ' + body.id : ''));
         common.checkHeaders(t, res.headers);
         checkMachine(t, body);
 
