@@ -1405,6 +1405,34 @@ test('Package has remaining boot disk', function (suite) {
     suite.end();
 });
 
+
+
+test('Boot disk smaller than image size', function (t) {
+    if (!BHYVE_IMAGE_UUID) {
+        t.ok(true, 'No bhyve images. Test skipped');
+        t.end();
+        return;
+    }
+
+    var obj = {
+        disks: [
+            { size: BHYVE_IMAGE.image_size / 2},
+            { size: 'remaining' }
+        ],
+        image: BHYVE_IMAGE_UUID,
+        name: 'bhyve-remaining-no-space-test-' + process.pid,
+        package: BHYVE_128_FLEXIBLE.uuid
+    };
+
+    CLIENT.post('/my/machines', obj,
+        function createdMachine(err, req, res, body) {
+            t.ok(err);
+            t.equal(err.statusCode, 409);
+            t.equal(body.code, 'InvalidArgument');
+            t.end();
+    });
+});
+
 test('teardown', function (t) {
     common.teardown(CLIENTS, SERVER, function (teardownErr) {
         t.ifError(teardownErr, 'Teardown success');
