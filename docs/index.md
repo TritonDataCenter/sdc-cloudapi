@@ -133,7 +133,7 @@ to many instances.
 If you haven't already generated an SSH key (required to use both SSH and HTTP
 Signing), run the following command:
 
-    $ ssh-keygen -b 2048 -t rsa
+    $ ssh-keygen -b 2048 -t rsa -m PEM
 
 This will prompt you with a place to save the key.  You should probably just
 accept the defaults, as many programs (SSH and CloudAPI CLIs) will first look

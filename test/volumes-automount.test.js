@@ -215,6 +215,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
         child_process.exec([
             'ssh-keygen',
             '-t rsa',
+            '-m PEM',
             '-N ""',
             '-f',
             KEY_FILENAME
