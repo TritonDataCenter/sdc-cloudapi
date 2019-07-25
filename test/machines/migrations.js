@@ -194,7 +194,6 @@ module.exports = function migrate(suite, client, other, machine, callback) {
                 });
                 progressEvents.forEach(function testPrgrEvt(evt) {
                     t.ok(evt.current_progress, 'Should have current_progress');
-                    t.ok(evt.message, 'Should have a message');
                     t.ok(evt.state, 'Should have event state');
                     t.ok(evt.total_progress, 'Should have total_progress');
                     if (evt.started_timestamp) {
