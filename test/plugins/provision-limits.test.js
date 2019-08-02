@@ -5,17 +5,18 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright (c) 2019, Joyent, Inc.
  */
 
 var test = require('@smaller/tap').test;
-var clone = require('jsprim').deepCopy;
+var jsprim = require('jsprim');
 var plugin = require('../../plugins/provision_limits');
 var restify = require('restify');
 
 
 // --- Globals
 
+var clone = jsprim.deepCopy;
 
 var ACCOUNT = {
     uuid: 'd987aa8e-bfa3-11e7-b71c-28cfe91f7d53',
@@ -111,10 +112,81 @@ function check1_resize(t, cfgLimits, ufdsLimits, tenant, existingVm, vms, pkg,
             t.ok(err, 'Provision/resize should fail');
         }
 
-        t.end();
+        opts.api = api;
+        opts.config = cfgLimits;
+
+        checkProvisionLimits(t, cfgLimits, ufdsLimits, opts);
     });
 }
 
+function checkProvisionLimits(t, cfgLimits, ufdsLimits, opts) {
+    // Remember all original limits, but remove the used setting from the limits
+    // prior to passing to the plugin._getProvisionLimits call.
+    var originalLimits = [];
+    Object.keys(cfgLimits).forEach(function (name) {
+        originalLimits = originalLimits.concat(clone(cfgLimits[name]));
+        // Clear used value from limits.
+        cfgLimits[name].forEach(function (limit) {
+            delete limit.used;
+        });
+    });
+    // For ufdsLimits, each limit entry is a serialized JSON object.
+    ufdsLimits.forEach(function (config) {
+        var limit;
+        var limits;
+
+        if (config.limit && config.datacenter === opts.api.datacenterName) {
+            if (Array.isArray(config.limit)) {
+                limits = config.limit.map(JSON.parse);
+                originalLimits = originalLimits.concat(clone(limits));
+                // Clear used value from limits.
+                limits.forEach(function (l) {
+                    delete l.used;
+                });
+                // Set limit back (without the used value).
+                config.limit = limits.map(JSON.stringify);
+            } else {
+                limit = JSON.parse(config.limit);
+                originalLimits.push(clone(limit));
+                // Clear used value from limits.
+                delete limit.used;
+                // Set limit back (without the used value).
+                config.limit = JSON.stringify(limit);
+            }
+        }
+    });
+
+    plugin._getProvisionLimits(opts, function _onGetLimits(err2, limits) {
+        // For all limits returned, ensure the used amount is what we
+        // expected it would be.
+        limits.forEach(function _checkLimitUsed(limit) {
+            var expectedLimit = originalLimits.find(function (l) {
+                // Only find limits that define a 'used' value.
+                if (!l.hasOwnProperty('used')) {
+                    return false;
+                }
+                // Find by an exact copy (by property inspection).
+                return Object.keys(limit).every(function (name) {
+                    if (name === 'used') {
+                        return true; // Ignore 'used' values.
+                    }
+                    if (limit[name] === undefined) {
+                        return true; // Ignore undefined (cleared) values.
+                    }
+                    return limit[name] === l[name];
+                });
+            });
+            if (!expectedLimit) {
+                t.fail('No limit match for: ' + JSON.stringify(limit));
+            } else {
+                t.equal(limit.used, expectedLimit.used,
+                    'Limit used should match the expected value');
+            }
+        });
+
+        t.end();
+    });
+}
 
 function check2_provision(t, limits, vms, listImages, shouldSucceed) {
     check2_resize(t, limits, null, vms, listImages, shouldSucceed);
@@ -165,7 +237,10 @@ function check2_resize(t, limits, existingVm, vms, listImages, shouldSucceed) {
             t.ok(err, 'Provision/resize should fail');
         }
 
-        t.end();
+        opts.api = api;
+        opts.config = {defaults: limits};
+
+        checkProvisionLimits(t, opts.config, [], opts);
     });
 }
 
@@ -266,7 +341,7 @@ function (t) {
         { ram: 256, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 2 } ],
+        defaults: [ { value: 2, used: 1 } ],
         small: [ { value: 3 } ]
     };
 
@@ -284,7 +359,7 @@ function (t) {
         { ram: 256, uuid: UUID2 }
     ];
     var cfg = {
-        defaults: [ { value: 2 } ],
+        defaults: [ { value: 2, used: 2 } ],
         small: [ { value: 3 } ]
     };
 
@@ -296,7 +371,7 @@ function (t) {
 // VMs has nothing to do with VM size itself
 test('allowResize - no tenant/no ufdsLimits/three VMs',
 function (t) {
-    var fields = 'uuid';
+    var fields = 'ram';
     var tenant = undefined;
     var ufdsLimits = [];
     var vms = [
@@ -305,7 +380,7 @@ function (t) {
         { ram: 256, uuid: UUID3 }
     ];
     var cfg = {
-        defaults: [ { value: 2 } ],
+        defaults: [ { value: 2, used: 3 } ],
         small: [ { value: 3 } ]
     };
 
@@ -322,7 +397,7 @@ function (t) {
         { ram: 256, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 2 } ],
+        defaults: [ { value: 2, used: 1 } ],
         small: [ { value: 3 } ]
     };
 
@@ -340,7 +415,7 @@ function (t) {
         { ram: 256, uuid: UUID2 }
     ];
     var cfg = {
-        defaults: [ { value: 2 } ],
+        defaults: [ { value: 2, used: 2 } ],
         small: [ { value: 3 } ]
     };
 
@@ -352,7 +427,7 @@ function (t) {
 // VMs has nothing to do with VM size itself
 test('allowResize - unknown tenant/no ufdsLimits/three VMs',
 function (t) {
-    var fields = 'uuid';
+    var fields = 'ram';
     var tenant = 'supercalifragilisticexpialidocious';
     var ufdsLimits = [];
     var vms = [
@@ -361,7 +436,7 @@ function (t) {
         { ram: 256, uuid: UUID3 }
     ];
     var cfg = {
-        defaults: [ { value: 2 } ],
+        defaults: [ { value: 2, used: 3 } ],
         small: [ { value: 3 } ]
     };
 
@@ -380,7 +455,7 @@ function (t) {
     ];
     var cfg = {
         defaults: [ { value: 2 } ],
-        small: [ { value: 3 } ]
+        small: [ { value: 3, used: 2 } ]
     };
 
     check1_provision(t, cfg, ufdsLimits, tenant, vms, PKG, fields,  true);
@@ -399,7 +474,7 @@ function (t) {
     ];
     var cfg = {
         defaults: [ { value: 2 } ],
-        small: [ { value: 3 } ]
+        small: [ { value: 3, used: 3 } ]
     };
 
     check1_provision(t, cfg, ufdsLimits, tenant, vms, PKG, fields, false);
@@ -410,7 +485,7 @@ function (t) {
 // VMs has nothing to do with VM size itself
 test('allowResize - tenant/no ufdsLimits/four VMs',
 function (t) {
-    var fields = 'uuid';
+    var fields = 'ram';
     var tenant = 'small';
     var ufdsLimits = [];
     var vms = [
@@ -421,7 +496,7 @@ function (t) {
     ];
     var cfg = {
         defaults: [ { value: 2 } ],
-        small: [ { value: 3 } ]
+        small: [ { value: 3, used: 4 } ]
     };
 
     check1_resize(t, cfg, ufdsLimits, tenant, vms[0], vms, PKG, fields, true);
@@ -435,7 +510,10 @@ function (t) {
     var ufdsLimits = [];
     var vms = [];
     var cfg = {
-        defaults: [ { value: 2 }, { value: 1024, by: 'ram' } ],
+        defaults: [
+            { value: 2, used: 0 },
+            { value: 1024, by: 'ram', used: 0 }
+        ],
         small: [ { value: 3 } ]
     };
 
@@ -452,7 +530,10 @@ function (t) {
         { ram: 976, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 2 }, { value: 1024, by: 'ram' } ],
+        defaults: [
+            { value: 2, used: 1 },
+            { value: 1024, by: 'ram', used: 976 }
+        ],
         small: [ { value: 3 } ]
     };
 
@@ -462,14 +543,17 @@ function (t) {
 
 test('allowResize - no tenant/no ufdsLimits/one smaller VM',
 function (t) {
-    var fields = 'uuid,ram';
+    var fields = 'ram';
     var tenant = undefined;
     var ufdsLimits = [];
     var vms = [
         { ram: 976, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 2 }, { value: 1024, by: 'ram' } ],
+        defaults: [
+            { value: 2, used: 1 },
+            { value: 1024, by: 'ram', used: 976 }
+        ],
         small: [ { value: 3 } ]
     };
 
@@ -479,14 +563,17 @@ function (t) {
 
 test('allowResize - no tenant/no ufdsLimits/one larger VM',
 function (t) {
-    var fields = 'uuid,ram';
+    var fields = 'ram';
     var tenant = undefined;
     var ufdsLimits = [];
     var vms = [
         { ram: 1026, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 2 }, { value: 1024, by: 'ram' } ],
+        defaults: [
+            { value: 2, used: 1 },
+            { value: 1024, by: 'ram', used: 1026 }
+        ],
         small: [ { value: 3 } ]
     };
     var pkg = {
@@ -506,7 +593,7 @@ function (t) {
     var vms = [];
     var cfg = {
         defaults: [ { value: 2 }, { value: 1024, by: 'ram' } ],
-        small: [ { value: 3 } ]
+        small: [ { value: 3, used: 0 } ]
     };
 
     check1_provision(t, cfg, ufdsLimits, tenant, vms, PKG, fields, true);
@@ -524,7 +611,7 @@ function (t) {
     ];
     var cfg = {
         defaults: [ { value: 2 }, { value: 1024, by: 'ram' } ],
-        small: [ { value: 3 } ]
+        small: [ { value: 3, used: 2 } ]
     };
 
     check1_provision(t, cfg, ufdsLimits, tenant, vms, PKG, fields,  true);
@@ -536,7 +623,10 @@ function (t) {
     var fields = 'ram';
     var tenant = undefined;
     var ufdsLimits = [
-        { datacenter: API.datacenterName, limit: '{"value": 4}' }
+        {
+            datacenter: API.datacenterName,
+            limit: '{"value": 4, "used": 3}'
+        }
     ];
     var vms = [
         { ram: 256, uuid: UUID1 },
@@ -544,7 +634,7 @@ function (t) {
         { ram: 256, uuid: UUID3 }
     ];
     var cfg = {
-        defaults: [ { value: 2 } ],
+        defaults: [ { value: 2, used: 3 } ],
         small: [ { value: 3 } ]
     };
 
@@ -557,7 +647,10 @@ function (t) {
     var fields = 'ram';
     var tenant = undefined;
     var ufdsLimits = [
-        { datacenter: API.datacenterName, limit: '{"value": 4}' }
+        {
+            datacenter: API.datacenterName,
+            limit: '{"value": 4, "used": 4}'
+        }
     ];
     var vms = [
         { ram: 256, uuid: UUID1 },
@@ -566,7 +659,7 @@ function (t) {
         { ram: 256, uuid: UUID4 }
     ];
     var cfg = {
-        defaults: [ { value: 2 } ],
+        defaults: [ { value: 2, used: 4 } ],
         small: [ { value: 3 } ]
     };
 
@@ -578,10 +671,13 @@ function (t) {
 // VMs has nothing to do with VM size itself
 test('allowResize - no tenant/ufdsLimits/four VMs',
 function (t) {
-    var fields = 'uuid';
+    var fields = 'ram';
     var tenant = undefined;
     var ufdsLimits = [
-        { datacenter: API.datacenterName, limit: '{"value": 3}' }
+        {
+            datacenter: API.datacenterName,
+            limit: '{"value": 3, "used": 4}'
+        }
     ];
     var vms = [
         { ram: 256, uuid: UUID1 },
@@ -590,7 +686,7 @@ function (t) {
         { ram: 256, uuid: UUID4 }
     ];
     var cfg = {
-        defaults: [ { value: 2 } ],
+        defaults: [ { value: 2, used: 4 } ],
         small: [ { value: 3 } ]
     };
 
@@ -611,7 +707,7 @@ function (t) {
         { ram: 256, uuid: UUID3 }
     ];
     var cfg = {
-        defaults: [ { value: 2 } ],
+        defaults: [ { value: 2, used: 3 } ],
         small: [ { value: 3 } ]
     };
 
@@ -623,7 +719,7 @@ function (t) {
 // VMs has nothing to do with VM size itself
 test('allowResize - no tenant/different DC ufdsLimits/three VMs',
 function (t) {
-    var fields = 'uuid';
+    var fields = 'ram';
     var tenant = undefined;
     var ufdsLimits = [
         { datacenter: 'lostinspaaace', limit: '{"value": 4}' }
@@ -634,7 +730,7 @@ function (t) {
         { ram: 256, uuid: UUID3 }
     ];
     var cfg = {
-        defaults: [ { value: 2 } ],
+        defaults: [ { value: 2, used: 3 } ],
         small: [ { value: 3 } ]
     };
 
@@ -648,7 +744,10 @@ function (t) {
     var tenant = 'small';
     var ufdsLimits = [ {
         datacenter: API.datacenterName,
-        limit: ['{"value": 4}', '{"value": 2000, "by": "ram"}']
+        limit: [
+            '{"value": 4, "used": 3}',
+            '{"value": 2000, "by": "ram", "used": 768}'
+        ]
     } ];
     var vms = [
         { ram: 256, uuid: UUID1 },
@@ -665,11 +764,14 @@ function (t) {
 
 test('allowResize - tenant/multiple ufdsLimits/three VMs',
 function (t) {
-    var fields = 'uuid,ram';
+    var fields = 'ram';
     var tenant = 'small';
     var ufdsLimits = [ {
         datacenter: API.datacenterName,
-        limit: ['{"value": 4}', '{"value": 2000, "by": "ram"}']
+        limit: [
+            '{"value": 4, "used": 3}',
+            '{"value": 2000, "by": "ram", "used": 768}'
+        ]
     } ];
     var vms = [
         { ram: 256, uuid: UUID1 },
@@ -689,7 +791,10 @@ function (t) {
     var fields = 'ram';
     var tenant = 'small';
     var ufdsLimits = [
-        { datacenter: API.datacenterName, limit: '{"value": 4}' }
+        {
+            datacenter: API.datacenterName,
+            limit: '{"value": 4, "used": 4}'
+        }
     ];
     var vms = [
         { ram: 256, uuid: UUID1 },
@@ -699,7 +804,7 @@ function (t) {
     ];
     var cfg = {
         defaults: [ { value: 2 } ],
-        small: [ { value: 3 } ]
+        small: [ { value: 3, used: 4 } ]
     };
 
     check1_provision(t, cfg, ufdsLimits, tenant, vms, PKG, fields, false);
@@ -710,10 +815,13 @@ function (t) {
 // VMs has nothing to do with VM size itself
 test('allowResize - tenant/ufdsLimits/four VMs',
 function (t) {
-    var fields = 'uuid';
+    var fields = 'ram';
     var tenant = 'small';
     var ufdsLimits = [
-        { datacenter: API.datacenterName, limit: '{"value": 4}' }
+        {
+            datacenter: API.datacenterName,
+            limit: '{"value": 4, "used": 4}'
+        }
     ];
     var vms = [
         { ram: 256, uuid: UUID1 },
@@ -723,7 +831,7 @@ function (t) {
     ];
     var cfg = {
         defaults: [ { value: 2 } ],
-        small: [ { value: 3 } ]
+        small: [ { value: 3, used: 4 } ]
     };
 
     check1_resize(t, cfg, ufdsLimits, tenant, vms[0], vms, PKG, fields, true);
@@ -736,7 +844,10 @@ function (t) {
     var tenant = undefined;
     var ufdsLimits = [ {
         datacenter: API.datacenterName,
-        limit: ['{"value": 4}', '{"value": 2000, "by": "ram"}']
+        limit: [
+            '{"value": 4, "used": 1}',
+            '{"value": 2000, "by": "ram", "used": 976}'
+        ]
     } ];
     var vms = [
         { ram: 976, uuid: UUID1 }
@@ -751,11 +862,14 @@ function (t) {
 
 test('allowResize - no tenant/multiple ufdsLimits/one large VM',
 function (t) {
-    var fields = 'uuid,ram';
+    var fields = 'ram';
     var tenant = undefined;
     var ufdsLimits = [ {
         datacenter: API.datacenterName,
-        limit: ['{"value": 4}', '{"value": 2000, "by": "ram"}']
+        limit: [
+            '{"value": 4, "used": 1}',
+            '{"value": 2000, "by": "ram", "used": 976}'
+        ]
     } ];
     var vms = [
         { ram: 976, uuid: UUID1 }
@@ -774,7 +888,10 @@ function (t) {
     var tenant = undefined;
     var ufdsLimits = [ {
         datacenter: API.datacenterName,
-        limit: ['{"value": 4}', '{"value": 2000, "by": "ram"}']
+        limit: [
+            '{"value": 4, "used": 2}',
+            '{"value": 2000, "by": "ram", "used": 1952}'
+        ]
     } ];
     var vms = [
         { ram: 976, uuid: UUID1 },
@@ -790,11 +907,14 @@ function (t) {
 
 test('allowResize - no tenant/multiple ufdsLimits/two large VMs',
 function (t) {
-    var fields = 'uuid,ram';
+    var fields = 'ram';
     var tenant = undefined;
     var ufdsLimits = [ {
         datacenter: API.datacenterName,
-        limit: ['{"value": 4}', '{"value": 2000, "by": "ram"}']
+        limit: [
+            '{"value": 4, "used": 2}',
+            '{"value": 2000, "by": "ram", "used": 1952}'
+        ]
     } ];
     var vms = [
         { ram: 976, uuid: UUID1 },
@@ -817,7 +937,7 @@ function (t) {
         { ram: 256, quota: 50, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 60, by: 'quota' } ]
+        defaults: [ { value: 60, by: 'quota', used: 50 } ]
     };
 
     check1_provision(t, cfg, ufdsLimits, tenant, vms, PKG, fields, true);
@@ -826,14 +946,14 @@ function (t) {
 
 test('allowResize - check by quota/smaller VM',
 function (t) {
-    var fields = 'uuid,quota';
+    var fields = 'quota';
     var tenant = undefined;
     var ufdsLimits = [];
     var vms = [
         { ram: 256, quota: 50, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 60, by: 'quota' } ]
+        defaults: [ { value: 60, by: 'quota', used: 50 } ]
     };
 
     check1_resize(t, cfg, ufdsLimits, tenant, vms[0], vms, PKG, fields, true);
@@ -842,14 +962,14 @@ function (t) {
 
 test('allowResize - check by quota/larger VM',
 function (t) {
-    var fields = 'uuid,quota';
+    var fields = 'quota';
     var tenant = undefined;
     var ufdsLimits = [];
     var vms = [
         { ram: 256, quota: 50, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 60, by: 'quota' } ]
+        defaults: [ { value: 60, by: 'quota', used: 50 } ]
     };
     var pkg = {
         max_physical_memory: 256,
@@ -869,7 +989,7 @@ function (t) {
         { ram: 256, quota: 60, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 60, by: 'quota' } ]
+        defaults: [ { value: 60, by: 'quota', used: 60 } ]
     };
 
     check1_provision(t, cfg, ufdsLimits, tenant, vms, PKG, fields, false);
@@ -885,7 +1005,8 @@ function (t) {
         { ram: 256, quota: 50, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 60, by: 'quota', check: 'os', os: 'any' } ]
+        defaults: [ { value: 60, by: 'quota', check: 'os', os: 'any',
+            used: 50 } ]
     };
 
     check1_provision(t, cfg, ufdsLimits, tenant, vms, PKG, fields, true);
@@ -901,7 +1022,8 @@ function (t) {
         { ram: 256, quota: 60, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 60, by: 'quota', check: 'os', os: 'any' } ]
+        defaults: [ { value: 60, by: 'quota', check: 'os', os: 'any',
+            used: 60 } ]
     };
 
     check1_provision(t, cfg, ufdsLimits, tenant, vms, PKG, fields, false);
@@ -910,14 +1032,15 @@ function (t) {
 
 test('allowResize - check by quota/os wildcard/smaller VM',
 function (t) {
-    var fields = 'uuid,quota';
+    var fields = 'quota';
     var tenant = undefined;
     var ufdsLimits = [];
     var vms = [
         { ram: 256, quota: 60, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 60, by: 'quota', check: 'os', os: 'any' } ]
+        defaults: [ { value: 60, by: 'quota', check: 'os', os: 'any',
+            used: 60 } ]
     };
 
     check1_resize(t, cfg, ufdsLimits, tenant, vms[0], vms, PKG, fields, true);
@@ -926,14 +1049,15 @@ function (t) {
 
 test('allowResize - check by quota/os wildcard/larger VM',
 function (t) {
-    var fields = 'uuid,quota';
+    var fields = 'quota';
     var tenant = undefined;
     var ufdsLimits = [];
     var vms = [
         { ram: 256, quota: 60, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 60, by: 'quota', check: 'os', os: 'any' } ]
+        defaults: [ { value: 60, by: 'quota', check: 'os', os: 'any',
+            used: 60 } ]
     };
     var pkg = {
         max_physical_memory: 256,
@@ -953,7 +1077,8 @@ function (t) {
         { ram: 256, quota: 50, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 60, by: 'quota', check: 'os', os: 'any' } ]
+        defaults: [ { value: 60, by: 'quota', check: 'os', os: 'any',
+            used: 50 } ]
     };
 
     check1_provision(t, cfg, ufdsLimits, tenant, vms, PKG, fields, true);
@@ -962,14 +1087,15 @@ function (t) {
 
 test('allowResize - check by quota/image wildcard/smaller VM',
 function (t) {
-    var fields = 'uuid,quota';
+    var fields = 'quota';
     var tenant = undefined;
     var ufdsLimits = [];
     var vms = [
         { ram: 256, quota: 50, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 60, by: 'quota', check: 'os', os: 'any' } ]
+        defaults: [ { value: 60, by: 'quota', check: 'os', os: 'any',
+            used: 50 } ]
     };
 
     check1_resize(t, cfg, ufdsLimits, tenant, vms[0], vms, PKG, fields, true);
@@ -978,14 +1104,15 @@ function (t) {
 
 test('allowResize - check by quota/image wildcard/larger VM',
 function (t) {
-    var fields = 'uuid,quota';
+    var fields = 'quota';
     var tenant = undefined;
     var ufdsLimits = [];
     var vms = [
         { ram: 256, quota: 50, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 60, by: 'quota', check: 'os', os: 'any' } ]
+        defaults: [ { value: 60, by: 'quota', check: 'os', os: 'any',
+            used: 50 } ]
     };
     var pkg = {
         max_physical_memory: 256,
@@ -1005,7 +1132,8 @@ function (t) {
         { ram: 256, quota: 60, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 60, by: 'quota', check: 'os', os: 'any' } ]
+        defaults: [ { value: 60, by: 'quota', check: 'os', os: 'any',
+            used: 60 } ]
     };
 
     check1_provision(t, cfg, ufdsLimits, tenant, vms, PKG, fields, false);
@@ -1021,7 +1149,8 @@ function (t) {
         { ram: 256, quota: 50, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 60, by: 'quota', check: 'brand', brand: 'any' } ]
+        defaults: [ { value: 60, by: 'quota', check: 'brand', brand: 'any',
+            used: 50 } ]
     };
 
     check1_provision(t, cfg, ufdsLimits, tenant, vms, PKG, fields, true);
@@ -1030,14 +1159,15 @@ function (t) {
 
 test('allowResize - check by quota/brand wildcard/smaller VM',
 function (t) {
-    var fields = 'uuid,quota';
+    var fields = 'quota';
     var tenant = undefined;
     var ufdsLimits = [];
     var vms = [
         { ram: 256, quota: 50, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 60, by: 'quota', check: 'brand', brand: 'any' } ]
+        defaults: [ { value: 60, by: 'quota', check: 'brand', brand: 'any',
+            used: 50 } ]
     };
 
     check1_resize(t, cfg, ufdsLimits, tenant, vms[0], vms, PKG, fields, true);
@@ -1046,14 +1176,15 @@ function (t) {
 
 test('allowResize - check by quota/brand wildcard/larger VM',
 function (t) {
-    var fields = 'uuid,quota';
+    var fields = 'quota';
     var tenant = undefined;
     var ufdsLimits = [];
     var vms = [
         { ram: 256, quota: 50, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 60, by: 'quota', check: 'brand', brand: 'any' } ]
+        defaults: [ { value: 60, by: 'quota', check: 'brand', brand: 'any',
+            used: 50 } ]
     };
     var pkg = {
         max_physical_memory: 256,
@@ -1073,7 +1204,8 @@ function (t) {
         { ram: 256, quota: 60, uuid: UUID1 }
     ];
     var cfg = {
-        defaults: [ { value: 60, by: 'quota', check: 'brand', brand: 'any' } ]
+        defaults: [ { value: 60, by: 'quota', check: 'brand', brand: 'any',
+            used: 60 } ]
     };
 
     check1_provision(t, cfg, ufdsLimits, tenant, vms, PKG, fields, false);
@@ -1084,7 +1216,7 @@ test('allowProvision - count/os/one VM',
 function (t) {
     var vms = [ { ram: 256, image_uuid: IMAGE.uuid, uuid: UUID1 } ];
     var limits = [
-        { value: 2, check: 'os', os: 'other' }
+        { value: 2, check: 'os', os: 'other', used: 1 }
     ];
 
     function listImages(opts, cb) {
@@ -1107,7 +1239,7 @@ function (t) {
         { ram: 256, image_uuid: IMAGE.uuid, uuid: UUID2 }
     ];
     var limits = [
-        { value: 2, check: 'os', os: 'other' }
+        { value: 2, check: 'os', os: 'other', used: 2 }
     ];
 
     function listImages(opts, cb) {
@@ -1133,7 +1265,7 @@ function (t) {
         { ram: 256, image_uuid: IMAGE.uuid, uuid: UUID3 }
     ];
     var limits = [
-        { value: 2, check: 'os', os: 'other' }
+        { value: 2, check: 'os', os: 'other', used: 3 }
     ];
 
     function listImages(opts, cb) {
@@ -1155,11 +1287,21 @@ function (t) {
         { ram: 256, image_uuid: IMAGE.uuid, uuid: UUID1 }
     ];
     var limits = [
-        { value: 2, check: 'os', os: 'smartos' }
+        { value: 2, check: 'os', os: 'smartos', used: 0 }
     ];
 
+    // The listImages function should only get called once via
+    // checkProvisionLimits, as allowProvision will already filter the limit out
+    // (i.e. allowProvision doesn't look up images at all).
+    var callCount = 0;
     function listImages(opts, cb) {
-        t.deepEqual(opts, { state: 'all', os: 'other' }, 'opts');
+        t.equal(callCount, 0, 'should be only be called once');
+        callCount += 1;
+        t.deepEqual(opts, {
+            state: 'all',
+            os: 'smartos',
+            req_id: '8882779e-f9ab-11e7-a697-93c18b2a37ef'
+        }, 'opts');
         cb(null, [IMAGE]);
     }
 
@@ -1175,7 +1317,7 @@ function (t) {
             uuid: UUID2 }
     ];
     var limits = [
-        { value: 2, check: 'os', os: 'other' }
+        { value: 2, check: 'os', os: 'other', used: 1 }
     ];
 
     function listImages(opts, cb) {
@@ -1199,7 +1341,7 @@ function (t) {
             uuid: UUID2 }
     ];
     var limits = [
-        { value: 2, check: 'os', os: 'other' }
+        { value: 2, check: 'os', os: 'other', used: 1 }
     ];
 
     function listImages(opts, cb) {
@@ -1221,7 +1363,7 @@ function (t) {
         { ram: 256, image_uuid: IMAGE.uuid, uuid: UUID1 }
     ];
     var limits = [
-        { value: 512, by: 'ram', check: 'os', os: 'other' }
+        { value: 512, by: 'ram', check: 'os', os: 'other', used: 256 }
     ];
 
     function listImages(opts, cb) {
@@ -1244,7 +1386,7 @@ function (t) {
         { ram: 256, image_uuid: IMAGE.uuid, uuid: UUID2 }
     ];
     var limits = [
-        { value: 512, by: 'ram', check: 'os', os: 'other' }
+        { value: 512, by: 'ram', check: 'os', os: 'other', used: 512 }
     ];
 
     function listImages(opts, cb) {
@@ -1267,7 +1409,7 @@ function (t) {
         { ram: 256, image_uuid: IMAGE.uuid, uuid: UUID2 }
     ];
     var limits = [
-        { value: 512, by: 'ram', check: 'os', os: 'other' }
+        { value: 512, by: 'ram', check: 'os', os: 'other', used: 512 }
     ];
 
     function listImages(opts, cb) {
@@ -1290,7 +1432,7 @@ function (t) {
         { ram: 256, image_uuid: IMAGE.uuid, uuid: UUID1 }
     ];
     var limits = [
-        { value: 2, check: 'image', image: 'testimage' }
+        { value: 2, check: 'image', image: 'testimage', used: 1 }
     ];
 
     function listImages(opts, cb) {
@@ -1313,7 +1455,7 @@ function (t) {
         { ram: 256, image_uuid: IMAGE.uuid, uuid: UUID2 }
     ];
     var limits = [
-        { value: 2, check: 'image', image: 'testimage' }
+        { value: 2, check: 'image', image: 'testimage', used: 2 }
     ];
 
     function listImages(opts, cb) {
@@ -1335,11 +1477,21 @@ function (t) {
         { ram: 256, image_uuid: IMAGE.uuid, uuid: UUID1 }
     ];
     var limits = [
-        { value: 2, check: 'image', image: 'definitelynotwhatyouwant' }
+        { value: 2, check: 'image', image: 'definitelynotwhatyouwant', used: 0 }
     ];
 
+    // The listImages function should only get called once via
+    // checkProvisionLimits, as allowProvision will already filter the limit out
+    // (i.e. allowProvision doesn't look up images at all).
+    var callCount = 0;
     function listImages(opts, cb) {
-        t.deepEqual(opts, { state: 'all', name: 'testimage' }, 'opts');
+        t.equal(callCount, 0, 'should be only be called once');
+        callCount += 1;
+        t.deepEqual(opts, {
+            state: 'all',
+            name: 'definitelynotwhatyouwant',
+            req_id: '8882779e-f9ab-11e7-a697-93c18b2a37ef'
+        }, 'opts');
         cb(null, [IMAGE]);
     }
 
@@ -1354,7 +1506,7 @@ function (t) {
         { ram: 256, image_uuid: 'd26e2a4c-bfb8-11e7-a0eb-28cfe91f7d53' }
     ];
     var limits = [
-        { value: 2, check: 'image', image: 'testimage' }
+        { value: 2, check: 'image', image: 'testimage', used: 1 }
     ];
 
     function listImages(opts, cb) {
@@ -1376,7 +1528,7 @@ function (t) {
         { ram: 256, image_uuid: IMAGE.uuid, uuid: UUID1 }
     ];
     var limits = [
-        { value: 512, by: 'ram', check: 'image', image: 'testimage' }
+        { value: 512, by: 'ram', check: 'image', image: 'testimage', used: 256 }
     ];
 
     function listImages(opts, cb) {
@@ -1399,7 +1551,7 @@ function (t) {
         { ram: 256, image_uuid: IMAGE.uuid, uuid: UUID2 }
     ];
     var limits = [
-        { value: 512, by: 'ram', check: 'image', image: 'testimage' }
+        { value: 512, by: 'ram', check: 'image', image: 'testimage', used: 512 }
     ];
 
     function listImages(opts, cb) {
@@ -1421,7 +1573,7 @@ function (t) {
         { ram: 256, image_uuid: IMAGE.uuid, brand: 'lx', uuid: UUID1 }
     ];
     var limits = [
-        { value: 2, check: 'brand', brand: 'lx' }
+        { value: 2, check: 'brand', brand: 'lx', used: 1 }
     ];
 
     function listImages(opts, cb) {
@@ -1440,7 +1592,7 @@ function (t) {
         { ram: 256, image_uuid: IMAGE.uuid, brand: 'lx', uuid: UUID2 }
     ];
     var limits = [
-        { value: 2, check: 'brand', brand: 'lx' }
+        { value: 2, check: 'brand', brand: 'lx', used: 2 }
     ];
 
     function listImages(opts, cb) {
@@ -1458,7 +1610,7 @@ function (t) {
         { ram: 256, image_uuid: IMAGE.uuid, brand: 'lx', uuid: UUID1 }
     ];
     var limits = [
-        { value: 2, check: 'brand', brand: 'joyent' }
+        { value: 2, check: 'brand', brand: 'joyent', used: 0 }
     ];
 
     function listImages(opts, cb) {
@@ -1478,7 +1630,7 @@ function (t) {
             brand: 'joyent', uuid: UUID2 }
     ];
     var limits = [
-        { value: 2, check: 'brand', brand: 'lx' }
+        { value: 2, check: 'brand', brand: 'lx', used: 1 }
     ];
 
     function listImages(opts, cb) {
@@ -1496,7 +1648,7 @@ function (t) {
         { ram: 256, image_uuid: IMAGE.uuid, brand: 'lx', uuid: UUID1 }
     ];
     var limits = [
-        { value: 512, by: 'ram', check: 'brand', brand: 'lx' }
+        { value: 512, by: 'ram', check: 'brand', brand: 'lx', used: 256 }
     ];
 
     function listImages(opts, cb) {
@@ -1515,7 +1667,7 @@ function (t) {
         { ram: 256, image_uuid: IMAGE.uuid, brand: 'lx', uuid: UUID2 }
     ];
     var limits = [
-        { value: 512, by: 'ram', check: 'brand', brand: 'lx' }
+        { value: 512, by: 'ram', check: 'brand', brand: 'lx', used: 512 }
     ];
 
     function listImages(opts, cb) {
@@ -1611,70 +1763,36 @@ function (t) {
 test('_findMinimalFields',
 function (t) {
     var findMinimalFields = plugin._findMinimalFields;
-    var needUuid = false;
 
     var result = findMinimalFields([
         { value: 256, by: 'ram' },
         { value: 256, by: 'ram' }
-    ], needUuid);
+    ]);
     t.deepEqual(result, 'ram', 'findMinimalFields results');
 
     result = findMinimalFields([
         { value: 256, by: 'ram' },
         { value: 256, by: 'ram' },
         { value: 60,  by: 'quota' }
-    ], needUuid);
+    ]);
     t.deepEqual(result, 'ram,quota', 'findMinimalFields results');
 
     result = findMinimalFields([
         { value: 60, by: 'quota' },
         { value: 60, by: 'quota' }
-    ], needUuid);
+    ]);
     t.deepEqual(result, 'quota', 'findMinimalFields results');
 
     result = findMinimalFields([
         { value: 60, by: 'quota' },
         { value: 5,  check: 'os' }
-    ], needUuid);
+    ]);
     t.deepEqual(result, undefined, 'findMinimalFields results');
 
     result = findMinimalFields([
         { value: 60, by: 'quota' },
         { value: 5,  check: 'image' }
-    ], needUuid);
-    t.deepEqual(result, undefined, 'findMinimalFields results');
-
-    needUuid = true;
-
-    result = findMinimalFields([
-        { value: 256, by: 'ram' },
-        { value: 256, by: 'ram' }
-    ], needUuid);
-    t.deepEqual(result, 'uuid,ram', 'findMinimalFields results');
-
-    result = findMinimalFields([
-        { value: 256, by: 'ram' },
-        { value: 256, by: 'ram' },
-        { value: 60,  by: 'quota' }
-    ], needUuid);
-    t.deepEqual(result, 'uuid,ram,quota', 'findMinimalFields results');
-
-    result = findMinimalFields([
-        { value: 60, by: 'quota' },
-        { value: 60, by: 'quota' }
-    ], needUuid);
-    t.deepEqual(result, 'uuid,quota', 'findMinimalFields results');
-
-    result = findMinimalFields([
-        { value: 60, by: 'quota' },
-        { value: 5,  check: 'os' }
-    ], needUuid);
-    t.deepEqual(result, undefined, 'findMinimalFields results');
-
-    result = findMinimalFields([
-        { value: 60, by: 'quota' },
-        { value: 5,  check: 'image' }
-    ], needUuid);
+    ]);
     t.deepEqual(result, undefined, 'findMinimalFields results');
 
     t.end();

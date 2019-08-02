@@ -623,8 +623,8 @@ Possible values for every config member are:
 
 **Name**   | **Type** | **Description**         | **Possible values**
 ---------- | -------- | ----------------------- | ------------------------------
-os         | String   | Value for Image `os`.   | Usually, this will be one of `windows`, `linux`, `smartos`, `bsd` or `any`. See [IMGAPI os values](https://github.com/joyent/sdc-imgapi/blob/master/docs/index.md#manifest-os)
-image      | String   | Value for Image `name`. | This will be one of `windows`, the different `linux` flavors, different `smartos` based datasets or `any`. See [IMGAPI possible values for image names](https://github.com/joyent/sdc-imgapi/blob/master/docs/index.md#manifest-name)
+os         | String   | Value for Image `os`.   | Usually, this will be one of `windows`, `linux`, `smartos`, `bsd` or `other`. See [IMGAPI os values](https://github.com/joyent/sdc-imgapi/blob/master/docs/index.md#manifest-os)
+image      | String   | Value for Image `name`. | The name of the image. See [IMGAPI possible values for image names](https://github.com/joyent/sdc-imgapi/blob/master/docs/index.md#manifest-name)
 check      | String   | Either "image" or "os"  | See explanation below
 by         | String   | The name of the value this limit will be based on. Note that "machines" means "number of machines" | "ram", "quota", or "machines"
 value      | Number   | A value for the previous "by" member | Negative Integer, Zero, or Positive Integer

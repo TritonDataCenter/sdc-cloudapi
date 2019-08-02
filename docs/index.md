@@ -841,6 +841,12 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
+## 9.8.0
+- Added support for retrieving account [provisioning limits](#GetAccountLimits).
+
+## 9.7.0
+- Fixed instance resize from ignoring package traits.
+
 ## 9.6.0
 - Added support for user-driven machine [Migrations](#migrations),
   allowing the movement of machines between servers.
@@ -1248,6 +1254,86 @@ or
       "created": "2015-12-21T11:48:54.884Z"
     }
 
+
+# GetAccountLimits (GET /:login/limits)
+
+When the operator has enabled the CloudAPI Provisioning Limits plugin, you can
+retreive your account limits and usage through this API.
+
+See the [Provisioning Limits](admin.html#appendix-a-provision-limits-plugin)
+plugin for how limits are configured and used in Triton.
+
+### Inputs
+
+* None
+
+### Returns
+
+An array of provisioning limit objects. Possible values for each provisioning
+limit object are:
+
+**Field**   | **Type** | **Description**         | **Possible values**
+----------- | -------- | ---------------
+by          | String   | The type of limit. Note that "machines" means the "number of machines". | "ram", "quota", or "machines".
+value       | Number   | The limit value. I.e. the total number of machines, total ram or total quota. | Ram is defined in terms of MiB. Quota is defined in terms of GiB.
+used        | Number   | How much of the limit is used by existing machines. | Ram is defined in terms of MiB. Quota is defined in terms of GiB.
+check       | String   | Optional. Restricts the limit to an image name or to an image os. | "image" or "os".
+os          | String   | Optional. When `check` is set to "os", this is the Image `os` name this limit will be restricted to. | Usually, this will be one of `windows`, `linux`, `smartos`, `bsd` or `other`. See [IMGAPI os values](https://github.com/joyent/sdc-imgapi/blob/master/docs/index.md#manifest-os).
+image       | String   | Optional. When `check` is set to "image", this is the Image `name` this limit will be restricted to. | See [IMGAPI image name](https://github.com/joyent/sdc-imgapi/blob/master/docs/index.md#manifest-name).
+
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
+
+### Example Request
+
+    GET /my/limits HTTP/1.1
+    authorization: Signature keyId="..."
+    accept: application/json
+    accept-version: ~9
+    host: api.example.com
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Content-Length: 285
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: GET, HEAD, POST, PUT
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Content-MD5: Sz+3BJ3EKDxL3MLQQumPgg==
+    Date: Tue, 01 Aug 2019 05:06:33 GMT
+    Server: Joyent Triton 9.8.0
+    Api-Version: 9.0.0
+    Request-Id: c3d496f0-a869-11e5-8662-47ccf5717dbf
+    Response-Time: 1455
+
+    [
+      {
+        "by": "machines",
+        "value": 100,
+        "used": 2
+      },
+      {
+        "by": "ram",
+        "value": 1024,
+        "used": 512
+      },
+      {
+        "check": "os",
+        "os": "linux",
+        "by": "quota",
+        "value": 1024,
+        "used": 1
+      }
+    ]
 
 
 

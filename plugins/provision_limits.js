@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright (c) 2019, Joyent, Inc.
  */
 
 /*
@@ -185,6 +185,7 @@
  */
 
 var assert = require('assert-plus');
+var jsprim = require('jsprim');
 var vasync = require('vasync');
 
 
@@ -277,7 +278,7 @@ function filterLimits(log, service, cfgUserLimits, rawDcUserLimits) {
 
     // Convert any value attributes to numbers
     dcUserLimits  = atoiValues(dcUserLimits);
-    cfgUserLimits = atoiValues(cfgUserLimits);
+    cfgUserLimits = atoiValues(jsprim.deepCopy(cfgUserLimits));
 
     // If the user has any DC-wide wildcard limits specified, we skip any limits
     // specified in the sapi config.
@@ -401,84 +402,102 @@ function sum(a, b) {
  * Unknown checks (i.e. not "ram" or "quota") are treated as the default case:
  * counting VMs. Not great, but this is to keep consistent with the cloudapi
  * plugin's behaviour.
- *
- * Returns a boolean: true means provision is a go, false means provision should
- * be rejected.
  */
-function canProvision(log, resizing, pkg, vms, image, limits) {
+function setLimitsUsed(log, vms, limits) {
     assert.object(log, 'log');
-    assert.object(pkg, 'pkg');
     assert.arrayOfObject(vms, 'vms');
-    assert.object(image, 'image');
     assert.arrayOfObject(limits, 'limits');
 
-    // For the next three filter()s, it's possible that image.name, image.os or
-    // getBrand()'s results are undefined. This will only be the case if none of
-    // the limits require filtering by the associated image name, OS or VM
-    // brand. If they don't require it, then the results of imgVms, osVms,
-    // brandVms don't matter since they won't be used.
-
-    // All VMs matching new provision's image name
-    var imgVms = vms.filter(function imgFilter(vm) {
-        return vm.image_name === image.name;
-    });
-
-    // All VMs matching new provision's OS
-    var osVms = vms.filter(function osFilter(vm) {
-        return vm.os === image.os;
-    });
-
-    // All VMs with a particular brand
-    var brand = getBrand(image);
-    var brandVms = vms.filter(function brandFilter(vm) {
-        return vm.brand === brand;
-    });
-
-    // Loop through each limit and ensure that it passes. If any limit fails,
-    // this provision fails.
+    // Loop through each limit and set how much is used.
     for (var i = 0; i < limits.length; i++) {
         var limit = limits[i];
 
-        log.debug({ limit: limit }, 'Applying provision/resize limit');
-
         var machines = vms;
         if (limit.check === BRAND) {
-            machines = brandVms;
+            // All VMs with a particular brand.
+            machines = vms.filter(function brandFilter(vm) {
+                return vm.brand === limit.brand;
+            });
         } else if (limit.check === IMAGE) {
-            machines = imgVms;
+            // All VMs matching image name.
+            machines = vms.filter(function imgFilter(vm) {
+                return vm.image_name === limit.image;
+            });
         } else if (limit.check === OS) {
-            machines = osVms;
+            // All VMs matching the OS name.
+            machines = vms.filter(function osFilter(vm) {
+                return vm.os === limit.os;
+            });
         }
 
-        // Default is this
-        var count = machines.length + 1;
+        // Default to the number of machines.
+        var count = machines.length;
 
         if (limit.by === RAM) {
             // RAM; in MiB
             count = machines.map(function (vm) {
                 return vm.ram;
-            }).reduce(sum, pkg.max_physical_memory);
+            }).reduce(sum, 0);
 
         } else if (limit.by === QUOTA) {
             // Disk; VMs and limits are in GiB, but packages in MiB
             count = machines.map(function (vm) {
                 return vm.quota;
-            }).reduce(sum, pkg.quota / 1024);
-        } else if (resizing) {
+            }).reduce(sum, 0);
+        }
+
+        limit.used = count;
+    }
+}
+
+
+/*
+ * Returns a boolean: true means provision is a go, false means provision should
+ * be rejected.
+ */
+function canProvision(log, resizeVm, pkg, vms, limits) {
+    assert.object(log, 'log');
+    assert.object(pkg, 'pkg');
+    assert.optionalObject(resizeVm, 'resizeVm');
+    assert.arrayOfObject(vms, 'vms');
+    assert.arrayOfObject(limits, 'limits');
+
+    setLimitsUsed(log, vms, limits);
+
+    log.debug('Used limits', limits);
+
+    // Loop through each limit and ensure that it passes. If any limit fails,
+    // this provision fails.
+    return limits.every(function _checkLimitExceeded(limit) {
+        // Add the new pkg values (subtracting the old vm value when resizing).
+        if (limit.by === RAM) {
+            limit.used += pkg.max_physical_memory;
+            if (resizeVm) {
+                limit.used -= resizeVm.ram;
+            }
+        } else if (limit.by === QUOTA) {
+            limit.used += (pkg.quota / 1024);
+            if (resizeVm) {
+                limit.used -= resizeVm.quota;
+            }
+        } else if (resizeVm) {
             // If we are resizing, we don't care about the number of machines.
             // We bail here since we don't want to prevent resizing if we
             // somehow are over a limit on number of machines.
-            log.info({ limit: limit }, 'Resizing; skipping count');
-            continue;
+            log.info({ limit: limit }, 'Resizing; skipping vm count');
+            return true;
+        } else {
+            // Not resizing, which means we are provisioning a new instance,
+            // so add one extra vm to the count.
+            limit.used += 1;
         }
 
-        if (count > limit.value) {
-            log.info({ limit: limit }, 'Provision/resize limit applied');
+        if (limit.used > limit.value) {
+            log.info({ limit: limit }, 'Provision/resize limit exceeded');
             return false;
         }
-    }
-
-    return true;
+        return true;
+    });
 }
 
 
@@ -494,9 +513,8 @@ function canProvision(log, resizing, pkg, vms, image, limits) {
  * Returns a query string to use with vmapi's ListVms ?field=. Returns undefined
  * if we'll use the default object layout instead.
  */
-function findMinimalFields(limits, needUuid) {
+function findMinimalFields(limits) {
     assert.arrayOfObject(limits, 'limits');
-    assert.bool(needUuid, 'needUuid');
 
     var needImageUuid = limits.some(function (limit) {
         return limit.check === IMAGE || limit.check === OS;
@@ -516,18 +534,16 @@ function findMinimalFields(limits, needUuid) {
         return limit.by === QUOTA;
     });
 
-    var prefix = needUuid ? 'uuid,' : '';
-
     if (needRam && needQuota) {
-        return prefix + 'ram,quota';
+        return 'ram,quota';
     } else if (needQuota) {
-        return prefix + 'quota';
+        return 'quota';
     } else if (needRam) {
-        return prefix + 'ram';
+        return 'ram';
     } else {
         // vmapi won't return empty objects, so we need at least one attribute
         // regardless of whether it's needed or not
-        return needUuid ? 'uuid' : 'ram';
+        return 'ram';
     }
 }
 
@@ -537,6 +553,10 @@ function findMinimalFields(limits, needUuid) {
  * any of the limits require that VM objects are populated with details of their
  * image's OS or name, we need to ensure we have an imgapi version of the image
  * manifest.
+ *
+ * Note that when "image" is undefined, we are looking up all limit usage, else
+ * when image exists then we are checking the limits for a provisioning/resizing
+ * instance.
  *
  * If we'll be filtering by image name or OS, we can throw away all image or OS
  * limits that don't apply to this provision once we know the provision's image
@@ -548,12 +568,11 @@ function findMinimalFields(limits, needUuid) {
  * (also populated with "name" and "os" if required by the limits), and limits
  * (a new set of limits once we've throw away now-irrelevant limits).
  */
-function getVms(log, api, account, resizeVm, image, limits, reqId, cb) {
+function getVms(log, api, account, image, limits, reqId, cb) {
     assert.object(log, 'log');
     assert.object(api, 'api');
     assert.object(account, 'account');
-    assert.optionalObject(resizeVm, 'resizeVm');
-    assert.object(image, 'image');
+    assert.optionalObject(image, 'image');
     assert.arrayOfObject(limits, 'limits');
     assert.uuid(reqId, 'reqId');
     assert.func(cb, 'cb');
@@ -569,6 +588,11 @@ function getVms(log, api, account, resizeVm, image, limits, reqId, cb) {
     // checking by either image name or OS, thus we load it here.
     function getVmImage(_, next) {
         log.trace('Running getVmImage');
+
+        if (!image) {
+            // No need to get/convert the image.
+            return next();
+        }
 
         var needVmImage = limits.some(function (limit) {
             var check = limit.check;
@@ -602,7 +626,15 @@ function getVms(log, api, account, resizeVm, image, limits, reqId, cb) {
         });
     }
 
+    // Drop any limits that reference an image/os/brand that we dont' care
+    // about (i.e. when provisioning/resizing we only care about limits that
+    // reference the same image/os/brand as the provisioned/resized instance).
     function refineLimits(_, next) {
+        if (!image) {
+            // When not filtering on an image, we cannot refine the filters.
+            return next();
+        }
+
         var needBrand = limits.some(function (limit) {
             return limit.check === BRAND;
         });
@@ -655,7 +687,7 @@ function getVms(log, api, account, resizeVm, image, limits, reqId, cb) {
                 return next(err);
             }
 
-            log.debug({ opts: opts }, 'Loaded images');
+            log.debug({opts: opts, numImages: images.length}, 'Loaded images');
 
             images.forEach(function (img) {
                 imageLookup[img.uuid] = img;
@@ -669,34 +701,78 @@ function getVms(log, api, account, resizeVm, image, limits, reqId, cb) {
     function getOsImages(_, next) {
         log.trace('Running getOsImages');
 
-        var needOsDetails = limits.some(function (limit) {
+        var osNames = limits.filter(function (limit) {
             return limit.check === OS;
+        }).map(function (limit) {
+            return limit.os;
         });
 
-        if (needOsDetails) {
+        if (osNames.length === 0) {
+            log.debug('The OS is not needed for limit filtering; skipping');
+            return next();
+        }
+
+        if (image) {
+            // For provisioning/resizing, we can optimize this so that
+            // we only return images that share the same image os as the
+            // provisioning (or resizing) instance.
+            log.debug('load images with os name: ', image.os);
             return getImages({ os: image.os }, next);
         }
 
-        log.debug('VMs\' OS not needed for limit filtering; skipping');
+        // Else when loading limits used, we need all images that the filters
+        // specify.
+        var uniqueNames = new Set(osNames);
+        log.debug('load images with os names: ', osNames);
 
-        return next();
+        function loadOsImages(osName, nextOs) {
+            getImages({ os: osName }, nextOs);
+        }
+        vasync.forEachPipeline(
+            {
+                inputs: Array.from(uniqueNames),
+                func: loadOsImages
+            },
+            next);
+        return undefined;
     }
 
     // Search for images that match the VM image's name, but only if needed
     function getNameImages(_, next) {
         log.trace('Running getNameImages');
 
-        var needNameDetails = limits.some(function (limit) {
+        var imageNames = limits.filter(function (limit) {
             return limit.check === IMAGE;
+        }).map(function _mapImageNames(limit) {
+            return limit.image;
         });
 
-        if (needNameDetails) {
+        if (imageNames.length === 0) {
+            log.debug('Image names not needed for limit filtering; skipping');
+            return next();
+        }
+
+        if (image) {
+            // For provisioning/resizing, we can optimize this so that
+            // we only return images that share the same image name as the
+            // provisioning (or resizing) instance.
+            log.debug('load images with image name: ', image.name);
             return getImages({ name: image.name }, next);
         }
 
-        log.debug('Img names not needed needed for limit filtering; skipping');
-
-        return next();
+        // Else when loading limits used, we need all images that the filters
+        // specify.
+        var uniqueNames = new Set(imageNames);
+        function loadNamedImages(imageName, nextName) {
+            getImages({ name: imageName }, nextName);
+        }
+        vasync.forEachPipeline(
+            {
+                inputs: Array.from(uniqueNames),
+                func: loadNamedImages
+            },
+            next);
+        return undefined;
     }
 
     // Unfortunately, vmapi VMs don't have an 'os' attribute, nor do they store
@@ -726,7 +802,7 @@ function getVms(log, api, account, resizeVm, image, limits, reqId, cb) {
 
         var opts = {
             account: account,
-            fields: findMinimalFields(limits, !!resizeVm),
+            fields: findMinimalFields(limits),
             req_id: reqId
         };
 
@@ -755,16 +831,9 @@ function getVms(log, api, account, resizeVm, image, limits, reqId, cb) {
                 }
             });
 
-            // On a resize, the existing VM already exists. We remove the
-            // VM and proceed as if it were a provision to make checks
-            // the same in both provision and resize cases.
-            if (resizeVm) {
-                vms = vms.filter(function removeResizeVm(vm) {
-                    return vm.uuid !== resizeVm.uuid;
-                });
-            }
-
-            log.debug('VMs loaded');
+            log.debug({
+                vm_count: vms.length
+            }, 'VMs loaded');
 
             return next();
         });
@@ -785,6 +854,64 @@ function getVms(log, api, account, resizeVm, image, limits, reqId, cb) {
 
 
 /*
+ * Return the merged set of limits, reading from the UFDS account and
+ * the configuration.
+ */
+function getMergedAccountLimits(opts, cb) {
+    assert.object(opts, 'opts');
+    assert.object(opts.account, 'opts.account');
+    assert.object(opts.api, 'opts.api');
+    assert.object(opts.config, 'opts.config');
+    assert.func(cb, 'cb');
+
+    var account = opts.account;
+    var api = opts.api;
+    var config = opts.config;
+    var log = api.log;
+
+    if (account.isAdmin()) {
+        log.debug({account_uuid: account.uuid},
+            'Account is admin; no limits');
+        cb(null, []);
+        return;
+    }
+
+    // Fetch all of this account's DC limits from ufds.
+    account.listLimits(function listLimitsCb(err, globalUserLimits) {
+        if (err) {
+            cb(err);
+            return;
+        }
+
+        // Since ufds replicates between DCs, we're only interested in any
+        // limits that apply to this DC specifically.
+        var dcUserLimits = (globalUserLimits || []).find(function (limit) {
+            return limit.datacenter === api.datacenterName;
+        });
+
+        // We use a specific class of sapi-specified limits if the account
+        // has that class, otherwise fall back to defaults.
+        var cfgUserLimits = config[account.tenant] || config.defaults || [];
+
+        // Merge and optimize a bit the two sets of limits.
+        var limits = filterLimits(log, api.service, cfgUserLimits,
+            dcUserLimits);
+
+        if (!limits.length) {
+            log.debug({account_uuid: account.uuid}, 'No limits found');
+            cb(null, []);
+            return;
+        }
+
+        log.debug({account_uuid: account.uuid, limits: JSON.stringify(limits)},
+            'Loaded account limits');
+
+        cb(null, limits);
+    });
+}
+
+
+/*
  * Given a new provision or resize, load all limits that apply to the current
  * account both in sdc-docker's config and in ufds, determine which limits are
  * relevant to this provision/resize, and check that the provision/resize won't
@@ -800,7 +927,6 @@ function allowProvisionOrResize(api, cfg) {
     assert.object(cfg, 'cfg');
     assert.arrayOfObject(cfg.defaults, 'cfg.defaults');
 
-    var svcs = api.service;
     var log = api.log;
 
     return function checkProvisionAndResizeLimits(opts, cb) {
@@ -820,30 +946,14 @@ function allowProvisionOrResize(api, cfg) {
 
         log.debug('Running', checkProvisionAndResizeLimits.name);
 
-        if (account.isAdmin()) {
-            log.debug('Account %s is admin; skipping provision/resize limits',
-                account.uuid);
-                return cb();
-        }
-
-        // fetch all of this account's DC limits from ufds
-        return account.listLimits(function listLimitsCb(err, globalUserLimits) {
+        getMergedAccountLimits({
+            account: account,
+            api: api,
+            config: cfg
+        }, function _onGetAccountLimitsCb(err, limits) {
             if (err) {
                 return cb(err);
             }
-
-            // Since ufds replicates between DCs, we're only interested in any
-            // limits that apply to this DC specifically.
-            var dcUserLimits = (globalUserLimits || []).find(function (limit) {
-                return limit.datacenter === api.datacenterName;
-            });
-
-            // We use a specific class of sapi-specified limits if the account
-            // has that class, otherwise fall back to defaults.
-            var cfgUserLimits = cfg[account.tenant] || cfg.defaults || [];
-
-            // Merge and optimize a bit the two sets of limits.
-            var limits = filterLimits(log, svcs, cfgUserLimits, dcUserLimits);
 
             if (!limits.length) {
                 log.debug('No limits to be applied; skipping ' +
@@ -866,7 +976,7 @@ function allowProvisionOrResize(api, cfg) {
             // Load and populate any required VMs from imgapi to check against
             // the given limits. Narrow the limits based on new information
             // available from those queries.
-            return getVms(log, api, account, resizeVm, image, limits, reqId,
+            return getVms(log, api, account, image, limits, reqId,
                 function onGetVms(err2, vms, image2, fittedLimits) {
 
                 if (err2) {
@@ -880,7 +990,7 @@ function allowProvisionOrResize(api, cfg) {
                     img_name: image2.name
                 }, 'VMs loaded and provision/resize limits adjusted');
 
-                var allow = canProvision(log, !!resizeVm, pkg, vms, image2,
+                var allow = canProvision(log, resizeVm, pkg, vms,
                     fittedLimits);
 
                 if (!allow) {
@@ -894,10 +1004,68 @@ function allowProvisionOrResize(api, cfg) {
 }
 
 
+/*
+ * Load all limits that apply to the current account both in the service config
+ * and in ufds, load how much is used for each of those limits that apply to
+ * the current dc.
+ *
+ * Callback is `cb(err, limits)`.
+ */
+function getProvisionLimits(opts, cb) {
+    assert.object(opts, 'opts');
+    assert.object(opts.account, 'opts.account');
+    assert.object(opts.api, 'opts.api');
+    assert.object(opts.config, 'opts.config');
+    assert.uuid(opts.req_id, 'opts.req_id');
+    assert.func(cb, 'cb');
+
+    var account = opts.account;
+    var api = opts.api;
+    var config = opts.config;
+    var log = api.log;
+    var reqId = opts.req_id;
+
+    getMergedAccountLimits({
+        account: account,
+        api: api,
+        config: config
+    }, function _getAccountLimitsCb(err, limits) {
+        if (err) {
+            cb(err);
+            return;
+        }
+
+        if (!limits.length) {
+            cb(null, []);
+            return;
+        }
+
+        getVms(log, api, account, null, limits, reqId,
+            function onGetVms(err2, vms) {
+
+            if (err2) {
+                cb(err2);
+                return;
+            }
+
+            log.info({
+                vm_count: vms.length
+            }, 'VMs loaded');
+
+            setLimitsUsed(log, vms, limits);
+
+            cb(null, limits);
+        });
+    });
+}
+
+
 module.exports = {
     // hooks loaded by PluginManager
     allowProvision: allowProvisionOrResize,
     allowResize: allowProvisionOrResize,
+    // hook for account limits
+    _getProvisionLimits: getProvisionLimits,
 
     // and these are additionally exported for tests
     _convertFromCapi: convertFromCapi,

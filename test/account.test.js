@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright (c) 2019, Joyent, Inc.
  */
 
 var test = require('@smaller/tap').test;
@@ -152,6 +152,52 @@ test('PutAccount OK', function (t) {
         t.equal(typeof (obj.name), 'string');
         t.deepEqual(obj['role-tag'], []);
 
+        t.end();
+    });
+});
+
+
+test('GetAccountLimits(my) OK', function (t) {
+    CLIENT.get('/my/limits', function (err, req, res, limits) {
+        t.ifError(err);
+        t.ok(req);
+        t.ok(res);
+        common.checkHeaders(t, res.headers);
+        t.equal(res.statusCode, 200);
+        t.ok(Array.isArray(limits), 'Returned limits should be an array');
+        t.end();
+    });
+});
+
+
+test('GetAccountLimits(:login) OK', function (t) {
+    var path = '/' + encodeURIComponent(CLIENT.login) + '/limits';
+    CLIENT.get(path, function (err, req, res, limits) {
+        t.ifError(err);
+        t.ok(req);
+        t.ok(res);
+        common.checkHeaders(t, res.headers);
+        t.equal(res.statusCode, 200);
+        t.ok(Array.isArray(limits), 'Returned limits should be an array');
+        t.end();
+    });
+});
+
+
+test('GetAccountLimits(:login) other', function (t) {
+    var path = '/' + encodeURIComponent(CLIENT.login) + '/limits';
+    OTHER.get(path, function (err, req, res, limits) {
+        checkNotAuthorized(t, err, req, res, limits);
+        t.end();
+    });
+});
+
+
+test('GetAccountLimits 404', function (t) {
+    CLIENT.get('/' + common.uuid() + '/limits', function (err) {
+        t.ok(err);
+        t.equal(err.statusCode, 404);
+        t.equal(err.restCode, 'ResourceNotFound');
         t.end();
     });
 });
