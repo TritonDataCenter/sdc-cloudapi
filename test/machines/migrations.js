@@ -246,6 +246,26 @@ module.exports = function migrate(suite, client, other, machine, callback) {
         });
     });
 
+    suite.test('Finalize migration', function finalizeMigrCb(t) {
+        if (migrationFailed) {
+            t.end();
+            return;
+        }
+        var url = '/my/machines/' + machine + '/migrate';
+        client.post(url, {
+            action: 'finalize'
+        }, function doPostCb(err, req, res, body) {
+            t.ifError(err);
+            if (err) {
+                t.end();
+                return;
+            }
+
+            t.equal(res.statusCode, 200);
+            t.end();
+        });
+    });
+
     suite.test('Close migrations watch client', function closeTest(t) {
         httpClient.close();
         t.end();

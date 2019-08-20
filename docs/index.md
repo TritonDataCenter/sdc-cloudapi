@@ -7141,7 +7141,12 @@ A migration can be set to run all of these phases in one (_automatic_ migration)
 these phases can each be run manually (_on demand_ migration).
 
 For any migration action (e.g. `begin`, `sync`, `switch` or `abort`) you can use the
-migration `watch` endpoint to show progress information for the running migration action
+migration `watch` endpoint to show progress information for the running migration action.
+
+Once the migration switch is complete, if you are happy with the new migrated
+instance then you should run the `finalize` action to remove the original
+source instance. Note that once the finalize action completes successfully, the
+migration will no longer show up in the migration list.
 
 ## Migrate  (POST /:login/machines/:id/migrate)
 
@@ -7200,13 +7205,14 @@ successful    | Migration was successfully completed.
 
 ### Migration phases
 
-The workflow stage that the migration is currently running, one of:
+The action that the migration is currently running, one of:
 
 **Phase**  | **Description**
 ---------- | ------------
 begin      | This phase starts the migration process, creates a new migration database entry and provisions the target instance.
 sync       | This phase synchronizes the zfs datasets of the source instance with the zfs datasets in the target instance (without stopping the instance).
 switch     | This phase stops the instance from running, synchronizes the zfs datasets of the source instance with the zfs datasets in the target instance, moves the NICs from the source to the target instance, moves control to the target instance and then restarts the target instance.
+finalize   | This phase is used after switch is successful - it will remove the original source instance, leaving the target instance as the one true instance.
 abort      | This phase is used when aborting a migration.
 
 ### Errors
@@ -7245,6 +7251,9 @@ MissingParameter | If `action` wasn't provided
     running: 90% removing sync snapshots
     running: 95% starting the migrated instance
     Done - switch finished in 40.28621 seconds
+
+    $ triton instance migration finalize eaabc951
+    Done - the migration is finalized
 
     $ triton instance migration list
     SHORTID   PHASE   STATE       AGE
