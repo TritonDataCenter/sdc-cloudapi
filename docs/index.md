@@ -1273,7 +1273,7 @@ An array of provisioning limit objects. Possible values for each provisioning
 limit object are:
 
 **Field**   | **Type** | **Description**         | **Possible values**
------------ | -------- | ---------------
+----------- | -------- | ----------------------- | -------------------
 by          | String   | The type of limit. Note that "machines" means the "number of machines". | "ram", "quota", or "machines".
 value       | Number   | The limit value. I.e. the total number of machines, total ram or total quota. | Ram is defined in terms of MiB. Quota is defined in terms of GiB.
 used        | Number   | How much of the limit is used by existing machines. | Ram is defined in terms of MiB. Quota is defined in terms of GiB.
