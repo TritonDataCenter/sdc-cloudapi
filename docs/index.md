@@ -841,6 +841,12 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
+## 9.8.2
+- Fixed instance resize from failing during package trait check.
+
+## 9.8.1
+- Added migration finalize API [Migrations](#migrations).
+
 ## 9.8.0
 - Added support for retrieving account [provisioning limits](#GetAccountLimits).
 
