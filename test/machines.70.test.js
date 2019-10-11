@@ -9,9 +9,9 @@
  */
 
 
+var jsprim = require('jsprim');
 var util = require('util');
 var test = require('@smaller/tap').test;
-var vasync = require('vasync');
 var common = require('./common');
 var uuid = common.uuid;
 var addPackage = common.addPackage;
@@ -199,7 +199,7 @@ test('Delete tests', function (t) {
 });
 
 
-test('KVM image', function (t) {
+test('Find HVM images', function (t) {
     // Make sure we're not getting an lx-branded image instead
     // of a KVM/bhyve one. Note that starting with images built
     // after 20180819 the same images can be used for both of them;
@@ -219,32 +219,35 @@ test('KVM image', function (t) {
         }
 
         var hvmImages = body.filter(function getHvm(img) {
-            return img.type === 'zvol';
+            // Note that before CloudAPI 8, img.type was 'virtualmachine'.
+            return img.type === 'zvol' || img.type === 'virtualmachine';
         });
 
         KVM_IMAGE_UUID = hvmImages.filter(function getKvm(img) {
             var reqr = img.requirements;
             return !reqr || !reqr.brand || reqr.brand === 'kvm';
+        }).map(function getKvmImgId(img) {
+            return img.id;
         }).pop();
+        t.ok(KVM_IMAGE_UUID, 'Found KVM image uuid: ' + KVM_IMAGE_UUID);
 
         BHYVE_IMAGE_UUID = hvmImages.filter(function getBhyve(img) {
             var reqr = img.requirements;
             return !reqr || !reqr.brand || reqr.brand === 'bhyve';
+        }).map(function getBhyveImgId(img) {
+            return img.id;
         }).pop();
+        t.ok(BHYVE_IMAGE_UUID, 'Found bhyve image uuid: ' + BHYVE_IMAGE_UUID);
 
         t.end();
     });
 });
 
-test('Create KVM & bhyve packages', function (t) {
+test('Create KVM package', function (t) {
     if (KVM_IMAGE_UUID) {
         addPackage(CLIENT, common.kvm_128_package, function addPkgCb(err) {
             t.ifError(err, 'Add package error');
-            addPackage(CLIENT, common.bhyve_128_package,
-                function addBhyvePkgCb(bhyveErr) {
-                t.ifError(bhyveErr, 'Add package error');
-                t.end();
-            });
+            t.end();
         });
     } else {
         t.end();
@@ -301,6 +304,27 @@ test('Wait For KVM machine Running', function (t) {
 });
 
 
+test('Ensure we cannot resize a KVM machine', function (t) {
+    if (!KVM_MACHINE_UUID) {
+        t.end();
+        return;
+    }
+
+    var obj = {
+        package: common.kvm_128_package.uuid
+    };
+
+    CLIENT.post('/my/machines/' + KVM_MACHINE_UUID + '?action=resize',
+            obj, function (err, req, res, body) {
+        t.ok(err, 'expect POST /my/machines?resize error');
+        t.equal(res.statusCode, 409, 'should get a 409 statusCode');
+        t.equal(err.message, 'resize is not supported for KVM virtualmachines',
+            'res.message should be correct');
+        t.end();
+    });
+});
+
+
 test('Delete KVM tests', function (t) {
     if (KVM_MACHINE_UUID) {
         var deleteTest = require('./machines/delete');
@@ -312,6 +336,35 @@ test('Delete KVM tests', function (t) {
     }
 });
 
+test('Delete KVM package', function (t) {
+    if (!KVM_IMAGE_UUID) {
+        t.end();
+        return;
+    }
+
+    common.deletePackage(CLIENT, common.kvm_128_package, function delCb(err) {
+        t.ifError(err, 'err deleting package');
+        t.end();
+    });
+});
+
+
+// Bhyve tests
+
+test('Create bhyve packages', function (t) {
+    if (BHYVE_IMAGE_UUID) {
+        addPackage(CLIENT, common.bhyve_128_package, function addPkg1(err) {
+            t.ifError(err, 'Add bhyve package error');
+            addPackage(CLIENT, common.bhyve_128_flex_package,
+                    function addPkg2(err2) {
+                t.ifError(err2, 'Add bhyve flexible disk package error');
+                t.end();
+            });
+        });
+    } else {
+        t.end();
+    }
+});
 
 test('Create bhyve machine', function (t) {
     if (!BHYVE_IMAGE_UUID) {
@@ -392,6 +445,75 @@ test('Bhyve machine snapshots', function (t) {
 });
 
 
+test('Resize bhyve vm fails when not using flexible_disk', function (t) {
+    if (!BHYVE_MACHINE_UUID) {
+        t.end();
+        return;
+    }
+
+    var obj = {
+        package: common.bhyve_128_package.uuid
+    };
+
+    CLIENT.post('/my/machines/' + BHYVE_MACHINE_UUID + '?action=resize',
+            obj, function (err, req, res, body) {
+        t.ok(err, 'expect POST /my/machines?resize error');
+        t.equal(res.statusCode, 409, 'should get a 409 statusCode');
+        t.equal(err.restCode, 'InvalidArgument');
+
+        var serverHeader = res && res.headers && res.headers['server'];
+        var supportsBhyveResize = common.cloudapiServerHeaderGtrOrEq(
+            serverHeader, '9.8.3');
+
+        if (supportsBhyveResize) {
+            t.equal(err.message, 'Resizing to a package without flexible ' +
+                'disk space is not supported');
+        } else {
+            t.equal(err.message,
+                'resize is not supported for KVM virtualmachines');
+        }
+
+        t.end();
+    });
+});
+
+
+test('Resize bhyve vm', function (t) {
+    if (!BHYVE_MACHINE_UUID) {
+        t.end();
+        return;
+    }
+
+    var obj = {
+        package: common.bhyve_128_flex_package.uuid
+    };
+
+    // This should succeed on modern versions of CloudAPI, but will fail on
+    // older versions when bhyve resize was not supported.
+    CLIENT.post('/my/machines/' + BHYVE_MACHINE_UUID + '?action=resize',
+            obj,
+            function onBhyveResizeCb(err, req, res, body) {
+
+        var serverHeader = res && res.headers && res.headers['server'];
+        var supportsBhyveResize = common.cloudapiServerHeaderGtrOrEq(
+            serverHeader, '9.8.3');
+
+        if (supportsBhyveResize) {
+            t.ifError(err, 'Resize bhyve instance');
+            t.equal(res.statusCode, 201);
+        } else {
+            t.ok(err);
+            t.equal(res.statusCode, 409);
+            t.equal(err.restCode, 'InvalidArgument');
+            t.equal(err.message,
+                'resize is not supported for KVM virtualmachines');
+        }
+
+        t.end();
+    });
+});
+
+
 test('Delete bhyve test vm', function (t) {
     if (BHYVE_MACHINE_UUID) {
         var deleteTest = require('./machines/delete');
@@ -403,30 +525,26 @@ test('Delete bhyve test vm', function (t) {
     }
 });
 
-
-test('teardown', function (t) {
-    var delPkgs = [];
-
-    if (KVM_IMAGE_UUID) {
-        delPkgs.push(common.kvm_128_package);
+test('Delete bhyve test packages', function (t) {
+    if (!KVM_IMAGE_UUID) {
+        t.end();
+        return;
     }
 
-    if (BHYVE_IMAGE_UUID) {
-        delPkgs.push(common.bhyve_128_package);
-    }
-
-    vasync.forEachPipeline({
-        inputs: delPkgs,
-        func: function deletePkg(pkg, next) {
-            common.deletePackage(CLIENT, pkg, function delCb(err) {
-                t.ifError(err, 'err deleting package');
-                next();
-            });
-        }
-    }, function vasyncCb() {
-        common.teardown(CLIENTS, SERVER, function teardownClients(err) {
-            t.ifError(err, 'teardown success');
+    common.deletePackage(CLIENT, common.bhyve_128_package, function delCb(err) {
+        t.ifError(err, 'err deleting bhyve test package');
+        common.deletePackage(CLIENT, common.bhyve_128_flex_package,
+                function delCb2(err2) {
+            t.ifError(err2, 'err deleting bhyve flex test package');
             t.end();
         });
+    });
+});
+
+
+test('teardown', function (t) {
+    common.teardown(CLIENTS, SERVER, function teardownClients(err) {
+        t.ifError(err, 'teardown success');
+        t.end();
     });
 });

@@ -841,6 +841,9 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
+## 9.8.3
+- Allow instance resize on bhyve instances.
+
 ## 9.8.2
 - Fixed instance resize from failing during package trait check.
 
@@ -5284,9 +5287,9 @@ or
 
 Resize an instance to a new [package](#packages) (a.k.a. instance type).
 
-Resizing is only supported for containers (instances which are not hardware
-virtual machines -- they have `brand=kvm` or `brand=bhyve`). Hardware virtual
-machines cannot be resized.
+Note that KVM instances (with `brand=kvm`) cannot be resized, and bhyve
+instances (`brand=bhyve`) only allow resizing to a package that uses
+flexible_disk.
 
 Resizing is not guaranteed to work, especially when resizing upwards in
 resources. It is best-effort, and may fail. Resizing downwards will usually
