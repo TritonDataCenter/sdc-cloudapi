@@ -169,6 +169,20 @@
     "fabric_package_prefixes": {{{"CLOUDAPI_FABRIC_PACKAGE_PREFIXES}}},
     {{/"CLOUDAPI_FABRIC_PACKAGE_PREFIXES}}
 
+    {{^CLOUDAPI_DEFAULT_CONTAINER_BRAND}}
+    "default_container_brand": "joyent",
+    {{/CLOUDAPI_DEFAULT_CONTAINER_BRAND}}
+    {{#CLOUDAPI_DEFAULT_CONTAINER_BRAND}}
+    "default_container_brand": {{{CLOUDAPI_DEFAULT_CONTAINER_BRAND}}},
+    {{/CLOUDAPI_DEFAULT_CONTAINER_BRAND}}
+
+    {{^CLOUDAPI_DEFAULT_HVM_BRAND}}
+    "default_hvm_brand": "kvm",
+    {{/CLOUDAPI_DEFAULT_HVM_BRAND}}
+    {{#CLOUDAPI_DEFAULT_HVM_BRAND}}
+    "default_hvm_brand": {{{CLOUDAPI_DEFAULT_HVM_BRAND}}},
+    {{/CLOUDAPI_DEFAULT_HVM_BRAND}}
+
     {{^CLOUDAPI_MULTIPLE_PUB_NETWORKS}}
     "allow_multiple_public_networks": false,
     {{/CLOUDAPI_MULTIPLE_PUB_NETWORKS}}
