@@ -592,6 +592,10 @@ those VMs' RAM, and/or the total sum of those VM's disk quota. Each of these
 three sums can be optionally constrainted by: VM brand, VM OS (specifically, the
 "os" attribute in the VM's image), and/or VM image name.
 
+When this plugin is enabled, end users will be to request to see how much of the
+limit they have used - through the
+[GetAccountLimits](./index.md#GetAccountLimits) API.
+
 The following is the configuration fragment expected in the plugins section of
 CloudAPI config file (usually set through SAPI) in order to enable and set the
 different options for this plugin:
