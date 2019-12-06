@@ -5646,8 +5646,8 @@ Allows you to take a snapshot of an instance.  Once you have one or more
 snapshots, you can boot the instance from a previous snapshot.
 
 Snapshots are not usable with other instances; they are a point-in-time snapshot
-of the current instance. Snapshots can also only be taken of instances that are
-*not* of brand 'kvm' or 'bhyve'.
+of the current instance. Snapshots can be taken of instances that are
+SmartOS, Docker, and bhyve, but not of brand 'kvm'.
 
 Since instance instances use a copy-on-write filesystem, snapshots take up
 increasing amounts of space as the filesystem changes over time. There is a
