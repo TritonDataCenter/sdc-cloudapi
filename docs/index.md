@@ -841,6 +841,10 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
+## 9.8.5
+- Added `encrypted` attribute to VM creation, used to place VMs into
+encrypted servers.
+
 ## 9.8.3
 - Allow instance resize on bhyve instances.
 
@@ -4809,6 +4813,7 @@ deletion_protection | Boolean | Whether an instance is destroyable. See [Deletio
 allow_shared_images | Boolean | Whether to allow provisioning from a shared image. Default is false
 volumes   | Array    | A list of objects representing volumes to mount when the newly created machine boots
 disks     | Array    | An array of disk objects to be created (bhyve)
+encrypted | Boolean  | Place this instance into an encrypted server. Default is false
 
 #### volumes
 

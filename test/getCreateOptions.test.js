@@ -144,6 +144,15 @@ function buildReq(options) {
         req.config = options.config;
     }
 
+    // Needed due to TRITON-1993:
+    if (!req.config.default_container_brand) {
+        req.config.default_container_brand = 'joyent';
+    }
+
+    if (!req.config.default_hvm_brand) {
+        req.config.default_hvm_brand = 'kvm';
+    }
+
     // need req.params
     if (options.params === undefined) {
         req.params = {};
@@ -190,9 +199,6 @@ function buildReq(options) {
 }
 
 
-
-
-
 // --- Tests
 
 test('getCreateOptions sets brand to "joyent" by default', function (t) {
@@ -205,14 +211,34 @@ test('getCreateOptions sets brand to "joyent" by default', function (t) {
 
     createOpts = getCreateOptions(req);
 
-    t.equal(createOpts.brand, 'joyent', 'default brand should be joyent');
+    t.equal(createOpts.brand, req.config.default_container_brand,
+        'default brand should be joyent');
+    t.end();
+});
+
+
+test('getCreateOptions with encryption enabled', function (t) {
+    var createOpts;
+    var req;
+
+    req = buildReq({
+        img: IMAGES['smartos-1.6.3'],
+        params: {
+            encrypted: true
+        }
+    });
+
+    createOpts = getCreateOptions(req);
+
+    t.equal(createOpts.brand, req.config.default_container_brand,
+        'default brand should be joyent');
+    t.equal(createOpts.encrypted, true, 'encrypted options should be present');
     t.end();
 });
 
 
 test('getCreateOptions sets brand to "kvm" by when img.type === zvol',
     function (t) {
-
     var createOpts;
     var req;
 
@@ -222,14 +248,14 @@ test('getCreateOptions sets brand to "kvm" by when img.type === zvol',
 
     createOpts = getCreateOptions(req);
 
-    t.equal(createOpts.brand, 'kvm', 'default brand should be kvm for zvol');
+    t.equal(createOpts.brand, req.config.default_hvm_brand,
+        'default brand should be kvm for zvol');
     t.end();
 });
 
 
 test('getCreateOptions sets brand to "bhyve" by when img.requirements.brand ' +
     '=== bhyve', function (t) {
-
     var createOpts;
     var req;
 
@@ -247,7 +273,6 @@ test('getCreateOptions sets brand to "bhyve" by when img.requirements.brand ' +
 
 test('getCreateOptions sets brand to "bhyve" by when pkg.brand === bhyve',
     function (t) {
-
     var createOpts;
     var req;
 
@@ -268,7 +293,6 @@ test('getCreateOptions sets brand to "bhyve" by when pkg.brand === bhyve',
 
 test('getCreateOptions blows up when pkg.brand is unknown',
     function (t) {
-
     var createOpts;
     var req;
 
@@ -291,7 +315,6 @@ test('getCreateOptions blows up when pkg.brand is unknown',
 
 test('getCreateOptions blows up when pkg.brand and img.requirements.brand ' +
     'conflict', function (t) {
-
     var createOpts;
     var req;
 
