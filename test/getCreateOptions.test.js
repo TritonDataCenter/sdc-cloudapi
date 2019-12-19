@@ -232,7 +232,12 @@ test('getCreateOptions with encryption enabled', function (t) {
 
     t.equal(createOpts.brand, req.config.default_container_brand,
         'default brand should be joyent');
-    t.equal(createOpts.encrypted, true, 'encrypted options should be present');
+    t.ok(createOpts.internal_metadata, 'internal_metadata present');
+    t.equal(typeof (createOpts.internal_metadata), 'string',
+        'internal_metadata must be a string');
+    var internal_metadata = JSON.parse(createOpts.internal_metadata);
+    t.equal(internal_metadata.encrypted, true,
+        'encrypted options should be present');
     t.end();
 });
 
