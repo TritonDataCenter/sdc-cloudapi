@@ -4813,7 +4813,7 @@ deletion_protection | Boolean | Whether an instance is destroyable. See [Deletio
 allow_shared_images | Boolean | Whether to allow provisioning from a shared image. Default is false
 volumes   | Array    | A list of objects representing volumes to mount when the newly created machine boots
 disks     | Array    | An array of disk objects to be created (bhyve)
-encrypted | Boolean  | Place this instance into an encrypted server. Default is false
+encrypted | Boolean  | Place this instance into an encrypted server. Optional. Default is false
 
 #### volumes
 

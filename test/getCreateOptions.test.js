@@ -201,7 +201,7 @@ function buildReq(options) {
 
 // --- Tests
 
-test('getCreateOptions sets brand to "joyent" by default', function (t) {
+test('getCreateOptions sets brand to default_container_brand', function (t) {
     var createOpts;
     var req;
 
@@ -212,7 +212,7 @@ test('getCreateOptions sets brand to "joyent" by default', function (t) {
     createOpts = getCreateOptions(req);
 
     t.equal(createOpts.brand, req.config.default_container_brand,
-        'default brand should be joyent');
+        'check default container brand');
     t.end();
 });
 
@@ -231,7 +231,7 @@ test('getCreateOptions with encryption enabled', function (t) {
     createOpts = getCreateOptions(req);
 
     t.equal(createOpts.brand, req.config.default_container_brand,
-        'default brand should be joyent');
+        'brand should be default_container_brand');
     t.ok(createOpts.internal_metadata, 'internal_metadata present');
     t.equal(typeof (createOpts.internal_metadata), 'string',
         'internal_metadata must be a string');
@@ -242,7 +242,7 @@ test('getCreateOptions with encryption enabled', function (t) {
 });
 
 
-test('getCreateOptions sets brand to "kvm" by when img.type === zvol',
+test('getCreateOptions sets brand to default_hvm_brand img.type === zvol',
     function (t) {
     var createOpts;
     var req;
@@ -254,7 +254,7 @@ test('getCreateOptions sets brand to "kvm" by when img.type === zvol',
     createOpts = getCreateOptions(req);
 
     t.equal(createOpts.brand, req.config.default_hvm_brand,
-        'default brand should be kvm for zvol');
+        'default brand should be default_hvm_brand for zvol');
     t.end();
 });
 
