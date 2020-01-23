@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 
@@ -500,7 +500,7 @@ test('Resize bhyve vm', function (t) {
 
         if (supportsBhyveResize) {
             t.ifError(err, 'Resize bhyve instance');
-            t.equal(res.statusCode, 201);
+            t.equal(res.statusCode, 202);
         } else {
             t.ok(err);
             t.equal(res.statusCode, 409);
