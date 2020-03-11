@@ -691,11 +691,11 @@ The `algorithm`, `expires`, `keyId`, `signature` (Base64-encoded) and
 optionally the list of `method` values, are given as query string parameters
 to the endpoint.
 
-Unlike HTTP signature, which signs the current `Date` and implicitly allows use
-only a set time into the future (to account for clock skew), pre-signed URLs
-are valid up until an arbitrary future expiry date.  The `expires` field is a
-positive integer containing the UNIX timestamp at which the signature should
-become invalid.
+Pre-signed URLs are valid up until an arbitrary future expiry date.  The
+`expires` field is a positive integer containing the UNIX timestamp at which
+the signature should become invalid. This is different from HTTP signatures
+which sign the `Date` header and account for clock skew by accepting values
+of the `Date` header up to a limited time into the future.
 
 The list of permissible `method` values is optional -- if not given, the
 signature will be validated against the signing string with just the request's
