@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var libuuid = require('libuuid');
@@ -165,6 +165,60 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             },
             inputs: invalidNetworksInputs
         }, function onAllTestsDone() {
+            t.end();
+        });
+    });
+
+    test('creating volume with invalid affinity fails', function (t) {
+        var testVolumeName = 'test-volumes-basic-invalid-affinity';
+        var testVolumeType = 'tritonnfs';
+
+        CLIENT.post('/my/volumes', {
+            name: testVolumeName,
+            type: testVolumeType,
+            affinity: 1
+        }, function onVolumeCreated(volumeCreationErr, req, res, volume) {
+            var expectedStatusCode = 409;
+            var expectedRestCode = 'InvalidArgument';
+            var expectedErrorMsg = 'Invalid affinity: affinity must be an ' +
+                'array of strings';
+
+            t.ok(volumeCreationErr,
+                'creating a volume with an invalid type should error');
+            t.equal(volumeCreationErr.restCode, expectedRestCode,
+                'rest code should be ' + expectedRestCode);
+            t.equal(volumeCreationErr.statusCode, expectedStatusCode,
+                'status code should be ' + expectedStatusCode);
+            t.ok(volumeCreationErr.message.indexOf(expectedErrorMsg) !== -1,
+                'error message should include: ' + expectedErrorMsg);
+
+            t.end();
+        });
+    });
+
+    test('creating volume with invalid tags fails', function (t) {
+        var testVolumeName = 'test-volumes-basic-invalid-tags';
+        var testVolumeType = 'tritonnfs';
+
+        CLIENT.post('/my/volumes', {
+            name: testVolumeName,
+            type: testVolumeType,
+            tags: 1
+        }, function onVolumeCreated(volumeCreationErr, req, res, volume) {
+            var expectedStatusCode = 409;
+            var expectedRestCode = 'InvalidArgument';
+            var expectedErrorMsg = 'Invalid tags: tags must be an object ' +
+                'of key/value strings';
+
+            t.ok(volumeCreationErr,
+                'creating a volume with an invalid type should error');
+            t.equal(volumeCreationErr.restCode, expectedRestCode,
+                'rest code should be ' + expectedRestCode);
+            t.equal(volumeCreationErr.statusCode, expectedStatusCode,
+                'status code should be ' + expectedStatusCode);
+            t.ok(volumeCreationErr.message.indexOf(expectedErrorMsg) !== -1,
+                'error message should include: ' + expectedErrorMsg);
+
             t.end();
         });
     });
