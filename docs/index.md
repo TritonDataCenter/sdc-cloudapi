@@ -12,7 +12,7 @@ markdown2extras: tables, code-friendly
 -->
 
 <!--
-    Copyright 2019 Joyent, Inc.
+    Copyright 2020 Joyent, Inc.
 -->
 
 
@@ -840,6 +840,10 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 # Versions
 
 The section describes API changes in CloudAPI versions.
+
+## 9.8.6
+- Allow `affinity` and `tags` to [Volume](#Volumes) creation, which can be used
+  to target instances/containers to be near/far from volumes.
 
 ## 9.8.5
 - Added `encrypted` attribute to VM creation, used to place VMs into
@@ -5062,6 +5066,8 @@ against instance names or IDs, or against the named tag's value. Some examples:
     # Same, using a regular expression.
     triton instance create -a 'instance!=/^foo/' ...
 
+Note: For [Volumes](#Volumes), affinity rules can only target the tagName and
+not against the volume id.
 
 ### Locality hints
 
@@ -9683,6 +9689,7 @@ created    | String | A timestamp that indicates the time at which the volume wa
 state      | String   | `creating`, `ready`, `deleting`, `deleted` or `failed`. Indicates in which state the volume currently is. `failed` volumes are still persisted to Moray for troubleshooting/debugging purposes. See the section [Volumes state machine](#volumes-state-machine) for a diagram and further details about the volumes' state machine
 networks   | Array of string | A list of network UUIDs that represents the networks on which this volume can be reached
 refs       | Array of string | A list of VM UUIDs that reference this volume
+tags       | Object[String => String] | The tags (labels) this volume will have - these tags can be seen by [affinity rules](#affinity-rules).
 
 Here's an example of a volume object in JSON format:
 
@@ -9699,7 +9706,11 @@ Here's an example of a volume object in JSON format:
   ],
   "refs": [
     "some-vm-uuid"
-  ]
+  ],
+  "tags": {
+    "mytag": "myvalue",
+    "role": "storage"
+  }
 }
 ```
 
@@ -9839,7 +9850,11 @@ A list of volume objects of the following form:
     ],
     "refs": [
       "4d57d71c-1b7d-9ec1-3a21-2fdc14acb671"
-    ]
+    ],
+    "tags": {
+      "mytag": "myvalue",
+      "role": "storage"
+    }
   }
 ]
 ```
@@ -9858,6 +9873,8 @@ name        | String       | No        | The desired name for the volume. If mis
 size        | Number       | No        | The desired minimum storage capacity for that volume in mebibytes. Default value is 10240 mebibytes (10 gibibytes)
 type        | String       | Yes       | The type of volume. Currently only `'tritonnfs'` is supported
 networks    | Array        | Yes       | A list of UUIDs representing networks on which the volume is reachable. These networks must be fabric networks owned by the user sending the request
+affinity    | Array        | No        | (Added in CloudAPI v8.3.0.) Optional array of [affinity rules](#affinity-rules).
+tags        | Object[String => String] | No | Any tags (labels) this volume will have - these tags can be referenced by affinity rules.
 
 ### Output
 
