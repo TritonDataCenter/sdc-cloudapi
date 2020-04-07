@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var util = require('util');
@@ -14,6 +14,9 @@ var Keyapi = require('keyapi');
 var test = require('@smaller/tap').test;
 var restify = require('restify');
 var vasync = require('vasync');
+var url = require('url');
+var sshpk = require('sshpk');
+var qs = require('querystring');
 
 var common = require('./common');
 var checkNotFound = common.checkNotFound;
@@ -74,6 +77,103 @@ test('signature auth', function (t) {
     });
 });
 
+
+test('pre-signed url', function (t) {
+    var key = sshpk.parsePrivateKey(CLIENT.privateKey);
+    var path = '/my/keys';
+    var host = url.parse(SERVER.url).host;
+
+    var params = {
+        algorithm: key.type + '-' + key.defaultHashAlgorithm(),
+        expires: Math.round(Date.now() / 1000) + 300,
+        keyId: CLIENT.keyId
+    };
+
+    var signstr = 'GET\n' + host + '\n' + path + '\n' + qs.stringify(params);
+    var signer = key.createSign();
+    signer.update(signstr);
+    params.signature = signer.sign().toString();
+
+    path += '?' + qs.stringify(params);
+
+    CLIENT.get(path, function (err, req, res, body) {
+        t.ifError(err);
+        t.equal(res.statusCode, 200);
+        common.checkHeaders(t, res.headers);
+        t.ok(body);
+        t.ok(Array.isArray(body));
+        t.ok(body.length);
+        t.end();
+    });
+});
+
+test('pre-signed url - expired', function (t) {
+    var key = sshpk.parsePrivateKey(CLIENT.privateKey);
+    var path = '/my/keys';
+    var host = url.parse(SERVER.url).host;
+
+    var params = {};
+    params.algorithm = key.type + '-' + key.defaultHashAlgorithm();
+    params.expires = Math.round(Date.now() / 1000) - 300;
+    params.keyId = CLIENT.keyId;
+
+    var signstr = 'GET\n' + host + '\n' + path + '\n' + qs.stringify(params);
+    var signer = key.createSign();
+    signer.update(signstr);
+    params.signature = signer.sign().toString();
+
+    path += '?' + qs.stringify(params);
+
+    CLIENT.get(path, function (err, req, res, body) {
+        t.ok(err);
+        t.end();
+    });
+});
+
+test('pre-signed url - missing params', function (t) {
+    var key = sshpk.parsePrivateKey(CLIENT.privateKey);
+    var path = '/my/keys';
+    var host = url.parse(SERVER.url).host;
+
+    var params = {};
+    params.expires = Math.round(Date.now() / 1000) + 300;
+    params.keyId = CLIENT.keyId;
+
+    var signstr = 'GET\n' + host + '\n' + path + '\n' + qs.stringify(params);
+    var signer = key.createSign();
+    signer.update(signstr);
+    params.signature = signer.sign().toString();
+
+    path += '?' + qs.stringify(params);
+
+    CLIENT.get(path, function (err, req, res, body) {
+        t.ok(err);
+        t.end();
+    });
+});
+
+test('pre-signed url - wrong host', function (t) {
+    var key = sshpk.parsePrivateKey(CLIENT.privateKey);
+    var path = '/my/keys';
+    var host = 'invalid.host.example.com';
+
+    var params = {};
+    params.algorithm = key.type + '-' + key.defaultHashAlgorithm();
+    params.expires = Math.round(Date.now() / 1000) + 300;
+    params.keyId = CLIENT.keyId;
+
+    var signstr = 'GET\n' + host + '\n' + path + '\n' + qs.stringify(params);
+    var signer = key.createSign();
+    signer.update(signstr);
+    params.signature = signer.sign().toString();
+
+    path += '?' + qs.stringify(params);
+
+    CLIENT.get(path, function (err, req, res, body) {
+        t.ok(err);
+        t.end();
+    });
+});
 
 // http-signature 0.10.x test
 var httpSignature = require('http-signature');
