@@ -21,6 +21,7 @@ var restify = require('restify');
 var libuuid = require('libuuid');
 var util = require('util');
 var fs = require('fs');
+var semver = require('semver');
 var vasync = require('vasync');
 
 var UFDS = require('ufds');
@@ -62,7 +63,17 @@ var KVM_128_PACKAGE = Object.assign({}, SDC_128_PACKAGE, {
 var BHYVE_128_PACKAGE = Object.assign({}, SDC_128_PACKAGE, {
     uuid: 'e83d57d2-b7e5-11e8-84bb-7be61e455e35',
     brand: 'bhyve',
-    name: 'sdc_128_bhyve'
+    name: 'sdc_128_bhyve',
+    max_physical_memory: 256,
+    max_swap: 512
+});
+
+var BHYVE_128_FLEX_PACKAGE = Object.assign({}, BHYVE_128_PACKAGE, {
+    uuid: '8b3b6796-e5b1-47ce-bb49-ac9dcba7c6eb',
+    brand: 'bhyve',
+    name: 'sdc_128_flex_bhyve',
+    quota: 50 * 1024, // 50 GiB
+    flexible_disk: true
 });
 
 var PASSWD = 'secret123';
@@ -1254,6 +1265,38 @@ function makeImageProvisionable(client, imageName, callback) {
     });
 }
 
+/*
+ * Compare the given `ver` with the cloudapi version in the server header.
+ *
+ * Callback fires as (err, cmpResult), where cmpResult is as below:
+ *    1  if `ver` >  cloudapiVer
+ *    0  if `ver` == cloudapiVer
+ *   -1  if `ver` <  cloudapiVer
+ */
+function cloudapiServerHeaderVersionCmp(ver, serverHeader) {
+    var match = serverHeader.match(/^cloudapi\/(.*)$/i);
+    if (!match) {
+        throw new Error('cloudapiVersionCmp: unexpected server header ' +
+            'format: ' + serverHeader);
+    }
+
+    return semver.compare(match[1], ver);
+}
+
+/*
+ * Returns true if the CloudAPI server version is greater than or equal to the
+ * given version, else returns false.
+ */
+function cloudapiServerHeaderGtrOrEq(serverHeader, ver) {
+    try {
+        return cloudapiServerHeaderVersionCmp(ver, serverHeader) >= 0;
+    } catch (ex) {
+        console.log('Error determining cloudapi server version: ' + ex);
+        return false;
+    }
+}
+
+
 // --- Library
 
 
@@ -1267,6 +1310,7 @@ module.exports = {
     checkNotAuthorized: checkNotAuthorized,
     checkNotFound: checkNotFound,
     checkInvalidArgument: checkInvalidArgument,
+    cloudapiServerHeaderGtrOrEq: cloudapiServerHeaderGtrOrEq,
 
     waitForMahiCache: waitForMahiCache,
     withTemporaryUser: withTemporaryUser,
@@ -1293,6 +1337,7 @@ module.exports = {
     sdc_128_package: SDC_128_PACKAGE,
     kvm_128_package: KVM_128_PACKAGE,
     bhyve_128_package: BHYVE_128_PACKAGE,
+    bhyve_128_flex_package: BHYVE_128_FLEX_PACKAGE,
 
     getCfg: function () {
         return CONFIG;

@@ -12,7 +12,7 @@ markdown2extras: tables, code-friendly
 -->
 
 <!--
-    Copyright 2019 Joyent, Inc.
+    Copyright 2020 Joyent, Inc.
 -->
 
 
@@ -640,20 +640,24 @@ JSON in the body:
 
 ### Authorization
 
-All API calls to CloudAPI require an Authorization header, which supports
-multiple ["schemes"](http://tools.ietf.org/html/rfc2617).  Currently CloudAPI
-supports only one Authentication mechanism due to PCI compliance restrictions:
+All API calls to CloudAPI require an Authorization header or signature, which
+supports multiple ["schemes"](http://tools.ietf.org/html/rfc2617).  Currently
+CloudAPI supports only one Authentication mechanism due to PCI compliance
+restrictions:
 
 * HTTP Signature Authentication Scheme.  This Scheme is outlined in
 [Appendix B](#appendix-b-http-signature-authentication).
 
-In order to leverage HTTP Signature Authentication, only RSA signing mechanisms
-are supported, and your keyId must be equal to the path returned from a
-[ListKeys](#ListKeys) API call.  For example, if your Triton login is `demo`,
-and you've uploaded an RSA SSH key with the name `foo`, an Authorization
-header would look like:
+In order to leverage HTTP Signature Authentication, only RSA and ECDSA signing
+mechanisms are supported, and your keyId must be equal to the path returned
+from a [ListKeys](#ListKeys) API call.  For example, if your Triton login is
+`demo`, and you've uploaded an RSA SSH key with the name `foo`, an
+Authorization header would look like:
 
     Authorization: Signature keyId=/demo/keys/foo,algorithm="rsa-sha256" ${Base64(sign($Date))}
+
+It is also permissible to use the full MD5 fingerprint of the key (in the
+standard colon-separated hexadecimal format) in place of the name `foo`.
 
 The default value to sign for CloudAPI requests is simply the value of the HTTP
 `Date` header.  For more information on the Date header value, see
@@ -667,6 +671,41 @@ CloudAPI SDKs; an additional reference implementation for Node.js is available
 in the npm `http-signature` module, which you can install with:
 
     npm install http-signature
+
+### Pre-signed URLs
+
+In common with Manta, CloudAPI (as of API version 8.4.0) also supports the use
+of pre-signed URLs to authenticate requests.  This is particularly useful with
+endpoints that upgrade to a WebSocket, as many WebSocket client implementations
+do not support setting custom headers (such as `Authorization`).
+
+Pre-signed URLs use a public-key signature in the same manner as the HTTP
+Signature scheme above, but the string to be signed is formatted differently:
+
+    $method[,$method2]\n
+    $http_host\n
+    $request_uri\n
+    key=val&...
+
+The `algorithm`, `expires`, `keyId`, `signature` (Base64-encoded) and
+optionally the list of `method` values, are given as query string parameters
+to the endpoint.
+
+Pre-signed URLs are valid up until an arbitrary future expiry date.  The
+`expires` field is a positive integer containing the UNIX timestamp at which
+the signature should become invalid. This is different from HTTP signatures
+which sign the `Date` header and account for clock skew by accepting values
+of the `Date` header up to a limited time into the future.
+
+The list of permissible `method` values is optional -- if not given, the
+signature will be validated against the signing string with just the request's
+actual HTTP method in its place.  If it is given, the list must include the
+request's actual HTTP method in order to be valid.
+
+The set of `key=val` query string encoded pairs should be lexicographically
+sorted by the `key`, and must include all query parameters to the endpoint
+(including parameters related to signing) other than `signature`. Note that
+this may mean including the list of `method` values in the string twice.
 
 ### Using cURL with CloudAPI
 
@@ -840,6 +879,25 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 # Versions
 
 The section describes API changes in CloudAPI versions.
+
+## 9.8.7
+
+- New endpoint, ConnectMachineVNC, which allows the use of a WebSocket to
+  connect to the VNC console of a HVM.
+- Support for pre-signed URLs for authentication (needed to make WebSockets
+    useable with browsers).
+    
+## 9.8.6
+
+- Allow `affinity` and `tags` to [Volume](#Volumes) creation, which can be used
+  to target instances/containers to be near/far from volumes.
+
+## 9.8.5
+- Added `encrypted` attribute to VM creation, used to place VMs into
+encrypted servers.
+
+## 9.8.3
+- Allow instance resize on bhyve instances.
 
 ## 9.8.2
 - Fixed instance resize from failing during package trait check.
@@ -1260,6 +1318,8 @@ or
       "created": "2015-12-21T11:48:54.884Z"
     }
 
+
+<a name="GetAccountLimits"></a>
 
 # GetAccountLimits (GET /:login/limits)
 
@@ -4804,6 +4864,7 @@ deletion_protection | Boolean | Whether an instance is destroyable. See [Deletio
 allow_shared_images | Boolean | Whether to allow provisioning from a shared image. Default is false
 volumes   | Array    | A list of objects representing volumes to mount when the newly created machine boots
 disks     | Array    | An array of disk objects to be created (bhyve)
+encrypted | Boolean  | Place this instance into an encrypted server. Optional. Default is false
 
 #### volumes
 
@@ -5052,6 +5113,8 @@ against instance names or IDs, or against the named tag's value. Some examples:
     # Same, using a regular expression.
     triton instance create -a 'instance!=/^foo/' ...
 
+Note: For [Volumes](#Volumes), affinity rules can only target the tagName and
+not against the volume id.
 
 ### Locality hints
 
@@ -5280,13 +5343,48 @@ or
     Transfer-Encoding: chunked
 
 
+## ConnectMachineVNC (GET /:login/machines/:id/vnc)
+
+Connects a websocket to the VNC console of a KVM instance.
+
+Returns an error if used on any non-KVM instance, or any instance that is not
+currently running.
+
+### Inputs
+
+* WebSocket upgrade headers
+
+### Returns
+
+* Upgrades to a WebSocket, which carries the VNC traffic in binary frames.
+  Accepts the subprotocol names `rfb` and `binary`. This is compatible with
+  e.g. the noVNC client.
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:id` does not exist
+MachineHasNoVNC  | If `:id` refers to a non-KVM VM with no VNC console
+MachineStopped   | If `:id` is not running
+UpgradeRequired  | If the WebSocket upgrade headers are missing or malformed
+
+### Notes
+
+It is recommended to use pre-signed URLs for authentication with this endpoint,
+as many WebSocket clients do not support sending custom HTTP headers with the
+Upgrade request.
+
+
 ## ResizeMachine (POST /:login/machines/:id?action=resize)
 
 Resize an instance to a new [package](#packages) (a.k.a. instance type).
 
-Resizing is only supported for containers (instances which are not hardware
-virtual machines -- they have `brand=kvm` or `brand=bhyve`). Hardware virtual
-machines cannot be resized.
+Note that KVM instances (with `brand=kvm`) cannot be resized, and bhyve
+instances (`brand=bhyve`) only allow resizing to a package that uses
+flexible_disk.
 
 Resizing is not guaranteed to work, especially when resizing upwards in
 resources. It is best-effort, and may fail. Resizing downwards will usually
@@ -5641,8 +5739,8 @@ Allows you to take a snapshot of an instance.  Once you have one or more
 snapshots, you can boot the instance from a previous snapshot.
 
 Snapshots are not usable with other instances; they are a point-in-time snapshot
-of the current instance. Snapshots can also only be taken of instances that are
-*not* of brand 'kvm' or 'bhyve'.
+of the current instance. Snapshots can be taken of instances that are
+SmartOS, Docker, and bhyve, but not of brand 'kvm'.
 
 Since instance instances use a copy-on-write filesystem, snapshots take up
 increasing amounts of space as the filesystem changes over time. There is a
@@ -9673,6 +9771,7 @@ created    | String | A timestamp that indicates the time at which the volume wa
 state      | String   | `creating`, `ready`, `deleting`, `deleted` or `failed`. Indicates in which state the volume currently is. `failed` volumes are still persisted to Moray for troubleshooting/debugging purposes. See the section [Volumes state machine](#volumes-state-machine) for a diagram and further details about the volumes' state machine
 networks   | Array of string | A list of network UUIDs that represents the networks on which this volume can be reached
 refs       | Array of string | A list of VM UUIDs that reference this volume
+tags       | Object[String => String] | The tags (labels) this volume will have - these tags can be seen by [affinity rules](#affinity-rules).
 
 Here's an example of a volume object in JSON format:
 
@@ -9689,7 +9788,11 @@ Here's an example of a volume object in JSON format:
   ],
   "refs": [
     "some-vm-uuid"
-  ]
+  ],
+  "tags": {
+    "mytag": "myvalue",
+    "role": "storage"
+  }
 }
 ```
 
@@ -9829,7 +9932,11 @@ A list of volume objects of the following form:
     ],
     "refs": [
       "4d57d71c-1b7d-9ec1-3a21-2fdc14acb671"
-    ]
+    ],
+    "tags": {
+      "mytag": "myvalue",
+      "role": "storage"
+    }
   }
 ]
 ```
@@ -9848,6 +9955,8 @@ name        | String       | No        | The desired name for the volume. If mis
 size        | Number       | No        | The desired minimum storage capacity for that volume in mebibytes. Default value is 10240 mebibytes (10 gibibytes)
 type        | String       | Yes       | The type of volume. Currently only `'tritonnfs'` is supported
 networks    | Array        | Yes       | A list of UUIDs representing networks on which the volume is reachable. These networks must be fabric networks owned by the user sending the request
+affinity    | Array        | No        | (Added in CloudAPI v8.3.0.) Optional array of [affinity rules](#affinity-rules).
+tags        | Object[String => String] | No | Any tags (labels) this volume will have - these tags can be referenced by affinity rules.
 
 ### Output
 

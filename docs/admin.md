@@ -11,7 +11,7 @@ markdown2extras: tables, code-friendly, cuddled-lists
 -->
 
 <!--
-    Copyright (c) 2018, Joyent, Inc.
+    Copyright 2019 Joyent, Inc.
 -->
 
 # Overview
@@ -60,6 +60,8 @@ CLOUDAPI_THROTTLE_WHITELIST               | Array    | See "Throttles" section b
 CLOUDAPI_MULTIPLE_PUB_NETWORKS            | Boolean  | Default false. Whether machines can be provisioned with more than one public network.
 CLOUDAPI_TEST_MODE                        | Boolean  | Default false. Disable some security checks to make testing easier.
 CLOUDAPI_IGNORE_APPROVED_FOR_PROVISIONING | Boolean  | Default false. Allow provisioning for users even if they have not been given permission.
+CLOUDAPI_DEFAULT_CONTAINER_BRAND          | String   | Default "joyent". The default brand for a container when one is not specified.
+CLOUDAPI_DEFAULT_HVM_BRAND                | String   | Default "kvm". The default hypervisor for virtual machines.
 
 For example, the 'docker' service could be added to CLOUDAPI_SERVICES as
 follows.
@@ -589,6 +591,10 @@ limit an account based on three sums: total number of account VMs, total sum of
 those VMs' RAM, and/or the total sum of those VM's disk quota. Each of these
 three sums can be optionally constrainted by: VM brand, VM OS (specifically, the
 "os" attribute in the VM's image), and/or VM image name.
+
+When this plugin is enabled, end users will be to request to see how much of the
+limit they have used - through the
+[GetAccountLimits](./index.md#GetAccountLimits) API.
 
 The following is the configuration fragment expected in the plugins section of
 CloudAPI config file (usually set through SAPI) in order to enable and set the
