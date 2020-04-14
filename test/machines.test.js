@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var util = require('util');
@@ -1872,6 +1872,42 @@ test('Create Machine using "params.bootrom" without "bhyve"', function (t) {
             code: 'InvalidArgument',
             message: 'Only bhyve VMs support "bootrom" option'
         });
+        t.end();
+    });
+});
+
+
+test('Create machine with an invalid brand', function (t) {
+    var obj = {
+        brand: 'unknown',
+        image: IMAGE_UUID,
+        package: SDC_128.name
+    };
+
+    CLIENT.post('/my/machines', obj, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.statusCode, 409);
+        t.equal(body.code, 'InvalidArgument');
+        t.equal(body.message, 'Unknown brand "unknown". ' +
+            'Brand is restricted to one of ["bhyve","kvm"]');
+        t.end();
+    });
+});
+
+
+test('Create machine with a restricted known brand', function (t) {
+    var obj = {
+        brand: 'smartos',
+        image: IMAGE_UUID,
+        package: SDC_128.name
+    };
+
+    CLIENT.post('/my/machines', obj, function (err, req, res, body) {
+        t.ok(err);
+        t.equal(err.statusCode, 409);
+        t.equal(body.code, 'InvalidArgument');
+        t.equal(body.message, 'Unknown brand "smartos". ' +
+            'Brand is restricted to one of ["bhyve","kvm"]');
         t.end();
     });
 });

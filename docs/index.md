@@ -4859,6 +4859,7 @@ affinity  | Array    | (Added in CloudAPI v8.3.0.) Optional array of [affinity r
 locality  | Object   | (Deprecated in CloudAPI v8.3.0.) Optionally object of [locality hints](#locality-hints), specify which instances the new instance should be near or far from.
 metadata.$name | String | An arbitrary set of metadata key/value pairs can be set at provision time, but they must be prefixed with "metadata."
 tag.$name | String   | An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag."
+brand     | String   | (Added in CloudAPI v9.9.0.) Optional machine type when creating a HVM machine - can be either "kvm" or "bhyve".
 firewall_enabled | Boolean | Completely enable or disable firewall for this instance. Default is false
 deletion_protection | Boolean | Whether an instance is destroyable. See [Deletion Protection](#deletion-protection). Default is false
 allow_shared_images | Boolean | Whether to allow provisioning from a shared image. Default is false

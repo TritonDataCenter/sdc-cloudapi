@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var fs = require('fs');
@@ -191,6 +191,10 @@ function buildReq(options) {
         return (version);
     };
 
+    if (options.brand) {
+        req.params.brand = options.brand;
+    }
+
     // rename img -> dataset
     req.dataset = req.img;
     delete req.img;
@@ -357,7 +361,7 @@ test('getCreateOptions blows up when pkg.brand and img.type conflict',
         createOpts = getCreateOptions(req);
         t.equal(createOpts, undefined, 'should not have createOpts');
     // JSSTYLED
-    }, /Package requires brand "lx" and image.type is incompatible \("zvol"\)/,
+    }, /Brand "lx" cannot use an image of type "zvol"/,
         'conflicting pkg.brand and img.type should result in exception');
 
 
@@ -372,8 +376,51 @@ test('getCreateOptions blows up when pkg.brand and img.type conflict',
         createOpts = getCreateOptions(req2);
         t.equal(createOpts, undefined, 'should not have createOpts');
     // JSSTYLED
-    }, /Package requires brand "bhyve" and image.type is not "zvol"/,
+    }, /Brand "bhyve" requires the image type to be "zvol"/,
         'conflicting pkg.brand and img.type should result in exception');
+
+    t.end();
+});
+
+
+test('getCreateOptions blows up when brand conflicts with img.type',
+        function (t) {
+    t.throws(function () {
+        var req = buildReq({
+            img: IMAGES['smartos-1.6.3'],
+            brand: 'kvm'
+        });
+        t.equal(getCreateOptions(req), undefined, 'should not have createOpts');
+    }, new RegExp('Brand "kvm" requires the image type to be "zvol"'),
+        'conflicting brand and img.type should result in exception');
+
+    t.end();
+});
+
+
+test('getCreateOptions blows up when brand conflicts with pkg brand',
+        function (t) {
+    t.throws(function () {
+        var req = buildReq({
+            img: IMAGES['ubuntu-certified-16.04'],
+            pkg: {
+                brand: 'bhyve'
+            },
+            brand: 'kvm'
+        });
+        t.equal(getCreateOptions(req), undefined, 'should not have createOpts');
+    }, new RegExp('Package requires brand "bhyve", but brand "kvm" was ' +
+            'selected'),
+        'conflicting brand and pkg.brand should result in exception');
+
+    t.throws(function () {
+        var req = buildReq({
+            img: IMAGES['ubuntu-bhyve-17.10'],
+            brand: 'kvm'
+        });
+        t.equal(getCreateOptions(req), undefined, 'should not have createOpts');
+    }, new RegExp('Image requires brand "bhyve", but brand "kvm" was selected'),
+        'conflicting brand and img.requirement.brand results in an exception');
 
     t.end();
 });
