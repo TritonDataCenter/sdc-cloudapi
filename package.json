@@ -1,7 +1,7 @@
 {
     "name": "cloudapi",
     "description": "Triton CloudAPI",
-    "version": "9.8.6",
+    "version": "9.9.0",
     "author": "Joyent (joyent.com)",
     "private": true,
     "engines": {
