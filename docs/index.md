@@ -880,6 +880,16 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
+## 9.10.0
+
+- Added the `nics` field to the machine objects returned from the GetMachine and
+  ListMachines endpoints - see [NIC Objects](#nic-objects).
+
+## 9.9.0
+
+- Allow a brand to be specified in CreateInstance endpoint. This is only
+  applicable for HVM instances as it allows a choice between KVM or Bhyve.
+
 ## 9.8.7
 
 - New endpoint, ConnectMachineVNC, which allows the use of a WebSocket to
@@ -4457,12 +4467,29 @@ Triton supports three different types of instances:
 
 * Docker containers. OS-virtualized instances managed through the Docker client.
 * Infrastructure containers. More traditional OS-virtualized instances running SmartOS or more Linux distributions.
-* Hardware-virtualized machines. Hardware-virtualized instances (KVM) for running legacy or special-purpose operating systems.
+* Hardware-virtualized machines. Hardware-virtualized instances (KVM or Bhyve) for running legacy or special-purpose operating systems.
 
 Infrastructure and Docker containers are lightweight, offering the most
 performance, observability and operational flexibility. Harware-virtualized
 machines are useful for non-SmartOS or non-Linux stacks.
 
+## NIC Objects
+
+Each instance can have zero or more NICs assigned to it, each of which will
+use a uniquely indentifiable MAC. The NIC fields are:
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+ip        | String   | NIC's IPv4 address
+mac       | String   | NIC's MAC address
+primary   | Boolean  | Whether this is the instance's primary NIC
+netmask   | String   | IPv4 netmask
+gateway   | String   | IPv4 gateway
+network   | UUID     | The NIC's network id (see [ListNetworks](#ListNetworks))
+
+Note that the [List NICs](#ListNics) endpoint is similar, but includes an
+additional `state` field, which is useful when adding NICs to or removing NICs
+from an instance.
 
 ## ListMachines (GET /:login/machines)
 
@@ -4529,8 +4556,9 @@ tags        | Object[String => String] | Any tags this instance has
 created     | ISO8601 date | When this instance was created
 updated     | ISO8601 date | When this instance's details was last updated
 docker      | Boolean  | Whether this instance is a Docker container, if present
-ips         | Array[String] | The IP addresses this instance has
-networks    | Array[String] | The network UUIDs of the nics this instance has
+nics        | Array[NIC] | An array of [NIC Objects](#nic-objects)
+ips         | Array[String] | (Deprecated - use nics attribute) The IP addresses this instance has
+networks    | Array[String] | (Deprecated - use nics attribute) The network UUIDs of the nics this instance has
 primaryIp   | String   | The IP address of the primary NIC of this instance. The "primary" NIC is used to determine the default gateway for an instance. Commonly it is also on an external network (i.e. accessible on the public internet) and hence usable for SSH'ing into an instance, but not always. (Note: In future Triton versions it will be possible to have multiple IPv4 and IPv6 addresses on a particular NIC, at which point the current definition of `primaryIp` will be ambiguous and will need to change.)
 firewall_enabled | Boolean  | Whether firewall rules are enforced on this instance
 deletion_protection | Boolean | Whether an instance is destroyable. See [Deletion Protection](#deletion-protection)
@@ -4688,8 +4716,9 @@ tags        | Object[String => String] | Any tags this instance has
 created     | ISO8601 date | When this instance was created
 updated     | ISO8601 date | When this instance's details was last updated
 docker      | Boolean  | Whether this instance is a Docker container, if present
-ips         | Array[String] | The IP addresses this instance has
-networks    | Array[String] | The network UUIDs of the nics this instance has
+nics        | Array[NIC] | An array of [NIC Objects](#nic-objects)
+ips         | Array[String] | (Deprecated - use nics attribute) The IP addresses this instance has
+networks    | Array[String] | (Deprecated - use nics attribute) The network UUIDs of the nics this instance has
 primaryIp   | String   | The IP address of the primary NIC of this instance. The "primary" NIC is used to determine the default gateway for an instance. Commonly it is also on an external network (i.e. accessible on the public internet) and hence usable for SSH'ing into an instance, but not always. (Note: In future Triton versions it will be possible to have multiple IPv4 and IPv6 addresses on a particular NIC, at which point the current definition of `primaryIp` will be ambiguous and will need to change.)
 firewall_enabled | Boolean  | Whether firewall rules are enforced on this instance
 compute_node | String  | UUID of the server on which the instance is located
