@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 /*
@@ -858,16 +858,39 @@ test('nics', function (tt) {
         });
     });
 
-    // this also checks that a VM creates with an external and internal nic by
-    // default if the package doesn't list networks
+    // Test nics are availble through the GetMachine endpoint, as well as the
+    // GetMachineNics endpoint. This also checks that a VM creates with an
+    // external and internal nic by default if the package doesn't list
+    // networks.
     tt.test('  List NICs', function (t) {
-        var path = '/my/machines/' + fixtures.instId + '/nics';
+        vasync.parallel({funcs: [
+            function _checkGetMachine(cb) {
+                CLIENT.get('/my/machines/' + fixtures.instId,
+                    function _checkGetMachineCb(err, req, res, body) {
+                        checkNicResult(err, req, res, body, 'nics');
+                        cb();
+                    });
+            },
+            function _checkGetMachineNics(cb) {
+                CLIENT.get('/my/machines/' + fixtures.instId + '/nics',
+                    function _checkGetMachineNicsCb(err, req, res, body) {
+                        checkNicResult(err, req, res, body);
+                        cb();
+                    });
+            }
+        ]}, function _onDone(err) {
+            t.ifError(err);
+            t.end();
+        });
 
-        CLIENT.get(path, function (err, req, res, body) {
+        function checkNicResult(err, req, res, body, subfield) {
             t.ifError(err);
             t.equal(res.statusCode, 200);
 
             var nics = body;
+            if (subfield) {
+                nics = body[subfield];
+            }
 
             t.ok(Array.isArray(nics));
             t.equal(nics.length, 2);
@@ -907,9 +930,7 @@ test('nics', function (tt) {
             });
 
             instNic = externalNic;
-
-            t.end();
-        });
+        }
     });
 
 
