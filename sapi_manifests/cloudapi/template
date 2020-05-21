@@ -198,6 +198,12 @@
     {{#experimental_cloudapi_automount_nfs_shared_volumes}}
     "experimental_cloudapi_automount_nfs_shared_volumes": {{{experimental_cloudapi_automount_nfs_shared_volumes}}},
     {{/experimental_cloudapi_automount_nfs_shared_volumes}}
+     {{^experimental_cloudapi_delegate_dataset}}
+    "experimental_cloudapi_delegate_dataset": false,
+    {{/experimental_cloudapi_delegate_dataset}}
+    {{#experimental_cloudapi_delegate_dataset}}
+    "experimental_cloudapi_delegate_dataset": {{{experimental_cloudapi_delegate_dataset}}},
+    {{/experimental_cloudapi_delegate_dataset}}
 
     "bleeding_edge_features": {
         {{#CLOUDAPI_BLEEDING_EDGE_FEATURES}}
