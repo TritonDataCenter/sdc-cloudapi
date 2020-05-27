@@ -22,7 +22,7 @@
     "changefeed": "1.5.2",
     "clone": "0.1.5",
     "ctype": "0.5.2",
-    "cueball": "2.1.1",
+    "cueball": "2.10.1",
     "filed": "0.0.7",
     "http-signature": "1.1.0",
     "joyent-schemas": "git+https://github.com/joyent/schemas.git#dd1c3cbfae6e2aa6ceafbe003bd95fb5e579e748",
