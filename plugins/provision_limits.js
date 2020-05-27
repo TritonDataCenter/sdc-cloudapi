@@ -492,11 +492,11 @@ function canProvision(log, resizeVm, pkg, vms, limits) {
             limit.used += 1;
         }
 
-        if (limit.used > limit.value) {
-            log.info({ limit: limit }, 'Provision/resize limit exceeded');
-            return false;
+        if (limit.used <= limit.value) {
+            return true;
         }
-        return true;
+        log.info({ limit: limit }, 'Provision/resize limit exceeded');
+        return false;
     });
 }
 
