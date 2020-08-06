@@ -1517,17 +1517,17 @@ if (CONFIG.experimental_cloudapi_delegate_dataset !== true) {
     process.exitCode = 0;
 } else {
     test('Createmachine with delegated dataset', function (t) {
-	var obj = {
-	    image: IMAGE_UUID,
-	    package: SDC_256.name,
-	    name: 'sdccloudapitest_delegated_dataset_{{shortId}}',
-	    delegate_dataset: "on"
-	};
+        var obj = {
+            image: IMAGE_UUID,
+            package: SDC_256.name,
+            name: 'sdccloudapitest_delegated_dataset_{{shortId}}',
+            delegate_dataset: 'on'
+        };
 
-	machinesCommon.createMachine(t, CLIENT, obj, function (_, machineUuid) {
-	    MACHINE_UUID = machineUuid;
-	    t.end();
-	});
+        machinesCommon.createMachine(t, CLIENT, obj, function (_, machineUuid) {
+            MACHINE_UUID = machineUuid;
+            t.end();
+        });
     });
     test('Wait for Running delegated dataset machine', waitForRunning);
     test('Delete delegated dataset machine', deleteMachine);
