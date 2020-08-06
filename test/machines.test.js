@@ -18,6 +18,7 @@ var uuid = common.uuid;
 var addPackage = common.addPackage;
 var checkNotFound = common.checkNotFound;
 var machinesCommon = require('./machines/common');
+var mod_config = require('../lib/config.js');
 var checkMachine = machinesCommon.checkMachine;
 var waitForJob = machinesCommon.waitForJob;
 
@@ -104,6 +105,7 @@ var CLIENT;
 var OTHER;
 var SERVER;
 
+var CONFIG = mod_config.configure();
 
 // --- Tests
 
@@ -1508,6 +1510,28 @@ test('Get {{shortId}} machine', function (t) {
 
 test('Delete {{shortId}} machine', deleteMachine);
 
+// Test TRITON-853 delegated dataset
+if (CONFIG.experimental_cloudapi_delegate_dataset !== true) {
+    console.log('experimental_cloudapi_delegate_dataset setting not ' +
+        'enabled, skipping tests');
+    process.exitCode = 0;
+} else {
+    test('Createmachine with delegated dataset', function (t) {
+	var obj = {
+	    image: IMAGE_UUID,
+	    package: SDC_256.name,
+	    name: 'sdccloudapitest_delegated_dataset_{{shortId}}',
+	    delegate_dataset: "on"
+	};
+
+	machinesCommon.createMachine(t, CLIENT, obj, function (_, machineUuid) {
+	    MACHINE_UUID = machineUuid;
+	    t.end();
+	});
+    });
+    test('Wait for Running delegated dataset machine', waitForRunning);
+    test('Delete delegated dataset machine', deleteMachine);
+}
 
 test('Create packageless machine', function (t) {
     var ownerUuid = CLIENT.account.uuid;
