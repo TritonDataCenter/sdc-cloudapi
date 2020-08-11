@@ -11,7 +11,7 @@ markdown2extras: tables, code-friendly, cuddled-lists
 -->
 
 <!--
-    Copyright 2019 Joyent, Inc.
+    Copyright 2020 Joyent, Inc.
 -->
 
 # Overview
@@ -62,6 +62,7 @@ CLOUDAPI_TEST_MODE                        | Boolean  | Default false. Disable so
 CLOUDAPI_IGNORE_APPROVED_FOR_PROVISIONING | Boolean  | Default false. Allow provisioning for users even if they have not been given permission.
 CLOUDAPI_DEFAULT_CONTAINER_BRAND          | String   | Default "joyent". The default brand for a container when one is not specified.
 CLOUDAPI_DEFAULT_HVM_BRAND                | String   | Default "kvm". The default hypervisor for virtual machines.
+experimental_cloudapi_delegate_dataset    | Boolean  | Unsafe (see warning). Default false. Whether machines can be created with a delegated dataset through CloudAPI. WARNING: With this enabled, users can use zfs directly on the 'data' dataset inside of their zone, which could possibly lead to a kernel panic and/or data corruption. Note that `zfs receive` is disabled on the delegate dataset.
 
 For example, the 'docker' service could be added to CLOUDAPI_SERVICES as
 follows.

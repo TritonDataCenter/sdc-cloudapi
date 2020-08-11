@@ -18,6 +18,7 @@ var uuid = common.uuid;
 var addPackage = common.addPackage;
 var checkNotFound = common.checkNotFound;
 var machinesCommon = require('./machines/common');
+var mod_config = require('../lib/config.js');
 var checkMachine = machinesCommon.checkMachine;
 var waitForJob = machinesCommon.waitForJob;
 
@@ -104,6 +105,7 @@ var CLIENT;
 var OTHER;
 var SERVER;
 
+var CONFIG = mod_config.configure();
 
 // --- Tests
 
@@ -1508,6 +1510,69 @@ test('Get {{shortId}} machine', function (t) {
 
 test('Delete {{shortId}} machine', deleteMachine);
 
+// Test TRITON-853 delegated dataset
+test('Createmachine with delegated dataset', function (t) {
+    var obj = {
+        image: IMAGE_UUID,
+        package: SDC_256.name,
+        name: 'sdccloudapitest_delegated_dataset_{{shortId}}',
+        delegate_dataset: true
+    };
+
+    MACHINE_UUID = null;
+
+    CLIENT.post('/my/machines', obj, function (err, req, res, body) {
+        // When datasets are not enabled, we expect an error.
+        if (CONFIG.experimental_cloudapi_delegate_dataset !== true) {
+            t.ok(err, 'Expect an error when delegate datasets are not allowed');
+            if (err) {
+                t.equal(err.statusCode, 409);
+                t.deepEqual(body, {
+                    code: 'InvalidArgument',
+                    message: 'Support for delegated datasets is not enabled ' +
+                        '(experimental_cloudapi_delegate_dataset in SAPI)'
+                });
+
+                t.end();
+                return;
+            }
+        }
+
+        t.ifErr(err, 'Create machine error');
+        if (err) {
+            t.end();
+            return;
+        }
+
+        t.equal(res.statusCode, 201, 'createMachine 201 statusCode');
+        t.ok(body, 'createMachine body' + (body ? ': ' + body.id : ''));
+        t.equal(res.headers.location,
+            util.format('/%s/machines/%s', CLIENT.login, body.id),
+            'createMachine Location header');
+
+        MACHINE_UUID = body.id;
+
+        t.end();
+    });
+});
+
+test('Wait for Running delegated dataset machine', waitForRunning);
+
+test('Verify delegated dataset', function (t) {
+    if (!MACHINE_UUID) {
+        t.end();
+        return;
+    }
+
+    CLIENT.get('/my/machines/' + MACHINE_UUID, function (err, req, res, body) {
+        t.ifError(err, 'getting VM ' + MACHINE_UUID);
+        t.equal(body.delegate_dataset, true,
+            'vm should have delegate_dataset set to true');
+        t.end();
+    });
+});
+
+test('Delete delegated dataset machine', deleteMachine);
 
 test('Create packageless machine', function (t) {
     var ownerUuid = CLIENT.account.uuid;
@@ -1954,6 +2019,11 @@ function getOrCreateNicTag(tagName, client, callback) {
 }
 
 function waitForRunning(t) {
+    if (!MACHINE_UUID) {
+        t.end();
+        return;
+    }
+
     machinesCommon.waitForRunningMachine(CLIENT, MACHINE_UUID, function (err) {
         t.ifError(err);
 
@@ -1987,6 +2057,11 @@ function waitForResize(t) {
 
 
 function deleteMachine(t) {
+    if (!MACHINE_UUID) {
+        t.end();
+        return;
+    }
+
     CLIENT.del('/my/machines/' + MACHINE_UUID, function (err, req, res) {
         t.ifError(err, 'DELETE /my/machines error');
         t.equal(res.statusCode, 204, 'DELETE /my/machines status');
