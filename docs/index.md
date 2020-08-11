@@ -880,6 +880,17 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
+## 9.12.0
+
+- Added a delegated_dataset option to the CreateMachine API. Delegated datasets
+  will also need to be enabled by the Admin through a SAPI configuration option.
+  See the [Admin SAPI Configuration](./admin.md#sapi-configuration) for how to
+  enable/disable it.
+
+## 9.11.0
+
+- Add support for user AccessKeys [#65](https://github.com/joyent/sdc-cloudapi/pull/65).
+
 ## 9.10.0
 
 - Added the `nics` field to the machine objects returned from the GetMachine and
@@ -4890,6 +4901,7 @@ metadata.$name | String | An arbitrary set of metadata key/value pairs can be se
 tag.$name | String   | An arbitrary set of tags can be set at provision time, but they must be prefixed with "tag."
 brand     | String   | (Added in CloudAPI v9.9.0.) Optional machine type when creating a HVM machine - can be either "kvm" or "bhyve".
 firewall_enabled | Boolean | Completely enable or disable firewall for this instance. Default is false
+delegated_dataset | Boolean | (Added in CloudAPI v9.12.0.) Optional boolean to allow creation of a delegated dataset inside of the zone. Default is false. Note that the delegate dataset SAPI config also needs to enabled by the admin.
 deletion_protection | Boolean | Whether an instance is destroyable. See [Deletion Protection](#deletion-protection). Default is false
 allow_shared_images | Boolean | Whether to allow provisioning from a shared image. Default is false
 volumes   | Array    | A list of objects representing volumes to mount when the newly created machine boots

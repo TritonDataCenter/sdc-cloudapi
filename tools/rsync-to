@@ -6,7 +6,7 @@
 #
 
 #
-# Copyright (c) 2014, Joyent, Inc.
+# Copyright 2020 Joyent, Inc.
 #
 
 #
@@ -26,9 +26,9 @@ TOP=$(cd $(dirname $0)/../; pwd)
 NODE=root@$1
 
 if [[ -z "$CLOUDAPI_ZONE" ]]; then
-    CLOUDAPI_ZONE=$(ssh $NODE "/opt/smartdc/bin/sdc-vmapi /vms" 2>/dev/null \
-        | json -H -c 'this.tags && this.tags.smartdc_role === "cloudapi"' \
-            -c 'this.state === "running"' 0.uuid)
+    CLOUDAPI_ZONE=$(ssh $NODE \
+        "/opt/smartdc/bin/sdc-vmapi '/vms?state=active&tag.smartdc_role=cloudapi'" \
+        2>/dev/null | json -H 0.uuid)
 fi
 echo "CLOUDAPI_ZONE: $CLOUDAPI_ZONE"
 
