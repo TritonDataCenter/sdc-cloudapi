@@ -5,10 +5,9 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
-var assert = require('assert-plus');
 var test = require('@smaller/tap').test;
 var vasync = require('vasync');
 var verror = require('verror');
@@ -16,7 +15,6 @@ var verror = require('verror');
 var common = require('./common');
 var mod_config = require('../lib/config.js');
 var mod_testConfig = require('./lib/config');
-var mod_testNetworks = require('./lib/networks');
 var mod_testVolumes = require('./lib/volumes');
 
 var CONFIG = mod_config.configure();
@@ -145,7 +143,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     });
                 },
                 inputs: INVALID_NAMES
-            }, function invalidVolsCreated(err) {
+            }, function invalidVolsCreated() {
                 t.end();
             });
         });

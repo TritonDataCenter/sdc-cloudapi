@@ -9,7 +9,6 @@
  */
 
 
-var jsprim = require('jsprim');
 var util = require('util');
 var test = require('@smaller/tap').test;
 var common = require('./common');
@@ -45,9 +44,9 @@ var CONFIG = mod_config.configure();
 test('setup', function (t) {
     common.setup({clientApiVersion: '~7.0'}, function (_, clients, server) {
         CLIENTS = clients;
-        CLIENT  = clients.user;
-        OTHER   = clients.other;
-        SERVER  = server;
+        CLIENT = clients.user;
+        OTHER = clients.other;
+        SERVER = server;
 
         t.end();
     });
@@ -315,7 +314,7 @@ test('Ensure we cannot resize a KVM machine', function (t) {
     };
 
     CLIENT.post('/my/machines/' + KVM_MACHINE_UUID + '?action=resize',
-            obj, function (err, req, res, body) {
+            obj, function (err, req, res) {
         t.ok(err, 'expect POST /my/machines?resize error');
         t.equal(res.statusCode, 409, 'should get a 409 statusCode');
         t.equal(err.message, 'resize is not supported for KVM virtualmachines',
@@ -441,7 +440,6 @@ test('Bhyve machine snapshots', function (t) {
             t.end();
         }
     });
-
 });
 
 
@@ -456,7 +454,7 @@ test('Resize bhyve vm fails when not using flexible_disk', function (t) {
     };
 
     CLIENT.post('/my/machines/' + BHYVE_MACHINE_UUID + '?action=resize',
-            obj, function (err, req, res, body) {
+            obj, function (err, req, res) {
         t.ok(err, 'expect POST /my/machines?resize error');
         t.equal(res.statusCode, 409, 'should get a 409 statusCode');
         t.equal(err.restCode, 'InvalidArgument');
@@ -492,8 +490,7 @@ test('Resize bhyve vm', function (t) {
     // older versions when bhyve resize was not supported.
     CLIENT.post('/my/machines/' + BHYVE_MACHINE_UUID + '?action=resize',
             obj,
-            function onBhyveResizeCb(err, req, res, body) {
-
+            function onBhyveResizeCb(err, req, res) {
         var serverHeader = res && res.headers && res.headers['server'];
         var supportsBhyveResize = common.cloudapiServerHeaderGtrOrEq(
             serverHeader, '9.8.3');

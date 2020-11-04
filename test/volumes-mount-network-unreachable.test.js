@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var assert = require('assert-plus');
@@ -17,20 +17,18 @@ var common = require('./common');
 var libuuid = require('libuuid');
 var mod_config = require('../lib/config.js');
 var mod_testConfig = require('./lib/config');
-var mod_testNetworks = require('./lib/networks');
 var mod_testVolumes = require('./lib/volumes');
 
 var machinesCommon = require('./machines/common');
 
 var CONFIG = mod_config.configure();
 var DEFAULT_FABRIC_NETWORK_UUID;
-var JOYENT_IMGAPI_SOURCE = 'https://images.joyent.com';
 var NON_DEFAULT_FABRIC_VLAN_ID = 4;
 var NON_DEFAULT_FABRIC_NETWORKS = [];
 var TEST_IMAGE_SMARTOS = 'minimal-64-lts';
 var TEST_SMARTOS_IMAGE_UUID;
-var UFDS_ADMIN_UUID = CONFIG.ufds_admin_uuid;
 
+var CLIENT;
 function mountVolumeFromMachine(opts, cb) {
     assert.object(opts, 'opts');
     assert.object(opts.client, 'opts.client');
@@ -69,13 +67,13 @@ function mountVolumeFromMachine(opts, cb) {
             mod_testVolumes.waitForTransitionToState(client, testVolumeId,
                 expectedState, function onTransition() {
                     CLIENT.get('/my/volumes/' + testVolumeId,
-                        function onGetVolume(getVolumeErr, req, res, volume) {
+                        function onGetVolume(_err, req, res, volume) {
                             if (!volume || volume.state !== expectedState) {
                                 next(new Error('test volume not in expected ' +
                                     'state (' + expectedState + ')'));
-                            } else {
-                                next();
+                                return;
                             }
+                            next();
                         });
             });
         },
@@ -127,7 +125,7 @@ function mountVolumeFromMachine(opts, cb) {
          */
         function waitForMachineToRun(_, next) {
             machinesCommon.waitForRunningMachine(client, testMachineId,
-                function waitDone(waitErr) {
+                function waitDone() {
                     next();
                 });
         },
@@ -146,7 +144,7 @@ function mountVolumeFromMachine(opts, cb) {
             }
 
             machinesCommon.waitForDeletedMachine(client, testMachineId,
-                function onWaitDone(waitMachineErr) {
+                function onWaitDone() {
                     next();
                 });
         },
@@ -166,7 +164,7 @@ function mountVolumeFromMachine(opts, cb) {
             }
 
             mod_testVolumes.waitForDeletion(client, testVolumeId,
-                function onWaitDone(waitErr) {
+                function onWaitDone() {
                     next();
                 });
         }
@@ -179,9 +177,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     process.exitCode = 0;
 } else {
     var CLIENTS;
-    var CLIENT;
     var SERVER;
-    var SSH_PUBLIC_KEY;
 
     var testPackage;
 
@@ -240,7 +236,6 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
                 t.end();
             });
-
     });
 
     /*
@@ -265,7 +260,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             name: 'sdccloudapi_tests_volumes_network_unreachable',
             description: 'test VLAN for sdc-cloudapi tests',
             vlan_id: NON_DEFAULT_FABRIC_VLAN_ID
-        }, function vlanCreated(vlanCreateErr, req, res, body) {
+        }, function vlanCreated(vlanCreateErr, req, res) {
             t.ifErr(vlanCreateErr, 'VLAN creation should be successful');
             t.end();
         });

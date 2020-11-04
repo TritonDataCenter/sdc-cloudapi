@@ -5,10 +5,8 @@
  */
 
 /*
- * Copyright (c) 2019, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
-
-var util = require('util');
 
 var semver = require('semver');
 var test = require('@smaller/tap').test;
@@ -92,7 +90,6 @@ var SERVER;
 var CREATED_SDC_512_BHYVE_BRAND = false;
 var CREATED_SDC_512_BHYVE_FLEX = false;
 var PAPI_VERSION;
-var VIEWABLE_PACKAGE_NAMES;
 var VIEWABLE_PACKAGE_UUIDS;
 
 
@@ -139,12 +136,12 @@ function searchAndCheck(query, t, checkAttr) {
 
 
 test('setup', function (t) {
-    common.setup(function (ignoredErr, clients, server) {
+    common.setup(function (_err, clients, server) {
         var viewablePkgs = [];
 
         CLIENTS = clients;
-        CLIENT  = clients.user;
-        SERVER  = server;
+        CLIENT = clients.user;
+        SERVER = server;
 
         SDC_512.owner_uuids.push(CLIENT.account.uuid);
         SDC_512_BHYVE_BRAND.owner_uuids.push(CLIENT.account.uuid);
@@ -162,7 +159,6 @@ test('setup', function (t) {
                 function _checkPapiVersion(_, cb) {
                     CLIENT.papi.client.get('/ping',
                         function _onPing(err, req, res) {
-
                         if (err) {
                             cb(err);
                             return;
@@ -226,7 +222,6 @@ test('setup', function (t) {
 
                         cb();
                     });
-
                 }
             ]
         },
@@ -237,10 +232,6 @@ test('setup', function (t) {
 
             VIEWABLE_PACKAGE_UUIDS = viewablePkgs.map(function (pkg) {
                 return pkg.uuid;
-            });
-
-            VIEWABLE_PACKAGE_NAMES = viewablePkgs.map(function (pkg) {
-                return pkg.name;
             });
 
             t.end();
@@ -375,14 +366,14 @@ test('GetPackage by name OK', function (t) {
         common.checkHeaders(t, res.headers);
 
         t.deepEqual(body, {
-            name:    SDC_512.name,
-            memory:  SDC_512.max_physical_memory,
-            disk:    SDC_512.quota,
-            swap:    SDC_512.max_swap,
-            vcpus:   SDC_512.vcpus,
-            lwps:    SDC_512.max_lwps,
+            name: SDC_512.name,
+            memory: SDC_512.max_physical_memory,
+            disk: SDC_512.quota,
+            swap: SDC_512.max_swap,
+            vcpus: SDC_512.vcpus,
+            lwps: SDC_512.max_lwps,
             default: SDC_512.default,
-            id:      SDC_512.uuid,
+            id: SDC_512.uuid,
             version: SDC_512.version
         });
 
@@ -407,14 +398,14 @@ test('GetPackage by id OK', function (t) {
         common.checkHeaders(t, res.headers);
 
         t.deepEqual(body, {
-            name:    SDC_512.name,
-            memory:  SDC_512.max_physical_memory,
-            disk:    SDC_512.quota,
-            swap:    SDC_512.max_swap,
-            vcpus:   SDC_512.vcpus,
-            lwps:    SDC_512.max_lwps,
+            name: SDC_512.name,
+            memory: SDC_512.max_physical_memory,
+            disk: SDC_512.quota,
+            swap: SDC_512.max_swap,
+            vcpus: SDC_512.vcpus,
+            lwps: SDC_512.max_lwps,
             default: SDC_512.default,
-            id:      SDC_512.uuid,
+            id: SDC_512.uuid,
             version: SDC_512.version
         });
 

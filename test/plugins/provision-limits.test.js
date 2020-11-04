@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2019, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var test = require('@smaller/tap').test;
@@ -64,7 +64,6 @@ var UUID4 = '3a97e990-ab82-11e8-a3c8-671dae682a29';
 
 function check1_provision(t, cfgLimits, ufdsLimits, tenant, vms, fields, pkg,
     shouldSucceed) {
-
     check1_resize(t, cfgLimits, ufdsLimits, tenant, null, vms, fields, pkg,
         shouldSucceed);
 }
@@ -72,7 +71,6 @@ function check1_provision(t, cfgLimits, ufdsLimits, tenant, vms, fields, pkg,
 
 function check1_resize(t, cfgLimits, ufdsLimits, tenant, existingVm, vms, pkg,
     fields, shouldSucceed) {
-
     var api = clone(API);
     api.getImage = function getImgStub() {
         t.fail('No image should be needed');
@@ -156,7 +154,7 @@ function checkProvisionLimits(t, cfgLimits, ufdsLimits, opts) {
         }
     });
 
-    plugin._getProvisionLimits(opts, function _onGetLimits(err2, limits) {
+    plugin._getProvisionLimits(opts, function _onGetLimits(_, limits) {
         // For all limits returned, ensure the used amount is what we
         // expected it would be.
         limits.forEach(function _checkLimitUsed(limit) {
@@ -458,7 +456,7 @@ function (t) {
         small: [ { value: 3, used: 2 } ]
     };
 
-    check1_provision(t, cfg, ufdsLimits, tenant, vms, PKG, fields,  true);
+    check1_provision(t, cfg, ufdsLimits, tenant, vms, PKG, fields, true);
 });
 
 
@@ -614,7 +612,7 @@ function (t) {
         small: [ { value: 3, used: 2 } ]
     };
 
-    check1_provision(t, cfg, ufdsLimits, tenant, vms, PKG, fields,  true);
+    check1_provision(t, cfg, ufdsLimits, tenant, vms, PKG, fields, true);
 });
 
 
@@ -1576,7 +1574,7 @@ function (t) {
         { value: 2, check: 'brand', brand: 'lx', used: 1 }
     ];
 
-    function listImages(opts, cb) {
+    function listImages(_, cb) {
         t.fail('listImages() should not be called');
         cb(null, [IMAGE]);
     }
@@ -1595,7 +1593,7 @@ function (t) {
         { value: 2, check: 'brand', brand: 'lx', used: 2 }
     ];
 
-    function listImages(opts, cb) {
+    function listImages(_, cb) {
         t.fail('listImages() should not be called');
         cb(null, [IMAGE]);
     }
@@ -1613,7 +1611,7 @@ function (t) {
         { value: 2, check: 'brand', brand: 'joyent', used: 0 }
     ];
 
-    function listImages(opts, cb) {
+    function listImages(_, cb) {
         t.fail('listImages() should not be called');
         cb(null, [IMAGE]);
     }
@@ -1633,7 +1631,7 @@ function (t) {
         { value: 2, check: 'brand', brand: 'lx', used: 1 }
     ];
 
-    function listImages(opts, cb) {
+    function listImages(_, cb) {
         t.fail('listImages() should not be called');
         cb(null, [IMAGE]);
     }
@@ -1651,7 +1649,7 @@ function (t) {
         { value: 512, by: 'ram', check: 'brand', brand: 'lx', used: 256 }
     ];
 
-    function listImages(opts, cb) {
+    function listImages(_, cb) {
         t.fail('listImages() should not be called');
         cb(null, [IMAGE]);
     }
@@ -1670,7 +1668,7 @@ function (t) {
         { value: 512, by: 'ram', check: 'brand', brand: 'lx', used: 512 }
     ];
 
-    function listImages(opts, cb) {
+    function listImages(_, cb) {
         t.fail('listImages() should not be called');
         cb(null, [IMAGE]);
     }
@@ -1710,20 +1708,20 @@ function (t) {
     var atoiValues = plugin._atoiValues;
 
     var result = atoiValues([
-        { value: 25,     by: 'ram'   },
-        { value: 1,      by: 'ram'   },
-        { value: -1,     by: 'quota' },
-        { value: '25',   by: 'quota' },
+        { value: 25, by: 'ram' },
+        { value: 1, by: 'ram' },
+        { value: -1, by: 'quota' },
+        { value: '25', by: 'quota' },
         { value: 'xxxx', by: 'count' },
         { value: '-1' }
     ]);
 
     t.deepEqual(result, [
-        { value: 25, by: 'ram'   },
-        { value: 1,  by: 'ram'   },
+        { value: 25, by: 'ram' },
+        { value: 1, by: 'ram' },
         { value: -1, by: 'quota' },
         { value: 25, by: 'quota' },
-        { value: 0,  by: 'count' },
+        { value: 0, by: 'count' },
         { value: -1 }
     ], 'atoiValues limits');
 
@@ -1773,7 +1771,7 @@ function (t) {
     result = findMinimalFields([
         { value: 256, by: 'ram' },
         { value: 256, by: 'ram' },
-        { value: 60,  by: 'quota' }
+        { value: 60, by: 'quota' }
     ]);
     t.deepEqual(result, 'ram,quota', 'findMinimalFields results');
 
@@ -1785,13 +1783,13 @@ function (t) {
 
     result = findMinimalFields([
         { value: 60, by: 'quota' },
-        { value: 5,  check: 'os' }
+        { value: 5, check: 'os' }
     ]);
     t.deepEqual(result, undefined, 'findMinimalFields results');
 
     result = findMinimalFields([
         { value: 60, by: 'quota' },
-        { value: 5,  check: 'image' }
+        { value: 5, check: 'image' }
     ]);
     t.deepEqual(result, undefined, 'findMinimalFields results');
 

@@ -5,10 +5,9 @@
  */
 
 /*
- * Copyright 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
-var assert = require('assert-plus');
 var format = require('util').format;
 var test = require('@smaller/tap').test;
 var vasync = require('vasync');
@@ -247,7 +246,7 @@ function createTestNetwork(name, octet, params, cb) {
 
     var _params = params || {};
     _params.name = name;
-    _params.vlan_id =  59;
+    _params.vlan_id = 59;
     _params.subnet = '10.99.' + octet + '.0/24';
     _params.provision_start_ip = '10.99.' + octet + '.5';
     _params.provision_end_ip = '10.99.' + octet + '.250';
@@ -324,7 +323,7 @@ test('networks', function (tt) {
 
     tt.test('  list networks', function (t) {
         var poolFound = false;
-        var netFound  = false;
+        var netFound = false;
 
         CLIENT.get('/my/networks', function (err, req, res, body) {
             t.ifError(err, 'GET /my/networks error');
@@ -582,7 +581,7 @@ test('networks', function (tt) {
             ip);
         CLIENT.put(path, {reserved: true}, function (err, req, res, body) {
             t.ifError(err, 'PUT /my/networks/' + fixtures.network3.uuid +
-                '/ips/' + ip  + ' error');
+                '/ips/' + ip + ' error');
             t.equal(res.statusCode, 200,
                 'PUT /my/networks/:uuid/ips/:ip_address status');
             common.checkHeaders(t, res.headers);
@@ -605,7 +604,7 @@ test('networks', function (tt) {
             ip);
         CLIENT.put(path, {reserved: false}, function (err, req, res, body) {
             t.ifError(err, 'PUT /my/networks/' + fixtures.network3.uuid +
-                '/ips/' + ip  + ' error');
+                '/ips/' + ip + ' error');
             t.equal(res.statusCode, 200,
                 'PUT /my/networks/:uuid/ips/:ip_address status');
             common.checkHeaders(t, res.headers);
@@ -645,5 +644,4 @@ test('networks', function (tt) {
     });
 
     tt.end();
-
 });

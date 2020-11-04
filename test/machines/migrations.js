@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var restify = require('restify');
@@ -254,7 +254,7 @@ module.exports = function migrate(suite, client, other, machine, callback) {
         var url = '/my/machines/' + machine + '/migrate';
         client.post(url, {
             action: 'finalize'
-        }, function doPostCb(err, req, res, body) {
+        }, function doPostCb(err, req, res) {
             t.ifError(err);
             if (err) {
                 t.end();

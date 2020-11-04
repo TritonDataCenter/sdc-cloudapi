@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2017, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var assert = require('assert-plus');
@@ -35,6 +35,7 @@ function waitForTransitionToState(cloudapiClient, volumeUuid, expectedState,
                 if (!getVolumeErr && volume !== undefined &&
                     volume.state === expectedState) {
                     callback();
+                    return;
                 } else {
                     setTimeout(pollVolumeState, RETRY_DELAY_IN_MS);
                 }
@@ -56,19 +57,20 @@ function waitForDeletion(cloudapiClient, volumeUuid, callback) {
     function pollVolumeState() {
         if (nbRetriesSoFar > MAX_NB_RETRIES) {
             callback();
+            return;
         } else {
             ++nbRetriesSoFar;
 
             cloudapiClient.get('/my/volumes/' + volumeUuid,
-                function onGetVolume(getVolumeErr, req, res, volume) {
+                function onGetVolume(getVolumeErr, req, res) {
                     if (getVolumeErr) {
                         if (verror.hasCauseWithName(getVolumeErr,
                             'VolumeNotFoundError')) {
-
                             callback();
                             return;
                         }
                         callback(getVolumeErr);
+                        return;
                     } else {
                         setTimeout(pollVolumeState, RETRY_DELAY_IN_MS);
                     }

@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2019, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 /*
@@ -13,7 +13,6 @@
  * See machines/affinity.test.js for integration tests.
  */
 
-var assert = require('assert-plus');
 var test = require('@smaller/tap').test;
 
 var affinity_lib = require('../lib/triton-affinity');

@@ -5,7 +5,7 @@
 #
 
 #
-# Copyright 2019 Joyent, Inc.
+# Copyright 2020 Joyent, Inc.
 #
 
 #
@@ -31,7 +31,7 @@ TAP		:= ./node_modules/.bin/tap
 # Files
 #
 DOC_FILES	 = index.md admin.md dev.md
-RESTDOWN_FLAGS   = --brand-dir=deps/restdown-brand-remora
+RESTDOWN_FLAGS	 = --brand-dir=deps/restdown-brand-remora
 EXTRA_DOC_DEPS += deps/restdown-brand-remora/.git
 # We explicitly don't want to lint node-http-signature, as it's an external
 # repository that is exceptionally bundled in this repo to ensure backward
@@ -40,10 +40,9 @@ JS_FILES	:= $(shell ls *.js) $(shell find lib -name '*.js' | grep -v node-http-s
 	$(shell find test -name '*.js') $(shell find bench -name '*.js') \
 	$(shell find plugins -name '*.js') \
 	$(shell find test -name '*.javascript')
-JSL_CONF_NODE	 = tools/jsl.node.conf
-JSL_FILES_NODE   = $(JS_FILES)
+ESLINT_FILES	= $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
-JSSTYLE_FLAGS    = -f tools/jsstyle.conf
+JSSTYLE_FLAGS	 = -f tools/jsstyle.conf
 SMF_MANIFESTS_IN    = smf/manifests/cloudapi.xml.in smf/manifests/haproxy.xml.in smf/manifests/stud.xml.in
 
 CLEAN_FILES	+= node_modules cscope.files
@@ -78,8 +77,8 @@ include ./deps/eng/tools/mk/Makefile.smf.defs
 
 # Mountain Gorilla-spec'd versioning.
 
-ROOT                    := $(shell pwd)
-RELEASE_TARBALL         := $(NAME)-pkg-$(STAMP).tar.gz
+ROOT			:= $(shell pwd)
+RELEASE_TARBALL		:= $(NAME)-pkg-$(STAMP).tar.gz
 RELSTAGEDIR				:= /tmp/$(NAME)-$(STAMP)
 
 BASE_IMAGE_UUID = 04a48d7d-6bb5-4e83-8c3b-e60a99e0f48f
@@ -88,7 +87,7 @@ BUILDIMAGE_DESC	= SDC CloudAPI
 BUILDIMAGE_PKGSRC = \
 	openssl-1.0.2o \
 	stud-0.3p53nb5 \
- 	haproxy-1.6.2
+	haproxy-1.6.2
 AGENTS		= amon config registrar
 
 #

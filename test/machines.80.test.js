@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var test = require('@smaller/tap').test;
@@ -21,7 +21,6 @@ var checkMachine = machinesCommon.checkMachine;
 var SDC_128 = common.sdc_128_package;
 
 var IMAGE_UUID;
-var PROVISIONABLE_NET_UUID;
 var MACHINE_UUID;
 
 var CLIENTS;
@@ -36,9 +35,9 @@ var SERVER;
 test('setup', function (t) {
     common.setup({clientApiVersion: '~8.0'}, function (_, clients, server) {
         CLIENTS = clients;
-        CLIENT  = clients.user;
-        OTHER   = clients.other;
-        SERVER  = server;
+        CLIENT = clients.user;
+        OTHER = clients.other;
+        SERVER = server;
 
         t.end();
     });

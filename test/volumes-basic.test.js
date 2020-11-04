@@ -8,7 +8,6 @@
  * Copyright 2020 Joyent, Inc.
  */
 
-var assert = require('assert-plus');
 var test = require('@smaller/tap').test;
 var util = require('util');
 var verror = require('verror');
@@ -16,7 +15,6 @@ var verror = require('verror');
 var common = require('./common');
 var mod_config = require('../lib/config.js');
 var mod_testConfig = require('./lib/config');
-var mod_testNetworks = require('./lib/networks');
 var mod_testVolumes = require('./lib/volumes');
 
 var CONFIG = mod_config.configure();
@@ -194,7 +192,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
     test('getting volume from other account should fail', function (t) {
         OTHER.get('/my/volumes/' + testVolume.id,
-            function onGetVol(getVolErr, req, res, volume) {
+            function onGetVol(getVolErr, req, res) {
                 t.equal(checkVolumeNotFoundError(getVolErr), true,
                     'expected VolumeNotFoundError, got: ' +
                         util.inspect(getVolErr));
@@ -204,7 +202,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
     test('deleting volume from other account should fail', function (t) {
         OTHER.del('/my/volumes/' + testVolume.id,
-            function onDelVol(delVolErr, req, res, volume) {
+            function onDelVol(delVolErr, req, res) {
                 t.equal(checkVolumeNotFoundError(delVolErr), true,
                     'expected VolumeNotFoundError, got: ' +
                         util.inspect(delVolErr));
@@ -215,7 +213,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     test('updating volume from other account should fail', function (t) {
         OTHER.post('/my/volumes/' + testVolume.id, {
             name: 'foo'
-        }, function onUpdateVol(updateVolErr, req, res, volume) {
+        }, function onUpdateVol(updateVolErr, req, res) {
             t.equal(checkVolumeNotFoundError(updateVolErr), true,
                 'expected VolumeNotFoundError, got: ' +
                     util.inspect(updateVolErr));
@@ -267,7 +265,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
     test('getting nfs volume\'s storage VM should error', function (t) {
         CLIENT.get('/my/machines/' + testVolumeStorageVmUuid,
-            function onMachineGet(machineGetErr, req, res, machine) {
+            function onMachineGet(machineGetErr, req, res) {
                 var expectedErrCode = 'ResourceNotFound';
 
                 t.ok(machineGetErr,
@@ -285,7 +283,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     test('sending HEAD req for nfs volume\'s storage VM should error',
         function (t) {
             CLIENT.head('/my/machines/' + testVolumeStorageVmUuid,
-                function onMachineHead(machineHeadErr, req, res, machine) {
+                function onMachineHead(machineHeadErr, req, res) {
                     var expectedStatusCode = 404;
 
                     t.ok(machineHeadErr,
@@ -300,7 +298,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
     test('updating nfs volume\'s storage VM should error', function (t) {
         CLIENT.post('/my/machines/' + testVolumeStorageVmUuid,
-            function onMachineUpdate(machineUpdateErr, req, res, machine) {
+            function onMachineUpdate(machineUpdateErr, req, res) {
                 var expectedErrCode = 'ResourceNotFound';
 
                 t.ok(machineUpdateErr,
@@ -314,7 +312,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
     test('deleting nfs volume\'s storage VM should error', function (t) {
         CLIENT.del('/my/machines/' + testVolumeStorageVmUuid,
-            function onMachineDel(machineDelErr, req, res, machine) {
+            function onMachineDel(machineDelErr, req, res) {
                 var expectedErrCode = 'ResourceNotFound';
 
                 t.ok(machineDelErr,
@@ -355,7 +353,6 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     // filter, we should not see any 'deleted' or 'failed' in a default query.
     test('/my/volumes should not include deleted or failed by default',
         function (t) {
-
             CLIENT.get('/my/volumes',
                 function onGetVolumes(getVolumesErr, req, res, volumes) {
                     var idx;

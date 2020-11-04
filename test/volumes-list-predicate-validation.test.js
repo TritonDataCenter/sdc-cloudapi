@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var libuuid = require('libuuid');
@@ -29,8 +29,8 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     test('setup', function (t) {
         common.setup({clientApiVersion: '~8.0'}, function (_, clients, server) {
             CLIENTS = clients;
-            CLIENT  = clients.user;
-            SERVER  = server;
+            CLIENT = clients.user;
+            SERVER = server;
 
             t.end();
         });
@@ -40,7 +40,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
         var MALFORMED_PREDICATE = 'malformed-predicate';
 
         CLIENT.get('/my/volumes?predicate=' + MALFORMED_PREDICATE,
-            function onVolumesListed(listVolsErr, req, res, volumes) {
+            function onVolumesListed(listVolsErr, req, res) {
                 var expectedStatusCode = 409;
                 var expectedRestCode = 'InvalidArgument';
                 var expectedErrorMsg =
@@ -66,12 +66,12 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
         });
 
         CLIENT.get('/my/volumes?predicate=' + INVALID_PRED,
-            function onVolumesListed(listVolsErr, req, res, volumes) {
+            function onVolumesListed(listVolsErr, req, res) {
                 var expectedStatusCode = 409;
                 var expectedRestCode = 'InvalidArgument';
                 var expectedErrorMsg =
                     'predicate { eq: [ \'invalid-pred\', null ] }: field ' +
-                        '\"invalid-pred\" is not a string, number, or boolean';
+                        '"invalid-pred" is not a string, number, or boolean';
 
                 t.ok(listVolsErr,
                     'listing volumes with a malformed predicate should error');
@@ -127,7 +127,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
         vasync.forEachParallel({
             func: function testValidPred(validPred, done) {
                 CLIENT.get('/my/volumes?predicate=' + validPred,
-                    function onVolumesListed(listVolsErr, req, res, volumes) {
+                    function onVolumesListed(listVolsErr, req, res) {
                         var expectedStatusCode = 200;
 
                         t.ok(!listVolsErr,
@@ -140,7 +140,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     });
             },
             inputs: VALID_PREDS
-        }, function allValidPredsTested(err) {
+        }, function allValidPredsTested(_) {
             t.end();
         });
     });
@@ -184,7 +184,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
         vasync.forEachParallel({
             func: function testValidPred(invalidPred, done) {
                 CLIENT.get('/my/volumes?predicate=' + invalidPred,
-                    function onVolumesListed(listVolsErr, req, res, volumes) {
+                    function onVolumesListed(listVolsErr, req, res) {
                         var expectedStatusCode = 409;
 
                         t.ok(listVolsErr,
@@ -197,7 +197,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     });
             },
             inputs: INVALID_PREDS
-        }, function allValidPredsTested(err) {
+        }, function allValidPredsTested() {
             t.end();
         });
     });

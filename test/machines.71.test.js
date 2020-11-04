@@ -5,15 +5,13 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
-var util = require('util');
 var test = require('@smaller/tap').test;
 var common = require('./common');
 var uuid = common.uuid;
 var machinesCommon = require('./machines/common');
-var checkMachine = machinesCommon.checkMachine;
 var checkNotFound = common.checkNotFound;
 
 
@@ -38,9 +36,9 @@ var SERVER;
 test('setup', function (t) {
     common.setup({clientApiVersion: '~7.1'}, function (_, clients, server) {
         CLIENTS = clients;
-        CLIENT  = clients.user;
-        OTHER   = clients.other;
-        SERVER  = server;
+        CLIENT = clients.user;
+        OTHER = clients.other;
+        SERVER = server;
 
         t.end();
     });
@@ -65,7 +63,7 @@ test('Create machine with invalid package', function (t) {
         name: 'a' + uuid().substr(0, 7)
     };
 
-    CLIENT.post('/my/machines', obj, function (err, req, res, body) {
+    CLIENT.post('/my/machines', obj, function (err, req, res) {
         t.ok(err, 'POST /my/machines with invalid package error');
         console.log('Status Code: ' + res.statusCode);
         t.equal(res.statusCode, 409);
@@ -80,7 +78,7 @@ test('CreateMachine w/o dataset fails', function (t) {
         name: 'a' + uuid().substr(0, 7)
     };
 
-    CLIENT.post('/my/machines', obj, function (err, req, res, body) {
+    CLIENT.post('/my/machines', obj, function (err, req, res) {
         t.ok(err, 'create machine w/o dataset error');
         t.equal(res.statusCode, 409, 'create machine w/o dataset status');
         t.ok(/image/.test(err.message));
@@ -97,7 +95,7 @@ test('Create machine with invalid network', function (t) {
         networks: [uuid()]
     };
 
-    CLIENT.post('/my/machines', obj, function (err, req, res, body) {
+    CLIENT.post('/my/machines', obj, function (err, req, res) {
         t.ok(err, 'POST /my/machines with invalid network error');
         console.log('Status Code: ' + res.statusCode);
         t.equal(res.statusCode, 409);
@@ -185,7 +183,7 @@ test('Create image from machine (missing params)', function (t) {
             headers: {
                 'accept-version': '~7.1'
             }
-        }, obj, function (err, req, res, body) {
+        }, obj, function (err, req, res) {
             t.ok(err, 'missing parameters error');
             t.equal(res.statusCode, 409);
             t.ok(err.message);
@@ -292,7 +290,7 @@ test('Update image', function (t) {
             query: { action: 'update' }
         };
 
-        CLIENT.post(opts, obj, function (err, req, res, body) {
+        CLIENT.post(opts, obj, function (err, req, res) {
             t.ifError(err, 'Update Image error');
             t.end();
         });

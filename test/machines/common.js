@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var assert = require('assert-plus');
@@ -191,13 +191,16 @@ function waitForDeletedMachine(client, machineUuid, cb) {
                     if (getMachineErr.statusCode === 410 &&
                         machine && machine.state === 'deleted') {
                         cb(null, machine);
+                        return;
                     } else {
                         cb(getMachineErr);
+                        return;
                     }
                 } else {
                     if (machine && (machine.state === 'deleted' ||
                         machine.state === 'failed')) {
                             cb(null, machine);
+                            return;
                     } else {
                         setTimeout(getMachineState, POLL_DELAY_MS);
                     }

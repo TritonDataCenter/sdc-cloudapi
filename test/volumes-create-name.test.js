@@ -5,10 +5,9 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
-var assert = require('assert-plus');
 var test = require('@smaller/tap').test;
 var vasync = require('vasync');
 
@@ -30,8 +29,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
     var createdVolumes = [];
     var testVolume;
-    var testVolumeStorageVmUuid;
-
+    /* eslint-disable no-inner-declarations */
     function onVolumeCreatedCreator(t) {
         return function onVolumeCreated(volumeCreationErr, req, res, volume) {
             if (!volumeCreationErr && volume) {
@@ -79,7 +77,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     });
         });
     }
-
+    /* eslint-enable no-inner-declarations */
 
     test('setup', function (t) {
         common.setup({clientApiVersion: '~8.0'}, function (_, clients, server) {
@@ -131,7 +129,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     });
             },
             inputs: createdVolumes
-        }, function deleteDone(err) {
+        }, function deleteDone() {
             t.end();
         });
     });
@@ -154,7 +152,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                 });
             },
             inputs: INVALID_NAMES
-        }, function invalidVolsCreated(err) {
+        }, function invalidVolsCreated(_) {
             t.end();
         });
     });

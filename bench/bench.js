@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 /*
@@ -38,7 +38,6 @@
 
 var util = require('util');
 var assert = require('assert');
-var crypto = require('crypto');
 var path = require('path');
 var fs = require('fs');
 
@@ -83,12 +82,11 @@ function forEachPipeline(args, callback) {
 vasync.forEachPipeline = forEachPipeline;
 
 var UFDS = require('sdc-clients').UFDS;
-var common = require('./common');
 
 // --- Globals:
 var PASSWD = 'secret123';
 var DEFAULT_CFG = path.join(__dirname, '..', '/etc/cloudapi.cfg');
-var LOG =  new bunyan({
+var LOG = new bunyan({
     level: process.env.LOG_LEVEL || 'info',
     name: 'cloudapi_benchmark',
     stream: process.stderr,
@@ -100,7 +98,9 @@ var LOG =  new bunyan({
 var config = {};
 try {
     config = JSON.parse(fs.readFileSync(DEFAULT_CFG, 'utf8'));
-} catch (e) {}
+} catch (_e) {
+    // Do nothing
+}
 
 
 var ufds;
@@ -108,8 +108,10 @@ var ufds;
 // Expected "total" to be increased by each message being sent to a child
 // process, and "completed" with every message received from a child process,
 // so we can report progress and finish the whole process on completion:
+/* eslint-disable no-unused-vars */
 var total = 0;
 var completed = 0;
+/* eslint-enable no-unused-vars */
 
 // Number of Spec items:
 var totalSteps = 0;
@@ -132,6 +134,7 @@ function childCount() {
 }
 
 // Just in case we need to kill it without leaving child processes around:
+/* eslint-disable callback-return */
 function kill(cb) {
     if (childCount() > 0) {
         Object.keys(children).forEach(function (p) {
@@ -148,6 +151,7 @@ function kill(cb) {
         }
     }
 }
+/* eslint-enable callback-return */
 
 // Returns the array index for the element incuding an uuid with the
 // given value:
@@ -179,10 +183,12 @@ function printTotals() {
             responseCodes: [],
             responseTimes: {}
         };
+        /* eslint-disable no-loop-func */
         var resTimes = aSpec[i].totals.map(function (j) {
             totals[i].responseCodes.push(j.statusCode);
             return parseInt(j.responseTime, 0);
         });
+        /* eslint-enable no-loop-func */
         resTimes.sort();
         totals[i].responseTimes.raw = resTimes;
 
@@ -278,13 +284,7 @@ function forkChildProcesses(x, cb) {
     return vasync.forEachParallel({
         'func': forkAChild,
         'inputs': inputs
-    }, function (err, res) {
-        if (err) {
-            cb(err);
-        } else {
-            cb(null);
-        }
-    });
+    }, cb);
 }
 
 
@@ -338,7 +338,6 @@ function closeUFDSClient(cb) {
  * }
  */
 function createUFDSUser(callback) {
-
     var user = 'test' + libuuid.create().substr(0, 7) + '@joyent.com';
 
     var entry = {
@@ -362,7 +361,7 @@ function createUFDSUser(callback) {
                 openssh: data,
                 name: 'id_rsa'
             };
-            return customer.addKey(obj, function (er2, key) {
+            return customer.addKey(obj, function (er2, _key) {
                 if (er2) {
                     return callback(er2);
                 }
@@ -431,15 +430,7 @@ function parallel(_spec, cb) {
                     });
                     next();
                 }
-            }, function (err2, res) {
-                if (err2) {
-                    LOG.error({err: err2}, 'vasync.forEachParallel Error');
-                    cb(err2);
-                } else {
-                    LOG.debug(res);
-                    cb(null);
-                }
-            });
+            }, cb);
         }
     });
 }
@@ -479,11 +470,12 @@ function runSpec(spec) {
 
 
 if (require.main === module) {
-
     var specFile = process.env.SPEC || path.join(__dirname, 'spec.json');
     try {
         aSpec = JSON.parse(fs.readFileSync(specFile, 'utf8')).spec;
-    } catch (e) {}
+    } catch (_e) {
+        // Do nothing
+    }
 
     createUFDSClient(function (err) {
         if (err) {
@@ -533,7 +525,6 @@ if (require.main === module) {
             runSpec(aSpec);
         });
     });
-
 }
 
 // TODO:

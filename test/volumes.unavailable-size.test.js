@@ -5,20 +5,15 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
-var assert = require('assert-plus');
 var test = require('@smaller/tap').test;
 var vasync = require('vasync');
-var verror = require('verror');
 
 var common = require('./common');
 var mod_config = require('../lib/config.js');
 var mod_testConfig = require('./lib/config');
-var mod_testNetworks = require('./lib/networks');
-var testVolumes = require('./lib/volumes');
-var units = require('../lib/units');
 
 var CONFIG = mod_config.configure();
 if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
@@ -34,8 +29,8 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     test('setup', function (t) {
         common.setup({clientApiVersion: '~8.0'}, function (_, clients, server) {
             CLIENTS = clients;
-            CLIENT  = clients.user;
-            SERVER  = server;
+            CLIENT = clients.user;
+            SERVER = server;
 
             t.end();
         });
@@ -59,7 +54,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
         var largestSize;
 
         vasync.pipeline({arg: {}, funcs: [
-            function getVolumeSizes(ctx, next) {
+            function getVolumeSizes(_, next) {
                 CLIENT.volapi.listVolumeSizes(
                     function onListVolSizes(listVolSizesErr, sizes) {
                         t.ifErr(listVolSizesErr,
@@ -83,14 +78,14 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                         next();
                 });
             },
-            function createVolWithUnavailableSize(ctx, next) {
+            function createVolWithUnavailableSize(_, next) {
                 var unavailableSize = largestSize + 1;
 
                 CLIENT.post('/my/volumes', {
                     name: testVolumeNameUnavailableSize,
                     size: unavailableSize,
                     type: 'tritonnfs'
-                }, function onVolCreated(volumeCreationErr, req, res, volume) {
+                }, function onVolCreated(volumeCreationErr, req, res) {
                     var expectedErrMsg = 'Volume size ' + unavailableSize +
                         ' is not available';
                     var actualErrMsg;
@@ -108,7 +103,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     next();
                 });
             }
-        ]}, function onTestDone(err) {
+        ]}, function onTestDone() {
             t.end();
         });
     });

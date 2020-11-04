@@ -5,11 +5,10 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var test = require('@smaller/tap').test;
-var util = require('util');
 var common = require('./common');
 
 
@@ -73,7 +72,6 @@ var OTHER;
 var SERVER;
 
 var KEY_NAME;
-var FINGERPRINT;
 
 
 // --- Helpers
@@ -92,10 +90,9 @@ function checkKey(t, key) {
 test('setup', function (t) {
     common.setup(function (_, clients, server) {
         CLIENTS = clients;
-        CLIENT  = clients.user;
-        OTHER   = clients.other;
-        SERVER  = server;
-
+        CLIENT = clients.user;
+        OTHER = clients.other;
+        SERVER = server;
         t.end();
     });
 });
@@ -185,7 +182,7 @@ test('CreateKey (attested) wrong cert', function (t) {
         name: 'attest1'
     };
 
-    CLIENT.post('/my/keys', key, function (err, req, res, body) {
+    CLIENT.post('/my/keys', key, function (err, req, res) {
         t.ok(err, 'expect error, got: ' + err);
         if (err) {
             t.equal(err.statusCode, 409,
@@ -376,7 +373,6 @@ test('CreateKey OK', function (t) {
         checkKey(t, body);
 
         KEY_NAME = body.name;
-        FINGERPRINT = body.fingerprint;
 
         t.end();
     });

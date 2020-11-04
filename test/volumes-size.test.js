@@ -5,17 +5,15 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
-var assert = require('assert-plus');
 var test = require('@smaller/tap').test;
 var verror = require('verror');
 
 var common = require('./common');
 var mod_config = require('../lib/config.js');
 var mod_testConfig = require('./lib/config');
-var mod_testNetworks = require('./lib/networks');
 var testVolumes = require('./lib/volumes');
 var units = require('../lib/units');
 
@@ -37,8 +35,8 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     test('setup', function (t) {
         common.setup({clientApiVersion: '~8.0'}, function (_, clients, server) {
             CLIENTS = clients;
-            CLIENT  = clients.user;
-            SERVER  = server;
+            CLIENT = clients.user;
+            SERVER = server;
 
             t.end();
         });

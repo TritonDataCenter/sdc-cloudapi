@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var test = require('@smaller/tap').test;
@@ -29,8 +29,8 @@ var SERVER;
 test('setup', function (t) {
     common.setup(function (_, clients, server) {
         CLIENTS = clients;
-        CLIENT  = clients.user;
-        SERVER  = server;
+        CLIENT = clients.user;
+        SERVER = server;
 
         t.end();
     });

@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2019, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 /*
@@ -229,7 +229,7 @@ function convertFromCapi(log, dcUserLimits) {
     rawLimits.forEach(function (raw) {
         try {
             parsedLimits.push(JSON.parse(raw));
-        } catch (e) {
+        } catch (_e) {
             log.warn({
                 failed_json_string: raw
             }, 'Failed to deserialize DC provision limit!');
@@ -277,7 +277,7 @@ function filterLimits(log, service, cfgUserLimits, rawDcUserLimits) {
     var dcUserLimits = convertFromCapi(log, rawDcUserLimits);
 
     // Convert any value attributes to numbers
-    dcUserLimits  = atoiValues(dcUserLimits);
+    dcUserLimits = atoiValues(dcUserLimits);
     cfgUserLimits = atoiValues(jsprim.deepCopy(cfgUserLimits));
 
     // If the user has any DC-wide wildcard limits specified, we skip any limits
@@ -311,7 +311,7 @@ function filterLimits(log, service, cfgUserLimits, rawDcUserLimits) {
             limit.check = undefined;
             limit.image = undefined;
             limit.brand = undefined;
-            limit.os    = undefined;
+            limit.os = undefined;
         }
     });
 
@@ -320,7 +320,6 @@ function filterLimits(log, service, cfgUserLimits, rawDcUserLimits) {
         if ((limit.check === BRAND && !limit.brand) ||
             (limit.check === IMAGE && !limit.image) ||
             (limit.check === OS && !limit.os)) {
-
             log.warn({ limit: limit }, 'Invalid limit; entry is incomplete');
             return false;
         }
@@ -413,6 +412,7 @@ function setLimitsUsed(log, vms, limits) {
         var limit = limits[i];
 
         var machines = vms;
+        /* eslint-disable no-loop-func */
         if (limit.check === BRAND) {
             // All VMs with a particular brand.
             machines = vms.filter(function brandFilter(vm) {
@@ -429,6 +429,7 @@ function setLimitsUsed(log, vms, limits) {
                 return vm.os === limit.os;
             });
         }
+        /* eslint-enable no-loop-func */
 
         // Default to the number of machines.
         var count = machines.length;
@@ -438,7 +439,6 @@ function setLimitsUsed(log, vms, limits) {
             count = machines.map(function (vm) {
                 return vm.ram;
             }).reduce(sum, 0);
-
         } else if (limit.by === QUOTA) {
             // Disk; VMs and limits are in GiB, but packages in MiB
             count = machines.map(function (vm) {
@@ -939,7 +939,7 @@ function allowProvisionOrResize(api, cfg) {
         assert.func(cb, 'cb');
 
         var account = opts.account;
-        var resizeVm = opts.vm;  // the VM being resized if resizing
+        var resizeVm = opts.vm; // the VM being resized if resizing
         var image = opts.image;
         var pkg = opts.pkg;
         var reqId = opts.req_id;
@@ -978,7 +978,6 @@ function allowProvisionOrResize(api, cfg) {
             // available from those queries.
             return getVms(log, api, account, image, limits, reqId,
                 function onGetVms(err2, vms, image2, fittedLimits) {
-
                 if (err2) {
                     return cb(err2);
                 }
@@ -1042,7 +1041,6 @@ function getProvisionLimits(opts, cb) {
 
         getVms(log, api, account, null, limits, reqId,
             function onGetVms(err2, vms) {
-
             if (err2) {
                 cb(err2);
                 return;

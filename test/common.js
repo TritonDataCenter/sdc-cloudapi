@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 /*
@@ -89,7 +89,9 @@ var LOG = new bunyan.createLogger({
 var CONFIG = {};
 try {
     CONFIG = JSON.parse(fs.readFileSync(DEFAULT_CFG, 'utf8'));
-} catch (e) {}
+} catch (_e) {
+    // Looking forward for optional catch binding ...
+}
 
 var SIGNATURE_FMT = 'Signature keyId="%s",algorithm="%s" %s';
 
@@ -309,7 +311,7 @@ function clientDataTeardown(client, cb) {
     }
 
     var pollConfigCount = 10;
-    function pollConfigDeletion(err) {
+    function pollConfigDeletion() {
         --pollConfigCount;
         if (pollConfigCount === 0) {
             cb(new Error('Config failed to delete in time'));
@@ -320,9 +322,9 @@ function clientDataTeardown(client, cb) {
             if (err2) {
                 if (err2.restCode !== 'ResourceNotFound') {
                     cb(err2);
-                } else {
-                    ufds.deleteUser(account, cb);
+                    return;
                 }
+                ufds.deleteUser(account, cb);
                 return;
             }
 
@@ -449,7 +451,7 @@ function createXTestRole(client, otherAccount, cb) {
 
 
 function addUserKey(client, keyPath, cb) {
-    var publicKey  = fs.readFileSync(keyPath + '.pub', 'ascii');
+    var publicKey = fs.readFileSync(keyPath + '.pub', 'ascii');
     var privateKey = fs.readFileSync(keyPath, 'ascii');
 
     client.publicKey = publicKey;
@@ -514,15 +516,15 @@ function setupClient(version, serverUrl, user, keyId, keyPath, parentAcc, cb) {
     client.datacenter = CONFIG.datacenter_name;
 
     // Create clients to all the APIs
-    client.wfapi  = _wfapi();
-    client.vmapi  = _vmapi();
-    client.cnapi  = _cnapi();
-    client.napi   = _napi();
+    client.wfapi = _wfapi();
+    client.vmapi = _vmapi();
+    client.cnapi = _cnapi();
+    client.napi = _napi();
     client.imgapi = _imgapi();
     client.joyentImgapi = _joyentImgapi();
-    client.papi   = _papi();
-    client.mahi   = _mahi();
-    client.ufds   = _ufds();
+    client.papi = _papi();
+    client.mahi = _mahi();
+    client.ufds = _ufds();
     if (CONFIG.experimental_cloudapi_nfs_shared_volumes === true) {
         client.volapi = _volapi();
     }
@@ -625,11 +627,9 @@ function waitForAccountConfigReady(client, cb) {
 
             if (config.default_network) {
                 cb();
-            } else {
-                setTimeout(getConfig, TRY_DELAY_IN_MS);
+                return;
             }
-
-            return;
+            setTimeout(getConfig, TRY_DELAY_IN_MS);
         });
     }
 
@@ -644,7 +644,7 @@ function withTemporaryUser(ufdsClient, userOpts, bodyCb, cb) {
     var tmpUser = 'a' + uuid().substr(0, 7) + '.test@joyent.com';
 
     var keyPath = __dirname + '/testkeys/id_rsa';
-    var publicKey  = fs.readFileSync(keyPath + '.pub', 'ascii');
+    var publicKey = fs.readFileSync(keyPath + '.pub', 'ascii');
     var privateKey = fs.readFileSync(keyPath, 'ascii');
 
     var entry = {
@@ -662,7 +662,9 @@ function withTemporaryUser(ufdsClient, userOpts, bodyCb, cb) {
 
     ufdsClient.addUser(entry, createTmpUser);
 
-    function createTmpUser(err, tmpAccount, callback) {
+    // FIXME: I don't think this is properly working. `callback` is
+    // never called.
+    function createTmpUser(err, tmpAccount, _callback) {
         if (err) {
             return invokeBodyCb(err);
         }
@@ -689,9 +691,9 @@ function withTemporaryUser(ufdsClient, userOpts, bodyCb, cb) {
         });
     }
 
-    function destroyTmpUser(err, tmpAccount, tmpKey) {
+    function destroyTmpUser(_err, tmpAccount, tmpKey) {
         // ignore errors, and hope things work out
-        ufdsClient.deleteKey(tmpAccount, tmpKey, function (err2) {
+        ufdsClient.deleteKey(tmpAccount, tmpKey, function () {
             ufdsClient.deleteUser(tmpAccount, cb);
         });
     }
@@ -826,11 +828,11 @@ function teardown(clients, server, cb) {
     assert.object(server, 'server');
     assert.func(cb, 'callback');
 
-    var userClient      = clients.user;
-    var subUserClient   = clients.subuser;
+    var userClient = clients.user;
+    var subUserClient = clients.subuser;
     var otherUserClient = clients.other;
 
-    var ufds    = userClient.ufds;
+    var ufds = userClient.ufds;
     var accUuid = userClient.account.uuid;
 
     vasync.pipeline({ funcs: [
@@ -968,9 +970,9 @@ function getTestServer(client, cb) {
 
         if (runningHeadnodes.length === 0) {
             cb(new Error('could not find a test server'));
-        } else {
-            cb(null, runningHeadnodes[0]);
+            return;
         }
+        cb(null, runningHeadnodes[0]);
     });
 }
 
@@ -1049,15 +1051,19 @@ function napiDeleteNetworkByName(opts, cb) {
     opts.napi.listNetworks({name: opts.name}, function (err, nets) {
         if (err) {
             cb(err);
-        } else if (nets.length > 1) {
+            return;
+        }
+        if (nets.length > 1) {
             cb(new Error(util.format(
                 'unexpectedly more than one network named "%s": %j',
                 opts.name, nets)));
-        } else if (nets.length === 1) {
-            opts.napi.deleteNetwork(nets[0].uuid, cb);
-        } else {
-            cb();
+            return;
         }
+        if (nets.length === 1) {
+            opts.napi.deleteNetwork(nets[0].uuid, cb);
+            return;
+        }
+        cb();
     });
 }
 
@@ -1082,11 +1088,13 @@ function napiDeletePoolByName(opts, cb) {
             cb(new Error(util.format(
                 'unexpectedly more than one network pool named "%s": %j',
                 opts.name, matches)));
-        } else if (matches.length === 1) {
-            opts.napi.deleteNetworkPool(matches[0].uuid, cb);
-        } else {
-            cb();
+            return;
         }
+        if (matches.length === 1) {
+            opts.napi.deleteNetworkPool(matches[0].uuid, cb);
+            return;
+        }
+        cb();
     });
 }
 
@@ -1097,14 +1105,16 @@ function napiDeleteNicTagByName(opts, cb) {
     assert.object(opts.napi, 'opts.napi');
     assert.string(opts.name, 'opts.name');
 
-    opts.napi.getNicTag(opts.name, function (err, nicTag) {
+    opts.napi.getNicTag(opts.name, function (err) {
         if (!err) {
             opts.napi.deleteNicTag(opts.name, cb);
-        } else if (err.statusCode === 404) {
-            cb();
-        } else {
-            cb(err);
+            return;
         }
+        if (err.statusCode === 404) {
+            cb();
+            return;
+        }
+        cb(err);
     });
 }
 
@@ -1218,7 +1228,6 @@ function makeImageProvisionable(client, imageName, callback) {
                     ctx.images = images;
                     next();
                 });
-
         },
         /*
          * When images are imported into a DC's IMGAPI because they're an origin
@@ -1241,24 +1250,24 @@ function makeImageProvisionable(client, imageName, callback) {
                 if (publicImages.length > 0) {
                     ctx.provisionableImage = publicImages[0];
                     next();
-                } else {
-                    firstImage = ctx.images[0];
-                    firstImage.public = true;
-                    client.imgapi.updateImage(firstImage.uuid, firstImage,
-                        client.account.uuid,
-                        function onImageUpdated(updateImgErr) {
-                            if (updateImgErr) {
-                                next(updateImgErr);
-                                return;
-                            }
-
-                            ctx.provisionableImage = firstImage;
-                            next();
-                        });
+                    return;
                 }
-            } else {
-                next();
+                firstImage = ctx.images[0];
+                firstImage.public = true;
+                client.imgapi.updateImage(firstImage.uuid, firstImage,
+                    client.account.uuid,
+                    function onImageUpdated(updateImgErr) {
+                        if (updateImgErr) {
+                            next(updateImgErr);
+                            return;
+                        }
+
+                        ctx.provisionableImage = firstImage;
+                        next();
+                        return;
+                    });
             }
+            next();
         }
     ]}, function onAllDone(err) {
         callback(err, context.provisionableImage);

@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var assert = require('assert-plus');
@@ -232,8 +232,8 @@ function withoutDcLocalConfig(testFunc, cb) {
                             pollInterval);
                     } else {
                         next(err);
+                        return;
                     }
-                    return;
                 }
 
                 next();
@@ -414,10 +414,10 @@ function typeMsg(prop, found, exp) {
 test('setup', TEST_OPTS, function (t) {
     common.setup(function (_, clients, server) {
         CLIENTS = clients;
-        SERVER  = server;
+        SERVER = server;
 
         CLIENT = clients.user;
-        OTHER  = clients.other;
+        OTHER = clients.other;
 
         t.end();
     });
@@ -425,7 +425,6 @@ test('setup', TEST_OPTS, function (t) {
 
 
 test('VLANs', TEST_OPTS, function (tt) {
-
     tt.test('create fabric VLAN', function (t) {
         CLIENT.post('/my/fabrics/default/vlans', PARAMS.vlan,
                 function (err, req, res, body) {
@@ -578,7 +577,6 @@ test('create VLAN: invalid', TEST_OPTS, function (t) {
     function _createInvalidVLAN(data, cb) {
         CLIENT.post('/my/fabrics/default/vlans', data[0],
                 function (err, req, res) {
-
             t.ok(err, 'expected error: ' + JSON.stringify(data[0]));
             if (err) {
                 t.equal(err.message, data[1], 'error message');
@@ -616,7 +614,6 @@ test('update VLAN: invalid', TEST_OPTS, function (t) {
     function _updateInvalidVLAN(data, cb) {
         CLIENT.put('/my/fabrics/default/vlans/' + PARAMS.vlan.vlan_id, data[0],
                 function (err, req, res) {
-
             t.ok(err, 'expected error: ' + JSON.stringify(data[0]));
             if (err) {
                 t.equal(err.message, data[1], 'error message');
@@ -642,7 +639,6 @@ test('update VLAN: invalid', TEST_OPTS, function (t) {
 
 
 test('networks', TEST_OPTS, function (tt) {
-
     var nets = [];
 
     tt.test('create fabric network 0 - other', function (t) {
@@ -886,7 +882,6 @@ test('networks', TEST_OPTS, function (tt) {
                 common.checkReqId(t, res.headers);
                 t.end();
             });
-
     });
 
 
@@ -1012,7 +1007,6 @@ test('create fabric network: invalid', TEST_OPTS, function (t) {
     function _createInvalidNet(data, cb) {
         CLIENT.post(fmt('/my/fabrics/default/vlans/%d/networks',
                 PARAMS.vlan.vlan_id), data[0], function (err, req, res) {
-
             t.ok(err, 'expected error: ' + JSON.stringify(data[0]));
             if (err) {
                 t.equal(err.message, data[1], 'error message');
@@ -1220,7 +1214,6 @@ test('default fabric', TEST_OPTS, function (tt) {
 
 
 test('teardown', TEST_OPTS, function (tt) {
-
     tt.test('delete networks', function (t) {
         if (CREATED.nets.length === 0) {
             t.end();

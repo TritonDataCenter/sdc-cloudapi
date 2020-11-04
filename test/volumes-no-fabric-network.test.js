@@ -5,18 +5,14 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
-var assert = require('assert-plus');
 var test = require('@smaller/tap').test;
-var verror = require('verror');
 
 var common = require('./common');
 var mod_config = require('../lib/config.js');
 var mod_testConfig = require('./lib/config');
-var mod_testNetworks = require('./lib/networks');
-var mod_testVolumes = require('./lib/volumes');
 
 var CONFIG = mod_config.configure();
 
@@ -47,7 +43,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
      */
     test('getting config from ufds', function (t) {
         mod_testConfig.waitForAccountConfigReady(CLIENT,
-            function onConfigReady(configReadyErr, ufdsConfig) {
+            function onConfigReady(configReadyErr) {
                 t.ifErr(configReadyErr, 'newly created user\'s config should ' +
                     'eventually be created');
                 t.end();
@@ -55,7 +51,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     });
 
     test('getting user account from ufds', function (t) {
-        CLIENT.ufds.getUser(CLIENT.login, function onGetUser(getUserErr, user) {
+        CLIENT.ufds.getUser(CLIENT.login, function onGetUser(_, user) {
             USER = user;
             t.end();
         });

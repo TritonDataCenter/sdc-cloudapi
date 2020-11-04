@@ -5,19 +5,15 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
-var assert = require('assert-plus');
 var libuuid = require('libuuid');
 var test = require('@smaller/tap').test;
-var util = require('util');
 
 var common = require('./common');
 var mod_config = require('../lib/config.js');
 var mod_testConfig = require('./lib/config');
-var mod_testNetworks = require('./lib/networks');
-var mod_testVolumes = require('./lib/volumes');
 
 var CONFIG = mod_config.configure();
 
@@ -29,20 +25,16 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     var CLIENTS;
     var CLIENT;
     var NAPI_CLIENT;
-    var OTHER;
     var SERVER;
     var UFDS_CLIENT;
 
     var externalNetwork;
     var testVolumeName = 'test-volumes-basic';
-    var testVolume;
-    var testVolumeStorageVmUuid;
 
     test('setup', function (t) {
         common.setup({clientApiVersion: '~8.0'}, function (_, clients, server) {
             CLIENTS = clients;
             CLIENT = clients.user;
-            OTHER = clients.other;
             SERVER = server;
 
             NAPI_CLIENT = CLIENT.napi;
@@ -83,7 +75,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
         CLIENT.post('/my/volumes', {
             name: testVolumeName,
             type: 'tritonnfs'
-        }, function onVolumeCreated(volumeCreationErr, req, res, volume) {
+        }, function onVolumeCreated(volumeCreationErr, req, res) {
             var expectedErrName = 'InvalidNetworksError';
             var expectedRestCode = 'InvalidNetworks';
             var expectedStatusCode = 409;
@@ -137,7 +129,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
         CLIENT.post('/my/volumes', {
             name: testVolumeName,
             type: 'tritonnfs'
-        }, function onVolumeCreated(volumeCreationErr, req, res, volume) {
+        }, function onVolumeCreated(volumeCreationErr, req, res) {
             var expectedErrName = 'InvalidNetworksError';
             var expectedRestCode = 'InvalidNetworks';
             var expectedStatusCode = 409;

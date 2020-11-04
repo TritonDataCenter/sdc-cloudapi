@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var assert = require('assert-plus');
@@ -98,8 +98,8 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             common.setup({clientApiVersion: '~8.0'},
                 function (_, clients, server) {
                     CLIENTS = clients;
-                    CLIENT  = clients.user;
-                    SERVER  = server;
+                    CLIENT = clients.user;
+                    SERVER = server;
 
                     t.end();
                 });
@@ -110,7 +110,6 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
     test('listing nfs shared volumes with invalid query parameters',
         function (tt) {
-
         var badParameters = [
             [
                 'unknown query parameter should be rejected',
@@ -150,7 +149,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                 var query = '/my/volumes?' + querystring.stringify(listArgs);
 
                 CLIENT.get(query,
-                    function onListVolumes(err, req, res, obj) {
+                    function onListVolumes(err, req, res) {
                         t.ok(err, 'listing volumes with invalid ' + invalidWhat
                             + ' should error');
                         t.equal(err.restCode, 'InvalidArgument',
@@ -174,7 +173,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     predicate: JSON.stringify(predicate)
                 });
 
-                CLIENT.get(query, function onListVolumes(err, req, res, obj) {
+                CLIENT.get(query, function onListVolumes(err, req, res) {
                     t.ok(err,
                         'listing volumes with invalid predicate should error');
                     t.equal(err.restCode, 'InvalidArgument',
@@ -186,6 +185,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
         tt.end();
     });
 
+    /* eslint-disable no-inner-declarations */
     // copied from sdc-volapi test/integration/list-with-params.test.js
     function snowflakeName(strName) {
         switch (strName) {
@@ -240,7 +240,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
         return (foundVolumes);
     }
-
+    /* eslint-enable no-inner-declarations */
     test('create some test volumes', function (tt) {
         var testVolumeObjects = [
             {
@@ -468,7 +468,6 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
     test('list with size=102400 (number) returns correct volume',
         function (tt) {
-
         var query = '/my/volumes?' + querystring.stringify({
             size: 102400
         });
@@ -495,7 +494,6 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
 
     test('list with size=1024000 (string) returns correct volume',
         function (tt) {
-
         var query = '/my/volumes?' + querystring.stringify({
             size: '1024000'
         });

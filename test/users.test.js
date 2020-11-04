@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 /*
@@ -27,8 +27,6 @@ var checkInvalidArgument = common.checkInvalidArgument;
 // --- Globals
 
 
-var USER_FMT = 'uuid=%s, ou=users, o=smartdc';
-var SUB_FMT = 'uuid=%s, ' + USER_FMT;
 var ADMIN_ROLE_NAME = 'administrator';
 
 var SUB_ID = libuuid.create();
@@ -73,7 +71,6 @@ var POLICY_UUID;
 var POLICY_NAME;
 
 var ROLE_UUID;
-var ROLE_NAME;
 var ROLE_UUID_2;
 
 var CLIENTS;
@@ -137,10 +134,10 @@ function checkKey(t, key) {
 test('setup', function (t) {
     common.setup({ clientApiVersion: '~8' }, function (_, clients, server) {
         CLIENTS = clients;
-        CLIENT  = clients.user;
+        CLIENT = clients.user;
         SUB_CLIENT = clients.subuser;
-        OTHER   = clients.other;
-        SERVER  = server;
+        OTHER = clients.other;
+        SERVER = server;
 
         t.end();
     });
@@ -154,7 +151,7 @@ test('create user with invalid login', function (t) {
         password: PWD
     };
 
-    CLIENT.post('/my/users', user, function (err, req, res, body) {
+    CLIENT.post('/my/users', user, function (err, req, res) {
         t.ok(err);
         t.ok(/login/.test(err.message));
         t.equal(err.name, 'InvalidArgumentError');
@@ -171,7 +168,7 @@ test('create user with invalid email', function (t) {
         password: PWD
     };
 
-    CLIENT.post('/my/users', user, function (err, req, res, body) {
+    CLIENT.post('/my/users', user, function (err, req, res) {
         t.ok(err);
         t.ok(/email/.test(err.message));
         t.equal(err.name, 'InvalidArgumentError');
@@ -187,7 +184,7 @@ test('create user without password', function (t) {
         email: SUB_EMAIL
     };
 
-    CLIENT.post('/my/users', user, function (err, req, res, body) {
+    CLIENT.post('/my/users', user, function (err, req, res) {
         t.ok(err);
         t.ok(/password/.test(err.message));
         t.equal(err.name, 'MissingParameterError');
@@ -476,7 +473,7 @@ test('update policy - other', function (t) {
         name: 'this-update-should-fail'
     }, function (err, req, res, body) {
         // XXX should be not found
-        //checkNotFound(t, err, req, res, body);
+        // checkNotFound(t, err, req, res, body);
 
         t.ok(err);
         t.ok(body);
@@ -530,8 +527,6 @@ test('create role', function (t) {
         checkRole(t, body);
 
         ROLE_UUID = body.id;
-        ROLE_NAME = body.name;
-
         t.end();
     });
 });
@@ -588,7 +583,6 @@ test('update role', function (t) {
         common.checkHeaders(t, res.headers);
         checkRole(t, body);
         t.equal(body.name, 'role-name-can-be-modified');
-        ROLE_NAME = body.name;
         t.ok(body.members.indexOf(SUB_LOGIN) !== -1);
         t.ok(body.default_members.indexOf(SUB_LOGIN) !== -1);
         t.end();
@@ -658,7 +652,7 @@ test('add unexisting policy to role', function (t) {
 
     CLIENT.post('/my/roles/' + ROLE_UUID, {
         policies: [POLICY_NAME, fakePolicy]
-    }, function (err, req, res, body) {
+    }, function (err, req, res) {
         t.ok(err);
         t.equal(res.statusCode, 409);
         common.checkHeaders(t, res.headers);
@@ -714,7 +708,7 @@ test('add role to user resource', function (t) {
     }, function (err) {
         t.ifError(err);
 
-        CLIENT.get(path, function (err2, req, res, body) {
+        CLIENT.get(path, function (err2, req, res) {
             t.ifError(err2);
             t.equal(res.headers['role-tag'], role);
             t.end();
@@ -944,7 +938,7 @@ test('Create (named) key with duplicate name', function (t) {
 
     var p = util.format('/my/users/%s/keys', SUB_USER.id);
 
-    CLIENT.post(p, key, function (err, req, res, body) {
+    CLIENT.post(p, key, function (err, req, res) {
         t.ok(err);
         t.equal(err.statusCode, 409);
         t.end();
@@ -960,7 +954,7 @@ test('Attempt to create with invalid key', function (t) {
 
     var p = util.format('/my/users/%s/keys', SUB_USER.id);
 
-    CLIENT.post(p, key, function (err, req, res, body) {
+    CLIENT.post(p, key, function (err, req, res) {
         t.ok(err);
         t.equal(err.statusCode, 409);
         t.equal(err.restCode, 'InvalidArgument');
@@ -1263,7 +1257,6 @@ test('create role v9', function (t) {
         checkRole(t, body);
 
         ROLE_UUID = body.id;
-        ROLE_NAME = body.name;
 
         t.end();
     });

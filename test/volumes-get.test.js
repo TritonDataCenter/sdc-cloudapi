@@ -5,10 +5,9 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
-var assert = require('assert-plus');
 var libuuid = require('libuuid');
 var test = require('@smaller/tap').test;
 
@@ -39,7 +38,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     test('getting non-existing volume should respond with 404 status code',
         function (t) {
             CLIENT.get('/my/volumes/' + libuuid.create(),
-                function onVolumeGet(volGetErr, req, res, volume) {
+                function onVolumeGet(volGetErr, req, res, _volume) {
                     var expectedErrCode = 'VolumeNotFound';
                     var expectedStatusCode = 404;
 

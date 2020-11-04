@@ -5,15 +5,13 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
-var util = require('util');
 var test = require('@smaller/tap').test;
 var common = require('./common');
 var uuid = common.uuid;
 var machinesCommon = require('./machines/common');
-var checkMachine = machinesCommon.checkMachine;
 
 
 // --- Globals
@@ -47,7 +45,7 @@ function provisionWithInvalidNetwork(t, networks, errMessage) {
 
     CLIENT.post({
         path: '/my/machines'
-    }, obj, function (err, req, res, body) {
+    }, obj, function (err, req, res) {
         t.ok(err, 'error expected');
         if (err) {
             t.equal(err.message, errMessage, 'error message');
@@ -64,9 +62,9 @@ function provisionWithInvalidNetwork(t, networks, errMessage) {
 test('setup', function (t) {
     common.setup({clientApiVersion: '~7.3'}, function (_, clients, server) {
         CLIENTS = clients;
-        CLIENT  = clients.user;
-        OTHER   = clients.other;
-        SERVER  = server;
+        CLIENT = clients.user;
+        OTHER = clients.other;
+        SERVER = server;
 
         t.end();
     });
@@ -129,7 +127,6 @@ test('Wait For Running', function (t) {
 
 
 test('networks: invalid formats', function (tt) {
-
     tt.test('ipv4_uuid: not a UUID', function (t) {
         provisionWithInvalidNetwork(t, [
             { ipv4_uuid: 'asdf' }

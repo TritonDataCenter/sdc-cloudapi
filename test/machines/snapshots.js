@@ -5,13 +5,12 @@
  */
 
 /*
- * Copyright (c) 2019, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var common = require('../common');
 var waitForJob = require('./common').waitForJob;
 
-var checkHeaders = common.checkHeaders;
 var checkNotFound = common.checkNotFound;
 
 
@@ -167,7 +166,7 @@ module.exports = function (suite, client, other, machine, callback) {
         if (snapshot) {
             t.ok(snapshot.name, 'Snapshot name OK');
             var url = '/my/machines/' + machine + '/snapshots/' + snapshot.name;
-            client.post(url, {}, function (err, req, res, body) {
+            client.post(url, {}, function (err, req, res) {
                 t.ifError(err);
                 t.equal(res.statusCode, 202);
                 common.checkHeaders(t, res.headers);
@@ -278,5 +277,4 @@ module.exports = function (suite, client, other, machine, callback) {
 
 
     return callback();
-
 };

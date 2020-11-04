@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 /*
@@ -77,7 +77,7 @@ CloudAPI.prototype._del = function (req, callback) {
     var self = this;
 
     // Issue HTTP request
-    return this.client.del(req, function (err, request, res, obj) {
+    return this.client.del(req, function (err, request, res, _obj) {
         if (err) {
             err = self._error(err);
         }
