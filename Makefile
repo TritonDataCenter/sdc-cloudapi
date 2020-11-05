@@ -52,7 +52,7 @@ CLEAN_FILES	+= node_modules cscope.files
 NODE_PREBUILT_VERSION=v6.17.1
 ifeq ($(shell uname -s),SunOS)
 	# minimal-64-lts@19.4.0
-	NODE_PREBUILT_IMAGE=c2c31b00-1d60-11e9-9a77-ff9f06554b0f
+	NODE_PREBUILT_IMAGE=5417ab20-3156-11ea-8b19-2b66f5e7a439
 	NODE_PREBUILT_TAG=zone
 else
 	NPM=npm
