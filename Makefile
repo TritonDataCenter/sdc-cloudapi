@@ -43,7 +43,7 @@ JS_FILES	:= $(shell ls *.js) $(shell find lib -name '*.js' | grep -v node-http-s
 ESLINT_FILES	= $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS	 = -f tools/jsstyle.conf
-SMF_MANIFESTS_IN    = smf/manifests/cloudapi.xml.in smf/manifests/haproxy.xml.in smf/manifests/stud.xml.in
+SMF_MANIFESTS_IN    = smf/manifests/cloudapi.xml.in smf/manifests/haproxy.xml.in
 
 CLEAN_FILES	+= node_modules cscope.files
 
