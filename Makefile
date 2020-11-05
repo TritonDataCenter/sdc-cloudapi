@@ -53,7 +53,7 @@ NODE_PREBUILT_VERSION=v6.17.1
 ifeq ($(shell uname -s),SunOS)
 	# minimal-64-lts@19.4.0
 	NODE_PREBUILT_IMAGE=5417ab20-3156-11ea-8b19-2b66f5e7a439
-	NODE_PREBUILT_TAG=zone
+	NODE_PREBUILT_TAG=zone64
 else
 	NPM=npm
 	NODE=node
