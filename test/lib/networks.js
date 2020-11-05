@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2017, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 /**
@@ -19,7 +19,7 @@ function waitForDefaultVLAN(CLIENT, t) {
 
     function _checkVlan() {
         CLIENT.get('/my/fabrics/default/vlans/2',
-                function (err, req, res, body) {
+                function (_err, req, res, body) {
             if (body && body.vlan_id) {
                 t.pass('found default vlan');
                 return t.end();

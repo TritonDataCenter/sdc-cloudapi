@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var test = require('@smaller/tap').test;
@@ -203,7 +203,7 @@ function (t) {
 
 test('allowProvision with no matching free VMs',
 function (t) {
-    API.getActiveVmsForAccount = function (args, cb) {
+    API.getActiveVmsForAccount = function (_, cb) {
         cb(null, [ {
             billing_id: '5ec1780a-f975-11e7-a5d3-fb5712313c38'
         }, {

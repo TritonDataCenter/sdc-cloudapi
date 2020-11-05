@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 /*
@@ -15,7 +15,7 @@
  * here by listing the Amon zone.
  */
 
-var test   = require('@smaller/tap').test;
+var test = require('@smaller/tap').test;
 var common = require('./common');
 
 
@@ -57,9 +57,9 @@ function checkForbidden(t, err, req, res, body) {
 test('setup', function (t) {
     common.setup({clientApiVersion: '~7.1'}, function (_, clients, server) {
         CLIENTS = clients;
-        CLIENT  = clients.user;
-        OTHER   = clients.other;
-        SERVER  = server;
+        CLIENT = clients.user;
+        OTHER = clients.other;
+        SERVER = server;
 
         CLIENT.ufds.getUser('admin', function (err, account) {
             t.ifError(err);

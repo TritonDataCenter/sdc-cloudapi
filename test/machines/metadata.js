@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var common = require('../common');
@@ -87,7 +87,7 @@ module.exports = function (suite, client, other, machine, callback) {
     });
 
 
-    suite.test('wait for add metadata job',  function (t) {
+    suite.test('wait for add metadata job', function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'update'

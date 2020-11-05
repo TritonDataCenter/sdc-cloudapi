@@ -5,12 +5,10 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var test = require('@smaller/tap').test;
-var util = require('util');
-var semver = require('semver');
 var common = require('./common');
 
 
@@ -92,8 +90,8 @@ test('setup', function (t) {
     common.setup({clientApiTestVersion: '~8.0'},
             function (_, clients, server) {
         CLIENTS = clients;
-        CLIENT  = clients.user;
-        SERVER  = server;
+        CLIENT = clients.user;
+        SERVER = server;
 
         CLIENT.imgapi.listImages(function (err, imgs) {
             t.ifError(err);

@@ -28,7 +28,7 @@ var waitForJob = machinesCommon.waitForJob;
 
 var SDC_128 = common.sdc_128_package; // already loaded in PAPI
 
-var SDC_256_INACTIVE =  {
+var SDC_256_INACTIVE = {
     uuid: '4633473b-aae9-466b-8bde-3c410e5072cc',
     name: 'sdc_256_inactive',
     version: '1.0.0',
@@ -113,9 +113,9 @@ var CONFIG = mod_config.configure();
 test('setup', function (t) {
     common.setup(function (_, clients, server) {
         CLIENTS = clients;
-        CLIENT  = clients.user;
-        OTHER   = clients.other;
-        SERVER  = server;
+        CLIENT = clients.user;
+        OTHER = clients.other;
+        SERVER = server;
 
         addPackage1();
 
@@ -295,7 +295,6 @@ test('Create machine with too many public networks', function (t) {
             createMachine(networkUuids, function () {
                 t.end();
             });
-
         } else if (nets.length === 1) {
             addNetwork(fakeNetwork, function (_, newNetUuid) {
                 createMachine(networkUuids.concat(newNetUuid), function () {
@@ -304,7 +303,6 @@ test('Create machine with too many public networks', function (t) {
                     });
                 });
             });
-
         } else {
             // shouldn't end up here
             t.ok(false);
@@ -1043,7 +1041,6 @@ test('Check cannot delete machine with deletion_protection set',
 function (t) {
     CLIENT.del('/my/machines/' + MACHINE_UUID,
         function delCb(err, req, res, body) {
-
         t.ok(err, 'delete error expected');
         t.equal(res.statusCode, 409, 'http code');
         t.deepEqual(body, {
@@ -1072,7 +1069,6 @@ test('Remove deletion_protection', function (t) {
 
             machinesCommon.waitForJob(CLIENT, jobs[0].uuid,
                 function waitCb(err3) {
-
                 t.ifError(err3, 'wait for job error');
                 t.end();
             });
@@ -1118,10 +1114,10 @@ test('machine audit', function (t) {
 
         for (var i = 0; i !== expectedJobs.length; i++) {
             var expected = expectedJobs[i];
-            var job      = body[i];
+            var job = body[i];
             t.ok(job, 'expected job: ' + expected);
 
-            var caller   = job.caller;
+            var caller = job.caller;
 
             if (expected === 'replace_tags') {
                 // since we're updating tags fairly quickly in these tests,
@@ -1293,7 +1289,7 @@ test('Create Docker machine', function (t) {
         },
         autoboot: true, // false
         docker: true,
-        brand: 'joyent-minimal',  // should be lx, but we're abusing this
+        brand: 'joyent-minimal', // should be lx, but we're abusing this
         networks: [ {
             uuid: '', // filled in below
             primary: true
@@ -1691,7 +1687,6 @@ test('Create Machine using network and IP', function (t) {
             MACHINE_UUID = machineUuid;
             t.end();
         });
-
     });
 });
 
@@ -1831,7 +1826,6 @@ test('Create Machine using multiple networks and IPs', function (t) {
             MACHINE_UUID = machineUuid;
             t.end();
         });
-
     });
 });
 
@@ -2003,11 +1997,14 @@ function getOrCreateNicTag(tagName, client, callback) {
         if (err) {
             if (err.statusCode === 404) {
                 createNicTag();
+                return;
             } else {
                 callback(err);
+                return;
             }
         } else {
             callback(null, nicTag);
+            return;
         }
     });
 

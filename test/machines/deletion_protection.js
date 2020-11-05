@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var checkNotFound = require('../common').checkNotFound;
@@ -83,7 +83,6 @@ function deletionProtectionTests(suite, client, other, machineUuid, cb) {
     suite.test('Check deletion_protection enabled', function (t) {
         client.get('/my/machines/' + machineUuid,
             function getCb(err, req, res, body) {
-
             t.ifError(err, 'GetMachine error');
             t.equal(body.deletion_protection, true, 'deletion_protection');
 
@@ -109,7 +108,6 @@ function deletionProtectionTests(suite, client, other, machineUuid, cb) {
     suite.test('Check deletion_protection disabled', function (t) {
         client.get('/my/machines/' + machineUuid,
             function getCb(err, req, res, body) {
-
             t.ifError(err, 'GetMachine error');
             t.equal(body.deletion_protection, false, 'deletion_protection');
 

@@ -5,10 +5,9 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
-var assert = require('assert-plus');
 var child_process = require('child_process');
 var fs = require('fs');
 var test = require('@smaller/tap').test;
@@ -19,13 +18,11 @@ var common = require('./common');
 var libuuid = require('libuuid');
 var mod_config = require('../lib/config.js');
 var mod_testConfig = require('./lib/config');
-var mod_testNetworks = require('./lib/networks');
 var mod_testVolumes = require('./lib/volumes');
 
 var machinesCommon = require('./machines/common');
 
 var CONFIG = mod_config.configure();
-var JOYENT_IMGAPI_SOURCE = 'https://images.joyent.com';
 var KEY_FILENAME = '/tmp/cloudapi-test-key';
 /*
  * The test images below are imported via sdcadm post-setup dev-sample-data.
@@ -34,7 +31,6 @@ var TEST_IMAGE_HVM = 'ubuntu-certified-16.04';
 var TEST_IMAGE_LX = 'ubuntu-16.04';
 var TEST_IMAGE_NAMES_TO_UUID = {};
 var TEST_IMAGE_SMARTOS = 'minimal-64-lts';
-var UFDS_ADMIN_UUID = CONFIG.ufds_admin_uuid;
 
 function deleteKeypair(cb) {
     child_process.exec([
@@ -69,7 +65,6 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     var testPackage;
     var testVolumeName = 'test-volumes-automount';
     var testVolume;
-    var testVolumeStorageVmUuid;
 
     test('setup', function (t) {
         common.setup({clientApiVersion: '~8.0'}, function (_, clients, server) {
@@ -98,7 +93,6 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                 for (idx = 0; idx < nics.length; idx++) {
                     if (networkUuidSsh === undefined &&
                         nics[idx].nic_tag !== 'admin') {
-
                         networkUuidSsh = nics[idx].network_uuid;
                     }
                 }
@@ -125,7 +119,6 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     networks.forEach(function findFabric(net) {
                         if (networkUuidFabric === undefined &&
                             net.fabric === true) {
-
                             networkUuidFabric = net.id;
                         }
                     });
@@ -231,7 +224,6 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                         SSH_PUBLIC_KEY.substr(SSH_PUBLIC_KEY.length - 20));
                     t.end();
                 });
-
         });
     });
 
@@ -402,7 +394,6 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     if (getMachineErr) {
                         if (getMachineErr.statusCode === 410 &&
                             machine && machine.state === 'deleted') {
-
                             // pretend like restify knows how to handle this
                             getMachineErr = undefined;
                         } else {
@@ -553,7 +544,6 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     if (getMachineErr) {
                         if (getMachineErr.statusCode === 410 &&
                             machine && machine.state === 'deleted') {
-
                             // pretend like restify knows how to handle this
                             getMachineErr = undefined;
                         } else {
@@ -614,7 +604,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             ]
         };
 
-        CLIENT.post('/my/machines', payload, function (err, req, res, body) {
+        CLIENT.post('/my/machines', payload, function (err, req, res) {
             t.ok(err, 'expect VM create failure');
             t.equal(err.statusCode, 409, 'expected 409');
 

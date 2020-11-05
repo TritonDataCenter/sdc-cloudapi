@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var common = require('../common');
@@ -101,7 +101,7 @@ function (suite, client, other, machine, pkgDown, pkgSame, pkgUp, cb) {
         var imgapi = client.imgapi;
         var img;
 
-        function getImage(ctx, next) {
+        function getImage(_, next) {
             client.vmapi.getVm({ uuid: machine }, function onGetVm(err, vm) {
                 t.ifError(err, 'GetVm error');
 
@@ -113,13 +113,13 @@ function (suite, client, other, machine, pkgDown, pkgSame, pkgUp, cb) {
             });
         }
 
-        function updateImage(ctx, next) {
+        function updateImage(_, next) {
             imgapi.updateImage(img.uuid, {
                 public: false
             }, next);
         }
 
-        function resizeMachine(ctx, next) {
+        function resizeMachine(_, next) {
             client.post('/my/machines/' + machine, {
                 action: 'resize',
                 'package': pkgDown.uuid
@@ -129,7 +129,7 @@ function (suite, client, other, machine, pkgDown, pkgSame, pkgUp, cb) {
             });
         }
 
-        function resetPublic(ctx, next) {
+        function resetPublic(_, next) {
             imgapi.updateImage(img.uuid, {
                 public: img.public
             }, next);

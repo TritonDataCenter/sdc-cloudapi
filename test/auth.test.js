@@ -48,16 +48,16 @@ var XROLE_NAME;
 test('setup', function (t) {
     common.setup({ clientApiVersion: '~8' }, function (_, clients, server) {
         CLIENTS = clients;
-        SERVER  = server;
+        SERVER = server;
 
-        CLIENT      = clients.user;
-        SUB_CLIENT  = clients.subuser;
-        OTHER       = clients.other;
+        CLIENT = clients.user;
+        SUB_CLIENT = clients.subuser;
+        OTHER = clients.other;
 
-        ROLE_NAME   = CLIENT.role.name;
+        ROLE_NAME = CLIENT.role.name;
         POLICY_NAME = CLIENT.policy.name;
 
-        XROLE_NAME  = CLIENT.xrole.name;
+        XROLE_NAME = CLIENT.xrole.name;
 
         t.end();
     });
@@ -124,7 +124,7 @@ test('pre-signed url - expired', function (t) {
 
     path += '?' + qs.stringify(params);
 
-    CLIENT.get(path, function (err, req, res, body) {
+    CLIENT.get(path, function (err, req, res) {
         t.ok(err);
         t.end();
     });
@@ -146,7 +146,7 @@ test('pre-signed url - missing params', function (t) {
 
     path += '?' + qs.stringify(params);
 
-    CLIENT.get(path, function (err, req, res, body) {
+    CLIENT.get(path, function (err, req, res) {
         t.ok(err);
         t.end();
     });
@@ -169,7 +169,7 @@ test('pre-signed url - wrong host', function (t) {
 
     path += '?' + qs.stringify(params);
 
-    CLIENT.get(path, function (err, req, res, body) {
+    CLIENT.get(path, function (err, req, res) {
         t.ok(err);
         t.end();
     });
@@ -346,7 +346,7 @@ test('token auth', function (t) {
 // inside cloudapi conflict with simple updates of the existing user. That
 // implies skipping using the existing http client.
 test('auth of disabled account', function (t) {
-    function attemptGet(err, tmpAccount, signer, cb) {
+    function attemptGet(err, _, signer, cb) {
         t.ifError(err);
 
         var httpClient = restify.createJsonClient({
@@ -403,7 +403,7 @@ test('tag resource collection with role', function (t) {
 test('tag resource collection with non-existent role', function (t) {
     CLIENT.put('/my/users', {
         'role-tag': ['asdasdasdasd']
-    }, function (err, req, res, body) {
+    }, function (err, req, res) {
         t.deepEqual(err, {
             jse_info: {},
             jse_shortmsg: '',
@@ -463,7 +463,7 @@ test('tag individual resource with role - other', function (t) {
 test('tag individual resource with non-existent role', function (t) {
     CLIENT.put('/my/users/' + SUB_CLIENT.login, {
         'role-tag': ['asdasdasdasd']
-    }, function (err, req, res, body) {
+    }, function (err, req, res) {
         t.deepEqual(err, {
             jse_info: {},
             jse_shortmsg: '',
@@ -536,6 +536,7 @@ test('sub-user signature auth (0.10)', function (t) {
                     }, 1000);
                 } else {
                     cb();
+                    return;
                 }
             }
         });
@@ -559,7 +560,7 @@ test('sub-user signature auth (0.10)', function (t) {
                 headers: {
                     'accept-version': '~7.2'
                 }
-            }, function (err, req, res, obj) {
+            }, function (err, req, res) {
                 t2.ok(err, 'sub-user get account error');
                 t2.equal(res.statusCode, 403, 'sub-user auth statusCode');
                 t2.end();
@@ -572,7 +573,7 @@ test('sub-user signature auth (0.10)', function (t) {
                 headers: {
                     'accept-version': '~7.2'
                 }
-            }, function (err, req, res, obj) {
+            }, function (err, req, res) {
                 t1.ifError(err, 'sub-user get users error');
                 t1.equal(res.statusCode, 200, 'sub-user auth statusCode');
                 t1.end();
@@ -588,7 +589,7 @@ test('sub-user signature auth (0.10)', function (t) {
                 headers: {
                     'accept-version': '~7.2'
                 }
-            }, function (err, req, res, obj) {
+            }, function (err, req, res) {
                 t3.ok(err, 'sub-user get thyself error');
                 t3.equal(res.statusCode, 403, 'sub-user auth statusCode');
                 cli.close();
@@ -598,8 +599,8 @@ test('sub-user signature auth (0.10)', function (t) {
 
         t.test('sub-user with as-role', function (t4) {
             var accountUuid = CLIENT.account.uuid;
-            var roleUuid    = CLIENT.role.uuid;
-            var ufds        = CLIENT.ufds;
+            var roleUuid = CLIENT.role.uuid;
+            var ufds = CLIENT.ufds;
 
             var oldDefaultMembers;
             function getRole(_, cb) {
@@ -625,7 +626,7 @@ test('sub-user signature auth (0.10)', function (t) {
                     headers: {
                         'accept-version': '~7.2'
                     }
-                }, function (err, req, res, obj) {
+                }, function (err, req, res) {
                     cli.close();
 
                     if (err && err.statusCode !== 403) {
@@ -643,7 +644,7 @@ test('sub-user signature auth (0.10)', function (t) {
                     headers: {
                         'accept-version': '~7.2'
                     }
-                }, function (err, req, res, obj) {
+                }, function (err, req, res) {
                     if (err) {
                         return cb(err);
                     }
@@ -813,7 +814,6 @@ test('get /:account/keys - other no xacct role', function (t) {
 test('get /:account/keys - other xacct role', function (t) {
     OTHER.get('/' + CLIENT.login + '/keys?as-role=' + XROLE_NAME,
         function (err, req, res, body) {
-
         t.ifError(err, 'other xacct role keys err');
         t.ok(body, 'other xacct role keys body');
         t.ok(Array.isArray(body), 'resource is an array');

@@ -103,9 +103,8 @@ var FIXTURE_DATA = {
 };
 
 
-var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 var IP_RE = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
-var MAC_RE = /^(?:[0-9a-f]{2}\:){5}[0-9a-f]{2}/i;
+var MAC_RE = /^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}/i;
 
 var CLIENTS;
 var CLIENT;
@@ -132,6 +131,7 @@ function deleteFixtures(t, fixtures, cb) {
          * We use VMAPI to clean up the test inst because the cloudapi
          * tests are creating new users for every test run.
          */
+        /* eslint-disable callback-return */
         function getTestInstId(ctx, next) {
             if (fixtures && fixtures.instId) {
                 ctx.instId = fixtures.instId;
@@ -154,13 +154,14 @@ function deleteFixtures(t, fixtures, cb) {
                 });
             }
         },
+        /* eslint-enable callback-return */
         function getSecondTestInstId(ctx, next) {
             if (fixtures && fixtures.secondInstId) {
                 ctx.secondInstId = fixtures.secondInstId;
                 next();
                 return;
             }
-
+            /* eslint-disable callback-return */
             CLIENT.vmapi.listVms({
                 state: 'active',
                 alias: FIXTURE_DATA.inst.name + '2'
@@ -178,6 +179,7 @@ function deleteFixtures(t, fixtures, cb) {
                     next();
                 }
             });
+            /* eslint-enable callback-return */
         },
         function deleteTestInst(ctx, next) {
             if (!ctx.instId) {
@@ -255,8 +257,7 @@ function deleteFixtures(t, fixtures, cb) {
              * run, then remove it now.
              */
             if (fixtures && fixtures.internal &&
-                !fixtures.internal.existingNicTag)
-            {
+                !fixtures.internal.existingNicTag) {
                 nicTags.push(fixtures.internal.nicTag.name);
             }
 
@@ -458,7 +459,6 @@ function createFixtures(t, cb) {
                     next(err2);
                 });
             });
-
         },
 
         /*
@@ -496,6 +496,7 @@ function createTestNetwork(t, data, cb) {
 
     vasync.pipeline({funcs: [
         function haveNicTag(_, next) {
+            /* eslint-disable callback-return */
             CLIENT.napi.getNicTag(data.nicTag.name, function (err, nicTag) {
                 if (!err) {
                     fixture.existingNicTag = nicTag;
@@ -532,6 +533,7 @@ function createTestNetwork(t, data, cb) {
             }
         },
 
+        /* eslint-enable callback-return */
         function mkTestNetwork(_, next) {
             data.network.nic_tag = fixture.nicTag.name;
             if (data.addOwner) {
@@ -606,19 +608,17 @@ function deleteTestNetwork(t, data, fixture, cb) {
         },
         function deleteNicTag(_, next) {
             if (!data.nicTagUseExisting ||
-                (fixture && !fixture.existingNicTag))
-            {
+                (fixture && !fixture.existingNicTag)) {
                 common.napiDeleteNicTagByName({
                     napi: CLIENT.napi,
                     name: data.nicTag.name
                 }, function (err) {
                     t.ifError(err, 'deleteNicTag ' + data.nicTag.name);
                     next(err);
+                    return;
                 });
-            } else {
-                // Don't delete a pre-existing nic tag.
-                next();
             }
+            next();
         }
     ]}, cb);
 }
@@ -777,7 +777,7 @@ function waitTilNicAdded(t, path) {
  * Remove the given instance NIC and wait for its deletion.
  */
 function removeNic(t, instId, nic) {
-    var mac  = nic.mac.replace(/\:/g, '');
+    var mac = nic.mac.replace(/:/g, '');
     var path = '/my/machines/' + instId + '/nics/' + mac;
 
     CLIENT.del(path, function (err, req, res, body) {
@@ -803,7 +803,7 @@ function waitTilNicDeleted(t, apiPath) {
             return;
         }
 
-        CLIENT.get(apiPath, function (err, req, res, nic) {
+        CLIENT.get(apiPath, function (err, req, res) {
             if (err) {
                 t.equal(err.statusCode, 404, 'NIC path 404');
                 t.end();
@@ -832,8 +832,8 @@ test('nics', function (tt) {
                     t.ifError(err, 'commonSetup err');
                     t.ok(clients, 'commonSetup clients');
                     CLIENTS = clients;
-                    CLIENT  = clients.user;
-                    OTHER   = clients.other;
+                    CLIENT = clients.user;
+                    OTHER = clients.other;
                     CLOUDAPI_SERVER = server;
                     next();
                 });
@@ -949,7 +949,7 @@ test('nics', function (tt) {
     tt.test('  Head NICs - other', function (t) {
         var path = '/my/machines/' + fixtures.instId + '/nics';
 
-        OTHER.head(path, function (err, req, res, body) {
+        OTHER.head(path, function (err, req, res) {
             t.ok(err);
             t.equal(res.statusCode, 404);
             t.end();
@@ -1023,7 +1023,7 @@ test('nics', function (tt) {
 
 
     tt.test('  Get NIC', function (t) {
-        var mac = instNic.mac.replace(/\:/g, '');
+        var mac = instNic.mac.replace(/:/g, '');
         var path = '/my/machines/' + fixtures.instId + '/nics/' + mac;
 
         CLIENT.get(path, function (err, req, res, body) {
@@ -1038,7 +1038,7 @@ test('nics', function (tt) {
 
 
     tt.test('  Head NIC', function (t) {
-        var mac = instNic.mac.replace(/\:/g, '');
+        var mac = instNic.mac.replace(/:/g, '');
         var path = '/my/machines/' + fixtures.instId + '/nics/' + mac;
 
         CLIENT.head(path, function (err, req, res, body) {
@@ -1051,10 +1051,10 @@ test('nics', function (tt) {
 
 
     tt.test('  Head NIC - other', function (t) {
-        var mac = instNic.mac.replace(/\:/g, '');
+        var mac = instNic.mac.replace(/:/g, '');
         var path = '/my/machines/' + fixtures.instId + '/nics/' + mac;
 
-        OTHER.head(path, function (err, req, res, body) {
+        OTHER.head(path, function (err, req, res) {
             t.ok(err);
             t.equal(res.statusCode, 404);
             t.end();
@@ -1105,7 +1105,7 @@ test('nics', function (tt) {
 
 
     tt.test('  Get NIC from invalid machine', function (t) {
-        var mac = instNic.mac.replace(/\:/g, '');
+        var mac = instNic.mac.replace(/:/g, '');
         var path = '/my/machines/wowzers/nics/' + mac;
 
         var expectedErr = {
@@ -1131,7 +1131,7 @@ test('nics', function (tt) {
 
 
     tt.test('  Get owner NIC from non-owner machine', function (t) {
-        var mac = instNic.mac.replace(/\:/g, '');
+        var mac = instNic.mac.replace(/:/g, '');
         var path = '/my/machines/' + fixtures.otherVm.uuid + '/nics/' + mac;
 
         var expectedErr = {
@@ -1152,7 +1152,7 @@ test('nics', function (tt) {
 
 
     tt.test('  Get non-owner NIC from owner machine', function (t) {
-        var mac = fixtures.otherVm.nics[0].mac.replace(/\:/g, '');
+        var mac = fixtures.otherVm.nics[0].mac.replace(/:/g, '');
         var path = '/my/machines/' + fixtures.instId + '/nics/' + mac;
 
         // the err message must match the 'Get nonexistent NIC' test above
@@ -1174,7 +1174,7 @@ test('nics', function (tt) {
 
 
     tt.test('  Get non-owner NIC from non-owner machine', function (t) {
-        var mac = fixtures.otherVm.nics[0].mac.replace(/\:/g, '');
+        var mac = fixtures.otherVm.nics[0].mac.replace(/:/g, '');
         var path = '/my/machines/' + fixtures.otherVm.uuid + '/nics/' + mac;
 
         var expectedErr = {
@@ -1196,7 +1196,7 @@ test('nics', function (tt) {
 
     tt.test('  Get NIC from nonexistent machine', function (t) {
         var path = '/my/machines/fa9e18e4-654a-43a8-918b-cce04bdbf461/nics/'
-            + instNic.mac.replace(/\:/g, '');
+            + instNic.mac.replace(/:/g, '');
         var expectedErr = {
             jse_info: {},
             jse_shortmsg: '',
@@ -1557,7 +1557,7 @@ test('nics', function (tt) {
 
 
     tt.test('  Remove owner NIC from non-owner machine', function (t) {
-        var mac  = instNic.mac.replace(/\:/g, '');
+        var mac = instNic.mac.replace(/:/g, '');
         var path = '/my/machines/' + fixtures.otherVm.uuid + '/nics/' + mac;
 
         var expectedErr = {
@@ -1578,7 +1578,7 @@ test('nics', function (tt) {
 
 
     tt.test('  Remove non-owner NIC from owner machine', function (t) {
-        var mac  = fixtures.otherVm.nics[0].mac.replace(/\:/g, '');
+        var mac = fixtures.otherVm.nics[0].mac.replace(/:/g, '');
         var path = '/my/machines/' + fixtures.instId + '/nics/' + mac;
 
         var expectedErr = {
@@ -1599,7 +1599,7 @@ test('nics', function (tt) {
 
 
     tt.test('  Remove non-owner NIC from non-owner machine', function (t) {
-        var mac  = fixtures.otherVm.nics[0].mac.replace(/\:/g, '');
+        var mac = fixtures.otherVm.nics[0].mac.replace(/:/g, '');
         var path = '/my/machines/' + fixtures.otherVm.uuid + '/nics/' + mac;
 
         var expectedErr = {
@@ -1640,7 +1640,7 @@ test('nics', function (tt) {
 
 
     tt.test('  Remove NIC from invalid machine', function (t) {
-        var mac  = instNic.mac.replace(/\:/g, '');
+        var mac = instNic.mac.replace(/:/g, '');
         var path = '/my/machines/wowzers/nics/' + mac;
 
         var expectedErr = {
@@ -1812,7 +1812,7 @@ test('nics', function (tt) {
             var path = '/my/machines/' + fixtures.instId + '/nics';
             var args = { network: fabricNetwork.id };
             CLIENT.post(path, args, function (err2, req2, res2, nic) {
-                t.ifError(err2, 'AddNic to vm '+ fixtures.instId);
+                t.ifError(err2, 'AddNic to vm ' + fixtures.instId);
                 t.equal(res2.statusCode, 201, 'AddNic 201 statusCode');
 
                 var location = res2.headers.location;
@@ -1855,9 +1855,9 @@ test('nics', function (tt) {
                 ipv4_ips: [ fabricNetworkIp ]
             };
             var args = { network: networkParams };
-            CLIENT.post(path, args, function (nicCreateErr, nicCreateReq,
+            CLIENT.post(path, args, function (nicCreateErr, _,
                 nicCreateRes, nic) {
-                t.ifError(nicCreateErr, 'AddNic to vm '+ fixtures.instId);
+                t.ifError(nicCreateErr, 'AddNic to vm ' + fixtures.instId);
                 t.equal(nicCreateRes.statusCode, 201, 'AddNic 201 statusCode');
 
                 var location = nicCreateRes.headers.location;
@@ -1887,8 +1887,7 @@ test('nics', function (tt) {
                 ipv4_ips: [ fabricNetworkIp ]
             };
             var args = { network: networkParams };
-            CLIENT.post(path, args, function onNicCreate(nicCreateErr,
-                nicCreateReq, nicCreateRes, nic) {
+            CLIENT.post(path, args, function onNicCreate() {
                 var expectedErr = {
                     jse_info: {},
                     jse_shortmsg: '',
@@ -1947,8 +1946,7 @@ test('nics', function (tt) {
                 ipv4_ips: [ fakeIp ]
             };
             var args = { network: networkParams };
-            CLIENT.post(path, args, function onNicCreate(nicCreateErr,
-                nicCreateReq, nicCreateRes, nic) {
+            CLIENT.post(path, args, function onNicCreate() {
                 var expectedErr = {
                     jse_info: {},
                     jse_shortmsg: '',
@@ -1988,8 +1986,7 @@ test('nics', function (tt) {
                 ipv4_ips: [ '111' + fabricNetworkIp ]
             };
             var args = { network: networkParams };
-            CLIENT.post(path, args, function onNicCreate(nicCreateErr,
-                nicCreateReq, nicCreateRes, nic) {
+            CLIENT.post(path, args, function onNicCreate() {
                 var expectedErr = {
                     jse_info: {},
                     jse_shortmsg: '',

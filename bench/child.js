@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 /*
@@ -16,7 +16,6 @@
  * charge of running one request each and report results to parent process.
  */
 
-var util = require('util');
 var common = require('./common');
 function notifyParent(msg) {
     process.send(msg);
@@ -58,7 +57,7 @@ process.on('message', function (msg) {
 
                 // Check for success every 10 seconds:
                 anInterval = setInterval(function () {
-                    sdc.getMachineAudit(obj.id, function (err2, obj2, res2) {
+                    sdc.getMachineAudit(obj.id, function (_err2, obj2, res2) {
                         if (obj2.length && obj2[0].action === 'provision') {
                             clearInterval(anInterval);
                             clearTimeout(pTimeOut);

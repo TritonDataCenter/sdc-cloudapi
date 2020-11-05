@@ -5,10 +5,9 @@
  */
 
 /*
- * Copyright 2016, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
-var assert = require('assert-plus');
 var vasync = require('vasync');
 
 var common = require('../common');
@@ -353,7 +352,6 @@ module.exports = function (suite, client, other, machine, callback) {
             t.equal(typeof (body[TAG_TWO_KEY]), 'undefined', 'Removed Tag');
             t.end();
         });
-
     });
 
 

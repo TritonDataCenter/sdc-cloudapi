@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var checkNotFound = require('../common').checkNotFound;
@@ -41,7 +41,7 @@ module.exports = function (suite, client, other, machine, callback) {
     });
 
 
-    suite.test('Wait For Firewall Disabled',  function (t) {
+    suite.test('Wait For Firewall Disabled', function (t) {
         client.vmapi.listJobs({
             vm_uuid: machine,
             task: 'update'

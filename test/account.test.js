@@ -5,11 +5,10 @@
  */
 
 /*
- * Copyright (c) 2019, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var test = require('@smaller/tap').test;
-var util = require('util');
 var common = require('./common');
 
 var checkNotAuthorized = common.checkNotAuthorized;
@@ -61,9 +60,9 @@ function checkOk(t, err, req, res, body) {
 test('setup', function (t) {
     common.setup(function (_, clients, server) {
         CLIENTS = clients;
-        CLIENT  = clients.user;
-        OTHER   = clients.other;
-        SERVER  = server;
+        CLIENT = clients.user;
+        OTHER = clients.other;
+        SERVER = server;
 
         t.end();
     });

@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var test = require('@smaller/tap').test;
@@ -37,7 +37,7 @@ var NETWORKS = [ {
     uuid: '3acc8d3e-a35f-11e7-8f64-28cfe91f7d53',
     owner_uuids: [ACCOUNT.uuid],
     nic_tag: 'external'
-}  ];
+}];
 
 var API = {
     getNapiNetworksForAccount: function () {},
@@ -244,7 +244,7 @@ function (t) {
 
 test('findOwnerExternalNetwork with non-owner account',
 function (t) {
-    function failStub(opts, cb) {
+    function failStub() {
         t.fail('this should not be called');
     }
 

@@ -27,8 +27,8 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
     test('setup', function (t) {
         common.setup({clientApiVersion: '~8.0'}, function (_, clients, server) {
             CLIENTS = clients;
-            CLIENT  = clients.user;
-            SERVER  = server;
+            CLIENT = clients.user;
+            SERVER = server;
 
             t.end();
         });
@@ -40,7 +40,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
         CLIENT.post('/my/volumes', {
             name: invalidVolumeName,
             type: 'tritonnfs'
-        }, function onVolumeCreated(volumeCreationErr, req, res, volume) {
+        }, function onVolumeCreated(volumeCreationErr, req, res) {
             var expectedStatusCode = 409;
             var expectedRestCode = 'InvalidArgument';
             var expectedErrorMsg = 'Invalid volume name: ' + invalidVolumeName;
@@ -65,7 +65,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
         CLIENT.post('/my/volumes', {
             name: testVolumeName,
             type: invalidVolumeType
-        }, function onVolumeCreated(volumeCreationErr, req, res, volume) {
+        }, function onVolumeCreated(volumeCreationErr, req, res) {
             var expectedStatusCode = 409;
             var expectedRestCode = 'InvalidArgument';
             var expectedErrorMsg = 'Invalid volume type: ' + invalidVolumeType;
@@ -92,7 +92,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             name: testVolumeName,
             type: testVolumeType,
             size: invalidVolumeSize
-        }, function onVolumeCreated(volumeCreationErr, req, res, volume) {
+        }, function onVolumeCreated(volumeCreationErr, req, res) {
             var expectedStatusCode = 409;
             var expectedRestCode = 'InvalidArgument';
             var expectedErrorMsg = 'Invalid volume size: ' + invalidVolumeSize;
@@ -134,7 +134,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     name: testVolumeName,
                     type: testVolumeType,
                     networks: invalidNetworks
-                }, function onVolumeCreated(volCreationErr, req, res, volume) {
+                }, function onVolumeCreated(volCreationErr, req, res) {
                     var expectedStatusCode = 409;
                     var expectedRestCode = 'InvalidArgument';
                     var expectedErrorMsg = 'Invalid networks: ' +
@@ -177,7 +177,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             name: testVolumeName,
             type: testVolumeType,
             affinity: 1
-        }, function onVolumeCreated(volumeCreationErr, req, res, volume) {
+        }, function onVolumeCreated(volumeCreationErr, req, res) {
             var expectedStatusCode = 409;
             var expectedRestCode = 'InvalidArgument';
             var expectedErrorMsg = 'Invalid affinity: affinity must be an ' +
@@ -204,7 +204,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             name: testVolumeName,
             type: testVolumeType,
             tags: 1
-        }, function onVolumeCreated(volumeCreationErr, req, res, volume) {
+        }, function onVolumeCreated(volumeCreationErr, req, res) {
             var expectedStatusCode = 409;
             var expectedRestCode = 'InvalidArgument';
             var expectedErrorMsg = 'Invalid tags: tags must be an object ' +

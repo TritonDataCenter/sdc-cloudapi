@@ -5,15 +5,13 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
-var assert = require('assert-plus');
 var test = require('@smaller/tap').test;
 
 var common = require('./common');
 var mod_config = require('../lib/config.js');
-var mod_testConfig = require('./lib/config');
 
 var CONFIG = mod_config.configure();
 
@@ -79,7 +77,6 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                     for (idx = 0; idx < volumeSizes.length; idx++) {
                         if (idx > 0 &&
                             volumeSizes[idx - 1] > volumeSizes[idx]) {
-
                             sorted = false;
                         }
                     }

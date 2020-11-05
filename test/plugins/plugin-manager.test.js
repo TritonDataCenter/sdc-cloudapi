@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var bunyan = require('bunyan');
@@ -122,7 +122,7 @@ function (t) {
             return !net.owner_uuid;
         }).filter(function checkOwnerUuids(net) {
             return net.owner_uuids &&
-                net.owner_uuids.indexOf(ACCOUNT.uuid) == -1;
+                net.owner_uuids.indexOf(ACCOUNT.uuid) === -1;
         });
 
         t.deepEqual(badNets, [], 'no unexpected networks');
@@ -412,7 +412,7 @@ function (t) {
     }
 
     try {
-        manager.api.listImages({},  undefined);
+        manager.api.listImages({}, undefined);
         t.fail('exception not thrown');
     } catch (e) {
         t.deepEqual(e.message, 'opts.req_id (uuid) is required', 'e.message');
@@ -424,7 +424,7 @@ function (t) {
     try {
         manager.api.listImages({
             req_id: 'b8cca400-f9ca-11e7-8a6e-83fc53229350'
-        },  undefined);
+        }, undefined);
         t.fail('exception not thrown');
     } catch (e) {
         t.deepEqual(e.message, 'cb (func) is required', 'e.message');
@@ -611,7 +611,7 @@ function (t) {
             t.equal(typeof (next), 'function', 'next');
             next(null, { test: true });
         },
-        function (opts, next) {
+        function (_, next) {
             called += 1;
             t.fail('code should be unreachable');
             next();
@@ -621,7 +621,7 @@ function (t) {
     manager.findOwnerExternalNetwork({
         account: {},
         req_id: '03a19052-f9e0-11e7-bc63-1b41742f3bd0'
-    }, function extCb(err, net) {
+    }, function extCb(_, net) {
         t.deepEqual(net, { test: true }, 'networks');
         t.equal(called, 2, 'two funcs called');
         t.end();
@@ -757,7 +757,7 @@ function (t) {
             t.equal(typeof (next), 'function', 'next');
             next(new Error());
         },
-        function (opts, next) {
+        function (_, next) {
             called += 1;
             t.fail('code should be unreachable');
             next();
@@ -877,11 +877,11 @@ function (t) {
 
     var called = 0;
     manager.hooks.postProvision = [
-        function (opts, next) {
+        function (_, next) {
             called += 1;
             next(new Error());
         },
-        function (opts, next) {
+        function (_, next) {
             called += 1;
             next();
         }
@@ -1170,7 +1170,7 @@ function (t) {
             t.equal(typeof (next), 'function', 'next');
             next(new Error());
         },
-        function (opts, next) {
+        function (_, next) {
             called += 1;
             t.fail('code should be unreachable');
             next();

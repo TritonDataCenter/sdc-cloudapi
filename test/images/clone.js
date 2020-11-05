@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var jsprim = require('jsprim');
@@ -58,7 +58,7 @@ module.exports = function ImageCloneTestSuite(suite, clients) {
                     next(err);
                 });
             },
-            function createCustomImage(ctx, next) {
+            function createCustomImage(_, next) {
                 var newImgManifest = jsprim.deepCopy(testImg);
                 newImgManifest.owner = client.account.uuid;
                 newImgManifest.public = false;
@@ -85,7 +85,7 @@ module.exports = function ImageCloneTestSuite(suite, clients) {
                 };
                 client.imgapi.addImageFile(opts, next);
             },
-            function imgapiActivateImage(ctx, next) {
+            function imgapiActivateImage(_, next) {
                 client.imgapi.activateImage(customImg.uuid, next);
             }
         ]}, function _setupPipelineCb(err) {
@@ -115,7 +115,7 @@ module.exports = function ImageCloneTestSuite(suite, clients) {
 
         var data = {};
         other.post(util.format('/my/images/%s?action=clone', customImg.uuid),
-                data, function _testImageCloneNoAccessCb(err, req, res, img) {
+                data, function _testImageCloneNoAccessCb(err, req, res) {
             t.ok(err, 'should get an err on image clone without access');
             t.equal(res.statusCode, 404, 'res.statusCode');
             t.end();

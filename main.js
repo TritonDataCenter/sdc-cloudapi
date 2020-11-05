@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2017, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 /*
@@ -16,9 +16,6 @@
  */
 
 var assert = require('assert-plus');
-var fs = require('fs');
-var http = require('http');
-var https = require('https');
 var path = require('path');
 
 var bunyan = require('bunyan');
@@ -52,7 +49,7 @@ var shortOpts = {
 
 
 
-///--- Helpers
+// --- Helpers
 
 function setupLogger(config) {
     assert.object(config.bunyan, 'config.bunyan');
@@ -83,7 +80,6 @@ function setupLogger(config) {
             }
         ]
     });
-
 }
 
 function usage(code, message) {
@@ -116,14 +112,14 @@ function createBootstrapServer(port, log, cb) {
         log: log.child({ component: 'bootstrap' })
     }));
 
-    function bootstrapHandler(req, res, next) {
+    function bootstrapHandler(_req, res, next) {
         var msg = 'Attempting to connect to internal services during bootstrap';
         log.warn(msg);
         res.send(new restify.InternalError(msg));
         next();
     }
 
-    function bootstrapMethodNotAllowed(req, res, err, next) {
+    function bootstrapMethodNotAllowed(req, res, _err, next) {
         bootstrapHandler(req, res, next);
     }
 

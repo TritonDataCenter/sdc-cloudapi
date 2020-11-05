@@ -5,10 +5,9 @@
  */
 
 /*
- * Copyright 2019, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
-var clone = require('clone');
 var libuuid = require('libuuid');
 var machinesCommon = require('./common');
 
@@ -21,7 +20,7 @@ var CONTAINER_PREFIX = 'sdccloudapitest_affinity_';
 // --- Tests
 
 module.exports =
-function affinityTests(suite, client, other, imgUuid, pkgUuid, cb) {
+function affinityTests(suite, client, _other, imgUuid, pkgUuid, cb) {
     var VM_UUID;
     var VM2_UUID;
 
@@ -39,7 +38,7 @@ function affinityTests(suite, client, other, imgUuid, pkgUuid, cb) {
     function checkFail(t, _client, affinityStr) {
         var args = createArgs(affinityStr);
 
-        _client.post('/my/machines', args, function postCb(err, req, res, vm) {
+        _client.post('/my/machines', args, function postCb(err, req, res) {
             t.ok(err, 'err');
             t.equal(err.name, 'NoAllocatableServersError');
             t.end();
@@ -51,7 +50,7 @@ function affinityTests(suite, client, other, imgUuid, pkgUuid, cb) {
     suite.test('CreateMachine with bad-syntax affinity', function (t) {
         var args = createArgs('container=!' + CONTAINER_PREFIX + '*');
 
-        client.post('/my/machines', args, function postCb(err, req, res, vm) {
+        client.post('/my/machines', args, function postCb(err, req, res) {
             t.ok(err, 'err');
             t.ok(/not find operator in affinity/.test(err.message), 'err.msg');
             t.equal(res.statusCode, 409);
@@ -86,7 +85,6 @@ function affinityTests(suite, client, other, imgUuid, pkgUuid, cb) {
     // This behaviour was changed in DAPI-306.
     suite.test('CreateMachine with affinity "container!=' + CONTAINER_PREFIX +
         '*"', function (t) {
-
         var args = createArgs('container!=' + CONTAINER_PREFIX + '*');
 
         client.post('/my/machines', args, function (err, req, res, vm) {
@@ -120,7 +118,6 @@ function affinityTests(suite, client, other, imgUuid, pkgUuid, cb) {
     // same as above test, but with instance
     suite.test('CreateMachine with affinity "instance!=' + CONTAINER_PREFIX +
         '*"', function (t) {
-
         var args = createArgs('instance!=' + CONTAINER_PREFIX + '*');
 
         client.post('/my/machines', args, function (err, req, res, vm) {

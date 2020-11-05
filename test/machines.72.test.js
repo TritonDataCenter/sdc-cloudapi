@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var util = require('util');
@@ -47,11 +47,11 @@ var SERVER;
 test('setup', function (t) {
     common.setup({clientApiVersion: '~7.2'}, function (_, clients, server) {
         CLIENTS = clients;
-        SERVER  = server;
+        SERVER = server;
 
-        CLIENT  = clients.user;
+        CLIENT = clients.user;
         SUB_CLIENT = clients.subuser;
-        OTHER   = clients.other;
+        OTHER = clients.other;
 
         ACCOUNT_NAME = CLIENT.account.login;
 
@@ -182,7 +182,7 @@ test('7.3 networks format should fail', function (t) {
 
     CLIENT.post({
         path: '/my/machines'
-    }, obj, function (err, req, res, body) {
+    }, obj, function (err, req, res) {
         t.ok(err, 'error expected');
         if (err) {
             t.equal(err.message, 'Invalid Networks', 'error message');
@@ -211,16 +211,17 @@ test('sub-user tests', function (t) {
                 CLIENT.log.error({err: er}, 'Error fetching mahi resource');
                 t.fail('Error fetching mahi resource');
                 t.end();
-            } else {
-                if (!cache.roles || Object.keys(cache.roles).length === 0 ||
-                    Object.keys(cache.roles).indexOf(ROLE_UUID) === -1) {
-                    setTimeout(function () {
-                        waitMahiReplicator(cb);
-                    }, 1000);
-                } else {
-                    cb();
-                }
+                return;
             }
+
+            if (!cache.roles || Object.keys(cache.roles).length === 0 ||
+                Object.keys(cache.roles).indexOf(ROLE_UUID) === -1) {
+                setTimeout(function () {
+                    waitMahiReplicator(cb);
+                }, 1000);
+                return;
+            }
+            cb();
         });
     }
 
@@ -280,7 +281,7 @@ test('sub-user tests', function (t) {
                 }
             }, {
                 action: 'stop'
-            }, function (err, req, res, obj) {
+            }, function (err, req, res) {
                 t3.ok(err, 'sub-user get account error');
                 t3.equal(res.statusCode, 403, 'sub-user auth statusCode');
                 t3.end();
@@ -402,7 +403,7 @@ test('Verify submachine role-tag', function (t) {
             'accept-version': '~7.2',
             'role-tag': true
         }
-    }, function (err, req, res, body) {
+    }, function (err, req, res) {
         t.ifError(err);
         t.equal(res.statusCode, 200);
         t.ok(res.headers['role-tag'], 'resource role-tag header');
