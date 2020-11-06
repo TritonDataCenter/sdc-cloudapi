@@ -59,7 +59,7 @@ function setup_cloudapi {
 
     #haproxy
     for port in "${ports[@]}"; do
-        hainstances="$hainstances        server cloudapi-$port 127.0.0.1:$port check inter 10s slowstart 10s error-limit 3 on-error mark-down\n"
+        hainstances="$hainstances        server cloudapi-$port *:$port check inter 10s slowstart 10s error-limit 3 on-error mark-down\n"
     done
 
     sed -e "s#@@CLOUDAPI_INSTANCES@@#$hainstances#g" \

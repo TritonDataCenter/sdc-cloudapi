@@ -7,6 +7,13 @@ global
         pidfile /var/run/haproxy.pid
         stats socket /tmp/haproxy.sock
 
+        ca-base /opt/smartdc/cloudapi/ssl
+        crt-base /opt/smartdc/cloudapi/ssl
+
+        ssl-default-bind-ciphers EECDH+CHACHA20:EECDH+AES128:RSA+AES128:EECDH+AES256:RSA+AES256:HIGH:!MD5:!aNULL:!PSK
+        ssl-default-bind-options no-sslv3
+        tune.ssl.default-dh-param 2048
+
 defaults
         mode    http
         balance leastconn
@@ -14,7 +21,6 @@ defaults
         option  redispatch
         option  abortonclose
         option  forwardfor
-        option  http-tunnel
         retries 1
         timeout queue   0
         timeout connect 2000
@@ -27,7 +33,7 @@ defaults
         errorfile 408 /opt/smartdc/cloudapi/etc/haproxy-error-408.json.http
 
 frontend cloudapi
-        bind *:8443 accept-proxy
+        bind *:443 ssl crt /opt/smartdc/cloudapi/ssl/stud.pem
         default_backend servers
 
 backend servers
