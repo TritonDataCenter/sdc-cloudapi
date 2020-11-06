@@ -44,7 +44,7 @@ echo "export PATH=/opt/smartdc/$role/build/node/bin:/opt/smartdc/$role/node_modu
 # Until we figure out a way to share aperture config across applications:
 cp $SVC_ROOT/etc/aperture.json.in $SVC_ROOT/etc/aperture.json
 
-# setup stud, haproxy
+# setup haproxy
 function setup_cloudapi {
     local cloudapi_instances=4
 
@@ -62,7 +62,9 @@ function setup_cloudapi {
         hainstances="$hainstances        server cloudapi-$port *:$port check inter 10s slowstart 10s error-limit 3 on-error mark-down\n"
     done
 
-    sed -e "s#@@CLOUDAPI_INSTANCES@@#$hainstances#g" \
+    ADMIN_IP=$(/usr/sbin/mdata-get sdc:nics | /usr/bin/json -a -c 'this.nic_tag === "admin"' | /usr/bin/json ip)
+
+    sed -e "s#@@CLOUDAPI_INSTANCES@@#$hainstances#g" -e "s/@@ADMIN_IP@@/$ADMIN_IP/g" \
         $SVC_ROOT/etc/haproxy.cfg.in > $SVC_ROOT/etc/haproxy.cfg || \
         fatal "could not process $src to $dest"
 
