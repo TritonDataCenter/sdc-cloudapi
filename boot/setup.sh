@@ -28,14 +28,22 @@ mkdir -p /var/smartdc/$role
 
 /usr/bin/chown -R root:root /opt/smartdc
 
-echo "Generating SSL Certificate"
-mkdir -p /opt/smartdc/$role/ssl
-/opt/local/bin/openssl req -x509 -nodes -subj '/CN=*' -newkey rsa:2048 \
-    -keyout /opt/smartdc/$role/ssl/key.pem \
-    -out /opt/smartdc/$role/ssl/cert.pem -days 365
+# Mount the delegated dataset at /data
+zfs set mountpoint=/data zones/$(zonename)/data
 
-cat /opt/smartdc/$role/ssl/cert.pem > /opt/smartdc/$role/ssl/stud.pem
-cat /opt/smartdc/$role/ssl/key.pem >> /opt/smartdc/$role/ssl/stud.pem
+function setup_tls_certificate() {
+    if [[ -f /data/tls/key.pem && -f /data/tls/cert.pem ]]; then
+        echo "TLS Certificate Exists"
+    else
+        echo "Generating TLS Certificate"
+        mkdir -p /data/tls
+        /opt/local/bin/openssl req -x509 -nodes -subj '/CN=*' \
+            -pkeyopt ec_paramgen_curve:prime256v1 \
+            -pkeyopt ec_param_enc:named_curve \
+            -newkey ec -keyout /data/tls/key.pem \
+            -out /data/tls/cert.pem -days 365
+    fi
+}
 
 # Add build/node/bin and node_modules/.bin to PATH
 echo "" >>/root/.profile
@@ -143,6 +151,8 @@ HERE
 
     logadm -w /var/log/haproxy.log -C 5 -c -s 100m
 }
+
+setup_tls_certificate
 
 setup_cloudapi
 
