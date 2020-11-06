@@ -42,6 +42,7 @@ function setup_tls_certificate() {
             -pkeyopt ec_param_enc:named_curve \
             -newkey ec -keyout /data/tls/key.pem \
             -out /data/tls/cert.pem -days 365
+        cat /data/tls/key.pem >> /data/tls/cert.pem
     fi
 }
 
