@@ -35,13 +35,13 @@ function setup_tls_certificate() {
     if [[ -f /data/tls/key.pem && -f /data/tls/cert.pem ]]; then
         echo "TLS Certificate Exists"
     else
-        echo "Generating TLS Certificate"
+        echo "Generating TLS Self-signed Certificate"
         mkdir -p /data/tls
         /opt/local/bin/openssl req -x509 -nodes -subj '/CN=*' \
             -pkeyopt ec_paramgen_curve:prime256v1 \
             -pkeyopt ec_param_enc:named_curve \
             -newkey ec -keyout /data/tls/key.pem \
-            -out /data/tls/cert.pem -days 365
+            -out /data/tls/cert.pem -days 3650
         cat /data/tls/key.pem >> /data/tls/cert.pem
     fi
 }
@@ -71,7 +71,7 @@ function setup_cloudapi {
         hainstances="$hainstances        server cloudapi-$port *:$port check inter 10s slowstart 10s error-limit 3 on-error mark-down\n"
     done
 
-    ADMIN_IP=$(/usr/sbin/mdata-get sdc:nics | /usr/bin/json -a -c 'this.nic_tag === "admin"' | /usr/bin/json ip)
+    ADMIN_IP=$(/usr/sbin/mdata-get sdc:nics | /usr/bin/json -a -c 'this.nic_tag === "admin"' ip)
 
     sed -e "s#@@CLOUDAPI_INSTANCES@@#$hainstances#g" -e "s/@@ADMIN_IP@@/$ADMIN_IP/g" \
         $SVC_ROOT/etc/haproxy.cfg.in > $SVC_ROOT/etc/haproxy.cfg || \
