@@ -896,7 +896,6 @@ function checkHeaders(t, headers) {
     t.ok(headers['request-id'], 'headers request-id');
     t.ok(headers['response-time'] >= 0, 'headers response time');
     t.ok(headers.server, 'headers server');
-    t.equal(headers.connection, 'Keep-Alive', 'headers connection');
     t.ok(headers['api-version'], 'headers api-version OK');
 }
 

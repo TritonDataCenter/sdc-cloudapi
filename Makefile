@@ -21,11 +21,11 @@
 # other projects too, you should add these to the original versions of the
 # included Makefiles (in eng.git) so that other teams can use them too.
 #
-NAME		:= cloudapi
+NAME	:= cloudapi
 #
 # Tools
 #
-TAP		:= ./node_modules/.bin/tap
+TAP	:= ./node_modules/.bin/tap
 
 #
 # Files
@@ -43,16 +43,17 @@ JS_FILES	:= $(shell ls *.js) $(shell find lib -name '*.js' | grep -v node-http-s
 ESLINT_FILES	= $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS	 = -f tools/jsstyle.conf
-SMF_MANIFESTS_IN    = smf/manifests/cloudapi.xml.in smf/manifests/haproxy.xml.in smf/manifests/stud.xml.in
+SMF_MANIFESTS_IN    = smf/manifests/cloudapi.xml.in smf/manifests/haproxy.xml.in
 
 CLEAN_FILES	+= node_modules cscope.files
 
 # The prebuilt sdcnode version we want. See
 # "tools/mk/Makefile.node_prebuilt.targ" for details.
-NODE_PREBUILT_VERSION=v4.9.0
+NODE_PREBUILT_VERSION=v6.17.1
 ifeq ($(shell uname -s),SunOS)
-	NODE_PREBUILT_IMAGE=18b094b0-eb01-11e5-80c1-175dac7ddf02
-	NODE_PREBUILT_TAG=zone
+	# minimal-64-lts@19.4.0
+	NODE_PREBUILT_IMAGE=5417ab20-3156-11ea-8b19-2b66f5e7a439
+	NODE_PREBUILT_TAG=zone64
 else
 	NPM=npm
 	NODE=node
@@ -79,15 +80,14 @@ include ./deps/eng/tools/mk/Makefile.smf.defs
 
 ROOT			:= $(shell pwd)
 RELEASE_TARBALL		:= $(NAME)-pkg-$(STAMP).tar.gz
-RELSTAGEDIR				:= /tmp/$(NAME)-$(STAMP)
-
-BASE_IMAGE_UUID = 04a48d7d-6bb5-4e83-8c3b-e60a99e0f48f
+RELSTAGEDIR		:= /tmp/$(NAME)-$(STAMP)
+# triton-origin-x86_64-19.4.0
+BASE_IMAGE_UUID = 59ba2e5e-976f-4e09-8aac-a4a7ef0395f5
 BUILDIMAGE_NAME = $(NAME)
 BUILDIMAGE_DESC	= SDC CloudAPI
 BUILDIMAGE_PKGSRC = \
-	openssl-1.0.2o \
-	stud-0.3p53nb5 \
-	haproxy-1.6.2
+	openssl-1.1.1d \
+	haproxy-2.0.13
 AGENTS		= amon config registrar
 
 #

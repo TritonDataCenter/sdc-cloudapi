@@ -7,7 +7,7 @@
 #
 
 #
-# Copyright (c) 2018, Joyent, Inc.
+# Copyright 2020 Joyent, Inc.
 #
 
 export PS4='[\D{%FT%TZ}] ${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
@@ -28,14 +28,23 @@ mkdir -p /var/smartdc/$role
 
 /usr/bin/chown -R root:root /opt/smartdc
 
-echo "Generating SSL Certificate"
-mkdir -p /opt/smartdc/$role/ssl
-/opt/local/bin/openssl req -x509 -nodes -subj '/CN=*' -newkey rsa:2048 \
-    -keyout /opt/smartdc/$role/ssl/key.pem \
-    -out /opt/smartdc/$role/ssl/cert.pem -days 365
+# Mount the delegated dataset at /data
+zfs set mountpoint=/data zones/$(zonename)/data
 
-cat /opt/smartdc/$role/ssl/cert.pem > /opt/smartdc/$role/ssl/stud.pem
-cat /opt/smartdc/$role/ssl/key.pem >> /opt/smartdc/$role/ssl/stud.pem
+function setup_tls_certificate() {
+    if [[ -f /data/tls/key.pem && -f /data/tls/cert.pem ]]; then
+        echo "TLS Certificate Exists"
+    else
+        echo "Generating TLS Self-signed Certificate"
+        mkdir -p /data/tls
+        /opt/local/bin/openssl req -x509 -nodes -subj '/CN=*' \
+            -pkeyopt ec_paramgen_curve:prime256v1 \
+            -pkeyopt ec_param_enc:named_curve \
+            -newkey ec -keyout /data/tls/key.pem \
+            -out /data/tls/cert.pem -days 3650
+        cat /data/tls/key.pem >> /data/tls/cert.pem
+    fi
+}
 
 # Add build/node/bin and node_modules/.bin to PATH
 echo "" >>/root/.profile
@@ -44,7 +53,7 @@ echo "export PATH=/opt/smartdc/$role/build/node/bin:/opt/smartdc/$role/node_modu
 # Until we figure out a way to share aperture config across applications:
 cp $SVC_ROOT/etc/aperture.json.in $SVC_ROOT/etc/aperture.json
 
-# setup stud, haproxy
+# setup haproxy
 function setup_cloudapi {
     local cloudapi_instances=4
 
@@ -59,10 +68,12 @@ function setup_cloudapi {
 
     #haproxy
     for port in "${ports[@]}"; do
-        hainstances="$hainstances        server cloudapi-$port 127.0.0.1:$port check inter 10s slowstart 10s error-limit 3 on-error mark-down\n"
+        hainstances="$hainstances        server cloudapi-$port *:$port check inter 10s slowstart 10s error-limit 3 on-error mark-down\n"
     done
 
-    sed -e "s#@@CLOUDAPI_INSTANCES@@#$hainstances#g" \
+    ADMIN_IP=$(/usr/sbin/mdata-get sdc:nics | /usr/bin/json -a -c 'this.nic_tag === "admin"' ip)
+
+    sed -e "s#@@CLOUDAPI_INSTANCES@@#$hainstances#g" -e "s/@@ADMIN_IP@@/$ADMIN_IP/g" \
         $SVC_ROOT/etc/haproxy.cfg.in > $SVC_ROOT/etc/haproxy.cfg || \
         fatal "could not process $src to $dest"
 
@@ -90,9 +101,6 @@ function setup_cloudapi {
         svcadm enable "$cloudapi_instance" || \
             fatal "unable to start $cloudapi_instance"
     done
-
-    svccfg import $SVC_ROOT/smf/manifests/stud.xml
-    svcadm enable stud || fatal "unable to start stud"
 
     unset IFS
 }
@@ -144,6 +152,8 @@ HERE
 
     logadm -w /var/log/haproxy.log -C 5 -c -s 100m
 }
+
+setup_tls_certificate
 
 setup_cloudapi
 
