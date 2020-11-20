@@ -5,12 +5,12 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var util = require('util');
 var sprintf = util.format;
-var libuuid = require('libuuid');
+const { v4: uuidv4 } = require('uuid');
 
 var checkMachine = require('./common').checkMachine;
 var checkNotFound = require('../common').checkNotFound;
@@ -239,7 +239,7 @@ module.exports = function (suite, client, other, machine, callback) {
 
 
     suite.test('Get unexisting rule', function (t) {
-        client.get(sprintf(RULE_URL, libuuid.create()),
+        client.get(sprintf(RULE_URL, uuidv4()),
             function (err, req, res, _body) {
                 t.ok(err);
                 t.equal(404, res.statusCode);

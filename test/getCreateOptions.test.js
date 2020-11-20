@@ -10,7 +10,7 @@
 
 var fs = require('fs');
 
-var test = require('@smaller/tap').test;
+var test = require('tape');
 
 var getCreateOptions = require('../lib/machines')._getCreateOptions;
 var safeBrandName = require('../lib/machines')._safeBrandName;

@@ -10,12 +10,12 @@
 
 var child_process = require('child_process');
 var fs = require('fs');
-var test = require('@smaller/tap').test;
+var test = require('tape');
 var vasync = require('vasync');
 var verror = require('verror');
 
 var common = require('./common');
-var libuuid = require('libuuid');
+const { v4: uuidv4 } = require('uuid');
 var mod_config = require('../lib/config.js');
 var mod_testConfig = require('./lib/config');
 var mod_testVolumes = require('./lib/volumes');
@@ -290,7 +290,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             metadata: {},
             image: TEST_IMAGE_NAMES_TO_UUID[TEST_IMAGE_LX],
             package: testPackage.id,
-            name: 'cloudapi-volume-lx-' + libuuid.create().split('-')[0],
+            name: 'cloudapi-volume-lx-' + uuidv4().split('-')[0],
             firewall_enabled: false,
             networks: [
                 {ipv4_uuid: networkUuidSsh, primary: true},
@@ -439,7 +439,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             metadata: {},
             image: TEST_IMAGE_NAMES_TO_UUID[TEST_IMAGE_SMARTOS],
             package: testPackage.id,
-            name: 'cloudapi-volume-smartos-' + libuuid.create().split('-')[0],
+            name: 'cloudapi-volume-smartos-' + uuidv4().split('-')[0],
             firewall_enabled: false,
             networks: [
                 {ipv4_uuid: networkUuidSsh, primary: true},
@@ -588,7 +588,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             metadata: {},
             image: TEST_IMAGE_NAMES_TO_UUID[TEST_IMAGE_HVM],
             package: testPackage.id,
-            name: 'cloudapi-volume-kvm-' + libuuid.create().split('-')[0],
+            name: 'cloudapi-volume-kvm-' + uuidv4().split('-')[0],
             firewall_enabled: false,
             networks: [
                 {ipv4_uuid: networkUuidSsh, primary: true},

@@ -45,7 +45,7 @@ var fork = require('child_process').fork;
 
 var restify = require('restify');
 var bunyan = require('bunyan');
-var libuuid = require('libuuid');
+const { v4: uuidv4 } = require('uuid');
 var vasync = require('vasync');
 
 // TO BE REMOVED as soon as we update to a version of vasync >= 1.3.1:
@@ -338,7 +338,7 @@ function closeUFDSClient(cb) {
  * }
  */
 function createUFDSUser(callback) {
-    var user = 'test' + libuuid.create().substr(0, 7) + '@joyent.com';
+    var user = 'test' + uuidv4().substr(0, 7) + '@joyent.com';
 
     var entry = {
         login: user,
@@ -516,7 +516,7 @@ if (require.main === module) {
             for (s = 0; s < aSpec.length; s += 1) {
                 aSpec[s].user = user;
                 if (!aSpec[s].uuid) {
-                    aSpec[s].uuid = libuuid.create();
+                    aSpec[s].uuid = uuidv4();
                 }
                 if (!aSpec[s].concurrency) {
                     aSpec[s].concurrency = process.env.CONCURRENCY || 1;

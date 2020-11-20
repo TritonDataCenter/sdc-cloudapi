@@ -11,7 +11,7 @@
 var assert = require('assert-plus');
 var clone = require('clone');
 var fmt = require('util').format;
-var test = require('@smaller/tap').test;
+var test = require('tape');
 var vasync = require('vasync');
 
 var common = require('./common');

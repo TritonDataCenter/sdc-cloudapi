@@ -13,7 +13,7 @@
  */
 
 var assert = require('assert-plus');
-var test = require('@smaller/tap').test;
+var test = require('tape');
 var util = require('util');
 var vasync = require('vasync');
 

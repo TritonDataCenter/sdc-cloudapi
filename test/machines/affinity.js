@@ -8,7 +8,7 @@
  * Copyright 2020 Joyent, Inc.
  */
 
-var libuuid = require('libuuid');
+const { v4: uuidv4 } = require('uuid');
 var machinesCommon = require('./common');
 
 
@@ -29,7 +29,7 @@ function affinityTests(suite, client, _other, imgUuid, pkgUuid, cb) {
         return {
             image: imgUuid,
             package: pkgUuid,
-            name: CONTAINER_PREFIX + libuuid.create().split('-')[0],
+            name: CONTAINER_PREFIX + uuidv4().split('-')[0],
             firewall_enabled: true,
             affinity: [affinity]
         };

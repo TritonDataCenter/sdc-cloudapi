@@ -9,7 +9,7 @@
  */
 
 var semver = require('semver');
-var test = require('@smaller/tap').test;
+var test = require('tape');
 var vasync = require('vasync');
 
 var common = require('./common');

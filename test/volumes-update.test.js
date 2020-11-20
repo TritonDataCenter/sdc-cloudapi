@@ -8,7 +8,7 @@
  * Copyright 2020 Joyent, Inc.
  */
 
-var test = require('@smaller/tap').test;
+var test = require('tape');
 var vasync = require('vasync');
 var verror = require('verror');
 

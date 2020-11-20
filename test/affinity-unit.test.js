@@ -13,7 +13,7 @@
  * See machines/affinity.test.js for integration tests.
  */
 
-var test = require('@smaller/tap').test;
+var test = require('tape');
 
 var affinity_lib = require('../lib/triton-affinity');
 
