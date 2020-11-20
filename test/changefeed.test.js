@@ -40,7 +40,7 @@ test('Changefeed test', function (suite) {
     }, function (_, clients, server) {
         const CLIENTS = clients;
         const CLIENT = clients.user;
-        const OTHER = clients.other;
+        // const OTHER = clients.other;
         const SERVER = server;
         const shed = new Watershed();
 
@@ -145,8 +145,8 @@ test('Changefeed test', function (suite) {
                             t.end();
                         });
                     });
-*/
                     suite.end();
+*/
                 });
             });
         });
