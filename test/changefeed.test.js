@@ -10,7 +10,6 @@
  */
 
 
-const util = require('util');
 const restify = require('restify');
 const test = require('tape');
 const Watershed = require('watershed').Watershed;
@@ -40,7 +39,7 @@ test('Changefeed test', function (suite) {
     }, function (_, clients, server) {
         const CLIENTS = clients;
         const CLIENT = clients.user;
-        // const OTHER = clients.other;
+        const OTHER = clients.other;
         const SERVER = server;
         const shed = new Watershed();
 
@@ -51,7 +50,10 @@ test('Changefeed test', function (suite) {
             retryOptions: {
                 retry: 0
             },
-            log: CLIENT.log,
+            log: CLIENT.log.child({
+                component: 'changefeed',
+                level: 'trace'
+            }),
             rejectUnauthorized: false,
             signRequest: CLIENT.signRequest
         });
@@ -63,6 +65,11 @@ test('Changefeed test', function (suite) {
 
         common.getTestImage(CLIENT, function (err, img) {
             suite.ifError(err, 'getTestImage');
+            if (err) {
+                suite.fail('Test image not available');
+                suite.end();
+                return;
+            }
             suite.ok(img.id, 'img.id: ' + img.id);
             const IMAGE_UUID = img.id;
 
@@ -79,30 +86,85 @@ test('Changefeed test', function (suite) {
                     if (waitErr) {
                         // Skip machine tests when machine creation fails
                         MACHINE_UUID = false;
+                        suite.fail('Error waiting for running machine');
                         suite.end();
                         return;
                     }
-                    console.log(util.inspect(MACHINE_UUID, false, 8, true));
+                    const wskey = shed.generateKey();
+                    let wsc;
+
                     httpClient.get({
                         headers: {
                             connection: 'upgrade',
                             upgrade: 'websocket',
-                            'sec-websocket-key': shed.generateKey()
+                            'sec-websocket-key': wskey
                         },
                         path: '/my/changefeed'
-                    }, (feedErr, res, body) => {
-                        console.log(util.inspect(feedErr, false, 8, true));
-                        console.log(util.inspect(res, false, 1, true));
-                        console.log(util.inspect(body, false, 8, true));
+                    }, (feedErr, req) => {
+                        suite.ifError(feedErr);
+                        req.on('result', (resErr, _result) => {
+                            suite.ifError(resErr, 'resErr');
+                        });
+                        req.on('upgradeResult', (upErr, res, socket, head) => {
+                            suite.ifError(upErr, 'upResErr');
+                            socket.setNoDelay(true);
+                            wsc = shed.connect(res, socket, head, wskey);
+                            wsc.on('error', (wsErr) => {
+                                suite.ifError(wsErr, 'err');
+                            });
+                            wsc.on('end', () => {
+                                console.log('WSC Closed');
+                                suite.end();
+                            });
+                            wsc.on('text', (msg) => {
+                                try {
+                                    const change = JSON.parse(msg);
+                                    suite.ok(change.changeKind, 'changeKind');
+                                    suite.equal(change.changeKind.resource,
+                                        'vm', 'Change resource must be "vm"');
+                                    suite.ok(change.changeKind.subResources,
+                                        'subResources');
+                                    suite.ok(change.changedResourceId,
+                                        'changedResourceId');
+                                    suite.ok(change.published, 'published');
+                                    if (change.changeObject) {
+                                        suite.equal(change.changedResourceId,
+                                            change.changeObject.id);
+                                    } else {
+                                        // We will not get any messages if
+                                        // changeObject is not present:
+                                        return;
+                                    }
 
-                        httpClient.close();
-                        common.teardown(CLIENTS, SERVER, (teardownErr) => {
-                            suite.ifError(teardownErr, 'teardown success');
-                            suite.end();
+                                    // We should receive messages for different
+                                    // events: rename, stop, delete. We want to
+                                    // check that we got those here:
+                                    const subr = change.changeKind.subResources;
+                                    suite.ok(subr.indexOf('alias') !== -1 ||
+                                            subr.indexOf('state') !== -1 ||
+                                            subr.indexOf('destroyed') !== -1,
+                                        'Expected events');
+                                } catch (e) {
+                                    suite.ifError(e);
+                                    return;
+                                }
+                            });
+
+                            wsc.send(JSON.stringify({
+                                resource: 'vm',
+                                subResources: [
+                                    'alias',
+                                    'customer_metadata',
+                                    'destroyed',
+                                    'nics',
+                                    'owner_uuid',
+                                    'server_uuid',
+                                    'state',
+                                    'tags'
+                                ]}));
                         });
                     });
-                    return;
-/*
+
                     suite.test('Rename machine tests', function (t) {
                         const renameTest = require('./machines/rename');
                         renameTest(t, CLIENT, OTHER, MACHINE_UUID, () => {
@@ -113,20 +175,6 @@ test('Changefeed test', function (suite) {
                     suite.test('Stop test', function (t) {
                         const stopTest = require('./machines/stop');
                         stopTest(t, CLIENT, OTHER, MACHINE_UUID, () => {
-                            t.end();
-                        });
-                    });
-
-                    suite.test('Start test', function (t) {
-                        const startTest = require('./machines/start');
-                        startTest(t, CLIENT, OTHER, MACHINE_UUID, () => {
-                            t.end();
-                        });
-                    });
-
-                    suite.test('Reboot test', function (t) {
-                        const rebootTest = require('./machines/reboot');
-                        rebootTest(t, CLIENT, OTHER, MACHINE_UUID, () => {
                             t.end();
                         });
                     });
@@ -142,11 +190,10 @@ test('Changefeed test', function (suite) {
                         httpClient.close();
                         common.teardown(CLIENTS, SERVER, (teardownErr) => {
                             t.ifError(teardownErr, 'teardown success');
+                            wsc.end();
                             t.end();
                         });
                     });
-                    suite.end();
-*/
                 });
             });
         });
