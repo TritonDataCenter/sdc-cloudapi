@@ -64,5 +64,4 @@ backend servers
 backend websockets
         balance source
         option http-server-close
-        option forceclose
 @@CLOUDAPI_INSTANCES@@
