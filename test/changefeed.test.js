@@ -35,7 +35,7 @@ if (CONFIG.experimental_cloudapi_changefeed !== true) {
 
 test('Changefeed test', function (suite) {
     common.setup({
-        clientApiVersion: '~9.0'
+        clientApiVersion: '~9'
     }, function (_, clients, server) {
         const CLIENTS = clients;
         const CLIENT = clients.user;
@@ -127,12 +127,13 @@ test('Changefeed test', function (suite) {
                                     suite.ok(change.changedResourceId,
                                         'changedResourceId');
                                     suite.ok(change.published, 'published');
-                                    if (change.changeObject) {
+
+                                    if (change.resourceObject) {
                                         suite.equal(change.changedResourceId,
-                                            change.changeObject.id);
+                                            change.resourceObject.id);
                                     } else {
                                         // We will not get any messages if
-                                        // changeObject is not present:
+                                        // resourceObject is not present:
                                         return;
                                     }
 
@@ -175,6 +176,20 @@ test('Changefeed test', function (suite) {
                     suite.test('Stop test', function (t) {
                         const stopTest = require('./machines/stop');
                         stopTest(t, CLIENT, OTHER, MACHINE_UUID, () => {
+                            t.end();
+                        });
+                    });
+
+                    suite.test('Start test', function (t) {
+                        const startTest = require('./machines/start');
+                        startTest(t, CLIENT, OTHER, MACHINE_UUID, () => {
+                            t.end();
+                        });
+                    });
+
+                    suite.test('Reboot test', function (t) {
+                        const rebootTest = require('./machines/reboot');
+                        rebootTest(t, CLIENT, OTHER, MACHINE_UUID, () => {
                             t.end();
                         });
                     });
