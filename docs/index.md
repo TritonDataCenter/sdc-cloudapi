@@ -880,6 +880,62 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
+## 9.14.0
+
+- Expose Feed of Machines Changes [#68](https://github.com/joyent/sdc-cloudapi/pull/68).
+  Requires activation through SAPI:
+
+```
+cloudapi_svc=$(sdc-sapi /services?name=cloudapi|json -H 0.uuid)
+sapiadm update $cloudapi_svc metadata.experimental_cloudapi_changefeed=true
+```
+
+The following is an example of using `node-triton` to watch the changes:
+
+```
+$ ./bin/triton -i changefeed
+Change (2020-11-27T18:11:58.633Z) =>
+    modified: state,zone_state,tags
+    state: shutting_down
+    object: 98cbd3d0
+Change (2020-11-27T18:11:58.636Z) =>
+    modified: state,zone_state,pid,tags
+    state: down
+    object: 98cbd3d0
+Change (2020-11-27T18:11:58.641Z) =>
+    modified: state,zone_state,boot_timestamp,pid,tags
+    state: ready
+    object: 98cbd3d0
+Change (2020-11-27T18:12:00.632Z) =>
+    modified: state,zone_state,boot_timestamp,pid,tags
+    state: running
+    object: 98cbd3d0
+Change (2020-11-27T18:12:00.634Z) =>
+    modified: tags
+    state: ready
+    object: 98cbd3d0
+Change (2020-11-27T18:12:00.636Z) =>
+    modified: tags
+    state: running
+    object: 98cbd3d0
+```
+
+These events are fired by the following command (on a different terminal session):
+
+```
+./bin/triton -i inst reboot 98cbd3d0 -w
+Rebooting instance 98cbd3d0
+Rebooted instance 98cbd3d0
+```
+
+Note that the latest two changes are not relevant to the reboot event. (These are
+due to the way machine tags are stored in moray).
+
+## 9.13.0
+
+No API changes. Bump Node & HAProxy versions. Remove stud. Persist certificates
+across reprovisions.
+
 ## 9.12.0
 
 - Added a delegated_dataset option to the CreateMachine API. Delegated datasets
