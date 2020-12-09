@@ -12,7 +12,7 @@ markdown2extras: tables, code-friendly
 -->
 
 <!--
-    Copyright 2020 Joyent, Inc.
+    Copyright 2021 Joyent, Inc.
 -->
 
 
@@ -880,6 +880,10 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
+## 9.15.0
+
+- Added support for creating VPCs and VPC networks.
+
 ## 9.14.0
 
 - Expose Feed of Machines Changes [#68](https://github.com/joyent/sdc-cloudapi/pull/68).
@@ -917,7 +921,7 @@ across reprovisions.
   connect to the VNC console of a HVM.
 - Support for pre-signed URLs for authentication (needed to make WebSockets
     useable with browsers).
-    
+
 ## 9.8.6
 
 - Allow `affinity` and `tags` to [Volume](#Volumes) creation, which can be used
@@ -8822,6 +8826,7 @@ id           | UUID     | Unique id for this network
 name         | String   | The network name
 public       | Boolean  | Whether this a public or private (rfc1918) network
 fabric       | Boolean  | Whether this network is created on a fabric
+vpc          | Boolean  | Whether this network is created on a VPC
 description  | String   | Description of this network (optional)
 subnet       | String   | A CIDR formatted string that describes the network
 provision_start_ip| String | The first IP on the network that may be assigned
@@ -8864,6 +8869,7 @@ ResourceNotFound | If `:login` or `:vlan_id` does not exist
         "name": "default",
         "public": false,
         "fabric": true,
+        "vpc": false,
         "gateway": "192.168.128.1",
         "internet_nat": true,
         "provision_end_ip": "192.168.131.250",
@@ -8924,6 +8930,7 @@ id           | UUID     | Unique id for this network
 name         | String   | The network name
 public       | Boolean  | Whether this a public or private (rfc1918) network
 fabric       | Boolean  | Whether this network is created on a fabric
+vpc          | Boolean  | Whether this network is created on a VPC
 description  | String   | Description of this network (optional)
 subnet       | String   | A CIDR formatted string that describes the network
 provision_start_ip| String | The first IP on the network that may be assigned
@@ -8981,6 +8988,7 @@ ResourceNotFound | If `:login` does not exist
       "name": "newnet",
       "public": false,
       "fabric": true,
+      "vpc": false,
       "gateway": "10.50.1.1",
       "internet_nat": true,
       "provision_end_ip": "10.50.1.20",
@@ -9021,6 +9029,7 @@ id           | UUID     | Unique id for this network
 name         | String   | The network name
 public       | Boolean  | Whether this a public or private (rfc1918) network
 fabric       | Boolean  | Whether this network is created on a fabric
+vpc          | Boolean  | Whether this network is created on a VPC
 description  | String   | Description of this network (optional)
 subnet       | String   | A CIDR formatted string that describes the network
 provision_start_ip| String | The first IP on the network that may be assigned
@@ -9063,6 +9072,7 @@ ResourceNotFound | If `:login`, `:vlan_id` or `:id` does not exist
       "name": "newnet",
       "public": false,
       "fabric": true,
+      "vpc": false,
       "gateway": "10.50.1.1",
       "internet_nat": true,
       "provision_end_ip": "10.50.1.20",
@@ -9104,6 +9114,7 @@ id           | UUID     | Unique id for this network
 name         | String   | The network name
 public       | Boolean  | Whether this a public or private (rfc1918) network
 fabric       | Boolean  | Whether this network is created on a fabric
+vpc          | Boolean  | Whether this network is created on a VPC
 description  | String   | Description of this network (optional)
 subnet       | String   | A CIDR formatted string that describes the network
 provision_start_ip| String | The first IP on the network that may be assigned
@@ -9156,6 +9167,7 @@ ResourceNotFound | If `:login` does not exist
       "name": "newnet",
       "public": false,
       "fabric": true,
+      "vpc": false,
       "description": "updated description",
       "gateway": "192.168.128.1",
       "internet_nat": true,
@@ -9213,7 +9225,621 @@ InUseError       | The VLAN currently has active networks on it
     Api-Version: 7.3.0
 
 
+# VPCs
 
+VPCs are the next iteration of fabrics. Some notable differences between
+fabrics and VPCs:
+
+- A user (subject to quota limits) can have multiple VPCs, each VPC is isolated
+    from any other VPC.
+- Each VPC must have a CIDR block that contains all of the networks (and IPs)
+    allocated in those networks. That is, all networks created in a VPC must
+    fit within the CIDR block used to create the VPC.
+- VPC Networks automatically route traffic between each other without having to
+    create any dedicated router instances.
+- VPC Networks do not have a vlan id. While used internally, these values are
+    automatically assigned as required.
+
+
+## ListVPCs (GET /:login/vpc/)
+
+### Inputs
+
+* None
+
+### Returns
+
+An array of A VPC objects.
+
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+vpc_id      | UUID     | Unique id for the network
+name        | String   | A unique name to identify the VPC
+cidr        | String   | The CIDR block for networks in this VPC.
+description | String   | Description of the VPC (optional)
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+--------------   | ---------------
+ResourceNotFound | If `:login` does not exist
+
+#### Example Request
+
+    GET /login/vpc HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~9.13
+
+#### Example Response
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Server: Joyent Triton 9.13.0
+    Api-Version: 9.13.0
+
+    [
+      {
+      "vpc_id": "ee8e7430-a607-4f79-b36a-798031b842aa",
+      "name": "MyVPC",
+      "cidr": "192.168.0.0/16",
+      "description": "My First VPC Network"
+      }
+    ]
+
+
+## CreateVPC (POST /:login/vpc)
+
+Creates a new VPC.
+
+### Inputs
+
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+name        | String   | A unique name to identify the VPC
+cidr        | String   | The CIDR block (address/mask) for this VPC.
+description | String   | An optional description of the VPC.
+
+### Returns
+
+A VPC Object.
+
+
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+vpc_id      | UUID     | The unique id of the VPC.
+name        | String   | A unique name to identify the VPC
+cidr        | String   | The CIDR block (address/mask) for this VPC.
+description | String   | An optional description of the VPC.
+
+### Errors
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
+MissingParameter | If you didn't send a required field
+InvalidArgument  | `vlan_id` or `name` are in use, or `vlan_id` is outside the valid range
+QuotaExceeded    | The user has already created the maximum number of allowed VPCs.
+
+#### Example Request
+
+    POST /login/vpc
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~9.13
+
+    {
+        "name": "MyVPC",
+        "description": "My First VPC",
+        "cidr": "10.100.0.0/16"
+    }
+
+#### Example Response
+
+    HTTP/1.1 201 Created
+    Content-Type: application/json
+    Server: Joyent Triton 9.13.0
+    Api-Version: 9.13.0
+
+    {
+        "vpc_id": "ee8e7430-a607-4f79-b36a-798031b842aa",
+        "name": "MyVPC",
+        "description": "My First VPC",
+        "cidr": "10.100.0.0/16"
+    }
+
+## GetVPC (GET /:login/vpc/:vpc_id)
+
+### Inputs
+
+* None
+
+### Returns
+
+A VPC object
+
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+vpc_id      | UUID     | Unique id for the network
+name        | String   | A unique name to identify the VPC
+cidr        | String   | The CIDR block for networks in this VPC.
+description | String   | Description of the VPC (optional)
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+--------------   | ---------------
+ResourceNotFound | If `:login` does not exist
+
+#### Example Request
+
+    GET /login/vpc/ee8e7430-a607-4f79-b36a-798031b842aa HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~9.13
+
+#### Example Response
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Server: Joyent Triton 9.13.0
+    Api-Version: 9.13.0
+
+    [
+      {
+      "vpc_id": "ee8e7430-a607-4f79-b36a-798031b842aa",
+      "name": "MyVPC",
+      "cidr": "192.168.0.0/16",
+      "description": "My First VPC Network"
+      }
+    ]
+
+## UpdateVPC (PUT /:login/vpc/:vpc_id)
+
+Updates a VPC.
+
+### Inputs
+
+All inputs are optional.
+
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+name        | String   | A unique name to identify the VPC
+description | String   | Description of the VPC (optional)
+
+### Returns
+
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------
+vpc_id      | UUID     | Unique id for the network
+name        | String   | A unique name to identify the VPC
+cidr        | String   | The CIDR block for networks in this VPC.
+description | String   | Description of the VPC (optional)
+
+### Errors
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:vpc_id` does not exist
+
+#### Example Request
+
+    POST /login/vpcs/ee8e7430-a607-4f79-b36a-798031b842aa HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~9.13
+
+    {
+      "description": "new description"
+    }
+
+#### Example Response
+
+    HTTP/1.1 202 Accepted
+    Content-Type: application/json
+    Server: Joyent Triton 9.13.0
+    Api-Version: 9.13.0
+
+    {
+      "vpc_id": "ee8e7430-a607-4f79-b36a-798031b842aa",
+      "name": "MyVPC",
+      "description": "new description",
+      "cidr": "192.168.0.0/16",
+    }
+
+## DeleteVPC (DELETE /:login/vpc/:vpc_id)
+
+Deletes the specified VPC. Note that there must be no networks on that VPC in
+order for the VPC to be deleted.
+
+### Inputs
+
+* None
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:vpc_id` does not exist
+InUseError       | The VPC currently has active networks on it
+
+#### Example Request
+
+    DELETE /login/vpc/ee8e7430-a607-4f79-b36a-798031b842aa HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~9.13
+
+#### Example Response
+
+    HTTP/1.1 204 No Content
+    Content-Type: application/json
+    Server: Joyent Triton 9.13.0
+    Api-Version: 9.13.0
+
+## ListVPCNetworks (GET /:login/vpc/:vpc_id/networks)
+
+Lists all of the networks in the VPC specified by `:vpc_id`.
+
+### Inputs
+
+* None
+
+### Returns
+
+Returns an array of Network Objects. Each network object has the following
+information:
+
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+id           | UUID     | Unique id for this network
+name         | String   | The network name
+public       | Boolean  | Whether this a public or private (rfc1918) network
+fabric       | Boolean  | Whether this network is created on a fabric
+vpc          | Boolean  | Whether this network is created on a VPC
+description  | String   | Description of this network (optional)
+subnet       | String   | A CIDR formatted string that describes the network
+provision_start_ip| String | The first IP on the network that may be assigned
+provision_end_ip  | String | The last IP on the network that may be assigned
+gateway      | String   | Optional Gateway IP address
+resolvers    | String   | Resolver IP addresses
+routes       | Routes Object| Optional Static routes for hosts on this network
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:vpc_id` does not exist
+
+#### Example Request
+
+    GET /login/vpc/ee8e7430-a607-4f79-b36a-798031b842aa/networks HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~9.13
+
+#### Example Response
+
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+    Server: Joyent Triton 9.13.0
+    Api-Version: 9.13.0
+
+    [
+      {
+        "id": "8ecf7f1c-e69f-4264-b94b-57774aab71e6",
+        "name": "default",
+        "public": false,
+        "fabric": false,
+        "vpc": true,
+        "gateway": "192.168.128.1",
+        "internet_nat": true,
+        "provision_end_ip": "192.168.131.250",
+        "provision_start_ip": "192.168.128.5",
+        "resolvers": [
+          "8.8.8.8",
+          "8.8.4.4"
+        ],
+        "routes": {
+            "192.168.0.0/16": "192.168.128.1"
+        },
+        "subnet": "192.168.128.0/22",
+      },
+      {
+        "id": "ad2ae2e7-2ec8-4d64-9528-aa7fb69352cb",
+        "name": "newnet",
+        "public": false,
+        "fabric": false,
+        "vpc": true,
+        "gateway": "192.168.5.1",
+        "internet_nat": true,
+        "provision_end_ip": "192.168.5.20",
+        "provision_start_ip": "192.168.5.2",
+        "resolvers": [
+          "8.8.8.8",
+          "8.8.4.4"
+        ],
+        "routes": {
+          "192.168.0.0/16": "192.168.5.1"
+        },
+        "subnet": "192.168.5.0/24",
+      }
+    ]
+
+## CreateVPCNetwork (POST /:login/vpc/:vpc_id/networks)
+
+Creates a network on the VPC specified by `:vpc_id`. The subnet must be a
+subset of the CIDR block for `:vpc_id`.
+
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+name         | String   | The network name; must be unique
+description  | String   | Description of this network (optional)
+subnet       | String   | A CIDR formatted string that describes the network
+provision_start_ip| String | The first IP on the network that may be assigned
+provision_end_ip  | String | The last IP on the network that may be assigned
+gateway      | String   | Gateway IP address
+resolvers    | String   | Optional resolver IP addresses
+routes       | Routes Object| Optional Static routes for hosts on this network.
+internet_nat | Boolean  | Provision internet NAT zone on gateway address, default is true
+
+If the gateway address is not specified, the first IP in the subnet is used.
+This may adjust the provision_start_ip value if it is the first IP in the
+subnet.
+
+If no routes are given, a default route entry with the VPC CIDR block and
+a next hop of the gateway IP are added. If no routes are desired for the
+network, an empty routes object should be given.
+
+Network Object:
+
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+id           | UUID     | Unique id for this network
+name         | String   | The network name
+public       | Boolean  | Whether this a public or private (rfc1918) network
+fabric       | Boolean  | Whether this network is created on a fabric
+vpc          | Boolean  | Whether this network is created on a VPC
+description  | String   | Description of this network (optional)
+subnet       | String   | A CIDR formatted string that describes the network
+provision_start_ip| String | The first IP on the network that may be assigned
+provision_end_ip  | String | The last IP on the network that may be assigned
+gateway      | String   | Gateway IP address
+resolvers    | String   | Resolver IP addresses
+routes       | Routes Object| Optional Static routes for hosts on this network
+internet_nat | Boolean  | Provision internet NAT zone on gateway address
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` or `:vpc_id` do not exist
+
+#### Example Request
+
+    POST /login/vpc/8e7430-a607-4f79-b36a-798031b842aa/networks HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~9.13
+
+    {
+      "name": "newnet",
+      "provision_end_ip": "192.168.1.20",
+      "provision_start_ip": "192.168.1.5",
+      "resolvers": [
+        "8.8.8.8",
+        "8.8.4.4"
+      ],
+      "subnet": "10.50.1.0/24"
+    }
+
+#### Example Response
+
+    HTTP/1.1 201 Created
+    Content-Type: application/json
+    Server: Joyent Triton 9.13.0
+    Api-Version: 9.13.0
+
+    {
+      "id": "fe5813d7-b897-4538-91ae-5fc2490fbafe",
+      "name": "newnet",
+      "public": false,
+      "fabric": false,
+      "vpc": true,
+      "gateway": "192.168.1.1",
+      "internet_nat": true,
+      "provision_end_ip": "192.168.1.20",
+      "provision_start_ip": "192.168.1.5",
+      "resolvers": [
+        "8.8.8.8",
+        "8.8.4.4"
+      ],
+      "routes": {
+        "192.168.0.0/16": "192.168.1.1"
+      },
+      "subnet": "192.168.1.0/24",
+    }
+
+## GetVPCNetwork (GET /:login/vpc/:vpc_id/networks/:id)
+
+### Inputs
+
+* None
+
+### Returns
+
+The details of the network object:
+
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+id           | UUID     | Unique id for this network
+name         | String   | The network name
+public       | Boolean  | Whether this a public or private (rfc1918) network
+fabric       | Boolean  | Whether this network is created on a fabric
+vpc          | Boolean  | Whether this network is created on a VPC
+description  | String   | Description of this network (optional)
+subnet       | String   | A CIDR formatted string that describes the network
+provision_start_ip| String | The first IP on the network that may be assigned
+provision_end_ip  | String | The last IP on the network that may be assigned
+gateway      | String   | Optional Gateway IP address
+resolvers    | String   | Resolver IP addresses
+routes       | Routes Object| Optional Static routes for hosts on this network
+internet_nat | Boolean  | Provision internet NAT zone on gateway address
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:vpc_id` or `:id` does not exist
+
+## UpdateVPCNetwork (PUT /:login/vpc/:vpc_id/networks/:id)
+
+### Inputs
+
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+name         | String   | The network name; must be unique (optional)
+description  | String   | Description of this network (optional)
+provision_start_ip| String | The first IP on the network that may be assigned (optional)
+provision_end_ip  | String | The last IP on the network that may be assigned (optional)
+resolvers    | String   | Resolver IP addresses (optional)
+routes       | Routes Object| Static routes for hosts on this network (optional)
+
+### Returns
+
+Network Object:
+
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+id           | UUID     | Unique id for this network
+name         | String   | The network name
+public       | Boolean  | Whether this a public or private (rfc1918) network
+fabric       | Boolean  | Whether this network is created on a fabric
+vpc          | Boolean  | Whether this network is created on a VPC
+description  | String   | Description of this network (optional)
+subnet       | String   | A CIDR formatted string that describes the network
+provision_start_ip| String | The first IP on the network that may be assigned
+provision_end_ip  | String | The last IP on the network that may be assigned
+gateway      | String   | Optional Gateway IP address
+resolvers    | String   | Resolver IP addresses
+routes       | Routes Object| Optional Static routes for hosts on this network
+internet_nat | Boolean  | Provision internet NAT zone on gateway address
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login` does not exist
+
+#### Example Request
+
+    PUT /login/vpc/8e7430-a607-4f79-b36a-798031b842aa/networks/8f6372d0-4988-4aab-8072-9f62d5c6210b HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~9.13
+
+    {
+      "name": "updatenet",
+      "description": "updated description",
+      "resolvers": [
+        "8.8.8.8"
+      ],
+      "routes": {
+        "192.168.128.0/16": "192.168.128.1",
+        "172.16.10.0/24": "192.16.128.1"
+      }
+    }
+
+#### Example Response
+
+    HTTP/1.1 201 Created
+    Content-Type: application/json
+    Server: Joyent Triton 7.3.0
+    Api-Version: 7.3.0
+
+    {
+      "id": "8f6372d0-4988-4aab-8072-9f62d5c6210b",
+      "name": "updatenet",
+      "public": false,
+      "fabric": false,
+      "vpc": true,
+      "description": "updated description",
+      "gateway": "192.168.128.1",
+      "internet_nat": true,
+      "provision_end_ip": "192.168.131.250",
+      "provision_start_ip": "192.168.128.5",
+      "resolvers": [
+        "8.8.8.8"
+      ],
+      "routes": {
+        "192.168.0.0/16": "192.168.128.1",
+        "172.16.10.1/24": "192.168.128.1"
+      },
+      "subnet": "192.168.128.0/22"
+  }
+
+## DeleteVPCNetwork (DELETE /:login/vpc/:vpc_id/networks/:id)
+
+Deletes the specified Network. Note that no instances may be provisioned on the
+Network.
+
+### Inputs
+
+* None
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:login`, `:vpc_id` or `:id` does not exist
+InUseError       | The VPC network currently has provisioned instances on it
+
+#### Example Request
+
+    DELETE /login/vpc/networks/f5008d60-470a-4c96-8b6b-2c8f55fc40e4 HTTP/1.1
+    Authorization: Basic ...
+    Host: api.example.com
+    Accept: application/json
+    Accept-version: ~9.13
+
+#### Example Response
+
+    HTTP/1.1 204 No Content
+    Content-Type: application/json
+    Server: Joyent Triton 9.13.0
+    Api-Version: 9.13.0
 
 # Networks
 
