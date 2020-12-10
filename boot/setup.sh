@@ -73,7 +73,9 @@ function setup_cloudapi {
 
     ADMIN_IP=$(/usr/sbin/mdata-get sdc:nics | /usr/bin/json -a -c 'this.nic_tag === "admin"' ip)
 
+    lasthainst="        server cloudapi-${ports[-1]} *:${ports[-1]} check inter 10s slowstart 10s error-limit 3 on-error mark-down\n"
     sed -e "s#@@CLOUDAPI_INSTANCES@@#$hainstances#g" -e "s/@@ADMIN_IP@@/$ADMIN_IP/g" \
+        -e "s#@@CLOUDAPI_LASTINST@@#$lasthainst#g" \
         $SVC_ROOT/etc/haproxy.cfg.in > $SVC_ROOT/etc/haproxy.cfg || \
         fatal "could not process $src to $dest"
 

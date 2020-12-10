@@ -883,53 +883,7 @@ The section describes API changes in CloudAPI versions.
 ## 9.14.0
 
 - Expose Feed of Machines Changes [#68](https://github.com/joyent/sdc-cloudapi/pull/68).
-  Requires activation through SAPI:
-
-```
-cloudapi_svc=$(sdc-sapi /services?name=cloudapi|json -H 0.uuid)
-sapiadm update $cloudapi_svc metadata.experimental_cloudapi_changefeed=true
-```
-
-The following is an example of using `node-triton` to watch the changes:
-
-```
-$ ./bin/triton -i changefeed
-Change (2020-11-27T18:11:58.633Z) =>
-    modified: state,zone_state,tags
-    state: shutting_down
-    object: 98cbd3d0
-Change (2020-11-27T18:11:58.636Z) =>
-    modified: state,zone_state,pid,tags
-    state: down
-    object: 98cbd3d0
-Change (2020-11-27T18:11:58.641Z) =>
-    modified: state,zone_state,boot_timestamp,pid,tags
-    state: ready
-    object: 98cbd3d0
-Change (2020-11-27T18:12:00.632Z) =>
-    modified: state,zone_state,boot_timestamp,pid,tags
-    state: running
-    object: 98cbd3d0
-Change (2020-11-27T18:12:00.634Z) =>
-    modified: tags
-    state: ready
-    object: 98cbd3d0
-Change (2020-11-27T18:12:00.636Z) =>
-    modified: tags
-    state: running
-    object: 98cbd3d0
-```
-
-These events are fired by the following command (on a different terminal session):
-
-```
-./bin/triton -i inst reboot 98cbd3d0 -w
-Rebooting instance 98cbd3d0
-Rebooted instance 98cbd3d0
-```
-
-Note that the latest two changes are not relevant to the reboot event. (These are
-due to the way machine tags are stored in moray).
+  See the [Changefeed](#changfeed) section for the details.
 
 ## 9.13.0
 
@@ -7769,6 +7723,154 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
       "machine": "40c3c6ec-8be5-476a-ca35-c0ea2b0858e3"
     }
 
+# Changefeed
+
+It's possible to get notifications of changes happening to VMs using WebSockets
+through the GetChangefeed end-point.
+
+
+## GetChangefeed (GET /:login/changefeed)
+
+Open a WebSocket connection to CloudAPI's server and listen for messages related
+to property changes for all the machines owned by the current account, or just
+those provided as input.
+
+### Inputs
+
+**Field**   | **Type**           | **Description**
+----------- | ------------------ | ---------------
+vms         | Arrray Of Strings  | Comma separated list of VM uuids to watch for changes.
+
+### Returns
+
+Every message will return a changfeed change object with the following properties
+
+**Field**         | **Type**          | **Description**
+----------------- | ----------------- | ----------------
+changedResourceId | UUID              | The UUID of the modified resource. (The machine UUID)
+published         | String(timestamp) | When the change has been published
+resourceState     | String            | Internal Machine state as described at VMAPI docs.
+changeKind        | Object            | It includes the properties `resource` and `subResources`. Fixed values as long as CloudAPI doesn't support any resource but `vms` yet. `subResources` will list the modified properties which have caused this change to be publishes.
+resourceObject    | Object            | The complete Machine Object.
+
+## CLI example
+
+We have an account with different machines, like:
+
+```
+$ ./bin/triton -i inst ls -o id,name,img,state
+ID                                    NAME      IMG                 STATE
+98cbd3d0-5d6f-429d-8535-bf6ba5afe1e3  cftest01  base-64-lts@19.4.0  running
+cde1f7a9-1aaf-40ba-bc3d-0296aafc0ece  cftest02  base-64-lts@19.4.0  running
+```
+
+We can track changes for one or all the machines using either:
+
+```
+$ ./bin/triton -i changefeed --instances=cde1f7a9-1aaf-40ba-bc3d-0296aafc0ece
+```
+or
+
+```
+$ ./bin/triton -i changefeed
+```
+
+The following are the results of rebooting both VMs while tracking the changes as
+explained above:
+
+```
+$ ./bin/triton -i inst reboot cftest01 -w
+Rebooting instance cftest01
+Rebooted instance cftest01
+$ ./bin/triton -i inst reboot cftest02 -w
+Rebooting instance cftest02
+Rebooted instance cftest02
+```
+
+Tracking changes without instance filter:
+
+```
+$ ./bin/triton -i changefeed
+Change (2020-12-10T10:28:33.075Z) =>
+    modified: state,zone_state,tags,exit_status,exit_timestamp
+    state: shutting_down
+    internal state: shutting_down
+    object: 98cbd3d0
+Change (2020-12-10T10:28:35.074Z) =>
+    modified: state,zone_state,boot_timestamp,pid,tags
+    state: ready
+    internal state: ready
+    object: 98cbd3d0
+Change (2020-12-10T10:28:35.075Z) =>
+    modified: state,zone_state,boot_timestamp,exit_status,exit_timestamp,pid,tags
+    state: running
+    internal state: running
+    object: 98cbd3d0
+Change (2020-12-10T10:28:35.077Z) =>
+    modified: state,zone_state,pid,tags
+    state: down
+    internal state: down
+    object: 98cbd3d0
+Change (2020-12-10T10:28:35.078Z) =>
+    modified: tags
+    state: ready
+    internal state: ready
+    object: 98cbd3d0
+Change (2020-12-10T10:28:37.075Z) =>
+    modified: tags
+    state: running
+    internal state: running
+    object: 98cbd3d0
+Change (2020-12-10T10:32:19.218Z) =>
+    modified: state,zone_state
+    state: shutting_down
+    internal state: shutting_down
+    object: cde1f7a9
+Change (2020-12-10T10:32:19.219Z) =>
+    modified: state,zone_state,pid
+    state: down
+    internal state: down
+    object: cde1f7a9
+Change (2020-12-10T10:32:19.221Z) =>
+    modified: state,zone_state,boot_timestamp,pid
+    state: ready
+    internal state: ready
+    object: cde1f7a9
+Change (2020-12-10T10:32:21.219Z) =>
+    modified: state,zone_state,boot_timestamp,pid
+    state: running
+    internal state: running
+    object: cde1f7a9
+```
+
+Tracking changes for just the provided instance:
+
+```
+$ ./bin/triton -i changefeed --instances=cde1f7a9-1aaf-40ba-bc3d-0296aafc0ece
+Change (2020-12-10T10:32:19.218Z) =>
+    modified: state,zone_state
+    state: shutting_down
+    internal state: shutting_down
+    object: cde1f7a9
+Change (2020-12-10T10:32:19.219Z) =>
+    modified: state,zone_state,pid
+    state: down
+    internal state: down
+    object: cde1f7a9
+Change (2020-12-10T10:32:19.221Z) =>
+    modified: state,zone_state,boot_timestamp,pid
+    state: ready
+    internal state: ready
+    object: cde1f7a9
+Change (2020-12-10T10:32:21.219Z) =>
+    modified: state,zone_state,boot_timestamp,pid
+    state: running
+    internal state: running
+    object: cde1f7a9
+```
+
+Note that using `ctrl+c` will properly stop the changefeed watcher and
+close the WebSocket connection.
 
 # FirewallRules
 
