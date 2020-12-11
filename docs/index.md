@@ -7750,7 +7750,7 @@ Every message will return a changfeed change object with the following propertie
 changedResourceId | UUID              | The UUID of the modified resource. (The machine UUID)
 published         | String(timestamp) | When the change has been published
 resourceState     | String            | Internal Machine state as described at VMAPI docs.
-changeKind        | Object            | It includes the properties `resource` and `subResources`. Fixed values as long as CloudAPI doesn't support any resource but `vms` yet. `subResources` will list the modified properties which have caused this change to be publishes.
+changeKind        | Object            | It includes the properties `resource` (String) and `subResources` (Array of Strings). Currently CloudAPI only supports the "vms" resource. `subResources` allows you to select which changes you are interested in - e.g. a subResource of `["state", "tags"]` will only notify when a vm.state or vm.tags have been changed.
 resourceObject    | Object            | The complete Machine Object.
 
 ## CLI example
