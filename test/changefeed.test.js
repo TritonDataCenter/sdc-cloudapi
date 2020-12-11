@@ -76,6 +76,7 @@ test('Changefeed test', function (suite) {
                 if (err) {
                     suite.fail('Test image not available');
                     suite.end();
+                    next(err);
                     return;
                 }
                 suite.ok(img.id, 'img.id: ' + img.id);
@@ -99,6 +100,7 @@ test('Changefeed test', function (suite) {
                         ctx.machine_uuid = false;
                         suite.fail('Error waiting for running machine');
                         suite.end();
+                        next(waitErr);
                         return;
                     }
                     next();
@@ -271,6 +273,7 @@ test('Changefeed test', function (suite) {
                         ctx._2nd_machine_uuid = false;
                         suite.fail('Error waiting for running machine');
                         suite.end();
+                        next(waitErr);
                         return;
                     }
                     next();
