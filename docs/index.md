@@ -7869,7 +7869,7 @@ Change (2020-12-10T10:32:21.219Z) =>
     object: cde1f7a9
 ```
 
-Note that using `ctrl+c` will properly stop the changefeed watcher and
+Note that using `ctrl+c` will stop the changefeed watcher and
 close the WebSocket connection.
 
 # FirewallRules
