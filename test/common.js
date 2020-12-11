@@ -18,7 +18,7 @@ var crypto = require('crypto');
 var path = require('path');
 var bunyan = require('bunyan');
 var restify = require('restify');
-var libuuid = require('libuuid');
+const { v4: uuidv4 } = require('uuid');
 var util = require('util');
 var fs = require('fs');
 var semver = require('semver');
@@ -100,7 +100,7 @@ var SIGNATURE_FMT = 'Signature keyId="%s",algorithm="%s" %s';
 
 
 function uuid() {
-    return libuuid.create();
+    return uuidv4();
 }
 
 

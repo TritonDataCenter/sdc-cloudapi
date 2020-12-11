@@ -52,7 +52,16 @@ frontend cloudapi
         bind *:443 ssl crt /data/tls/cert.pem
         http-request capture req.hdr(x-request-id) len 36
         default_backend servers
+        acl is_websocket path_end /changefeed
+        acl is_websocket hdr(Upgrade) -i WebSocket
+        acl is_websocket hdr_beg(Host) -i ws
+        use_backend websockets if is_websocket
 
 backend servers
         option httpchk GET /--ping
 @@CLOUDAPI_INSTANCES@@
+
+backend websockets
+        balance source
+        option http-server-close
+@@CLOUDAPI_LASTINST@@

@@ -9,8 +9,8 @@
  */
 
 var assert = require('assert-plus');
-var libuuid = require('libuuid');
-var test = require('@smaller/tap').test;
+const { v4: uuidv4 } = require('uuid');
+var test = require('tape');
 var querystring = require('querystring');
 var vasync = require('vasync');
 
@@ -135,7 +135,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
                 // owner_uuid can't be passed to cloudapi
                 'owner_uuid should be rejected',
                 'owner_uuid',
-                {owner_uuid: libuuid.create()}
+                {owner_uuid: uuidv4()}
             ]
         ];
         var idx;

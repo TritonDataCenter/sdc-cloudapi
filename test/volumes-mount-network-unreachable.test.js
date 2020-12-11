@@ -9,12 +9,12 @@
  */
 
 var assert = require('assert-plus');
-var test = require('@smaller/tap').test;
+var test = require('tape');
 var util = require('util');
 var vasync = require('vasync');
 
 var common = require('./common');
-var libuuid = require('libuuid');
+const { v4: uuidv4 } = require('uuid');
 var mod_config = require('../lib/config.js');
 var mod_testConfig = require('./lib/config');
 var mod_testVolumes = require('./lib/volumes');
@@ -42,10 +42,10 @@ function mountVolumeFromMachine(opts, cb) {
     var shouldWaitForVolumeDeletion = true;
     var testMachineId;
     var testMachineName = 'sdc-cloudapi-tests-mount-network-unreachable-' +
-        libuuid.create();
+        uuidv4();
     var testVolumeId;
     var testVolumeName = 'sdc-cloudapi-tests-mount-network-unreachable-' +
-        libuuid.create();
+        uuidv4();
 
     vasync.pipeline({funcs: [
         function createVol(_, next) {

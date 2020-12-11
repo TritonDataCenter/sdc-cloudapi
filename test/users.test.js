@@ -15,8 +15,8 @@
  * test common during test setup.
  */
 
-var test = require('@smaller/tap').test;
-var libuuid = require('libuuid');
+var test = require('tape');
+const { v4: uuidv4 } = require('uuid');
 var util = require('util');
 var common = require('./common');
 
@@ -29,14 +29,14 @@ var checkInvalidArgument = common.checkInvalidArgument;
 
 var ADMIN_ROLE_NAME = 'administrator';
 
-var SUB_ID = libuuid.create();
+var SUB_ID = uuidv4();
 var SUB_LOGIN = 'a' + SUB_ID.substr(0, 7);
 var SUB_EMAIL = SUB_LOGIN + '_test@joyent.com';
 var SUB_USER;
 
 var PWD = 'joypass123';
 
-var SUB_ID_2 = libuuid.create();
+var SUB_ID_2 = uuidv4();
 var SUB_LOGIN_2 = 'a' + SUB_ID_2.substr(0, 7);
 var SUB_EMAIL_2 = SUB_LOGIN_2 + '_test@joyent.com';
 var SUB_USER_2;
@@ -375,7 +375,7 @@ test('create another user', function (t) {
 
 
 test('create policy', function (t) {
-    var policy_uuid = libuuid.create();
+    var policy_uuid = uuidv4();
     var name = 'a' + policy_uuid.substr(0, 7);
 
     var entry = {
@@ -510,7 +510,7 @@ test('update policy with wrong rule', function (t) {
 
 
 test('create role', function (t) {
-    var role_uuid = libuuid.create();
+    var role_uuid = uuidv4();
     var name = 'a' + role_uuid.substr(0, 7);
 
     var entry = {
@@ -533,7 +533,7 @@ test('create role', function (t) {
 
 
 test('create role - other', function (t) {
-    var role_uuid = libuuid.create();
+    var role_uuid = uuidv4();
     var name = 'a' + role_uuid.substr(0, 7);
 
     var entry = {
@@ -648,7 +648,7 @@ test('add existing policy to role - other', function (t) {
 
 
 test('add unexisting policy to role', function (t) {
-    var fakePolicy = libuuid.create();
+    var fakePolicy = uuidv4();
 
     CLIENT.post('/my/roles/' + ROLE_UUID, {
         policies: [POLICY_NAME, fakePolicy]
@@ -662,7 +662,7 @@ test('add unexisting policy to role', function (t) {
 
 
 test('create another role', function (t) {
-    var name = 'a' + libuuid.create().substr(0, 7);
+    var name = 'a' + uuidv4().substr(0, 7);
 
     var entry = {
         name: name,
@@ -1054,7 +1054,7 @@ test('delete role', function (t) {
 });
 
 test('create role v9 - v8 style', function (t) {
-    var role_uuid = libuuid.create();
+    var role_uuid = uuidv4();
     var name = 'a' + role_uuid.substr(0, 7);
 
     var entry = {
@@ -1078,7 +1078,7 @@ test('create role v9 - v8 style', function (t) {
 });
 
 test('create role v9 - nulls', function (t) {
-    var role_uuid = libuuid.create();
+    var role_uuid = uuidv4();
     var name = 'a' + role_uuid.substr(0, 7);
 
     var entry = {
@@ -1102,7 +1102,7 @@ test('create role v9 - nulls', function (t) {
 });
 
 test('create role v9 - inner arrays', function (t) {
-    var role_uuid = libuuid.create();
+    var role_uuid = uuidv4();
     var name = 'a' + role_uuid.substr(0, 7);
 
     var entry = {
@@ -1126,7 +1126,7 @@ test('create role v9 - inner arrays', function (t) {
 });
 
 test('create role v9 - extra props', function (t) {
-    var role_uuid = libuuid.create();
+    var role_uuid = uuidv4();
     var name = 'a' + role_uuid.substr(0, 7);
 
     var entry = {
@@ -1158,7 +1158,7 @@ test('create role v9 - extra props', function (t) {
 });
 
 test('create role v9 - missing type', function (t) {
-    var role_uuid = libuuid.create();
+    var role_uuid = uuidv4();
     var name = 'a' + role_uuid.substr(0, 7);
 
     var entry = {
@@ -1188,7 +1188,7 @@ test('create role v9 - missing type', function (t) {
 });
 
 test('create role v9 - stringified', function (t) {
-    var role_uuid = libuuid.create();
+    var role_uuid = uuidv4();
     var name = 'a' + role_uuid.substr(0, 7);
 
     var entry = {
@@ -1219,7 +1219,7 @@ test('create role v9 - stringified', function (t) {
 });
 
 test('create role v9', function (t) {
-    var role_uuid = libuuid.create();
+    var role_uuid = uuidv4();
     var name = 'a' + role_uuid.substr(0, 7);
 
     var entry = {

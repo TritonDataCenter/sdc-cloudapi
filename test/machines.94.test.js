@@ -5,10 +5,10 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
-var test = require('@smaller/tap').test;
+var test = require('tape');
 var util = require('util');
 var vasync = require('vasync');
 

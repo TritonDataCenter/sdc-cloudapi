@@ -9,7 +9,7 @@
  */
 
 
-const test = require('@smaller/tap').test;
+const test = require('tape');
 
 const common = require('./common');
 

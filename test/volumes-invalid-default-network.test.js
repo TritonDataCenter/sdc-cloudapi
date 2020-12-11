@@ -8,8 +8,8 @@
  * Copyright 2020 Joyent, Inc.
  */
 
-var libuuid = require('libuuid');
-var test = require('@smaller/tap').test;
+const { v4: uuidv4 } = require('uuid');
+var test = require('tape');
 
 var common = require('./common');
 var mod_config = require('../lib/config.js');
@@ -63,7 +63,7 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
             CONFIG.datacenter_name, {
             dclocalconfig: CONFIG.datacenter_name,
             defaultFabricSetup: 'false',
-            defaultNetwork: libuuid.create()
+            defaultNetwork: uuidv4()
         }, function onDcLocalConfigUpdated(updateErr) {
             t.ifErr(updateErr, 'updating dclocalconfig should not error');
             t.end();

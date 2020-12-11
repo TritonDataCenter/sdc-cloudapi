@@ -5,10 +5,10 @@
  */
 
 /*
- * Copyright (c) 2018, Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
-var test = require('@smaller/tap').test;
+var test = require('tape');
 var common = require('./common');
 
 

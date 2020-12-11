@@ -77,6 +77,9 @@
 {{#experimental_cloudapi_bhyve_snapshots}}
     "experimental_cloudapi_bhyve_snapshots": {{{experimental_cloudapi_bhyve_snapshots}}},
 {{/experimental_cloudapi_bhyve_snapshots}}
+{{#experimental_cloudapi_changefeed}}
+    "experimental_cloudapi_changefeed": {{{experimental_cloudapi_changefeed}}},
+{{/experimental_cloudapi_changefeed}}
     "cueballHttpAgent": {
         "resolvers": ["{{{BINDER_SERVICE}}}"],
         "initialDomains": [

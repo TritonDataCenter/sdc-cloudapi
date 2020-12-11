@@ -1,7 +1,7 @@
 {
     "name": "cloudapi",
     "description": "Triton CloudAPI",
-    "version": "9.13.0",
+    "version": "9.14.0",
     "author": "Joyent (joyent.com)",
     "private": true,
     "engines": {
@@ -19,6 +19,7 @@
         "assert-plus": "1.0.0",
         "backoff": "2.5.0",
         "bunyan": "1.8.1",
+        "changefeed": "1.5.2",
         "clone": "0.1.5",
         "ctype": "0.5.2",
         "cueball": "2.1.1",
@@ -29,7 +30,6 @@
         "kang": "1.1.0",
         "keyapi": "git+https://github.com/joyent/keyapi.git#e14b3d582e1d9d338b7082d61f34ba8d1bbc540a",
         "krill": "1.0.1",
-        "libuuid": "0.2.1",
         "mahi": "2.3.0",
         "mime": "^1.4.1",
         "mooremachine": "^2.2.0",
@@ -41,6 +41,7 @@
         "triton-metrics": "0.1.0",
         "triton-netconfig": "1.3.0",
         "ufds": "1.7.0",
+        "uuid": "^8.3.0",
         "uuid-by-string": "0.6.0",
         "vasync": "2.2.0",
         "verror": "1.10.0",
@@ -49,9 +50,11 @@
     "devDependencies": {
         "eslint": "^4.10.0",
         "eslint-plugin-joyent": "^2.1.0",
-        "@smaller/tap": "11.1.4-1.0.0",
+        "nyc": "^14.1.0",
         "smartdc": "8.1.0",
-        "sshpk": "^1.16.1"
+        "sshpk": "^1.16.1",
+        "tape": "^5.0.0"
+
     },
     "sdcDependencies": {
         "imgapi": ">=2.1.0",
@@ -59,7 +62,8 @@
     },
     "scripts": {
         "start": "node ./main.js",
-        "test": "./node_modules/.bin/tap ./test/*.test.js"
+        "test": "./node_modules/.bin/tape ./test/*.test.js",
+        "coverage": "nyc --reporter=lcov npm test"
     },
     "license": "MPL-2.0"
 }

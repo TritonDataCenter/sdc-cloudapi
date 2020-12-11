@@ -15,7 +15,7 @@
  * here by listing the Amon zone.
  */
 
-var test = require('@smaller/tap').test;
+var test = require('tape');
 var common = require('./common');
 
 

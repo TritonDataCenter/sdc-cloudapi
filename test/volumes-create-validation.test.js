@@ -8,8 +8,8 @@
  * Copyright 2020 Joyent, Inc.
  */
 
-var libuuid = require('libuuid');
-var test = require('@smaller/tap').test;
+const { v4: uuidv4 } = require('uuid');
+var test = require('tape');
 var vasync = require('vasync');
 
 var common = require('./common');
@@ -118,8 +118,8 @@ if (CONFIG.experimental_cloudapi_nfs_shared_volumes !== true) {
              * CloudAPI should check if they're valid fabric networks owner by
              * the test user.
              */
-            libuuid.create(),
-            [libuuid.create()],
+            uuidv4(),
+            [uuidv4()],
             ['invalid-network'],
             {},
             42

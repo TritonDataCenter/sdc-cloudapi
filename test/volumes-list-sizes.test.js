@@ -8,7 +8,7 @@
  * Copyright 2020 Joyent, Inc.
  */
 
-var test = require('@smaller/tap').test;
+var test = require('tape');
 
 var common = require('./common');
 var mod_config = require('../lib/config.js');

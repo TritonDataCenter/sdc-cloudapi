@@ -10,7 +10,7 @@
 
 
 var util = require('util');
-var test = require('@smaller/tap').test;
+var test = require('tape');
 var common = require('./common');
 var uuid = common.uuid;
 var addPackage = common.addPackage;
