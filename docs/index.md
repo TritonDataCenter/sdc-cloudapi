@@ -3932,7 +3932,7 @@ homepage    | String   | No  | The image [homepage](https://images.joyent.com/do
 eula        | String   | No  | The image [eula](https://images.joyent.com/docs/#manifest-eula)
 acl         | String   | No  | The image [acl](https://images.joyent.com/docs/#manifest-acl)
 tags        | String   | No  | The image [tags](https://images.joyent.com/docs/#manifest-tags)
-incremental | Boolean  | No  | Whether this is an incremental image
+incremental | Boolean  | No  | Whether to create an incremental image. Default is true.
 
 ### Returns
 
