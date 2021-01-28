@@ -172,6 +172,13 @@
     "fabric_package_prefixes": {{{"CLOUDAPI_FABRIC_PACKAGE_PREFIXES}}},
     {{/"CLOUDAPI_FABRIC_PACKAGE_PREFIXES}}
 
+    {{^vpc_cfg}}
+    "vpc_enabled": false,
+    {{/vpc_cfg}}
+    {{#vpc_cfg}}
+    "vpc_enabled": true,
+    {{/vpc_enabled}}
+
     {{^CLOUDAPI_DEFAULT_CONTAINER_BRAND}}
     "default_container_brand": "joyent",
     {{/CLOUDAPI_DEFAULT_CONTAINER_BRAND}}
