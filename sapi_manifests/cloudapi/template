@@ -156,6 +156,13 @@
         }
     },
 
+    {{#CLOUDAPI_EXTERNAL_TAGS}}
+    "extra_external_tags": {{{CLOUDAPI_EXTERNAL_TAGS}}},
+    {{/CLOUDAPI_EXTERNAL_TAGS}}
+    {{^CLOUDAPI_EXTERNAL_TAGS}}
+    "extra_external_tags": [],
+    {{/CLOUDAPI_EXTERNAL_TAGS}}
+
     {{^account_allowed_dcs}}
     "account_allowed_dcs": false,
     {{/account_allowed_dcs}}
