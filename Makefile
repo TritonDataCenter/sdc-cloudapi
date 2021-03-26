@@ -75,7 +75,7 @@ BASE_IMAGE_UUID = 59ba2e5e-976f-4e09-8aac-a4a7ef0395f5
 BUILDIMAGE_NAME = $(NAME)
 BUILDIMAGE_DESC	= SDC CloudAPI
 BUILDIMAGE_PKGSRC = \
-	openssl-1.1.1i \
+	openssl-1.1.1k \
 	haproxy-2.0.13
 AGENTS		= amon config registrar
 
