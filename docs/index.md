@@ -12,7 +12,8 @@ markdown2extras: tables, code-friendly
 -->
 
 <!--
-    Copyright 2020 Joyent, Inc.
+    Copyright 2021 Joyent, Inc.
+    Copyright 2021 The University of Queensland
 -->
 
 
@@ -879,6 +880,10 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 # Versions
 
 The section describes API changes in CloudAPI versions.
+
+## 9.15.0
+
+- Allow setting the `primary` option with the AddNic API [#84].
 
 ## 9.14.0
 
@@ -9796,6 +9801,7 @@ Creates a new NIC on an instance belonging to a given account.
 **Field** | **Type** | **Description**
 --------- | -------- | ---------------
 network   | Object or String   | [Network object](#network-objects) or network UUID string.
+primary   | Boolean  | Whether to make this NIC the new primary NIC
 
 ### Returns
 
