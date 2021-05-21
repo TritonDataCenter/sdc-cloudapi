@@ -7,6 +7,7 @@
 
 #
 # Copyright 2019 Joyent, Inc.
+# Copyright 2021 Spearhead Systems S.R.L.
 #
 
 #
@@ -125,8 +126,8 @@ end_time=$(date +%s)
 elapsed=$((${end_time} - ${start_time}))
 
 tests=$(grep "^1\.\.[0-9]" ${OUTPUT_DIR}/cloudapi.tap | cut -d '.' -f3 | xargs | tr ' ' '+' | bc)
-failed=$(grep "^# failed [0-9]" ${OUTPUT_DIR}/cloudapi.tap | cut -d ' ' -f3 | xargs | tr ' ' '+' | bc)
-skipped=$(grep "^# skip: [0-9]" ${OUTPUT_DIR}/cloudapi.tap | cut -d ' ' -f3 | xargs | tr ' ' '+' | bc)
+failed=$(grep "^# fail  [0-9]" ${OUTPUT_DIR}/cloudapi.tap | cut -d ' ' -f4 | xargs | tr ' ' '+' | bc)
+skipped=$(grep "^# skip  [0-9]" ${OUTPUT_DIR}/cloudapi.tap | cut -d ' ' -f4 | xargs | tr ' ' '+' | bc)
 
 [[ -z ${tests} ]] && tests=0
 [[ -z ${failed} ]] && failed=0
