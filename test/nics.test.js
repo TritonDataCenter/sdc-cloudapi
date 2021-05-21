@@ -6,6 +6,7 @@
 
 /*
  * Copyright 2020 Joyent, Inc.
+ * Copyright 2021 Spearhead Systems S.R.L.
  */
 
 /*
@@ -617,8 +618,10 @@ function deleteTestNetwork(t, data, fixture, cb) {
                     next(err);
                     return;
                 });
+            } else {
+                next();
+                return;
             }
-            next();
         }
     ]}, cb);
 }
