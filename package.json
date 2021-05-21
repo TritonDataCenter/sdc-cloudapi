@@ -30,7 +30,7 @@
     "kang": "1.1.0",
     "keyapi": "git+https://github.com/joyent/keyapi.git#e14b3d582e1d9d338b7082d61f34ba8d1bbc540a",
     "krill": "1.0.1",
-    "mahi": "2.3.0",
+    "mahi": "2.3.3",
     "mime": "^1.4.1",
     "mooremachine": "^2.2.0",
     "nodemailer": "0.7.1",
