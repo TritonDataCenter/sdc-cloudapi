@@ -106,7 +106,10 @@
                 "delay": 250,
                 "maxDelay": 1000
             }
-        }
+        },
+        "tcpKeepAliveInitialDelay": 10000,
+        "ping": "/ping",
+        "pingInterval": 30000
     },
     {{#MAHI_SERVICE}}
     "mahi": {
