@@ -8,7 +8,7 @@
  * Copyright 2020 Joyent, Inc.
  */
 
-var test = require('@smaller/tap').test;
+var test = require('tape').test;
 var plugin = require('../../plugins/free_tier');
 var restify = require('restify');
 
