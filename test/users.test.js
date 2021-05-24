@@ -6,6 +6,7 @@
 
 /*
  * Copyright 2020 Joyent, Inc.
+ * Copyright 2021 Spearhead Systems S.R.L.
  */
 
 /*
@@ -1234,6 +1235,11 @@ test('create role v9', function (t) {
                 default: false
             },
             {
+                type: 'subuser',
+                id: SUB_USER.id,
+                default: false
+            },
+            {
                 type: 'account',
                 login: OTHER.login,
                 default: true
@@ -1272,7 +1278,7 @@ test('get role (by UUID)', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.equal(body.id, ROLE_UUID);
-        t.deepEqual(body.members, [SUB_LOGIN_2]);
+        t.deepEqual(body.members.sort(), [SUB_LOGIN_2, SUB_LOGIN].sort());
         t.deepEqual(body.default_members, []);
         t.deepEqual(body.policies, [POLICY_NAME]);
         t.end();
@@ -1295,19 +1301,32 @@ test('get role v9 (by UUID)', function (t) {
         t.ok(Array.isArray(body.members), 'members is an array');
         t.strictEqual(typeof (body.members[0]), 'object',
             'members[0] is object');
-        t.strictEqual(body.members.length, 2, '2 members present');
-        body.members.forEach(function (member) {
-            if (member.type === 'subuser') {
-                t.strictEqual(member.login, SUB_LOGIN_2);
-            } else if (member.type === 'account') {
-                t.strictEqual(member.login, OTHER.login);
-            }
-        });
+        t.strictEqual(body.members.length, 3, '3 members present');
         t.ok(Array.isArray(body.policies), 'policies is an array');
         t.strictEqual(typeof (body.policies[0]), 'object',
             'policies[0] is object');
         t.strictEqual(body.policies[0].id, POLICY_UUID, 'policy uuid');
         t.strictEqual(body.policies[0].name, POLICY_NAME, 'policy name');
+
+        function memberSorter(a, b) {
+            return a.login < b.login;
+        }
+
+        var members = body.members.map(function (m) {
+            return { login: m.login, type: m.type };
+        });
+        var expectedMem = [{
+            login: SUB_LOGIN,
+            type: 'subuser'
+        }, {
+            login: SUB_LOGIN_2,
+            type: 'subuser'
+        }, {
+            login: OTHER.login,
+            type: 'account'
+        }];
+
+        t.deepEqual(members.sort(memberSorter), expectedMem.sort(memberSorter));
         t.end();
     });
 });
