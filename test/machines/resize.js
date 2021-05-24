@@ -6,6 +6,7 @@
 
 /*
  * Copyright 2020 Joyent, Inc.
+ * Copyright 2021 Spearhead Systems S.R.L.
  */
 
 var common = require('../common');
@@ -24,7 +25,7 @@ function (suite, client, other, machine, pkgDown, pkgSame, pkgUp, cb) {
         return cb();
     }
 
-    suite.test('Resize Machine to insuficient capacity fails', function (t) {
+    suite.test('Resize Machine to insufficient capacity fails', function (t) {
         t.ok(pkgUp, 'Resize up package OK');
 
         return client.post('/my/machines/' + machine, {
@@ -40,12 +41,23 @@ function (suite, client, other, machine, pkgDown, pkgSame, pkgUp, cb) {
                 t.equal(body.code, 'ValidationFailed');
                 t.equal(body.message, 'Invalid VM update parameters');
 
-                t.equal(body.errors.length, 1);
-                var error = body.errors[0];
+                var errors = body.errors;
 
-                t.equal(error.field, 'ram');
-                t.equal(error.code, 'InsufficientCapacity');
-            }
+                errors.forEach(function (bErr) {
+                    t.equal(bErr.code, 'InsufficientCapacity');
+                });
+
+                if (errors.length === 1) {
+                    t.equal(errors[0].field, 'ram');
+                } else if (errors.length === 2) {
+                    var fields = errors.map(function (bErr) {
+                        return bErr.field;
+                    }).sort();
+                    t.deepEqual(fields, ['quota', 'ram']);
+                } else {
+                    t.fail('Unexpected capacity field');
+                }
+           }
 
             t.end();
         });
