@@ -426,11 +426,14 @@ test('list policies (OK)', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.ok(Array.isArray(body));
-        t.equal(body.length, 2);
+        t.equal(body.length, 3);
 
-        var expectedUuids = [POLICY_UUID, CLIENT.policy.uuid];
+        var expectedUuids = [
+            POLICY_UUID, CLIENT.policy.uuid, CLIENT.xpolicy.uuid
+        ];
         t.notEqual(expectedUuids, body[0].id);
         t.notEqual(expectedUuids, body[1].id);
+        t.notEqual(expectedUuids, body[2].id);
 
         t.end();
     });
@@ -691,7 +694,7 @@ test('list roles (OK)', function (t) {
         common.checkHeaders(t, res.headers);
         t.ok(body);
         t.ok(Array.isArray(body));
-        t.equal(body.length, 3);
+        t.equal(body.length, 4);
         checkRole(t, body[0]);
         checkRole(t, body[1]);
         t.end();
