@@ -53,7 +53,7 @@
     "nyc": "^14.1.0",
     "smartdc": "8.1.0",
     "sshpk": "^1.16.1",
-    "tape": "^5.0.0"
+    "tape": "4.13.2"
   },
   "sdcDependencies": {
     "imgapi": ">=2.1.0",
