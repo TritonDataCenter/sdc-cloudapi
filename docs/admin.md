@@ -714,6 +714,9 @@ support has vetted the account, they can add a limit in ufds for that account
 to override the defaults, thus bumping the amount of RAM or VMs the account
 can provision.
 
+Note that accounts with the `operator` role are considered admin/root
+accounts and don't get any limits applied upon provision.
+
 Limits are added to CloudAPI through sapi by adding a configuration for
 this CloudAPI plugin:
 
