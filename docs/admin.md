@@ -420,7 +420,7 @@ An example configuration:
 
 For information on writing a plugin, see [Plugin System](#plugin-system).
 By default, CloudAPI ships with some example plugins to limit provisioning based
-on number of customer machines, or resouces used by customer machines, as well
+on the number of customer machines, or resources used by customer machines, as well
 as providing a free tier of machines for customers to use.
 
 **Field** | **Type** | **Description**
@@ -593,7 +593,7 @@ those VMs' RAM, and/or the total sum of those VM's disk quota. Each of these
 three sums can be optionally constrainted by: VM brand, VM OS (specifically, the
 "os" attribute in the VM's image), and/or VM image name.
 
-When this plugin is enabled, end users will be to request to see how much of the
+When this plugin is enabled, end users will be able to check how much of the
 limit they have used - through the
 [GetAccountLimits](./index.md#GetAccountLimits) API.
 
@@ -603,7 +603,7 @@ different options for this plugin:
 
 
      {
-          "name": "provisioning_limits",
+          "name": "provision_limits",
           "enabled": true,
           "config": {
               "defaults": [{
@@ -685,7 +685,7 @@ an entire datacenter to 900GiB:
 Several limits can apply to the same account at once. All the examples above
 were meant as one-liners, but adding several limits to an account will work
 as desired. Each limit is applied to a new provision, and if any of the
-limits, the provision is rejected.
+limits are reached, the provision is rejected.
 
 As an example, to allow an account to have up to 25 VMs, a maximum of
 25600MiB RAM and 2.5TiB disk across the datacenter, and specifically only
@@ -720,7 +720,7 @@ this CloudAPI plugin:
     CLOUDAPI_UUID=$(sdc-sapi /services?name=cloudapi | json -Ha uuid)
     sdc-sapi /services/$CLOUDAPI_UUID -X PUT -d '{
         "metadata": {
-            "CLOUDAPI_PLUGINS": "[{\"name\":\"provision_limits\", \
+            "CLOUDAPI_PLUGINS": "[{\"name\":\"provision_limits\",
             \"enabled\": true,\"config\":{\"defaults\":[{\"value\":2 }]}}]"
         }
     }'
@@ -731,7 +731,7 @@ sdc-docker:
     DOCKER_UUID=$(sdc-sapi /services?name=docker | json -Ha uuid)
     sdc-sapi /services/$DOCKER_UUID -X PUT -d '{
         "metadata": {
-            "DOCKER_PLUGINS": "[{\"name\":\"provision_limits\", \
+            "DOCKER_PLUGINS": "[{\"name\":\"provision_limits\",
             \"enabled\": true,\"config\":{\"defaults\":[{\"value\":2 }]}}]"
         }
     }'
