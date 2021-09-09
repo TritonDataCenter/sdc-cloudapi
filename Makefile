@@ -76,7 +76,7 @@ BUILDIMAGE_NAME = $(NAME)
 BUILDIMAGE_DESC	= SDC CloudAPI
 BUILDIMAGE_PKGSRC = \
 	openssl-1.1.1k \
-	haproxy-2.0.13
+	haproxy-2.0.25
 AGENTS		= amon config registrar
 
 #
