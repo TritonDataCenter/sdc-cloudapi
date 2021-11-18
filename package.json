@@ -1,7 +1,7 @@
 {
   "name": "cloudapi",
   "description": "Triton CloudAPI",
-  "version": "9.15.1",
+  "version": "9.15.2",
   "author": "Joyent (joyent.com)",
   "private": true,
   "engines": {
@@ -24,9 +24,9 @@
     "ctype": "0.5.2",
     "cueball": "2.10.1",
     "filed": "0.0.7",
-    "http-signature": "1.1.0",
+    "http-signature": "1.3.6",
     "joyent-schemas": "git+https://github.com/joyent/schemas.git#dd1c3cbfae6e2aa6ceafbe003bd95fb5e579e748",
-    "jsprim": "2.0.0",
+    "jsprim": "2.0.2",
     "kang": "1.1.0",
     "keyapi": "git+https://github.com/joyent/keyapi.git#e14b3d582e1d9d338b7082d61f34ba8d1bbc540a",
     "krill": "1.0.1",
