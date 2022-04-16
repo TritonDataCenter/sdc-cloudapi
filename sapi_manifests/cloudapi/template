@@ -193,7 +193,7 @@
     "default_hvm_brand": "kvm",
     {{/CLOUDAPI_DEFAULT_HVM_BRAND}}
     {{#CLOUDAPI_DEFAULT_HVM_BRAND}}
-    "default_hvm_brand": {{{CLOUDAPI_DEFAULT_HVM_BRAND}}},
+    "default_hvm_brand": "{{{CLOUDAPI_DEFAULT_HVM_BRAND}}}",
     {{/CLOUDAPI_DEFAULT_HVM_BRAND}}
 
     {{^CLOUDAPI_MULTIPLE_PUB_NETWORKS}}
