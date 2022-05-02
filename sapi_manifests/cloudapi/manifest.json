@@ -1,5 +1,0 @@
-{
-    "name": "cloudapi",
-    "path": "/opt/smartdc/cloudapi/etc/cloudapi.cfg",
-    "post_cmd": "/usr/sbin/svcadm restart cloudapi:cloudapi-8081; /usr/sbin/svcadm restart cloudapi:cloudapi-8082; /usr/sbin/svcadm restart cloudapi:cloudapi-8083; /usr/sbin/svcadm restart cloudapi:cloudapi-8084"
-}
