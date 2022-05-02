@@ -1,7 +1,0 @@
-HTTP/1.1 500 Internal Server Error
-Content-Type: application/json
-Content-Length: 66
-Cache-Control: no-cache
-Connection: close
-
-{"code":"InternalServerError", "message":"Internal Server Error"}
