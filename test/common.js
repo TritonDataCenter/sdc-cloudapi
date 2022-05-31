@@ -1231,7 +1231,7 @@ function makeImageProvisionable(client, imageName, callback) {
         },
         /*
          * When images are imported into a DC's IMGAPI because they're an origin
-         * image for another image imported from updates.triotndatacenter.com,
+         * image for another image imported from updates.tritondatacenter.com,
 	 * their "public" attribute is set to false, which makes them
          * non-provisionable. In this case, we just update that public property
          * to "true".
