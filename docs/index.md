@@ -14,6 +14,7 @@ markdown2extras: tables, code-friendly
 <!--
     Copyright 2021 Joyent, Inc.
     Copyright 2021 The University of Queensland
+    Copyright 2022 MNX Cloud, Inc.
 -->
 
 
@@ -922,7 +923,7 @@ across reprovisions.
   connect to the VNC console of a HVM.
 - Support for pre-signed URLs for authentication (needed to make WebSockets
     useable with browsers).
-    
+
 ## 9.8.6
 
 - Allow `affinity` and `tags` to [Volume](#Volumes) creation, which can be used
@@ -1111,7 +1112,7 @@ encrypted servers.
   attribute `type` on images. In API versions 7 and earlier, `<image>.type`
   was either "virtualmachine" (for zvol images) or "smartmachine" for other
   image types. In version 8, `<image>.type` is the untranslated [type value
-  from the image in the IMGAPI](https://images.joyent.com/docs/#manifest-type).
+  from the image in the IMGAPI](https://images.smartos.org/docs/#manifest-type).
 
 - [Backward incompatible] ListDatasets and GetDataset have been removed.
   Use ListImages and GetImage, respectively.
@@ -3551,7 +3552,7 @@ name      | String   | The "friendly" name for this image
 os        | String   | The underlying operating system for this image
 version   | String   | The version for this image
 public    | Boolean  | Filter public/private images
-state     | String   | Filter on image [state](https://images.joyent.com/docs/#manifest-state). By default only active images are shown. Use `?state=all` to list all images
+state     | String   | Filter on image [state](https://images.smartos.org/docs/#manifest-state). By default only active images are shown. Use `?state=all` to list all images
 owner     | String   | Filter on owner UUID
 type      | String   | Filter on image type. The types changed in v8.0.0
 
@@ -3920,19 +3921,19 @@ Create a new custom image from an instance.  The typical process is:
 ### Inputs
 
 All inputs except `machine` are image manifest fields as defined by
-[the IMGAPI docs](https://images.joyent.com/docs/#image-manifests).  Note that
+[the IMGAPI docs](https://images.smartos.org/docs/#image-manifests).  Note that
 not all fields listed there can be specified here.
 
 **Field**   | **Type** | **Required?** | **Description**
 ----------- | -------- | ------------- | ---------------
 machine     | UUID     | Yes | The prepared and stopped instance UUID from which the image is to be created
-name        | String   | Yes | The name of the custom image, e.g. "my-image". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-name) for details
-version     | String   | Yes | The version of the custom image, e.g. "1.0.0". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-version) for details
-description | String   | No  | The image [description](https://images.joyent.com/docs/#manifest-description)
-homepage    | String   | No  | The image [homepage](https://images.joyent.com/docs/#manifest-homepage)
-eula        | String   | No  | The image [eula](https://images.joyent.com/docs/#manifest-eula)
-acl         | String   | No  | The image [acl](https://images.joyent.com/docs/#manifest-acl)
-tags        | String   | No  | The image [tags](https://images.joyent.com/docs/#manifest-tags)
+name        | String   | Yes | The name of the custom image, e.g. "my-image". See the [IMGAPI docs](https://images.smartos.org/docs/#manifest-name) for details
+version     | String   | Yes | The version of the custom image, e.g. "1.0.0". See the [IMGAPI docs](https://images.smartos.org/docs/#manifest-version) for details
+description | String   | No  | The image [description](https://images.smartos.org/docs/#manifest-description)
+homepage    | String   | No  | The image [homepage](https://images.smartos.org/docs/#manifest-homepage)
+eula        | String   | No  | The image [eula](https://images.smartos.org/docs/#manifest-eula)
+acl         | String   | No  | The image [acl](https://images.smartos.org/docs/#manifest-acl)
+tags        | String   | No  | The image [tags](https://images.smartos.org/docs/#manifest-tags)
 
 ### Returns
 
@@ -4122,13 +4123,13 @@ Only the image attributes listed below can be updated.
 
 **Field**   | **Type** | **Description**
 ----------- | -------- | ---------------
-name        | String   | The name of the custom image, e.g. "my-image". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-name) for details
-version     | String   | The version of the custom image, e.g. "1.0.0". See the [IMGAPI docs](https://images.joyent.com/docs/#manifest-version) for details
-description | String   | The image [description](https://images.joyent.com/docs/#manifest-description)
-homepage    | String   | The image [homepage](https://images.joyent.com/docs/#manifest-homepage)
-eula        | String   | The image [eula](https://images.joyent.com/docs/#manifest-eula)
-acl         | String   | The image [acl](https://images.joyent.com/docs/#manifest-acl)
-tags        | String   | The image [tags](https://images.joyent.com/docs/#manifest-tags)
+name        | String   | The name of the custom image, e.g. "my-image". See the [IMGAPI docs](https://images.smartos.org/docs/#manifest-name) for details
+version     | String   | The version of the custom image, e.g. "1.0.0". See the [IMGAPI docs](https://images.smartos.org/docs/#manifest-version) for details
+description | String   | The image [description](https://images.smartos.org/docs/#manifest-description)
+homepage    | String   | The image [homepage](https://images.smartos.org/docs/#manifest-homepage)
+eula        | String   | The image [eula](https://images.smartos.org/docs/#manifest-eula)
+acl         | String   | The image [acl](https://images.smartos.org/docs/#manifest-acl)
+tags        | String   | The image [tags](https://images.smartos.org/docs/#manifest-tags)
 
 ### Returns
 

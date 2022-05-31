@@ -6,6 +6,7 @@
 
 /*
  * Copyright 2020 Joyent, Inc.
+ * Copyright 2022 MNX Cloud, Inc.
  */
 
 /*
@@ -194,7 +195,7 @@ function _imgapi() {
 
 function _joyentImgapi() {
     return new IMGAPI({
-        url: 'https://images.joyent.com/',
+        url: 'https://images.smartos.org/',
         retry: {
             retries: 1,
             minTimeout: 1000
@@ -1230,8 +1231,8 @@ function makeImageProvisionable(client, imageName, callback) {
         },
         /*
          * When images are imported into a DC's IMGAPI because they're an origin
-         * image for another image imported from updates.joyent.com, their
-         * "public" attribute is set to false, which makes them
+         * image for another image imported from updates.triotndatacenter.com,
+	 * their "public" attribute is set to false, which makes them
          * non-provisionable. In this case, we just update that public property
          * to "true".
          */
