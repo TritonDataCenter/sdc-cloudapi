@@ -6,6 +6,7 @@
 
 #
 # Copyright 2022 Joyent, Inc.
+# Copyright 2022 MNX Cloud, Inc.
 #
 
 #
@@ -77,8 +78,8 @@ BASE_IMAGE_UUID = 502eeef2-8267-489f-b19c-a206906f57ef
 BUILDIMAGE_NAME = $(NAME)
 BUILDIMAGE_DESC	= SDC CloudAPI
 BUILDIMAGE_PKGSRC = \
-	openssl-1.1.1n \
-	haproxy-2.5.0
+	openssl-1.1.1q \
+	haproxy-2.6.1
 AGENTS		= amon config registrar
 
 #
