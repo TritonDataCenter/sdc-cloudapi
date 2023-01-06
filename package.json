@@ -1,8 +1,8 @@
 {
   "name": "cloudapi",
   "description": "Triton CloudAPI",
-  "version": "9.16.0",
-  "author": "Joyent (joyent.com)",
+  "version": "9.16.1",
+  "author": "MNX Cloud (mnx.io)",
   "private": true,
   "engines": {
     "node": ">=6.17.1"
@@ -10,11 +10,11 @@
   "engineStrict": true,
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com:joyent/sdc-cloudapi.git"
+    "url": "git+ssh://git@github.com:TritonDataCenter/sdc-cloudapi.git"
   },
   "dependencies": {
-    "aperture": "git+https://github.com/joyent/node-aperture.git#516f54924f9b3c997cca674e92937250801bd037",
-    "aperture-config": "git+https://github.com/joyent/aperture-config.git#752b0a27192ae091e382b55f5bc9ec5a806477be",
+    "aperture": "git+https://github.com/TritonDataCenter/node-aperture.git#516f54924f9b3c997cca674e92937250801bd037",
+    "aperture-config": "git+https://github.com/TritonDataCenter/aperture-config.git#752b0a27192ae091e382b55f5bc9ec5a806477be",
     "asn1": "0.1.11",
     "assert-plus": "1.0.0",
     "backoff": "2.5.0",
@@ -25,10 +25,10 @@
     "cueball": "2.10.1",
     "filed": "0.0.7",
     "http-signature": "1.3.6",
-    "joyent-schemas": "git+https://github.com/joyent/schemas.git#3ca3a09c8b6f29ee68ba17d61b556b6f2901a4b6",
+    "joyent-schemas": "git+https://github.com/TritonDataCenter/schemas.git#3ca3a09c8b6f29ee68ba17d61b556b6f2901a4b6",
     "jsprim": "2.0.2",
     "kang": "^1.3.0",
-    "keyapi": "git+https://github.com/joyent/keyapi.git#bedd6fe787a4f3f3942724b37baed19162c8f074",
+    "keyapi": "git+https://github.com/TritonDataCenter/keyapi.git#bedd6fe787a4f3f3942724b37baed19162c8f074",
     "krill": "1.0.1",
     "mahi": "2.3.3",
     "mime": "^1.6.0",

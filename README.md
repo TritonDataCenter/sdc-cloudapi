@@ -6,14 +6,15 @@
 
 <!--
     Copyright 2019 Joyent, Inc.
+    Copyright 2023 MNX Cloud, Inc.
 -->
 
 # sdc-cloudapi
 
-This repository is part of the Joyent Triton project. See the [contribution
-guidelines](https://github.com/joyent/triton/blob/master/CONTRIBUTING.md)
+This repository is part of the Triton DataCenter project. See the [contribution
+guidelines](https://github.com/TritonDataCenter/triton/blob/master/CONTRIBUTING.md)
 and general documentation at the main
-[Triton project](https://github.com/joyent/triton) page.
+[Triton project](https://github.com/TritonDataCenter/triton) page.
 
 CloudAPI is the HTTP API that customers use to interact with SmartDataCenter.
 
@@ -32,7 +33,7 @@ server):
 A CloudAPI server should be running in a cloudapi zone after running the
 sdcadm command above. Alternatively, a more manual approach is:
 
-    git clone git@github.com:joyent/sdc-cloudapi.git
+    git clone git@github.com:TritonDataCenter/sdc-cloudapi.git
     cd sdc-cloudapi
     git submodule update --init
     make all
@@ -124,7 +125,7 @@ in your local setup. Assuming you want to test RBAC in COAL, you'll need to:
 
     ./tools/create-account.sh headnode
 
-- Clone v7.3 or later branch of node-smartdc from https://github.com/joyent/node-smartdc
+- Clone v7.3 or later branch of node-smartdc from https://github.com/TritonDataCenter/node-smartdc
 - Assuming you want to test in COAL, you should have the following ENV vars
   setup to operate as the account owner:
 
@@ -149,8 +150,8 @@ need to hack the setup the same way we do for testing:
 For more information on RBAC you can check [CloudAPI docs][cloudapi] and
 the [Access Control User Guide][acuguide].
 
-[cloudapi]: https://apidocs.joyent.com/cloudapi/
-[acuguide]: https://docs.joyent.com/jpc/rbac
+[cloudapi]: https://apidocs.tritondatacenter.com/cloudapi/
+[acuguide]: https://docs.tritondatacenter.com/jpc/rbac
 
 
 ## How CloudAPI Auth works using RBAC
