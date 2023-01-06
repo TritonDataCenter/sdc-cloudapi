@@ -11,7 +11,7 @@
 
 # sdc-cloudapi
 
-This repository is part of the Joyent Triton project. See the [contribution
+This repository is part of the Triton DataCenter project. See the [contribution
 guidelines](https://github.com/TritonDataCenter/triton/blob/master/CONTRIBUTING.md)
 and general documentation at the main
 [Triton project](https://github.com/TritonDataCenter/triton) page.
@@ -151,7 +151,7 @@ For more information on RBAC you can check [CloudAPI docs][cloudapi] and
 the [Access Control User Guide][acuguide].
 
 [cloudapi]: https://apidocs.tritondatacenter.com/cloudapi/
-[acuguide]: https://docs.joyent.com/jpc/rbac
+[acuguide]: https://docs.tritondatacenter.com/jpc/rbac
 
 
 ## How CloudAPI Auth works using RBAC
