@@ -1,5 +1,5 @@
 ---
-title: Joyent CloudAPI Developer's Guide
+title: Triton DataCenter CloudAPI Developer's Guide
 mediaroot: ./media
 apisections:
 markdown2extras: wiki-tables, code-friendly
@@ -12,6 +12,7 @@ markdown2extras: wiki-tables, code-friendly
 
 <!--
     Copyright (c) 2015, Joyent, Inc.
+    Copyright 2023 MNX Cloud, Inc.
 -->
 
 # Overview

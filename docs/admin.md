@@ -1,5 +1,5 @@
 ---
-title: Joyent CloudAPI Administrator's Guide
+title: Triton DataCenter CloudAPI Administrator's Guide
 mediaroot: ./media
 apisections:
 markdown2extras: tables, code-friendly, cuddled-lists
@@ -12,6 +12,7 @@ markdown2extras: tables, code-friendly, cuddled-lists
 
 <!--
     Copyright 2020 Joyent, Inc.
+    Copyright 2023 MNX Cloud, Inc.
 -->
 
 # Overview
@@ -67,7 +68,7 @@ experimental_cloudapi_delegate_dataset    | Boolean  | Unsafe (see warning). Def
 For example, the 'docker' service could be added to CLOUDAPI_SERVICES as
 follows.
 
-    docker_endpoint="tcp://docker.coal.joyent.us:2376"
+    docker_endpoint="tcp://docker.coal.example.com:2376"
     cloudapi_svc=$(sdc-sapi /services?name=cloudapi | json -H 0.uuid)
     sapiadm get $cloudapi_svc \
         | json -e "
@@ -158,7 +159,7 @@ section will explain the configuration file.
                             "pass": ""
                         }
                     },
-                    "from": "nobody@joyent.com",
+                    "from": "nobody@example.com",
                     "subject": "Your SmartDataCenter machine is provisioning",
                     "body": "Check /my/machines for updates"
                 }
@@ -411,7 +412,7 @@ An example configuration:
                             "pass": ""
                         }
                     },
-                    "from": "nobody@joyent.com",
+                    "from": "nobody@example.com",
                     "subject": "Your SmartDataCenter machine is provisioning",
                     "body": "Check /my/machines for updates"
                 }
@@ -578,7 +579,7 @@ Log messages can be traced using `bunyan -p cloudapi` as explained in
 
 # Metrics
 
-CloudAPI exposes metrics via [node-triton-metrics](https://github.com/joyent/node-triton-metrics) on `http://<ADMIN_IP>:<config.port + 800>/metrics`. For example, if the CloudAPI servers are running on port 8081 and 8082, then a metrics server would be exposed on `http://<ADMIN_IP>:8881/metrics` and `http://<ADMIN_IP>:8882/metrics`.
+CloudAPI exposes metrics via [node-triton-metrics](https://github.com/TritonDataCenter/node-triton-metrics) on `http://<ADMIN_IP>:<config.port + 800>/metrics`. For example, if the CloudAPI servers are running on port 8081 and 8082, then a metrics server would be exposed on `http://<ADMIN_IP>:8881/metrics` and `http://<ADMIN_IP>:8882/metrics`.
 
 
 # Appendix A: Provision Limits Plugin
@@ -630,8 +631,8 @@ Possible values for every config member are:
 
 **Name**   | **Type** | **Description**         | **Possible values**
 ---------- | -------- | ----------------------- | ------------------------------
-os         | String   | Value for Image `os`.   | Usually, this will be one of `windows`, `linux`, `smartos`, `bsd` or `other`. See [IMGAPI os values](https://github.com/joyent/sdc-imgapi/blob/master/docs/index.md#manifest-os)
-image      | String   | Value for Image `name`. | The name of the image. See [IMGAPI possible values for image names](https://github.com/joyent/sdc-imgapi/blob/master/docs/index.md#manifest-name)
+os         | String   | Value for Image `os`.   | Usually, this will be one of `windows`, `linux`, `smartos`, `bsd` or `other`. See [IMGAPI os values](https://github.com/TritonDataCenter/sdc-imgapi/blob/master/docs/index.md#manifest-os)
+image      | String   | Value for Image `name`. | The name of the image. See [IMGAPI possible values for image names](https://github.com/TritonDataCenter/sdc-imgapi/blob/master/docs/index.md#manifest-name)
 check      | String   | Either "image" or "os"  | See explanation below
 by         | String   | The name of the value this limit will be based on. Note that "machines" means "number of machines" | "ram", "quota", or "machines"
 value      | Number   | A value for the previous "by" member | Negative Integer, Zero, or Positive Integer
@@ -938,5 +939,5 @@ is a simple example to understand.
 
 
 <p style="min-height: 31px; margin-top: 60px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0">
-<a rel="license" href="http://creativecommons.org/licenses/by-nd/3.0/"><img alt="Creative Commons License" style="border-width:0;float:left;margin:4px 8px 0 0;" src="https://i.creativecommons.org/l/by-nd/3.0/88x31.png" /></a> <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Text" property="dct:title" rel="dct:type">Joyent CloudAPI Administrator's Guide</span> by <a xmlns:cc="http://creativecommons.org/ns#" href="http://www.joyent.com" property="cc:attributionName" rel="cc:attributionURL">Joyent, Inc.</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nd/3.0/">Creative Commons Attribution-NoDerivs 3.0 Unported License</a>.
+<a rel="license" href="http://creativecommons.org/licenses/by-nd/3.0/"><img alt="Creative Commons License" style="border-width:0;float:left;margin:4px 8px 0 0;" src="https://i.creativecommons.org/l/by-nd/3.0/88x31.png" /></a> <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Text" property="dct:title" rel="dct:type">Triton DataCenter CloudAPI Administrator's Guide</span> by <a xmlns:cc="http://creativecommons.org/ns#" href="http://www.tritondatacenter.com.com" property="cc:attributionName" rel="cc:attributionURL">MNX Cloud, Inc.</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nd/3.0/">Creative Commons Attribution-NoDerivs 3.0 Unported License</a>.
 </p>

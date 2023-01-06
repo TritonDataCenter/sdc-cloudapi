@@ -1,5 +1,5 @@
 ---
-title: Joyent CloudAPI
+title: Triton DataCenter CloudAPI
 mediaroot: ./media
 apisections: Account, Keys, Config, Datacenters, Images, Packages, Instances, FirewallRules, Networks, Nics, Users, Roles, Policies, Services, User SSH Keys, Role Tags, Fabrics, Migrations
 markdown2extras: tables, code-friendly
@@ -14,11 +14,11 @@ markdown2extras: tables, code-friendly
 <!--
     Copyright 2021 Joyent, Inc.
     Copyright 2021 The University of Queensland
-    Copyright 2022 MNX Cloud, Inc.
+    Copyright 2023 MNX Cloud, Inc.
 -->
 
 
-# Joyent CloudAPI
+# Triton DataCenter CloudAPI
 
 CloudAPI is one of the public APIs for a Triton cloud: it allows end users of
 the cloud to manage their accounts, instances, networks, images, and to
@@ -26,14 +26,14 @@ inquire about other relevant details.  CloudAPI provides a single view of
 docker containers, infrastructure containers and hardware virtual machines
 owned by the user.
 
-This is the reference documentation for the CloudAPI that is part of Joyent's
-Triton stack.  This guide provides descriptions of the APIs available, as well
-as supporting information -- such as how to use the software developer kits
+This is the reference documentation for the CloudAPI that is part of the Triton
+DataCenter stack.  This guide provides descriptions of the APIs available, as
+well as supporting information -- such as how to use the software developer kits
 (SDK), command line interface (CLI), and where to find more information.
 
 Triton also provides a Docker API, which Docker clients can use, but this
 documentation does not cover. For more information about Triton visit
-[Joyent Triton](https://www.joyent.com/private-cloud).
+[Triton DataCenter](https://www.tritondatacenter.com/private-cloud).
 
 
 ## Conventions
@@ -68,8 +68,8 @@ While CloudAPI provides visibility into Docker containers, the regular
 [Docker CLI](https://docs.docker.com/installation/#installation) should be used
 for provisioning and managing Docker containers; Triton provides an endpoint
 that represents the entire datacenter as a single `DOCKER_HOST`, which Docker
-clients can communicate with.  Refer to Joyent's
-[Docker documentation](https://apidocs.joyent.com/docker) for more information.
+clients can communicate with.  Refer to Triton's
+[Docker documentation](https://apidocs.tritondatacenter.com/docker) for more information.
 
 
 ## How do I access CloudAPI?
@@ -77,9 +77,9 @@ clients can communicate with.  Refer to Joyent's
 CloudAPI is available as a REST API, and you can access it using:
 
 * Triton Customer Portal
-* [node-triton CLI](https://github.com/joyent/node-triton)
-* [node-smartdc CLI](https://github.com/joyent/node-smartdc)
-* [node.js SDK](https://github.com/joyent/node-smartdc)
+* [node-triton CLI](https://github.com/TritonDataCenter/node-triton)
+* [node-smartdc CLI](https://github.com/TritonDataCenter/node-smartdc)
+* [node.js SDK](https://github.com/TritonDataCenter/node-smartdc)
 * REST API
 
 If you don't want to write any code, use one of the two CLIs. The CLIs let you
@@ -156,7 +156,7 @@ interact with CloudAPI using either node-triton or node-smartdc:
   See [Role Based Access Control](#rbac-users-roles-policies).
 * `SDC_TESTING`: If using a self-signed SSL certificate, set this to 1.
 
-An example for `SDC_URL` is `https://us-west-1.api.joyent.com`.  Each
+An example for `SDC_URL` is `https://cloudapi.us-central-1.triton.zone`.  Each
 datacenter in a cloud has its own CloudAPI endpoint; a different cloud that uses
 Triton would have a different URL.
 
@@ -482,7 +482,7 @@ Each role can have an arbitrary set of [Policies](#policies):
     }
 
 The `rules` in policies are used for the access control of an account's users.
-These rules use [Aperture](https://github.com/joyent/node-aperture) as the
+These rules use [Aperture](https://github.com/TritonDataCenter/node-aperture) as the
 policy language, and are described in detail in the next section.
 
 Our recommendation is to limit each policy's set of rules to a very scoped
@@ -494,13 +494,13 @@ definition of each role's abilities.
 ## Rules definition for access control
 
 As mentioned earlier, the policies' rules use
-[Aperture Policy Language](https://github.com/joyent/node-aperture#policy-language),
+[Aperture Policy Language](https://github.com/TritonDataCenter/node-aperture#policy-language),
 with the following *basic format*:
 
 `<principals> CAN <actions> <resources> WHEN <conditions>`.
 
 You should refer to the
-[Aperture documentation](https://github.com/joyent/node-aperture) for the
+[Aperture documentation](https://github.com/TritonDataCenter/node-aperture) for the
 complete details about the different possibilities when defining new rules.
 This section will only cover a limited set strictly related to CloudAPI's usage.
 
@@ -549,7 +549,8 @@ that user in their `members` list, then those roles are set as the
 currently-active roles for a request instead.
 
 For more details on how Access Control works for both CloudAPI and Manta,
-please refer to [Role Based Access Control](https://docs.joyent.com/jpc/rbac/)
+please refer to
+[Role Based Access Control](https://docs.tritondatacenter.com/jpc/rbac/)
 documentation.
 
 ### An important note about RBAC and certain reads after writes
@@ -578,7 +579,7 @@ have eventual consistency, not read-after-write.
 
 CloudAPI exposes a REST API over HTTPS.  You can work with the REST API by
 either calling it directly via tooling you already know about (such as curl, et
-al), or by using the CloudAPI CLIs and SDKs from Joyent.  The node-triton
+al), or by using the CloudAPI CLIs and SDKs from Triton.  The node-triton
 CloudAPI SDK & CLI is available as an npm module, which you can install with:
 
     $ npm install triton
@@ -607,7 +608,7 @@ CloudAPI.  Details are also below.
 
 For requests requiring content, you can send parameters encoded with
 `application/json`, `application/x-www-form-urlencoded` or
-`multipart/form-data`.  Joyent recommends `application/json`.  The value of the
+`multipart/form-data`.  We recommend `application/json`.  The value of the
 `Accept` header determines the encoding of content returned in responses.
 CloudAPI supports `application/json` response encodings only.
 
@@ -616,14 +617,14 @@ For example, all of the following are valid calls:
 Query String (on the uri):
 
     POST /my/keys?name=rsa&key=... HTTP/1.1
-    Host: joyent.com
+    Host: cloudapi.local
     Authorization: ...
     Content-Length: 0
 
 Form encoded in the body:
 
     POST /my/keys HTTP/1.1
-    Host: joyent.com
+    Host: cloudapi.local
     Authorization: ...
     Content-Type: application/x-www-form-urlencoded
     Content-Length: 123
@@ -633,7 +634,7 @@ Form encoded in the body:
 JSON in the body:
 
     POST /my/keys HTTP/1.1
-    Host: joyent.com
+    Host: cloudapi.local
     Authorization: ...
     Content-Type: application/json
     Content-Length: 123
@@ -839,7 +840,7 @@ accept a particular major version, e.g. `Accept-Version: ~8`, so that
 future CloudAPI backward incompatible changes (always done with a *major*
 version bump) don't break your application.
 
-The [`triton` tool](https://github.com/joyent/node-triton) uses
+The [`triton` tool](https://github.com/TritonDataCenter/node-triton) uses
 `Accept-Version: ~9||~8` by default. Users can restrict the API version via the
 `triton --accept-version=RANGE ...` option. The older `sdc-*` tools from
 node-smartdc use `~8||~7` by default, and users can restrict the API
@@ -888,7 +889,7 @@ The section describes API changes in CloudAPI versions.
 
 ## 9.14.0
 
-- Expose Feed of Machines Changes [#68](https://github.com/joyent/sdc-cloudapi/pull/68).
+- Expose Feed of Machines Changes [#68](https://github.com/TritonDataCenter/sdc-cloudapi/pull/68).
   See the [Changefeed](#changfeed) section for the details.
 
 ## 9.13.0
@@ -905,7 +906,7 @@ across reprovisions.
 
 ## 9.11.0
 
-- Add support for user AccessKeys [#65](https://github.com/joyent/sdc-cloudapi/pull/65).
+- Add support for user AccessKeys [#65](https://github.com/TritonDataCenter/sdc-cloudapi/pull/65).
 
 ## 9.10.0
 
@@ -1070,7 +1071,7 @@ encrypted servers.
   This deprecates the `locality` field for "locality hints" on CreateMachine.
 
   This CloudAPI feature is comparable to [Triton's Docker placement affinity
-  rules](https://apidocs.joyent.com/docker/features/placement).
+  rules](https://apidocs.tritondatacenter.com/docker/features/placement).
 
 ## 8.2.1
 
@@ -1234,7 +1235,7 @@ or
     Connection: Keep-Alive
     Content-MD5: Sz+3BJ3EKDxL3MLQQumPgg==
     Date: Tue, 22 Dec 2015 05:06:33 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: c3d496f0-a869-11e5-8662-47ccf5717dbf
     Response-Time: 2122
@@ -1337,7 +1338,7 @@ or
     Connection: Keep-Alive
     Content-MD5: xxJ5ppNDrEyAf5VIlt4GZw==
     Date: Tue, 22 Dec 2015 12:16:37 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: d8db9e90-a8a5-11e5-90c9-4dcf4848c834
     Response-Time: 1244
@@ -1381,8 +1382,8 @@ by          | String   | The type of limit. Note that "machines" means the "numb
 value       | Number   | The limit value. I.e. the total number of machines, total ram or total quota. | Ram is defined in terms of MiB. Quota is defined in terms of GiB.
 used        | Number   | How much of the limit is used by existing machines. | Ram is defined in terms of MiB. Quota is defined in terms of GiB.
 check       | String   | Optional. Restricts the limit to an image name or to an image os. | "image" or "os".
-os          | String   | Optional. When `check` is set to "os", this is the Image `os` name this limit will be restricted to. | Usually, this will be one of `windows`, `linux`, `smartos`, `bsd` or `other`. See [IMGAPI os values](https://github.com/joyent/sdc-imgapi/blob/master/docs/index.md#manifest-os).
-image       | String   | Optional. When `check` is set to "image", this is the Image `name` this limit will be restricted to. | See [IMGAPI image name](https://github.com/joyent/sdc-imgapi/blob/master/docs/index.md#manifest-name).
+os          | String   | Optional. When `check` is set to "os", this is the Image `os` name this limit will be restricted to. | Usually, this will be one of `windows`, `linux`, `smartos`, `bsd` or `other`. See [IMGAPI os values](https://github.com/TritonDataCenter/sdc-imgapi/blob/master/docs/index.md#manifest-os).
+image       | String   | Optional. When `check` is set to "image", this is the Image `name` this limit will be restricted to. | See [IMGAPI image name](https://github.com/TritonDataCenter/sdc-imgapi/blob/master/docs/index.md#manifest-name).
 
 
 ### Errors
@@ -1413,7 +1414,7 @@ ResourceNotFound | If `:login` does not exist
     Connection: Keep-Alive
     Content-MD5: Sz+3BJ3EKDxL3MLQQumPgg==
     Date: Tue, 01 Aug 2019 05:06:33 GMT
-    Server: Joyent Triton 9.8.0
+    Server: cloudapi/9.8.0
     Api-Version: 9.0.0
     Request-Id: c3d496f0-a869-11e5-8662-47ccf5717dbf
     Response-Time: 1455
@@ -1531,7 +1532,7 @@ ResourceNotFound | If `:login` does not exist
     Connection: Keep-Alive
     Content-MD5: u4xmk+MgKzzIvrRt09k4sg==
     Date: Tue, 22 Dec 2015 12:23:12 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: c44e2000-a8a6-11e5-9030-479dc847c4b2
     Response-Time: 1041
@@ -1606,7 +1607,7 @@ or
     Connection: Keep-Alive
     Content-MD5: p8gjrCZqMiZbD15TA9ymEQ==
     Date: Tue, 22 Dec 2015 13:26:17 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 94423be0-a8af-11e5-a95f-e74285cfeb5b
     Response-Time: 999
@@ -1688,7 +1689,7 @@ or
     Connection: Keep-Alive
     Content-MD5: p8gjrCZqMiZbD15TA9ymEQ==
     Date: Tue, 22 Dec 2015 13:26:17 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 94423be0-a8af-11e5-a95f-e74285cfeb5b
     Response-Time: 999
@@ -1745,7 +1746,7 @@ or
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Tue, 22 Dec 2015 13:31:43 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 5677a420-a8b0-11e5-8702-0daf2c627de5
     Response-Time: 829
@@ -1820,7 +1821,7 @@ ResourceNotFound | If `:account` does not exist
     Connection: Keep-Alive
     Content-MD5: 6csVzj9aNZWB5/ZW9JsD8w==
     Date: Wed, 23 Dec 2015 06:42:20 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 50182970-a940-11e5-af28-0b661ec813b9
     Response-Time: 1051
@@ -1914,7 +1915,7 @@ ResourceNotFound | When `:account` or `:user` do not exist
     Connection: Keep-Alive
     Content-MD5: p4/N2pQwLkNuvKTjaKJPOw==
     Date: Wed, 23 Dec 2015 07:07:44 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: dc761fa0-a943-11e5-842f-87950f2a2edd
     Response-Time: 961
@@ -1986,7 +1987,7 @@ ResourceNotFound | If `:account` does not exist
 
 ### CLI Command:
 
-    $ sdc-user create --login=bob --email=bob@test.joyent.com --password=123secret
+    $ sdc-user create --login=bob --email=bob@test.example.com --password=123secret
 
 ### Request:
 
@@ -2019,7 +2020,7 @@ ResourceNotFound | If `:account` does not exist
     Connection: Keep-Alive
     Content-MD5: qC9LnijSqZ1I+zea5GQXvQ==
     Date: Wed, 23 Dec 2015 09:42:36 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 7f1193b0-a959-11e5-9cdd-eb0b10bce309
     Response-Time: 1229
@@ -2121,7 +2122,7 @@ ResourceNotFound | If `:account` or `:user` do not exist
     Connection: Keep-Alive
     Content-MD5: 4Sn7xQHfoc1+LvLkA2KbNA==
     Date: Thu, 24 Dec 2015 10:30:45 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 63a27380-aa29-11e5-ace8-d79496f2469d
     Response-Time: 1148
@@ -2209,7 +2210,7 @@ ResourceNotFound | If `:account` or `:user` do not exist
     Connection: Keep-Alive
     Content-MD5: qU6CaBlWpuehWaj0IdtPCw==
     Date: Thu, 24 Dec 2015 10:34:51 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: f6338220-aa29-11e5-8484-a9b10ef4e687
     Response-Time: 1297
@@ -2264,7 +2265,7 @@ ResourceNotFound | If `:account` does not exist or there isn't a user with eithe
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 24 Dec 2015 10:36:18 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 29bcb710-aa2a-11e5-b9f6-05ee86f81e61
     Response-Time: 997
@@ -2734,7 +2735,7 @@ ResourceNotFound | If `:account` or `:role` do not exist
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Tue, 19 Jan 2016 13:33:33 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 3b6aec20-beb1-11e5-820f-3bf7c01a78db
     Response-Time: 1095
@@ -2820,7 +2821,7 @@ command line with `sdc-info /:resource_path`. E.g.:
     Connection: Keep-Alive
     Content-MD5: glSyrrDK7km8e0oHkK8MFQ==
     Date: Tue, 19 Jan 2016 13:31:01 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: e0ec6b20-beb0-11e5-bb37-b3b95e8d52c8
     Response-Time: 1108
@@ -2887,7 +2888,7 @@ ResourceNotFound | If `:account` does not exist
     Connection: Keep-Alive
     Content-MD5: KIok0p7Vj1ywnmKotC0dxw==
     Date: Wed, 20 Jan 2016 10:27:01 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 56d4a410-bf60-11e5-8d8f-d9c2edd19b69
     Response-Time: 1539
@@ -2952,7 +2953,7 @@ ResourceNotFound | If `:account` or `:role` do not exist
     Connection: Keep-Alive
     Content-MD5: aJlIu8bZIl2QvcSBk/OjxQ==
     Date: Wed, 20 Jan 2016 10:27:41 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 6f6517d0-bf60-11e5-9252-e35f55471f16
     Response-Time: 684
@@ -3026,7 +3027,7 @@ ResourceNotFound | If `:account` or `:role` do not exist
     Connection: Keep-Alive
     Content-MD5: U9aAcBqQD9i80axNg4aK9A==
     Date: Wed, 20 Jan 2016 10:34:44 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 6b01c840-bf61-11e5-9252-e35f55471f16
     Response-Time: 1116
@@ -3098,7 +3099,7 @@ ResourceNotFound | If `:account` or `:role` do not exist
     Connection: Keep-Alive
     Content-MD5: V0Ud8w9ChirsRyEm341wQg==
     Date: Wed, 20 Jan 2016 11:02:55 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 5b10fbf0-bf65-11e5-8d2c-33d19d9c4408
     Response-Time: 1091
@@ -3155,7 +3156,7 @@ ResourceNotFound | If `:account` or `:policy` do not exist
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Wed, 20 Jan 2016 11:04:11 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 8887ee40-bf65-11e5-a1c5-412a81a23b66
     Response-Time: 872
@@ -3261,7 +3262,7 @@ command uses this endpoint to retrieve it.
     Connection: Keep-Alive
     Content-MD5: 0ZhWHGmb65TwGb3V1+XFlA==
     Date: Thu, 21 Jan 2016 05:23:10 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 0faa8fb0-bfff-11e5-a42d-41bc4fcc136a
     Response-Time: 379
@@ -3317,7 +3318,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
     Connection: Keep-Alive
     Content-MD5: g7ZJ7pMsDmGHEbxBpH0gug==
     Date: Thu, 21 Jan 2016 05:24:58 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 4ed86b80-bfff-11e5-bf5e-35b3b5208a80
     Response-Time: 1643
@@ -3394,7 +3395,7 @@ or
     Response-Time: 958
 
     {
-      "us-west-1": "https://us-west-1.api.joyent.com"
+      "us-west-1": "https://cloudapi.us-central-1.triton.zone"
     }
 
 
@@ -3445,7 +3446,7 @@ ResourceNotFound | If `:login` does not exist or `:name` does not exist
     Connection: Keep-Alive
     Content-MD5: LWs/o6eHtZLqPJPJEcN46A==
     Date: Thu, 21 Jan 2016 05:31:51 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 45769340-c000-11e5-a6b9-4349e525b06c
     Response-Time: 830
@@ -3511,7 +3512,7 @@ ResourceNotFound | If `:login` does not exist
     Connection: Keep-Alive
     Content-MD5: jzCseheYDALjhInUqjTbDg==
     Date: Thu, 21 Jan 2016 05:39:52 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 645d8920-c001-11e5-a42d-41bc4fcc136a
     Response-Time: 882
@@ -3538,7 +3539,7 @@ Provides a list of images available in this datacenter.
 
 Note: Currently, *Docker* images are not included in this endpoint's responses.
 You must use `docker images` against the
-[docker](https://apidocs.joyent.com/docker) service for this datacenter.
+[docker](https://apidocs.tritondatacenter.com/docker) service for this datacenter.
 
 
 ### Inputs
@@ -3627,7 +3628,7 @@ or
     Connection: Keep-Alive
     Content-MD5: 9eDxMdIxc+3aED7Z3qyL8w==
     Date: Thu, 21 Jan 2016 07:57:59 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: af34a510-c014-11e5-9c73-6767e338bf5d
     Response-Time: 1506
@@ -3705,7 +3706,7 @@ Possible `error.code` values:
 
 **error.code** | **Details**
 -------------- | -----------
-PrepareImageDidNotRun | This typically means that the target harware virtual machine (e.g. Linux) has old guest tools that pre-date the image creation feature. Guest tools can be upgraded with installers at <https://download.joyent.com/pub/guest-tools/>. Other possibilities are: a boot time greater than the five-minute timeout, or a bug or crash in the image-preparation script
+PrepareImageDidNotRun | This typically means that the target harware virtual machine (e.g. Linux) has old guest tools that pre-date the image creation feature. Guest tools can be upgraded with installers at <https://download.tritondatacenter.com/pub/guest-tools/>. Other possibilities are: a boot time greater than the five-minute timeout, or a bug or crash in the image-preparation script
 VmHasNoOrigin  | Origin image data could not be found for the instance. Typically this is for an instance *migrated* before image creation support was added
 NotSupported   | Indicates an error due to functionality that isn't currently supported. One example is that custom image creation of an instance based on a custom image isn't currently supported
 InternalError  | A catch-all error for unexpected or internal errors
@@ -3742,7 +3743,7 @@ or
     Connection: Keep-Alive
     Content-MD5: 42n5PWY5xZP0lnjdMb7Omg==
     Date: Thu, 21 Jan 2016 08:00:09 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: fd5679d0-c014-11e5-a8f8-951890fd520a
     Response-Time: 876
@@ -3821,7 +3822,7 @@ or
     Connection: Keep-Alive
     Content-MD5: 83MuHssrpOMWvPXLB9stgg==
     Date: Thu, 21 Jan 2016 08:02:08 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 440f5590-c015-11e5-b5f9-2b49303f7fc4
     Response-Time: 1262
@@ -3897,13 +3898,13 @@ ResourceNotFound | If `:login` or `:id` does not exist
     Connection: Keep-Alive
     Content-MD5: qSUhN+dwdJKEFlcyrUdBiw==
     Date: Thu, 21 Jan 2016 08:00:09 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 8180ad80-14ef-11e3-a62d-89e8106c294e
     Response-Time: 670
 
     {
-      "manta_url": "https://us-east.manta.joyent.com",
+      "manta_url": "https://us-central.manta.mnx.io",
       "image_path": "/user/stor/my-image.zfs.gz",
       "manifest_path": "/user/stor/my-image.imgmanifest"
     }
@@ -4006,7 +4007,7 @@ or
     Connection: Keep-Alive
     Content-MD5: 2sEZ45LmhRiretMPn5sqVA==
     Date: Thu, 21 Jan 2016 08:00:09 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 88af23b0-f952-11e2-8f2c-fff0ec35f4ce
     Response-Time: 160
@@ -4193,7 +4194,7 @@ ResourceNotFound | If `:login` or `:id` does not exist
     Connection: Keep-Alive
     Content-MD5: 2sEZ45LmhRiretMPn5sqVA==
     Date: Thu, 21 Jan 2016 08:00:09 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: b8e43c60-b904-11e3-93b7-1f685001b0c3
     Response-Time: 135
@@ -4272,7 +4273,7 @@ ImageNotShared     | When the given image is not shared with your account.
     Connection: Keep-Alive
     Content-MD5: 2sEZ45LmhRiretMPn5sqVA==
     Date: Thu, 21 Jan 2016 08:00:09 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: f8e43c60-b904-11e3-93b7-1f685001b0c3
     Response-Time: 135
@@ -4385,7 +4386,7 @@ or
     Connection: Keep-Alive
     Content-MD5: u0+0E3G28WL4Y4K8p6+pIg==
     Date: Thu, 21 Jan 2016 08:33:52 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: b24219e0-c019-11e5-99e1-8339f3270a9f
     Response-Time: 1992
@@ -4468,7 +4469,7 @@ or
     Connection: Keep-Alive
     Content-MD5: MEUpS89GsEaHBykatBp5rg==
     Date: Thu, 21 Jan 2016 08:37:04 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 253dd4c0-c01a-11e5-b5f9-2b49303f7fc4
     Response-Time: 1482
@@ -4675,7 +4676,7 @@ can combine them.  Run `triton instance list --help` or
     Connection: Keep-Alive
     Content-MD5: w5wJLKlhDzPpC6zKjtqaCw==
     Date: Thu, 21 Jan 2016 10:55:25 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 779b5cc0-c02d-11e5-a7d2-fdf229d32220
     Response-Time: 3444
@@ -4750,7 +4751,7 @@ primaryIp   | String   | The IP address of the primary NIC of this instance. The
 firewall_enabled | Boolean  | Whether firewall rules are enforced on this instance
 compute_node | String  | UUID of the server on which the instance is located
 package     | String   | The id or name of the package used to create this instance
-dns_names   | Array[String] | DNS names of the instance (if the instance is using [CNS](https://docs.joyent.com/public-cloud/network/cns))
+dns_names   | Array[String] | DNS names of the instance (if the instance is using [CNS](https://docs.tritondatacenter.com/public-cloud/network/cns))
 flexible    | Boolean | Whether this instance uses the flexible disk space feature (bhyve)
 free_space  | Number | The amount of space (MiB) that is not allocated to disks nor in use by snapshots of those disks. If snapshots are present, writes to disks may reduce this value (bhyve)
 
@@ -4801,7 +4802,7 @@ or
     Connection: Keep-Alive
     Content-MD5: 0q2leQEqeZCNiznbZvKhZw==
     Date: Thu, 21 Jan 2016 10:58:11 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: db0705c0-c02d-11e5-b1b7-65fab9169f0e
     Response-Time: 3159
@@ -5052,7 +5053,7 @@ or
     Connection: Keep-Alive
     Content-MD5: s5ROP0dBDWlf5X1drujDvg==
     Date: Thu, 21 Jan 2016 12:57:52 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 9283ba80-c03e-11e5-b1b7-65fab9169f0e
     Response-Time: 4655
@@ -5266,7 +5267,7 @@ or
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 21 Jan 2016 13:05:58 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: b49ae1b0-c03f-11e5-a7d2-fdf229d32220
     Response-Time: 3175
@@ -5330,7 +5331,7 @@ or
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 21 Jan 2016 13:07:24 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: e7fda2e0-c03f-11e5-a64c-d133f917673f
     Response-Time: 3487
@@ -5394,7 +5395,7 @@ or
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 21 Jan 2016 13:09:34 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 35679950-c040-11e5-b1b7-65fab9169f0e
     Response-Time: 3124
@@ -5495,7 +5496,7 @@ MissingParameter | If `action` or `package` wasn't provided
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 21 Jan 2016 13:12:06 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 8fa7d8d0-c040-11e5-9100-a95edd60134e
     Response-Time: 161
@@ -5553,7 +5554,7 @@ MissingParameter | If `action` or `name` wasn't provided
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 21 Jan 2016 13:14:17 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: dda360e0-c040-11e5-a64c-d133f917673f
     Response-Time: 3768
@@ -5614,7 +5615,7 @@ or
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 21 Jan 2016 13:16:00 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 1b1e83a0-c041-11e5-b1b7-65fab9169f0e
     Response-Time: 3594
@@ -5675,7 +5676,7 @@ or
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 21 Jan 2016 13:23:39 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 2c74e120-c042-11e5-9100-a95edd60134e
     Response-Time: 4178
@@ -5730,7 +5731,7 @@ MissingParameter | If `action` wasn't provided
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 21 Jan 2017 13:16:00 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 1b1e83a0-c041-11e5-b1b7-65fab9169f0e
     Response-Time: 3594
@@ -5784,7 +5785,7 @@ MissingParameter | If `action` wasn't provided
     Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
     Connection: Keep-Alive
     Date: Thu, 21 Jan 2016 13:23:39 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 2c74e120-c042-11e5-9100-a95edd60134e
     Response-Time: 4178
@@ -5858,7 +5859,7 @@ or
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     Response-Time: 754
@@ -5921,7 +5922,7 @@ or
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
     Date: Tue, 05 Jul 2011 17:26:56 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
     Response-Time: 297
@@ -5980,7 +5981,7 @@ or
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 06a57272-9238-4276-951b-4123fbfdb948
     Response-Time: 66
@@ -6046,7 +6047,7 @@ or
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
     Date: Tue, 05 Jul 2011 17:26:56 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
     Response-Time: 297
@@ -6107,7 +6108,7 @@ or
     Access-Control-Allow-Methods: GET, POST, DELETE
     Connection: close
     Date: Tue, 05 Jul 2011 17:26:56 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: af79d9cd-68c5-4002-95c6-af4c3ff0f1e4
     Response-Time: 297
@@ -6182,7 +6183,7 @@ InvalidArgument  | If `size` or `pci_slot` was invalid
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Dec 2018 17:19:26 GMT
-    Server: Joyent Triton 9.4.0
+    Server: cloudapi/9.4.0
     Api-Version: 9.0.0
     Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     Response-Time: 754
@@ -6267,7 +6268,7 @@ InvalidArgument  | If `size` or `dangerous_allow_shrink` was invalid
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Dec 2018 17:19:26 GMT
-    Server: Joyent Triton 9.4.0
+    Server: cloudapi/9.4.0
     Api-Version: 9.0.0
     Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     Response-Time: 754
@@ -6333,7 +6334,7 @@ ResourceNotFound | If `:login`, `:id`, or `:disk_id` does not exist
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Dec 2018 17:19:26 GMT
-    Server: Joyent Triton 9.4.0
+    Server: cloudapi/9.4.0
     Api-Version: 9.0.0
     Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     Response-Time: 754
@@ -6399,7 +6400,7 @@ ResourceNotFound | If `:login` or `:id` does not exist
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Dec 2018 17:19:26 GMT
-    Server: Joyent Triton 9.4.0
+    Server: cloudapi/9.4.0
     Api-Version: 9.0.0
     Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     Response-Time: 754
@@ -6471,7 +6472,7 @@ ResourceNotFound | If `:login`, `:id` or `:disk_id` does not exist
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Dec 2018 17:19:26 GMT
-    Server: Joyent Triton 9.4.0
+    Server: cloudapi/9.4.0
     Api-Version: 9.0.0
     Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     Response-Time: 754
@@ -6532,7 +6533,7 @@ ResourceNotFound | If `:login` or `:id` does not exist
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     Response-Time: 754
@@ -6591,7 +6592,7 @@ ResourceNotFound | If `:login` or `:id` does not exist
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     Response-Time: 754
@@ -6650,7 +6651,7 @@ ResourceNotFound | If `:login`, `:id` or `:key` does not exist
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Jul 2014 17:19:26 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     Response-Time: 754
@@ -6700,7 +6701,7 @@ ResourceNotFound | If `:login`, `:id` or `:key` does not exist
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     Response-Time: 754
@@ -6750,7 +6751,7 @@ to keep the shell from matching files in the current directory.
     Access-Control-Allow-Methods: GET, POST
     Connection: close
     Date: Tue, 05 Jul 2011 17:19:26 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     Response-Time: 754
@@ -6799,7 +6800,7 @@ Using node-smartdc:
 ### Example Request
 
     POST /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/tags HTTP/1.1
-    Host: us-east-3b.api.joyent.com
+    Host: cloudapi.local
     date: Thu, 11 Feb 2016 18:03:46 GMT
     authorization: ...
     accept: application/json
@@ -6812,7 +6813,7 @@ Using node-smartdc:
 ### Example Response
 
     HTTP/1.1 200 OK
-    server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     request-id: cb65c530-d0e9-11e5-ac0c-090497b36c30
     date: Thu, 11 Feb 2016 18:03:46 GMT
     response-time: 91
@@ -6862,7 +6863,7 @@ Using node-smartdc:
 ### Example Request
 
     POST /my/machines/5e42cd1e-34bb-402f-8796-bf5a2cae47db/tags HTTP/1.1
-    Host: us-east-3b.api.joyent.com
+    Host: cloudapi.local
     date: Thu, 11 Feb 2016 18:03:46 GMT
     authorization: ...
     accept: application/json
@@ -6875,7 +6876,7 @@ Using node-smartdc:
 ### Example Response
 
     HTTP/1.1 200 OK
-    server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     request-id: cb65c530-d0e9-11e5-ac0c-090497b36c30
     date: Thu, 11 Feb 2016 18:03:46 GMT
     response-time: 91
@@ -6936,7 +6937,7 @@ Using node-smartdc:
 ### Example Response
 
     HTTP/1.1 200 OK
-    server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     request-id: 4bcf467e-4b88-4ab4-b7ab-65fad7464de9
     date: Thu, 11 Feb 2016 18:03:46 GMT
     response-time: 91
@@ -7165,7 +7166,7 @@ or
     HTTP/1.1 204 No Content
     Access-Control-Allow-Origin: *
     Access-Control-Allow-Methods: GET, POST, DELETE
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Connection: close
     Date: Wed, 13 Apr 2011 23:38:03 GMT
     Api-Version: 8.0.0
@@ -7243,7 +7244,7 @@ or
     connection: Keep-Alive
     content-md5: GRmOq/dAdKZJ4wVpEelRrQ==
     date: Fri, 22 Feb 2013 15:19:37 GMT
-    server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     api-version: 8.0.0
     request-id: 453aee00-7d03-11e2-8048-5195b6159808
     response-time: 34
@@ -7291,7 +7292,7 @@ instance.
 
 Triton supports *incremental offline migrations* starting with CloudAPI version 9.6.0.
 
-It is possible to migrate (move a VM) to another CN using these APIs. See [RFD 34](https://github.com/joyent/rfd/blob/master/rfd/0034/README.md)
+It is possible to migrate (move a VM) to another CN using these APIs. See [RFD 34](https://github.com/TritonDataCenter/rfd/blob/master/rfd/0034/README.md)
 for the background on how and why instance migration works the way it does.
 
 VM migration operates in three distinct phases, the `begin` phase creates a hidden target
@@ -7898,7 +7899,7 @@ where
 * `priority` is a number between 0 and 100 (default is 0, the lowest priority)
 
 The use of `priority` is available only with fwapi `FWRULE_VERSION` 4 or above. See
-fwapi [documentation](https://github.com/joyent/sdc-fwapi/blob/master/docs/index.md)
+fwapi [documentation](https://github.com/TritonDataCenter/sdc-fwapi/blob/master/docs/index.md)
 for more information.
 
 The rule should have `tag`, `vm` or `all vms` in the FROM or TO target. The
@@ -7991,7 +7992,7 @@ or
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
     connection: Keep-Alive
     content-md5: v6s92rl/nTS2Ts5CNDcgQw==
-    server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     api-version: 8.0.0
     request-id: 35147710-7f49-11e2-8585-bd5fc323c72c
     response-time: 134
@@ -8056,7 +8057,7 @@ or
     access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
     access-control-allow-methods: GET
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
-    server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     api-version: 8.0.0
     request-id: cf1c1340-7f49-11e2-8585-bd5fc323c72c
     response-time: 203
@@ -8130,7 +8131,7 @@ or
     access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
     access-control-allow-methods: GET
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
-    server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     api-version: 8.0.0
     request-id: 2c0a2a20-7f49-11e2-8585-bd5fc323c72c
     response-time: 36
@@ -8206,7 +8207,7 @@ or
     access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
     access-control-allow-methods: GET
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
-    server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     api-version: 8.0.0
     request-id: 284907d0-7f67-11e2-8585-bd5fc323c72c
     response-time: 225
@@ -8274,7 +8275,7 @@ or
     access-control-allow-methods: GET
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
     connection: Keep-Alive
-    server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     api-version: 8.0.0
     request-id: 1ebe23c0-7f68-11e2-8585-bd5fc323c72c
     response-time: 232
@@ -8342,7 +8343,7 @@ or
     access-control-allow-methods: GET
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
     content-md5: E7I47cYr/F7S4J68NbK1AQ==
-    server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     api-version: 8.0.0
     request-id: 8a2d7490-7f67-11e2-8585-bd5fc323c72c
     response-time: 234
@@ -8398,7 +8399,7 @@ or
     access-control-allow-methods: GET
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
     connection: Keep-Alive
-    server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     api-version: 8.0.0
     request-id: 50a78b60-7f68-11e2-8585-bd5fc323c72c
     response-time: 219
@@ -8485,7 +8486,7 @@ or
     Connection: Keep-Alive
     Content-MD5: w5wJLKlhDzPpC6zKjtqaCw==
     Date: Thu, 21 Jan 2016 10:55:25 GMT
-    Server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     Api-Version: 8.0.0
     Request-Id: 779b5cc0-c02d-11e5-a7d2-fdf229d32220
     Response-Time: 3444
@@ -8587,7 +8588,7 @@ ResourceNotFound | If `:login` does not exist
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Server: Joyent Triton 7.3.0
+    Server: cloudapi/7.3.0
     Api-Version: 7.3.0
 
     [
@@ -8650,7 +8651,7 @@ InvalidArgument  | `vlan_id` or `name` are in use, or `vlan_id` is outside the v
 
     HTTP/1.1 201 Created
     Content-Type: application/json
-    Server: Joyent Triton 7.3.0
+    Server: cloudapi/7.3.0
     Api-Version: 7.3.0
 
     {
@@ -8700,7 +8701,7 @@ ResourceNotFound | If `:login` or `:vlan_id` does not exist
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Server: Joyent Triton 7.3.0
+    Server: cloudapi/7.3.0
     Api-Version: 7.3.0
 
     {
@@ -8757,7 +8758,7 @@ ResourceNotFound | If `:login` or `:vlan_id` does not exist
 
     HTTP/1.1 202 Accepted
     Content-Type: application/json
-    Server: Joyent Triton 7.3.0
+    Server: cloudapi/7.3.0
     Api-Version: 7.3.0
 
     {
@@ -8805,7 +8806,7 @@ InUseError       | The VLAN currently has active networks on it
 
     HTTP/1.1 204 No Content
     Content-Type: application/json
-    Server: Joyent Triton 7.3.0
+    Server: cloudapi/7.3.0
     Api-Version: 7.3.0
 
 
@@ -8861,7 +8862,7 @@ ResourceNotFound | If `:login` or `:vlan_id` does not exist
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Server: Joyent Triton 7.3.0
+    Server: cloudapi/7.3.0
     Api-Version: 7.3.0
 
     [
@@ -8979,7 +8980,7 @@ ResourceNotFound | If `:login` does not exist
 
     HTTP/1.1 201 Created
     Content-Type: application/json
-    Server: Joyent Triton 7.3.0
+    Server: cloudapi/7.3.0
     Api-Version: 7.3.0
 
     {
@@ -9061,7 +9062,7 @@ ResourceNotFound | If `:login`, `:vlan_id` or `:id` does not exist
 
     HTTP/1.1 200 OK
     Content-Type: application/json
-    Server: Joyent Triton 7.3.0
+    Server: cloudapi/7.3.0
     Api-Version: 7.3.0
 
     {
@@ -9154,7 +9155,7 @@ ResourceNotFound | If `:login` does not exist
 
     HTTP/1.1 201 Created
     Content-Type: application/json
-    Server: Joyent Triton 7.3.0
+    Server: cloudapi/7.3.0
     Api-Version: 7.3.0
 
     {
@@ -9215,7 +9216,7 @@ InUseError       | The VLAN currently has active networks on it
 
     HTTP/1.1 204 No Content
     Content-Type: application/json
-    Server: Joyent Triton 7.3.0
+    Server: cloudapi/7.3.0
     Api-Version: 7.3.0
 
 
@@ -9306,7 +9307,7 @@ or
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
     connection: Keep-Alive
     content-md5: v6s92rl/nTS2Ts5CNDcgQw==
-    server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     api-version: 8.0.0
     request-id: 35147710-7f49-11e2-8585-bd5fc323c72c
     response-time: 134
@@ -9370,7 +9371,7 @@ or
     access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
     access-control-allow-methods: GET, HEAD
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
-    server: Joyent Triton 8.0.0
+    Server: cloudapi/8.0.0
     api-version: 8.0.0
     request-id: cf1c1340-7f49-11e2-8585-bd5fc323c72c
     response-time: 203
@@ -9696,7 +9697,7 @@ InvalidArgument  | If `:id` isn't a UUID
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
     connection: Keep-Alive
     content-md5: ahIN4rEEcEIJGltGn9cqRQ==
-    server: Joyent Triton 7.2.0
+    Server: cloudapi/7.2.0
     api-version: 7.2.0
     request-id: 6b8c5170-d45a-11e3-8db6-c7649670227d
     response-time: 183
@@ -9774,7 +9775,7 @@ InvalidArgument  | If `:id` isn't a UUID, or `:mac` isn't a MAC address (without
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
     connection: Keep-Alive
     content-md5: ahIN4rEEcEIJGltGn9cqRQ==
-    server: Joyent Triton 7.2.0
+    Server: cloudapi/7.2.0
     api-version: 7.2.0
     request-id: 6b8c5170-d45a-11e3-8db6-c7649670227d
     response-time: 183
@@ -9879,7 +9880,7 @@ MissingParameter | If the `network` argument isn't present
     connection: Keep-Alive
     content-md5: ahIN4rEEcEIJGltGn9cqRQ==
     location: /my/machines/76a533e9-aa3c-4fd4-a194-03fa05663e0e/nics/90b8d02fb8f9
-    server: Joyent Triton 7.2.0
+    Server: cloudapi/7.2.0
     api-version: 7.2.0
     request-id: 6b8c5170-d45a-11e3-8db6-c7649670227d
     response-time: 183
@@ -9946,7 +9947,7 @@ InvalidArgument  | If `:id` isn't a UUID
     access-control-allow-methods: GET, HEAD, DELETE
     access-control-expose-headers: Api-Version, Request-Id, Response-Time
     connection: Keep-Alive
-    server: Joyent Triton 7.2.0
+    Server: cloudapi/7.2.0
     api-version: 7.2.0
     request-id: 6b8c5170-d45a-11e3-8db6-c7649670227d
     response-time: 183
@@ -10400,7 +10401,7 @@ power event to the instance.
 As suggested in [CreateMachine](#CreateMachine), you can poll an instance's
 state to check when that instance's provisioning has either successfully
 completed or failed.  Consider the following code using
-[node.js SDK](https://github.com/joyent/node-smartdc):
+[node.js SDK](https://github.com/TritonDataCenter/node-smartdc):
 
     var sdc = smartdc.createClient({ ... });
 
@@ -10521,8 +10522,7 @@ doing:
 In addition to HTTP Basic Authentication, CloudAPI supports a new mechanism for
 authenticating HTTP requests based on signing with your SSH private key.
 Specific examples of using this mechanism with Triton are given here. Reference
-the `HTTP Signature Authentication` specification by Joyent, Inc. for complete
-details.
+the `HTTP Signature Authentication` specification for complete details.
 
 A node.js library for HTTP Signature is available with:
 
@@ -10719,5 +10719,5 @@ Sample code for generating the `Authorization` header (and `Date` header):
 -|[triton services](#ListServices)|List available service endpoints for the datacenter.
 
 <p style="min-height: 31px; margin-top: 60px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0">
-<a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/"><img alt="Creative Commons License" style="border-width:0;float:left;margin:4px 8px 0 0;" src="https://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a> <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Text" property="dct:title" rel="dct:type">Joyent CloudAPI Documentation</span> by <a xmlns:cc="http://creativecommons.org/ns#" href="http://www.joyent.com" property="cc:attributionName" rel="cc:attributionURL">Joyent, Inc.</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/"><img alt="Creative Commons License" style="border-width:0;float:left;margin:4px 8px 0 0;" src="https://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a> <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Text" property="dct:title" rel="dct:type">Triton CloudAPI Documentation</span> by <a xmlns:cc="http://creativecommons.org/ns#" href="http://www.mnx.io" property="cc:attributionName" rel="cc:attributionURL">MNX Cloud, Inc.</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
 </p>
