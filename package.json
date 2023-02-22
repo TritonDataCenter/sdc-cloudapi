@@ -24,7 +24,7 @@
     "ctype": "^0.5.5",
     "cueball": "2.10.1",
     "filed": "0.0.7",
-    "http-signature": "1.3.6",
+    "http-signature": "https://github.com/TritonDataCenter/node-http-signature.git#5d8dc05d4e0ec3421bbf40b35be5a30152749638",
     "joyent-schemas": "git+https://github.com/TritonDataCenter/schemas.git#3ca3a09c8b6f29ee68ba17d61b556b6f2901a4b6",
     "jsprim": "2.0.2",
     "kang": "^1.3.0",
