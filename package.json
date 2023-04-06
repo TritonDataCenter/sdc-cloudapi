@@ -10,7 +10,7 @@
   "engineStrict": true,
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com:TritonDataCenter/sdc-cloudapi.git"
+    "url": "https://github.com/TritonDataCenter/sdc-cloudapi.git"
   },
   "dependencies": {
     "aperture": "git+https://github.com/TritonDataCenter/node-aperture.git#516f54924f9b3c997cca674e92937250801bd037",
