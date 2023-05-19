@@ -1,7 +1,7 @@
 {
   "name": "cloudapi",
   "description": "Triton CloudAPI",
-  "version": "9.16.1",
+  "version": "9.16.2",
   "author": "MNX Cloud (mnx.io)",
   "private": true,
   "engines": {
