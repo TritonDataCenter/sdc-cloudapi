@@ -6,7 +6,7 @@
 
 /*
  * Copyright 2020 Joyent, Inc.
- * Copyright 2022 MNX Cloud, Inc.
+ * Copyright 2023 MNX Cloud, Inc.
  */
 
 /*
@@ -38,6 +38,8 @@ var apertureConfig = require('aperture-config').config;
 
 
 // --- Globals
+
+var VALID_IMG_TYPES = ['zone-dataset', 'lx-dataset', 'zvol', 'docker', 'lxd'];
 
 var SDC_128_PACKAGE = {
     uuid: '897779dc-9ce7-4042-8879-a4adccc94353',
@@ -1347,6 +1349,8 @@ module.exports = {
     kvm_128_package: KVM_128_PACKAGE,
     bhyve_128_package: BHYVE_128_PACKAGE,
     bhyve_128_flex_package: BHYVE_128_FLEX_PACKAGE,
+
+    validImgTypes: VALID_IMG_TYPES,
 
     getCfg: function () {
         return CONFIG;
