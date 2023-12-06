@@ -6,6 +6,7 @@
 
 /*
  * Copyright 2020 Joyent, Inc.
+ * Copyright 2023 MNX Cloud, Inc.
  */
 
 var test = require('tape');
@@ -44,8 +45,7 @@ function checkImage(t, image, path) {
 
     t.equal(typeof (image.urn), 'undefined', 'image.urn');
     t.equal(typeof (image.default), 'undefined', 'image.default');
-    var expectedTypes = ['zone-dataset', 'lx-dataset', 'zvol', 'docker'];
-    t.ok(expectedTypes.indexOf(image.type) !== -1,
+    t.ok(common.validImgTypes.indexOf(image.type) !== -1,
         'expected image.type: ' + image.type);
 }
 
