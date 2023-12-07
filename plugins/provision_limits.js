@@ -961,7 +961,7 @@ function allowProvisionOrResize(api, cfg) {
                 return cb();
             }
 
-            log.debug({ limits: limits }, 'Will apply provison/resize limits');
+            log.debug({ limits: limits }, 'Will apply provision/resize limits');
 
             var disallow = limits.some(function (limit) {
                 return limit.value <= -1;
