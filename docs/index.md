@@ -14,7 +14,7 @@ markdown2extras: tables, code-friendly
 <!--
     Copyright 2021 Joyent, Inc.
     Copyright 2021 The University of Queensland
-    Copyright 2023 MNX Cloud, Inc.
+    Copyright 2024 MNX Cloud, Inc.
 -->
 
 
@@ -205,6 +205,8 @@ You can set environment variables for the following flags so that you don't have
 to type them for each request (e.g. in your .bash_profile).  All the examples in
 this document assume that these variables have been set:
 
+<!-- markdownlint-disable no-inline-html -->
+
 **CLI Flags**    | **Description**              | **Environment Variable**
 ---------------- | ---------------------------- | ------------------------
 --account<br/>-a | Login name (account)         | SDC_ACCOUNT
@@ -212,6 +214,7 @@ this document assume that these variables have been set:
 --keyId<br/>-k   | Fingerprint of key to use for signing | SDC_KEY_ID
 --url<br/>-u     | URL of the CloudAPI endpoint | SDC_URL
 
+<!-- markdownlint-disable no-inline-html -->
 
 ## Provision a new instance
 
@@ -882,6 +885,28 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 # Versions
 
 The section describes API changes in CloudAPI versions.
+
+## 9.19.0
+
+- `block_size` is now reported on disks in GetMachine, GetMachineDisk, and
+  ListDisks.
+- Handling of `block_size` on disk requests has been improved. Specifying an
+  invalid `block_size` on a disk will now report errors rather than silently
+  fail.
+
+# 9.18.0
+
+- Support for ED25519 keys.
+
+## 9.17.0
+
+- Packages with `flexible_disk` can be used with any brand type. This parameter
+  is ignored for brands other than `bhyve`. This allows operators to have a
+  single set of packages that support all brand types.
+
+## 9.16.0
+
+- Support for additional "external" NIC tags
 
 ## 9.15.0
 
@@ -2047,17 +2072,17 @@ changes so it can be selectively allowed/disallowed for users using policies.
 
 **Field**   | **Type** | **Description**
 ----------- | -------- | ---------------
-login       | String   |
-email       | String   |
-companyName | String   |
-firstName   | String   |
-lastName    | String   |
-address     | String   |
-postalCode  | String   |
-city        | String   |
-state       | String   |
-country     | String   |
-phone       | String   |
+login       | String   | &nbsp;
+email       | String   | &nbsp;
+companyName | String   | &nbsp;
+firstName   | String   | &nbsp;
+lastName    | String   | &nbsp;
+address     | String   | &nbsp;
+postalCode  | String   | &nbsp;
+city        | String   | &nbsp;
+state       | String   | &nbsp;
+country     | String   | &nbsp;
+phone       | String   | &nbsp;
 
 ### Returns
 
@@ -4930,7 +4955,7 @@ encrypted | Boolean  | Place this instance into an encrypted server. Optional. D
 The `volumes` input parameter allows users to specify a list of volumes to mount
 in the new machine when it boots:
 
-```
+```json
 "volumes": [
   {
     "name": "volume-name-1",
@@ -4958,7 +4983,7 @@ mountpoint | String   | Specifies where the volume is mounted in the newly creat
 #### disks
 The `disks` input parameter allows users to specify a list of disks to be provisioned when creating a bhyve instance. This parameter can only be specified if the package has its `flexible_disk` attribute set to `true`. The sum of the sizes of the disks may be no greater than the package quota.
 
-```
+```json
 "disks": [
   {
     "id": "eea4e223-dee6-44dc-a7e1-71f996e534f0",
@@ -7300,8 +7325,8 @@ placeholder vm for which to migrate into, the `sync` phase will synchronize the 
 filesystems and the `switch` phase will shutdown the original source vm, perform a final
 filesystem synchronization, hide the original source VM and then enable and restart the target VM.
 
-A migration can be set to run all of these phases in one (_automatic_ migration) or
-these phases can each be run manually (_on demand_ migration).
+A migration can be set to run all of these phases in one (*automatic* migration) or
+these phases can each be run manually (*on demand* migration).
 
 For any migration action (e.g. `begin`, `sync`, `switch` or `abort`) you can use the
 migration `watch` endpoint to show progress information for the running migration action.
@@ -7764,7 +7789,7 @@ resourceObject    | Object            | The complete Machine Object.
 
 We have an account with different machines, like:
 
-```
+```sh
 $ ./bin/triton -i inst ls -o id,name,img,state
 ID                                    NAME      IMG                 STATE
 98cbd3d0-5d6f-429d-8535-bf6ba5afe1e3  cftest01  base-64-lts@19.4.0  running
@@ -7773,19 +7798,20 @@ cde1f7a9-1aaf-40ba-bc3d-0296aafc0ece  cftest02  base-64-lts@19.4.0  running
 
 We can track changes for one or all the machines using either:
 
-```
+```sh
 $ ./bin/triton -i changefeed --instances=cde1f7a9-1aaf-40ba-bc3d-0296aafc0ece
 ```
+
 or
 
-```
+```sh
 $ ./bin/triton -i changefeed
 ```
 
 The following are the results of rebooting both VMs while tracking the changes as
 explained above:
 
-```
+```sh
 $ ./bin/triton -i inst reboot cftest01 -w
 Rebooting instance cftest01
 Rebooted instance cftest01
@@ -7796,7 +7822,7 @@ Rebooted instance cftest02
 
 Tracking changes without instance filter:
 
-```
+```sh
 $ ./bin/triton -i changefeed
 Change (2020-12-10T10:28:33.075Z) =>
     modified: state,zone_state,tags,exit_status,exit_timestamp
@@ -7852,7 +7878,7 @@ Change (2020-12-10T10:32:21.219Z) =>
 
 Tracking changes for just the provided instance:
 
-```
+```sh
 $ ./bin/triton -i changefeed --instances=cde1f7a9-1aaf-40ba-bc3d-0296aafc0ece
 Change (2020-12-10T10:32:19.218Z) =>
     modified: state,zone_state
@@ -9669,7 +9695,7 @@ For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses)
 
 **Error Code**   | **Description**
 ---------------- | ---------------
-ResourceNotFound | If `:login or `:id` does not exist
+ResourceNotFound | If `:login` or `:id` does not exist
 InvalidArgument  | If `:id` isn't a UUID
 
 ### CLI Command
@@ -9958,11 +9984,11 @@ InvalidArgument  | If `:id` isn't a UUID
 
 # Volumes
 
-_The API endpoints documented in this section are considered experimental. There
+*The API endpoints documented in this section are considered experimental. There
 is no guarantee on backward compatibility for them. Breaking changes can and
 will be made to them. They are available only for CloudAPI services running in
 datacenters for which NFS volumes support has been explicitly enabled. By
-default, it is disabled._
+default, it is disabled.*
 
 
 ## Volume objects
@@ -9970,7 +9996,7 @@ default, it is disabled._
 Volumes are represented as objects that share a common set of properties:
 
 **Name**     | **Type** | **Description**
---------     | -------- | --------------- |
+--------     | -------- | ---------------
 id         | String   | The UUID of the volume itself
 owner_uuid | String   | The UUID of the volume's owner. In the example of a NFS shared volume, the owner is the user who created the volume
 name       | String   | The volume's name. It must be unique for a given user. It must match the regular expression `/^[a-zA-Z0-9][a-zA-Z0-9_\.\-]+$/`. The maximum length for a volume's name is 256 characters. Trying to create or update a volume with a name longer than 256 characters will result in an error
@@ -9983,7 +10009,7 @@ tags       | Object[String => String] | The tags (labels) this volume will have 
 
 Here's an example of a volume object in JSON format:
 
-```
+```json
 {
   "id": "some-uuid",
   "owner_uuid": "some-uuid",
@@ -10008,7 +10034,7 @@ Here's an example of a volume object in JSON format:
 
 #### Uniqueness
 
-Volume names need to be _unique per account_.
+Volume names need to be *unique per account*.
 
 #### Renaming
 
@@ -10027,7 +10053,7 @@ extra properties:
 
 A `'tritonnfs'` volume can be represented as following:
 
-```
+```json
 {
   "id": "some-uuid",
   "owner_uuid": "some-uuid",
@@ -10055,9 +10081,9 @@ array. When a container which mounts shared volumes is created and becomes
 A container is considered to be active when it's in any state except `failed` or
 `destroyed` -- in other words in any state that can transition to `running`.
 
-For instance, even if a _stopped_ machine is the only remaining machine that
+For instance, even if a *stopped* machine is the only remaining machine that
 references a given shared volume, it won't be possible to delete that volume
-until that machine is _deleted_.
+until that machine is *deleted*.
 
 Deleting a shared volume when there's still at least one active machine that
 references it will result in an error.
@@ -10073,8 +10099,8 @@ a VM).
 
 ## ListVolumes (GET /:login/volumes)
 
-_Available only for CloudAPI services running in datacenters for which NFS
-volumes support has been explicitly enabled. By default, it is disabled._
+*Available only for CloudAPI services running in datacenters for which NFS
+volumes support has been explicitly enabled. By default, it is disabled.*
 
 By default (if the request doesn't include the `state` and `predicate`
 parameters), volumes in state === `'failed'` are not included in the response.
@@ -10094,17 +10120,17 @@ type        | String       | Allows filtering volumes by type, e.g `tritonnfs`
 `name` is a string containing either a full volume name, or a partial volume
 name prefixed and/or suffixed with a `*` character. For example:
 
- * foo
- * foo\*
- * \*foo
- * \*foo\*
+* foo
+* foo\*
+* \*foo
+* \*foo\*
 
 are all valid `name=` searches which will match respectively:
 
- * the exact name `foo`
- * any name that starts with `foo` such as `foobar`
- * any name that ends with `foo` such as `barfoo`
- * any name that contains `foo` such as `barfoobar`
+* the exact name `foo`
+* any name that starts with `foo` such as `foobar`
+* any name that ends with `foo` such as `barfoo`
+* any name that contains `foo` such as `barfoobar`
 
 #### Searching by predicate
 
@@ -10126,7 +10152,7 @@ error.
 
 A list of volume objects of the following form:
 
-```
+```json
 [
   {
     "id": "e435d72a-2498-8d49-a042-87b222a8b63f",
@@ -10152,8 +10178,8 @@ A list of volume objects of the following form:
 
 ## CreateVolume (POST /:login/volumes)
 
-_Available only for CloudAPI services running in datacenters for which NFS
-volumes support has been explicitly enabled. By default, it is disabled._
+*Available only for CloudAPI services running in datacenters for which NFS
+volumes support has been explicitly enabled. By default, it is disabled.*
 
 ### Input
 
@@ -10179,8 +10205,8 @@ If the creation process fails, the volume object has its state set to `failed`.
 
 ## GetVolume (GET /:login/volumes/:id)
 
-_Available only for CloudAPI services running in datacenters for which NFS
-volumes support has been explicitly enabled. By default, it is disabled._
+*Available only for CloudAPI services running in datacenters for which NFS
+volumes support has been explicitly enabled. By default, it is disabled.*
 
 GetVolume can be used to get data from an already-created volume, or to
 determine when a volume being created is ready to be used.
@@ -10198,8 +10224,8 @@ A [volume object](#volume-objects) representing the volume with UUID `id`.
 
 ## DeleteVolume (DELETE /:login/volumes/:id)
 
-_Available only for CloudAPI services running in datacenters for which NFS
-volumes support has been explicitly enabled. By default, it is disabled._
+*Available only for CloudAPI services running in datacenters for which NFS
+volumes support has been explicitly enabled. By default, it is disabled.*
 
 ### Input
 
@@ -10227,8 +10253,8 @@ If resources are using the volume to be deleted, the request results in a
 
 ## UpdateVolume (POST /:login/volumes/:id)
 
-_Available only for CloudAPI services running in datacenters for which NFS
-volumes support has been explicitly enabled. By default, it is disabled._
+*Available only for CloudAPI services running in datacenters for which NFS
+volumes support has been explicitly enabled. By default, it is disabled.*
 
 The `UpdateVolume` endpoint can be used to update the following properties of a
 shared volume:
@@ -10255,8 +10281,8 @@ updated.
 
 ## ListVolumeSizes (GET /:login/volumesizes)
 
-_Available only for CloudAPI services running in datacenters for which NFS
-volumes support has been explicitly enabled. By default, it is disabled._
+*Available only for CloudAPI services running in datacenters for which NFS
+volumes support has been explicitly enabled. By default, it is disabled.*
 
 The `ListVolumeSizes` endpoint can be used to determine in what sizes volumes of
 a certain type are available.
@@ -10277,7 +10303,7 @@ The response is an array of objects having two properties:
 
 * `type`: the type of volume for which the size is available
 
-```
+```json
 [
   {
     "size": 10240,

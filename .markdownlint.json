@@ -1,0 +1,18 @@
+{
+  "blanks-around-headings": false,
+  "blanks-around-lists": false,
+  "commands-show-output": false,
+  "code-block-style": false,
+  "heading-increment": false,
+  "no-duplicate-header": false,
+  "no-duplicate-heading": false,
+  "no-emphasis-as-header": false,
+  "no-emphasis-as-heading": false,
+  "no-multiple-blanks": false,
+  "no-trailing-punctuation": false,
+  "line-length": false,
+  "link-fragments": false,
+  "single-h1": false,
+  "ul-style": false,
+  "zz": "top"
+}
