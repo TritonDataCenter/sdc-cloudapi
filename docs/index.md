@@ -9296,6 +9296,12 @@ resolvers    | String  | Optional Resolver IP addresses
 routes       | Routes Object| Optional Static routes for hosts on this network
 internet_nat | Boolean | Provision internet NAT zone on gateway address
 
+If CNS is enabled for this Data Center and this account, the DNS suffixes used
+by the network will also be included:
+
+**Field**    | **Type**         | **Description**
+------------ | ---------------- | ---------------
+suffixes     | Array of Strings | Array of suffix strings used by this network
 
 ### Errors
 
@@ -9363,6 +9369,25 @@ id          | UUID     | Unique id for this network
 name        | String   | The network name
 public      | Boolean  | Whether this a public or private (rfc1918) network
 description | String   | Description of this network (optional)
+
+If the network is on a fabric, the following additional fields are included:
+
+**Field**    | **Type** | **Description**
+------------ | -------- | ---------------
+subnet       | String   | A CIDR formatted string that describes the network
+provision_start_ip | String | The first IP on the network that may be assigned
+provision_end_ip   | String | The last IP on the network that may be assigned
+gateway      | String  | Optional Gateway IP address
+resolvers    | String  | Optional Resolver IP addresses
+routes       | Routes Object| Optional Static routes for hosts on this network
+internet_nat | Boolean | Provision internet NAT zone on gateway address
+
+If CNS is enabled for this Data Center and this account, the DNS suffixes used
+by the network will also be included:
+
+**Field**    | **Type**         | **Description**
+------------ | ---------------- | ---------------
+suffixes     | Array of Strings | Array of suffix strings used by this network
 
 ### Errors
 
