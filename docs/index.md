@@ -15,6 +15,7 @@ markdown2extras: tables, code-friendly
     Copyright 2021 Joyent, Inc.
     Copyright 2021 The University of Queensland
     Copyright 2024 MNX Cloud, Inc.
+    Copyright 2025 Edgecast Cloud LLC.
 -->
 
 
@@ -885,6 +886,11 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 # Versions
 
 The section describes API changes in CloudAPI versions.
+
+## 9.20.0
+
+- Added support for [ReprovisionMachine](#ReprovisionMachine).
+  (XXX KEBE ASKS: Just for BHYVE or for native ones as well?)
 
 ## 9.19.0
 
@@ -5462,6 +5468,82 @@ as many WebSocket clients do not support sending custom HTTP headers with the
 Upgrade request.
 
 
+XXX KEBE SAYS START
+## ReprovisionMachine (POST /:login/machines/:id?action=reprovision)
+
+Reprovision an instance to a new [image](#images). This is often used to upgrade
+a machine's pkgsrc (native) or guest operating system (LX or BHYVE).
+
+Note that KVM instances (with `brand=kvm`) cannot be reprovisioned.
+
+Reprovisioning works differently on BHYVE instances vs. other reprovisionable
+ones. BHYVE instances will NOT have their non-boot-disks (data disks) touched by
+a reprovision, where as all disks and datasets in an LX or native instance will
+be erased.  If there is important data on a BHYVE instance's boot disk it should
+get moved to a non boot disk.
+
+The [Deletion Protection](#deletion-protection) attribute will prevent this
+operation from succeeding.
+
+### Inputs
+
+**Field** | **Type** | **Description**
+--------- | -------- | ---------------
+action    | String   | Use the exact string "reprovision"
+image     | String   | An image id, as returned from [ListImages](#ListImages)
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**       | **Description**
+-------------------- | ---------------
+ResourceNotFound     | If `:login` or `:id` does not exist
+InvalidState         | The instance is in the wrong state to be reprovisioned
+InvalidArgument      | If `action` was invalid, or `image` wasn't a valid id or name
+MissingParameter     | If `action` or `image` wasn't provided
+CannotDestroyMachine | XXX KEBE ASKS LEGIT TO USE HERE?!?! [Deletion Protection](#deletion-protection) is enabled on this instance
+
+### CLI Command
+
+    $ triton instance reprovision c2855c3a-a91d-46b8-9da6-6d7ab1bc6962 2b683a82-a066-11e3-97ab-2faa44701c5a
+
+or
+
+    $ sdc-reprovisionmachine --image=2b683a82-a066-11e3-97ab-2faa44701c5a c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
+
+### Example Request
+
+    POST /my/machines/c2855c3a-a91d-46b8-9da6-6d7ab1bc6962 HTTP/1.1
+    Host: api.example.com
+    Authorization: ...
+    Accept: application/json
+    Content-Length: 12
+    Content-Type: application/x-www-form-urlencoded
+    Api-Version: ~9 (XXX KEBE ASKS, what's right here?)
+
+    action=reprovision&image=2b683a82-a066-11e3-97ab-2faa44701c5a
+
+### Example Response
+
+    HTTP/1.1 202 Accepted
+    Access-Control-Allow-Origin: *
+    Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    Access-Control-Allow-Methods: POST, GET, HEAD, DELETE, PUT
+    Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+    Connection: Keep-Alive
+    Date: Thu, 21 Jan 2016 13:12:06 GMT
+    Server: cloudapi/9.20.0
+    Api-Version: 9.20.0
+    Request-Id: 8fa7d8d0-c040-11e5-9100-a95edd60134e
+    Response-Time: 161
+XXX KEBE SAYS STOP
+
+
 ## ResizeMachine (POST /:login/machines/:id?action=resize)
 
 Resize an instance to a new [package](#packages) (a.k.a. instance type).
@@ -5497,6 +5579,10 @@ InvalidArgument  | If `action` was invalid, or `package` wasn't a valid id or na
 MissingParameter | If `action` or `package` wasn't provided
 
 ### CLI Command
+
+    $ triton instance resize c2855c3a-a91d-46b8-9da6-6d7ab1bc6962 7041ccc7-3f9e-cf1e-8c85-a9ee41b7f968
+
+or
 
     $ sdc-resizemachine --package=7041ccc7-3f9e-cf1e-8c85-a9ee41b7f968 c2855c3a-a91d-46b8-9da6-6d7ab1bc6962
 
