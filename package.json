@@ -1,8 +1,8 @@
 {
   "name": "cloudapi",
   "description": "Triton CloudAPI",
-  "version": "9.20.0",
-  "author": "MNX Cloud (mnx.io)",
+  "version": "9.21.0",
+  "author": "Edgecast Cloud (edgecast.io)",
   "private": true,
   "engines": {
     "node": ">=6.17.1"
@@ -40,7 +40,7 @@
     "semver": "5.4.1",
     "triton-metrics": "1.0.3",
     "triton-netconfig": "1.5.0",
-    "ufds": "1.7.0",
+    "ufds": "git+https://github.com/TritonDataCenter/node-ufds.git#3e0ffc47e75e67428f3b5658c9e9d1e98ca4cb48",
     "uuid": "^8.3.0",
     "uuid-by-string": "0.6.0",
     "vasync": "2.2.0",
