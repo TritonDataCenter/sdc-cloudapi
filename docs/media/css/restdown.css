@@ -147,7 +147,7 @@ pre.shell code::before {
   width: 424px;
   height: 35px;
   display:block;
-  background: url(../img/logo.png) no-repeat;
+  background: url(../img/logo.svg) no-repeat;
   line-height:2.1em;
   padding:0;
   padding-left:140px;
