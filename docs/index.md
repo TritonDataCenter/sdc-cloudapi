@@ -3234,7 +3234,7 @@ ResourceNotFound | If `:account` does not exist or cannot be accessed
 
 ### CLI Command
 
-    $ triton accesskeys list
+    $ triton accesskey list
 
 ### Example Request
 
@@ -3298,7 +3298,7 @@ ResourceNotFound | If `:account` or `:accesskeyid` does not exist
 
 ### CLI Command
 
-    $ triton accesskeys get 0c6ff373f14601ec7866122c698bb55f
+    $ triton accesskey get 0c6ff373f14601ec7866122c698bb55f
 
 ### Example Request
 
@@ -3374,7 +3374,7 @@ ForbiddenError   | If the the max number of access keys has been exceed for the 
 
 ### CLI Command
 
-    $ triton accesskeys create -d "My key"
+    $ triton accesskey create -d "My key"
 
 ### Example Request
 
@@ -3445,7 +3445,7 @@ ResourceNotFound | If `:account` does not exist
 
 ### CLI Command
 
-    $ triton accesskeys update 0c6ff373f14601ec7866122c698bb55f status=Inactive
+    $ triton accesskey update 0c6ff373f14601ec7866122c698bb55f status=Inactive
 
 ### Example Request
 
@@ -3510,7 +3510,7 @@ ResourceNotFound | If `:account` or `:accesskeyid` does not exist
 
 ### CLI Command
 
-    $ triton accesskeys delete 0c6ff373f14601ec7866122c698bb55f
+    $ triton accesskey delete 0c6ff373f14601ec7866122c698bb55f
 
 ### Example Request
 
