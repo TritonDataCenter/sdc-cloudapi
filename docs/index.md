@@ -3549,7 +3549,7 @@ Lists all access keys associated with the specified sub-user. See [ListAccessKey
 ### CLI Command
 
 ```
-$ triton cloudapi /my/users/somesubuser/accesskeys
+$ triton rbac accesskeys somesubuser
 ```
 
 
@@ -3560,7 +3560,7 @@ Retrieves an access key belonging to a sub-user. See [GetAccessKey](#GetAccessKe
 ### CLI Command
 
 ```
-$ triton cloudapi /my/users/somesubuser/accesskeys/cd2fc7f0135e84b87e91c09484757cee
+$ triton rbac accesskeys somesubuser cd2fc7f0135e84b87e91c09484757cee
 ```
 
 ## CreateUserAccessKey (POST /:account/users/:user/accesskeys)
@@ -3570,7 +3570,7 @@ Creates a new access key for the specified sub-user. See [CreateAccessKey](#Crea
 ### CLI Command
 
 ```
-$ triton cloudapi -X POST -d '{}' /my/users/somesubuser/accesskeys
+$ triton rbac accesskeys --create somesubuser
 ```
 
 ## DeleteUserAccessKey (DELETE /:account/users/:user/accesskeys/:accesskeyid)
@@ -3580,7 +3580,7 @@ Deletes a sub-user access key. See [DeleteAccessKey](#DeleteAccessKey).
 ### CLI Command
 
 ```
-$ triton cloudapi -X DELETE /my/users/somesubuser/accesskeys/cd2fc7f0135e84b87e91c09484757cee
+$ triton rbac accesskeys --delete somesubuser
 ```
 
 ## UpdateUserAccessKey (POST /:account/users/:user/accesskeys/:accesskeyid)
@@ -3590,7 +3590,7 @@ Updates a sub-user access key. See [UpdateAccessK](#DeleteAccessKey).
 ### CLI Command
 
 ```
-$ triton cloudapi -X POST -d '{"description":"My sub key"}' /my/users/somesubuser/accesskeys/cd2fc7f0135e84b87e91c09484757cee
+$ triton rbac accesskeys --update --status=Inactive somesubuser
 ```
 
 
