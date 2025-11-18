@@ -40,7 +40,7 @@
     "semver": "5.4.1",
     "triton-metrics": "1.0.3",
     "triton-netconfig": "1.5.0",
-    "ufds": "git+https://github.com/TritonDataCenter/node-ufds.git#8b64c76422819a34e99cda5421e8931892640881",
+    "ufds": "git+https://github.com/TritonDataCenter/node-ufds.git#c1da5c06a8222c7c57b09da20cb220c3635cb08c",
     "uuid": "^8.3.0",
     "uuid-by-string": "0.6.0",
     "vasync": "2.2.0",
