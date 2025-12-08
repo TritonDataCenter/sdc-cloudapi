@@ -3216,13 +3216,15 @@ Lists the access keys that belong to the specified account.
 
 Array of access key objects. Each object provides the following fields:
 
-**Field**   | **Type**     | **Description**
------------ | ------------ | --------------------------------------------------------
-accesskeyid | String       | Unique identifier for this access key
-status      | String       | `Active`, `Inactive`, or `Expired` (default is `Active`)
-description | String       | Description for the access key (optional)
-created     | ISO8601 date | When the access key was created
-updated     | ISO8601 date | When the access key was updated
+**Field**      | **Type**     | **Description**
+-------------- | ------------ | --------------------------------------------------------
+accesskeyid    | String       | Unique identifier for this access key
+status         | String       | `Active`, `Inactive`, or `Expired` (default is `Active`)
+credentialtype | String       | Type of access key, `temporary` or `permanent`
+description    | String       | Description for the access key (optional)
+created        | ISO8601 date | When the access key was created
+updated        | ISO8601 date | When the access key was updated
+expiration     | ISO8601 date | Expiration of temporary access keys (optional)
 
 ### Errors
 
@@ -3251,7 +3253,7 @@ ResourceNotFound | If `:account` does not exist or cannot be accessed
 
     HTTP/1.1 200 OK
     content-type: application/json
-    content-length: 167
+    content-length: 565
     access-control-allow-origin: *
     access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
     access-control-allow-methods: POST, GET, HEAD
@@ -3268,9 +3270,19 @@ ResourceNotFound | If `:account` does not exist or cannot be accessed
         {
             "accesskeyid": "0c6ff373f14601ec7866122c698bb55f",
             "status": "Active",
+            "credentialtype": "permanent",
             "description": "My key",
             "created": "2025-10-28T16:54:02.847Z",
-            "updated": "2025-10-28T16:54:02.847Z"
+            "updated": "2025-10-28T16:54:02.847Z",
+            "expiration": null
+        },
+        {
+            "accesskeyid": "MSTS7D2029C170E7DA4E",
+            "status": "Active",
+            "credentialtype": "temporary",
+            "created": "2025-12-05T21:12:58.163Z",
+            "updated": "2025-12-05T21:12:58.163Z",
+            "expiration": "2025-12-05T22:12:58.163Z"
         }
     ]
 
@@ -3315,7 +3327,7 @@ ResourceNotFound | If `:account` or `:accesskeyid` does not exist
 
     HTTP/1.1 200 OK
     content-type: application/json
-    content-length: 165
+    content-length: 255
     access-control-allow-origin: *
     access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
     access-control-allow-methods: GET, HEAD, DELETE, POST
@@ -3331,9 +3343,11 @@ ResourceNotFound | If `:account` or `:accesskeyid` does not exist
     {
         "accesskeyid": "0c6ff373f14601ec7866122c698bb55f",
         "status": "Active",
+        "credentialtype": "permanent",
         "description": "My key",
         "created": "2025-10-28T16:54:02.847Z",
-        "updated": "2025-10-28T16:54:02.847Z"
+        "updated": "2025-10-28T16:54:02.847Z",
+        "expiration": null
     }
 
 
@@ -3358,9 +3372,11 @@ AccessKey object with the `accesskeysecret`
 accesskeyid     | UUID         | Unique identifier for this access key
 accesskeysecret | String       | Secret key, will only be returned by this endpoint upon creation
 status          | String       | `Active`, `Inactive`, or `Expired` (default is `Active`)
+credentialtype  | String       | Type of access key, `temporary` or `permanent`
 description     | String       | Description for the access key (optional)
 created         | ISO8601 date | When the access key was created
 updated         | ISO8601 date | Initial values is set to the created date
+expiration      | ISO8601 date | Will be `null` for permanent keys created by this endpoint
 
 ### Errors
 
@@ -3395,7 +3411,7 @@ ForbiddenError   | If the the max number of access keys has been exceed for the 
     HTTP/1.1 201 Created
     location: /admin/accesskeys/0c6ff373f14601ec7866122c698bb55f
     content-type: application/json
-    content-length: 238
+    content-length: 334
     access-control-allow-origin: *
     access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
     access-control-allow-methods: POST, GET, HEAD
@@ -3411,9 +3427,11 @@ ForbiddenError   | If the the max number of access keys has been exceed for the 
     {
         "accesskeyid": "0c6ff373f14601ec7866122c698bb55f",
         "status": "Active",
+        "credentialtype": "permanent",
         "description": "My key",
         "created": "2025-10-28T16:54:02.847Z",
         "updated": "2025-10-28T16:54:02.847Z",
+        "expiration": null,
         "accesskeysecret": "tdc_DZB2TScCFfKQyleUqmXC8qADvDmVaKmz3tfsKlTJ-RPyl4Kd"
     }
 
@@ -3467,7 +3485,7 @@ ResourceNotFound | If `:account` does not exist
     HTTP/1.1 201 Created
     location: /admin/accesskeys/0c6ff373f14601ec7866122c698bb55f
     content-type: application/json
-    content-length: 167
+    content-length: 257
     access-control-allow-origin: *
     access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
     access-control-allow-methods: GET, HEAD, DELETE, POST
@@ -3483,9 +3501,11 @@ ResourceNotFound | If `:account` does not exist
     {
         "accesskeyid": "0c6ff373f14601ec7866122c698bb55f",
         "status": "Inactive",
+        "credentialtype": "permanent",
         "description": "My key",
         "created": "2025-10-28T16:54:02.847Z",
-        "updated": "2025-10-28T17:12:12.792Z"
+        "updated": "2025-10-28T17:12:12.792Z",
+        "expiration": null
     }
 
 ## DeleteAccessKey (DELETE /:account/accesskeys/:accesskeyid)
