@@ -3447,6 +3447,8 @@ Updates the description or status of an access key.
 status      | String   | `Active`, `Inactive`, or `Expired` (optional)
 description | String   | Description of Access Key (optional)
 
+Changes to `status` are ignored for temporary access keys.
+
 ### Returns
 
 Access key object. See [ListAccessKeys](#ListAccessKeys) for field descriptions.
