@@ -95,10 +95,10 @@ all: build sdc-scripts
 
 .PHONY: build
 build: $(SMF_MANIFESTS) | $(TAP) $(REPO_DEPS)
-	$(NPM) install
+	$(NPM) ci --include=dev
 
 $(TAP): | $(NPM_EXEC)
-	$(NPM) install
+	$(NPM) ci --include=dev
 
 DOC_CLEAN_FILES = docs/{index,admin,dev}.{html,json} build/docs
 .PHONY: clean-docs
