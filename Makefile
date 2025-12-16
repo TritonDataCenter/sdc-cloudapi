@@ -18,7 +18,7 @@ NAME	:= cloudapi
 #
 # Tools
 #
-TAP	:= ./node_modules/.bin/tap
+TAPE	:= ./node_modules/.bin/tape
 
 #
 # Files
@@ -95,10 +95,10 @@ PATH	:= $(NODE_INSTALL)/bin:/opt/local/bin:${PATH}
 all: build sdc-scripts
 
 .PHONY: build
-build: $(SMF_MANIFESTS) | $(TAP) $(REPO_DEPS)
+build: $(SMF_MANIFESTS) | $(TAPE) $(REPO_DEPS)
 	$(NPM) ci --include=dev
 
-$(TAP): | $(NPM_EXEC)
+$(TAPE): | $(NPM_EXEC)
 	$(NPM) ci --include=dev
 
 DOC_CLEAN_FILES = docs/{index,admin,dev}.{html,json} build/docs
@@ -121,6 +121,7 @@ release: check all docs
 		$(ROOT)/plugins \
 		$(ROOT)/main.js \
 		$(ROOT)/node_modules \
+		$(ROOT)/package-lock.json \
 		$(ROOT)/package.json \
 		$(ROOT)/sapi_manifests \
 		$(ROOT)/smf \
