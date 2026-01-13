@@ -7,6 +7,7 @@
 <!--
     Copyright 2019 Joyent, Inc.
     Copyright 2023 MNX Cloud, Inc.
+    Copyright 2025 Edgecast Cloud LLC.
 -->
 
 # sdc-cloudapi
@@ -44,11 +45,8 @@ sdcadm command above. Alternatively, a more manual approach is:
 
 The configuration file `./etc/cloudapi.cfg` needs to be created before
 the CloudAPI server can run. Consequently, **this file is also required in
-order to run the test suite**.
-
-There is an example `cloudapi.coal.cfg` file in the repository, with the
-default values every required variable should take if we were running the
-tests on our development machine, which has access to a COAL setup.
+order to run the test suite**. You can obtain a `cloudapi.cfg` from within
+the cloudapi zone to use as an example.
 
 Please remember that if you're trying to modify this file within an actual
 cloudapi zone, the config file is created - and automatically updated - by the

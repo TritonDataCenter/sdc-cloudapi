@@ -15,6 +15,7 @@ markdown2extras: tables, code-friendly
     Copyright 2021 Joyent, Inc.
     Copyright 2021 The University of Queensland
     Copyright 2024 MNX Cloud, Inc.
+    Copyright 2025 Edgecast Cloud LLC.
 -->
 
 
@@ -886,6 +887,15 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
+## 9.21.0
+
+- Add ability to update an AccessKey's `status` and `description` field.
+- Remove unnecessary `dn`, `controls`, and `objectclass` properties from AccessKey responses.
+
+## 9.20.0
+
+-  When listing Networks, If CNS is enabled for the Data Center and account, the DNS suffixes used by the network will also be included in the response.
+
 ## 9.19.0
 
 - `block_size` is now reported on disks in GetMachine, GetMachineDisk, and
@@ -910,7 +920,7 @@ The section describes API changes in CloudAPI versions.
 
 ## 9.15.0
 
-- Allow setting the `primary` option with the AddNic API [#84].
+- Allow setting the `primary` option with the AddNic API [#84](https://github.com/TritonDataCenter/sdc-cloudapi/pull/84).
 
 ## 9.14.0
 
@@ -3187,6 +3197,423 @@ ResourceNotFound | If `:account` or `:policy` do not exist
     Response-Time: 872
 
 
+
+
+# AccessKeys
+
+Access Keys are required for Triton features that use the AWS SigV4
+authentication protocol (such as Manta's S3 compatibility layer.)
+
+## ListAccessKeys (GET /:account/accesskeys)
+
+Lists the access keys that belong to the specified account.
+
+### Inputs
+
+* None
+
+### Returns
+
+Array of access key objects. Each object provides the following fields:
+
+**Field**      | **Type**     | **Description**
+-------------- | ------------ | --------------------------------------------------------
+accesskeyid    | String       | Unique identifier for this access key
+status         | String       | `Active`, `Inactive`, or `Expired` (default is `Active`)
+credentialtype | String       | Type of access key, `temporary` or `permanent`
+description    | String       | Description for the access key (optional)
+created        | ISO8601 date | When the access key was created
+updated        | ISO8601 date | When the access key was updated
+expiration     | ISO8601 date | Expiration of temporary access keys (optional)
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:account` does not exist or cannot be accessed
+
+### CLI Command
+
+    $ triton accesskeys list
+
+### Example Request
+
+    GET /my/accesskeys HTTP/1.1
+    Host: api.example.com
+    date: Tue, 28 Oct 2025 17:03:35 GMT
+    authorization: Signature keyId=...
+    accept: application/json
+    user-agent: triton/7.18.0 (x64-linux; node/22.20.0)
+    accept-version: ~9||~8
+
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    content-type: application/json
+    content-length: 565
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: POST, GET, HEAD
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    connection: Keep-Alive
+    content-md5: txOxd6VAVJXwkyDeKsDhPA==
+    date: Tue, 28 Oct 2025 17:03:36 GMT
+    server: cloudapi/9.21.0
+    api-version: 9.0.0
+    request-id: 66053d1d-d94f-4ec9-aa67-7eb96854addf
+    response-time: 331
+
+    [
+        {
+            "accesskeyid": "0c6ff373f14601ec7866122c698bb55f",
+            "status": "Active",
+            "credentialtype": "permanent",
+            "description": "My key",
+            "created": "2025-10-28T16:54:02.847Z",
+            "updated": "2025-10-28T16:54:02.847Z",
+            "expiration": null
+        },
+        {
+            "accesskeyid": "MSTS7D2029C170E7DA4E",
+            "status": "Active",
+            "credentialtype": "temporary",
+            "created": "2025-12-05T21:12:58.163Z",
+            "updated": "2025-12-05T21:12:58.163Z",
+            "expiration": "2025-12-05T22:12:58.163Z"
+        }
+    ]
+
+
+
+## GetAccessKey (GET /:account/accesskeys/:accesskeyid)
+
+Retrieves a single access key by ID.
+
+### Inputs
+
+* None
+
+### Returns
+
+Access key object. See [ListAccessKeys](#ListAccessKeys) for field descriptions.
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:account` or `:accesskeyid` does not exist
+
+### CLI Command
+
+    $ triton accesskeys get 0c6ff373f14601ec7866122c698bb55f
+
+### Example Request
+
+    GET /my/accesskeys/0c6ff373f14601ec7866122c698bb55f HTTP/1.1
+    Host: api.example.com
+    date: Tue, 28 Oct 2025 17:06:14 GMT
+    authorization: Signature keyId="/admin/keys/6c:1c:7a:df:c6:59:e0:e9:b1:f1:16:73:d1:a3:36:0b",algorithm="ed25519-sha512",headers="(request-target) date",signature="gCfo/gDj9jG6NL8kSU7Sxn6lTB5HfDCU0xQJv+cqjaCC4P2pfqXwM4CR1UZZz3j9S2N782Y3+9zPtOtOiWQ0Cg=="
+    accept: application/json
+    user-agent: triton/7.18.0 (x64-linux; node/22.20.0)
+    accept-version: ~9||~8
+
+
+### Example Response
+
+    HTTP/1.1 200 OK
+    content-type: application/json
+    content-length: 255
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET, HEAD, DELETE, POST
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    connection: Keep-Alive
+    content-md5: d2xDdXaSmwxBzglG98qLbQ==
+    date: Tue, 28 Oct 2025 17:06:15 GMT
+    server: cloudapi/9.21.0
+    api-version: 9.0.0
+    request-id: f86c2c2b-3d7b-4b2e-8042-43c757385e60
+    response-time: 311
+
+    {
+        "accesskeyid": "0c6ff373f14601ec7866122c698bb55f",
+        "status": "Active",
+        "credentialtype": "permanent",
+        "description": "My key",
+        "created": "2025-10-28T16:54:02.847Z",
+        "updated": "2025-10-28T16:54:02.847Z",
+        "expiration": null
+    }
+
+
+
+## CreateAccessKey (POST /:account/accesskeys)
+
+Generates a new access key id and secret.
+
+### Inputs
+
+**Field**   | **Type** | **Description**
+----------- | -------- | ------------------------------------------------------------------
+status      | String   | `Active`, `Inactive`, or `Expired` (optional, default is `Active`)
+description | String   | Description of Access Key (optional)
+
+### Returns
+
+AccessKey object with the `accesskeysecret`
+
+**Field**       | **Type**     | **Description**
+--------------- | ------------ | ----------------------------------------------------------------
+accesskeyid     | UUID         | Unique identifier for this access key
+accesskeysecret | String       | Secret key, will only be returned by this endpoint upon creation
+status          | String       | `Active`, `Inactive`, or `Expired` (default is `Active`)
+credentialtype  | String       | Type of access key, `temporary` or `permanent`
+description     | String       | Description for the access key (optional)
+created         | ISO8601 date | When the access key was created
+updated         | ISO8601 date | Initial values is set to the created date
+expiration      | ISO8601 date | Will be `null` for permanent keys created by this endpoint
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------------------------------
+InvalidArgument  | If the access key could not be created
+ResourceNotFound | If `:account` does not exist
+ForbiddenError   | If the the max number of access keys has been exceed for the account
+
+### CLI Command
+
+    $ triton accesskeys create -d "My key"
+
+### Example Request
+
+    POST /my/accesskeys HTTP/1.1
+    Host: api.example.com
+    date: Tue, 28 Oct 2025 16:54:02 GMT
+    authorization: Signature keyId=...
+    accept: application/json
+    content-type: application/json
+    accept-version: ~9||~8
+    content-length: 24
+    content-md5: Kwz1oEQ4P+sgb/yvvMH2fQ==
+
+    {"description":"My key"}
+
+### Example Response
+
+    HTTP/1.1 201 Created
+    location: /admin/accesskeys/0c6ff373f14601ec7866122c698bb55f
+    content-type: application/json
+    content-length: 334
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: POST, GET, HEAD
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    connection: Keep-Alive
+    content-md5: m+P0i5OrG7f6aEZyKH4Uug==
+    date: Tue, 28 Oct 2025 16:54:02 GMT
+    server: cloudapi/9.21.0
+    api-version: 9.0.0
+    request-id: c56c82e4-8ee4-4ab7-b90b-c1fcea53ea59
+    response-time: 266
+
+    {
+        "accesskeyid": "0c6ff373f14601ec7866122c698bb55f",
+        "status": "Active",
+        "credentialtype": "permanent",
+        "description": "My key",
+        "created": "2025-10-28T16:54:02.847Z",
+        "updated": "2025-10-28T16:54:02.847Z",
+        "expiration": null,
+        "accesskeysecret": "tdc_DZB2TScCFfKQyleUqmXC8qADvDmVaKmz3tfsKlTJ-RPyl4Kd"
+    }
+
+
+## UpdateAccessKey (POST /:account/accesskeys/:accesskeyid)
+
+Updates the description or status of an access key.
+
+### Inputs
+
+**Field**   | **Type** | **Description**
+----------- | -------- | ---------------------------------------------
+status      | String   | `Active`, `Inactive`, or `Expired` (optional)
+description | String   | Description of Access Key (optional)
+
+Changes to `status` are ignored for temporary access keys.
+
+### Returns
+
+Access key object. See [ListAccessKeys](#ListAccessKeys) for field descriptions.
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | --------------------------------------
+InvalidArgument  | If the access key could not be updated
+ResourceNotFound | If `:account` does not exist
+
+
+### CLI Command
+
+    $ triton accesskeys update 0c6ff373f14601ec7866122c698bb55f status=Inactive
+
+### Example Request
+
+    POST /my/accesskeys/0c6ff373f14601ec7866122c698bb55f HTTP/1.1
+    Host: api.example.com
+    date: Tue, 28 Oct 2025 18:00:23 GMT
+    authorization: Signature keyId="/admin/keys/6c:1c:7a:df:c6:59:e0:e9:b1:f1:16:73:d1:a3:36:0b",algorithm="ed25519-sha512",headers="(request-target) date",signature="mKzhEINEXrM1FTeHMYHKu4CRM+G8SyQTBlLyasgFQN6P1ngN/63ejRG39T3+PdHI83korAik+rbuO+ebZ9LTAQ=="
+    accept: application/json
+    content-type: application/json
+    user-agent: triton/7.18.0 (x64-linux; node/22.20.0)
+    accept-version: ~9||~8
+    content-length: 21
+    content-md5: kojaeNXTM7qpXBS5ojOMDw==
+
+    {"status":"Inactive"}
+
+### Example Response
+
+    HTTP/1.1 201 Created
+    location: /admin/accesskeys/0c6ff373f14601ec7866122c698bb55f
+    content-type: application/json
+    content-length: 257
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET, HEAD, DELETE, POST
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    connection: Keep-Alive
+    content-md5: vQDU/7yK9b/Sl9kY43SdBA==
+    date: Tue, 28 Oct 2025 18:00:23 GMT
+    server: cloudapi/9.21.0
+    api-version: 9.0.0
+    request-id: 36472cc9-311a-40b2-9433-030ffe22ac37
+    response-time: 318
+
+    {
+        "accesskeyid": "0c6ff373f14601ec7866122c698bb55f",
+        "status": "Inactive",
+        "credentialtype": "permanent",
+        "description": "My key",
+        "created": "2025-10-28T16:54:02.847Z",
+        "updated": "2025-10-28T17:12:12.792Z",
+        "expiration": null
+    }
+
+## DeleteAccessKey (DELETE /:account/accesskeys/:accesskeyid)
+
+Deletes an existing access key.
+
+### Inputs
+
+* None
+
+### Returns
+
+* None
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**   | **Description**
+---------------- | ---------------
+ResourceNotFound | If `:account` or `:accesskeyid` does not exist
+
+### CLI Command
+
+    $ triton accesskeys delete 0c6ff373f14601ec7866122c698bb55f
+
+### Example Request
+
+    DELETE /my/accesskeys/0c6ff373f14601ec7866122c698bb55f HTTP/1.1
+    Host: api.example.com
+    date: Tue, 28 Oct 2025 18:03:44 GMT
+    authorization: Signature keyId="/admin/keys/6c:1c:7a:df:c6:59:e0:e9:b1:f1:16:73:d1:a3:36:0b",algorithm="ed25519-sha512",headers="(request-target) date",signature="3mFJVo/su0cpAPV4Q3Y9zpfuhPpmSMjOpZElpoJFhG8KxOkWWQmwzgvtwvWuI4qGm6tmnCeSVL65qWmsET2TDg=="
+    accept: application/json
+    user-agent: triton/7.18.0 (x64-linux; node/22.20.0)
+    accept-version: ~9||~8
+
+### Example Response
+
+    HTTP/1.1 204 No Content
+    access-control-allow-origin: *
+    access-control-allow-headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+    access-control-allow-methods: GET, HEAD, DELETE, POST
+    access-control-expose-headers: Api-Version, Request-Id, Response-Time
+    connection: Keep-Alive
+    date: Tue, 28 Oct 2025 18:03:45 GMT
+    server: cloudapi/9.21.0
+    api-version: 9.0.0
+    request-id: a24a3570-8ba8-47c3-ae7d-cf3fba6ed501
+    response-time: 366
+
+
+# User AccessKeys
+
+See account [AccessKeys](#accesskeys) for a detailed description.  These endpoints mirror
+the account-level routes but take the sub-user login as part of the path.
+
+## ListUserAccessKeys (GET /:account/users/:user/accesskeys)
+
+Lists all access keys associated with the specified sub-user. See [ListAccessKeys](#ListAccessKeys).
+
+### CLI Command
+
+```
+$ triton cloudapi /my/users/somesubuser/accesskeys
+```
+
+
+## GetUserAccessKey (GET /:account/users/:user/accesskeys/:accesskeyid)
+
+Retrieves an access key belonging to a sub-user. See [GetAccessKey](#GetAccessKey).
+
+### CLI Command
+
+```
+$ triton cloudapi /my/users/somesubuser/accesskeys/cd2fc7f0135e84b87e91c09484757cee
+```
+
+## CreateUserAccessKey (POST /:account/users/:user/accesskeys)
+
+Creates a new access key for the specified sub-user. See [CreateAccessKey](#CreateAccessKey).
+
+### CLI Command
+
+```
+$ triton cloudapi -X POST -d '{}' /my/users/somesubuser/accesskeys
+```
+
+## DeleteUserAccessKey (DELETE /:account/users/:user/accesskeys/:accesskeyid)
+
+Deletes a sub-user access key. See [DeleteAccessKey](#DeleteAccessKey).
+
+### CLI Command
+
+```
+$ triton cloudapi -X DELETE /my/users/somesubuser/accesskeys/cd2fc7f0135e84b87e91c09484757cee
+```
+
+## UpdateUserAccessKey (POST /:account/users/:user/accesskeys/:accesskeyid)
+
+Updates a sub-user access key. See [UpdateAccessK](#DeleteAccessKey).
+
+### CLI Command
+
+```
+$ triton cloudapi -X POST -d '{"description":"My sub key"}' /my/users/somesubuser/accesskeys/cd2fc7f0135e84b87e91c09484757cee
+```
 
 
 # User SSH Keys
