@@ -887,6 +887,10 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
+## 9.21.1 
+
+- Add an optional bucket-scope parameter when creating an accesskey.
+
 ## 9.21.0
 
 - Add ability to update an AccessKey's `status` and `description` field.
@@ -3362,6 +3366,35 @@ Generates a new access key id and secret.
 ----------- | -------- | ------------------------------------------------------------------
 status      | String   | `Active`, `Inactive`, or `Expired` (optional, default is `Active`)
 description | String   | Description of Access Key (optional)
+scope       | Object.  | Object describing permissions and bucket to which the accesskey will have access.
+
+The json schema of this optional parameter is the following:
+```json
+  {
+    "type": "object",
+    "required": ["version", "permissions"],
+    "properties": {
+      "version": { "const": 1 },
+      "permissions": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 1000,
+        "items": {
+          "type": "object",
+          "required": ["bucket", "level"],
+          "properties": {
+            "bucket": {
+              "type": "string",
+              "maxLength": 63,
+              "pattern": "^(\\*|[a-z0-9][a-z0-9.\\-]*\\*?)$"
+            },
+            "level": { "enum": ["read", "readwrite", "full"] }
+          }
+        }
+      }
+    }
+  }
+```
 
 ### Returns
 
