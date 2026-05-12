@@ -1,7 +1,7 @@
 {
   "name": "cloudapi",
   "description": "Triton CloudAPI",
-  "version": "9.21.1",
+  "version": "9.22.0",
   "author": "Edgecast Cloud (edgecast.io)",
   "private": true,
   "engines": {
