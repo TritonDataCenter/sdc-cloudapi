@@ -887,9 +887,10 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
-## 9.21.1 
+## 9.22.0 
 
 - Add an optional bucket-scope parameter when creating an accesskey.
+- `UpdateAccessKey` now returns 200 status code on success instead of 201.
 
 ## 9.21.0
 
@@ -3366,7 +3367,7 @@ Generates a new access key id and secret.
 ----------- | -------- | ------------------------------------------------------------------
 status      | String   | `Active`, `Inactive`, or `Expired` (optional, default is `Active`)
 description | String   | Description of Access Key (optional)
-scope       | Object.  | Object describing permissions and bucket to which the accesskey will have access.
+scope       | Object.  | Object describing permissions and bucket to which the accesskey will have access. _If_ `null` then the scope is unrestricted. 
 
 The json schema of this optional parameter is the following:
 ```json
