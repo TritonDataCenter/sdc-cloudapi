@@ -15,7 +15,7 @@ markdown2extras: tables, code-friendly
     Copyright 2021 Joyent, Inc.
     Copyright 2021 The University of Queensland
     Copyright 2024 MNX Cloud, Inc.
-    Copyright 2025 Edgecast Cloud LLC.
+    Copyright 2026 Edgecast Cloud LLC.
 -->
 
 
@@ -886,6 +886,11 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 # Versions
 
 The section describes API changes in CloudAPI versions.
+
+## 9.22.0 
+
+- Add an optional bucket-scope parameter when creating an accesskey.
+- `UpdateAccessKey` now returns 200 status code on success instead of 201.
 
 ## 9.21.0
 
@@ -3225,6 +3230,7 @@ description    | String       | Description for the access key (optional)
 created        | ISO8601 date | When the access key was created
 updated        | ISO8601 date | When the access key was updated
 expiration     | ISO8601 date | Expiration of temporary access keys (optional)
+scope          | Object       | Parsed bucket-scope envelope, or `null` for an unrestricted key. See [CreateAccessKey](#CreateAccessKey) for the schema.
 
 ### Errors
 
@@ -3362,6 +3368,35 @@ Generates a new access key id and secret.
 ----------- | -------- | ------------------------------------------------------------------
 status      | String   | `Active`, `Inactive`, or `Expired` (optional, default is `Active`)
 description | String   | Description of Access Key (optional)
+scope       | Object.  | Object describing permissions and bucket to which the accesskey will have access. _If_ `null` then the scope is unrestricted. 
+
+The json schema of this optional parameter is the following:
+```json
+  {
+    "type": "object",
+    "required": ["version", "permissions"],
+    "properties": {
+      "version": { "const": 1 },
+      "permissions": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 1000,
+        "items": {
+          "type": "object",
+          "required": ["bucket", "level"],
+          "properties": {
+            "bucket": {
+              "type": "string",
+              "maxLength": 63,
+              "pattern": "^(\\*|[a-z0-9][a-z0-9.\\-]*\\*?)$"
+            },
+            "level": { "enum": ["read", "readwrite", "full"] }
+          }
+        }
+      }
+    }
+  }
+```
 
 ### Returns
 
@@ -3377,6 +3412,7 @@ description     | String       | Description for the access key (optional)
 created         | ISO8601 date | When the access key was created
 updated         | ISO8601 date | Initial values is set to the created date
 expiration      | ISO8601 date | Will be `null` for permanent keys created by this endpoint
+scope           | Object       | Parsed bucket-scope envelope, or `null` for an unrestricted key.
 
 ### Errors
 
@@ -3438,7 +3474,7 @@ ForbiddenError   | If the the max number of access keys has been exceed for the 
 
 ## UpdateAccessKey (POST /:account/accesskeys/:accesskeyid)
 
-Updates the description or status of an access key.
+Updates the description, status, or bucket-scope of an access key.
 
 ### Inputs
 
@@ -3446,6 +3482,7 @@ Updates the description or status of an access key.
 ----------- | -------- | ---------------------------------------------
 status      | String   | `Active`, `Inactive`, or `Expired` (optional)
 description | String   | Description of Access Key (optional)
+scope       | Object   | Bucket-scope envelope (same schema as [CreateAccessKey](#CreateAccessKey)). Pass `null` or `""` to clear the scope and make the key unrestricted again. (optional)
 
 Changes to `status` are ignored for temporary access keys.
 
@@ -3607,7 +3644,7 @@ $ triton cloudapi -X DELETE /my/users/somesubuser/accesskeys/cd2fc7f0135e84b87e9
 
 ## UpdateUserAccessKey (POST /:account/users/:user/accesskeys/:accesskeyid)
 
-Updates a sub-user access key. See [UpdateAccessK](#DeleteAccessKey).
+Updates a sub-user access key. See [UpdateAccessKey](#UpdateAccessKey).
 
 ### CLI Command
 
