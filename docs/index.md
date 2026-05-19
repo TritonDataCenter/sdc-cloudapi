@@ -3230,6 +3230,7 @@ description    | String       | Description for the access key (optional)
 created        | ISO8601 date | When the access key was created
 updated        | ISO8601 date | When the access key was updated
 expiration     | ISO8601 date | Expiration of temporary access keys (optional)
+scope          | Object       | Parsed bucket-scope envelope, or `null` for an unrestricted key. See [CreateAccessKey](#CreateAccessKey) for the schema.
 
 ### Errors
 
@@ -3411,6 +3412,7 @@ description     | String       | Description for the access key (optional)
 created         | ISO8601 date | When the access key was created
 updated         | ISO8601 date | Initial values is set to the created date
 expiration      | ISO8601 date | Will be `null` for permanent keys created by this endpoint
+scope           | Object       | Parsed bucket-scope envelope, or `null` for an unrestricted key.
 
 ### Errors
 
@@ -3472,7 +3474,7 @@ ForbiddenError   | If the the max number of access keys has been exceed for the 
 
 ## UpdateAccessKey (POST /:account/accesskeys/:accesskeyid)
 
-Updates the description or status of an access key.
+Updates the description, status, or bucket-scope of an access key.
 
 ### Inputs
 
@@ -3480,6 +3482,7 @@ Updates the description or status of an access key.
 ----------- | -------- | ---------------------------------------------
 status      | String   | `Active`, `Inactive`, or `Expired` (optional)
 description | String   | Description of Access Key (optional)
+scope       | Object   | Bucket-scope envelope (same schema as [CreateAccessKey](#CreateAccessKey)). Pass `null` or `""` to clear the scope and make the key unrestricted again. (optional)
 
 Changes to `status` are ignored for temporary access keys.
 
@@ -3641,7 +3644,7 @@ $ triton cloudapi -X DELETE /my/users/somesubuser/accesskeys/cd2fc7f0135e84b87e9
 
 ## UpdateUserAccessKey (POST /:account/users/:user/accesskeys/:accesskeyid)
 
-Updates a sub-user access key. See [UpdateAccessK](#DeleteAccessKey).
+Updates a sub-user access key. See [UpdateAccessKey](#UpdateAccessKey).
 
 ### CLI Command
 
