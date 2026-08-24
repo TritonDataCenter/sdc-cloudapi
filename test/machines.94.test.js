@@ -6,6 +6,7 @@
 
 /*
  * Copyright 2020 Joyent, Inc.
+ * Copyright 2026 Edgecast Cloud LLC.
  */
 
 var test = require('tape');
@@ -13,6 +14,7 @@ var util = require('util');
 var vasync = require('vasync');
 
 var common = require('./common');
+var diskValidation = require('../lib/validation/disk');
 var machinesCommon = require('./machines/common');
 var checkMachine = machinesCommon.checkMachine;
 var deleteMachine = require('./machines/delete');
@@ -76,6 +78,31 @@ function checkDisk(t, expectedDisk, actualDisk) {
 function checkDisks(t, expectedDisks, actualDisks) {
     expectedDisks.forEach(function check(disk, idx) {
         checkDisk(t, disk, actualDisks[idx]);
+    });
+}
+
+/*
+ * block_size is reported back from the zvol's volblocksize, which varies with
+ * the pool's layout, so it can only be checked for validity and not against a
+ * fixed value. Everything else must match exactly.
+ */
+function checkDiskEqual(t, actualDisk, expectedDisk, msg) {
+    var disk = Object.assign({}, actualDisk);
+
+    if (disk.hasOwnProperty('block_size')) {
+        t.ok(diskValidation.validRecordSize(disk.block_size),
+            'valid block_size: ' + disk.block_size);
+        delete disk.block_size;
+    }
+
+    t.deepEqual(disk, expectedDisk, msg);
+}
+
+function checkDisksEqual(t, actualDisks, expectedDisks, msg) {
+    t.equal(actualDisks.length, expectedDisks.length, 'disk count');
+
+    actualDisks.forEach(function check(disk, idx) {
+        checkDiskEqual(t, disk, expectedDisks[idx], msg);
     });
 }
 
@@ -440,7 +467,7 @@ test('No disks/inflexible disk package', function (suite) {
             CLIENT.get(diskPath, function gotDisk(err, req, res, disk) {
                     t.ifError(err);
 
-                    t.deepEqual(disk, {
+                    checkDiskEqual(t, disk, {
                         id: DISK_UUID,
                         boot: false,
                         pci_slot: '0:4:1',
@@ -717,7 +744,7 @@ test('Disks/flexible disk package', function (suite) {
                     t.strictEqual(body.flexible, true);
                     checkDisksQuota(t, body.disks,
                         BHYVE_128_FLEXIBLE.quota - body.free_space);
-                    t.deepEqual(body.disks, expectedDisks);
+                    checkDisksEqual(t, body.disks, expectedDisks);
                     t.end();
             });
         });
@@ -764,7 +791,7 @@ test('Disks/flexible disk package', function (suite) {
             }, function resizeDisk(err, req, res, disk) {
                 t.ifError(err, 'err');
 
-                t.deepEqual(disk, {
+                checkDiskEqual(t, disk, {
                     id: DISK_UUID,
                     pci_slot: '0:4:1',
                     size: 512,
@@ -793,7 +820,7 @@ test('Disks/flexible disk package', function (suite) {
                         return;
                     }
 
-                    t.deepEqual(disk, {
+                    checkDiskEqual(t, disk, {
                         id: DISK_UUID,
                         pci_slot: '0:4:1',
                         size: 128,
@@ -844,7 +871,7 @@ test('Disks/flexible disk package', function (suite) {
                     }
 
                     t.ifError(err, 'err');
-                    t.deepEqual(disk, {
+                    checkDiskEqual(t, disk, {
                         id: DISK_UUID,
                         pci_slot: '0:4:1',
                         size: 128,
@@ -901,7 +928,7 @@ test('Disks/flexible disk package', function (suite) {
 
                     t.ifError(err, 'err');
 
-                    t.deepEqual(disk, {
+                    checkDiskEqual(t, disk, {
                         id: DISK_UUID,
                         pci_slot: '0:4:4',
                         size: 256,
@@ -984,7 +1011,7 @@ test('Disks/flexible disk package', function (suite) {
 
                     t.ifError(err, 'err');
                     if (count === 1) {
-                        t.deepEqual(disk, {
+                        checkDiskEqual(t, disk, {
                             id: DISK_UUID,
                             pci_slot: '0:4:2',
                             size: BHYVE_128_FLEXIBLE.quota -
@@ -1096,7 +1123,7 @@ test('Disks sum to quota/flex disk package', function (suite) {
                 t.strictEqual(body.flexible, true);
                 checkDisksQuota(t, body.disks,
                     BHYVE_128_FLEXIBLE.quota);
-                t.deepEqual(body.disks, expectedDisks);
+                checkDisksEqual(t, body.disks, expectedDisks);
                 t.end();
         });
     });
@@ -1203,7 +1230,7 @@ test('Disks with remaining/flex disk package', function (suite) {
                 t.strictEqual(body.flexible, true);
                 checkDisksQuota(t, body.disks,
                     BHYVE_128_FLEXIBLE.quota - body.free_space);
-                t.deepEqual(body.disks, expectedDisks);
+                checkDisksEqual(t, body.disks, expectedDisks);
                 t.end();
         });
     });
