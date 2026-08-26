@@ -5435,7 +5435,6 @@ id         | UUID     | Unique id for this disk
 boot       | Boolean  | If `true`, this is the boot disk
 image      | UUID     | The image from which the disk was created
 size       | Integer  | The size of the disk in mebibytes or "remaining". If "remaining", size will be set to the difference between the package quota and sum of the other disks.
-block_size | Integer  | Optional. The disk's block size in bytes. Must be 512-131072 and a power of 2. Cannot be set on an image-backed disk, which includes the boot disk. When not specified, the block size is chosen for you and reported back on subsequent requests.
 
 ### Returns
 
