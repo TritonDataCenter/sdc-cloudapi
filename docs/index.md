@@ -887,10 +887,9 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
-## 9.21.1
+## 9.22.0
 
-- Fixed [CreateMachineDisk](#CreateMachineDisk) failing with an InternalError on
-  every bhyve instance.
+- Added `block_size` to [CreateMachineDisk](#CreateMachineDisk) as an optional parameter.
 
 ## 9.21.0
 
