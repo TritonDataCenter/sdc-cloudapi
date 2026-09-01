@@ -1,7 +1,7 @@
 {
   "name": "cloudapi",
   "description": "Triton CloudAPI",
-  "version": "9.21.0",
+  "version": "9.22.0",
   "author": "Edgecast Cloud (edgecast.io)",
   "private": true,
   "engines": {
@@ -36,7 +36,7 @@
     "nodemailer": "0.7.1",
     "nopt": "2.0.0",
     "restify": "4.3.3",
-    "sdc-clients": "13.0.5",
+    "sdc-clients": "13.1.0",
     "semver": "5.4.1",
     "triton-metrics": "1.0.3",
     "triton-netconfig": "1.5.0",

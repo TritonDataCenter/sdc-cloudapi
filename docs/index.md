@@ -15,7 +15,7 @@ markdown2extras: tables, code-friendly
     Copyright 2021 Joyent, Inc.
     Copyright 2021 The University of Queensland
     Copyright 2024 MNX Cloud, Inc.
-    Copyright 2025 Edgecast Cloud LLC.
+    Copyright 2026 Edgecast Cloud LLC.
 -->
 
 
@@ -887,6 +887,10 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
+## 9.22.0
+
+- Added `block_size` to [CreateMachineDisk](#CreateMachineDisk) as an optional parameter.
+
 ## 9.21.0
 
 - Add ability to update an AccessKey's `status` and `description` field.
@@ -904,7 +908,7 @@ The section describes API changes in CloudAPI versions.
   invalid `block_size` on a disk will now report errors rather than silently
   fail.
 
-# 9.18.0
+## 9.18.0
 
 - Support for ED25519 keys.
 
@@ -6684,6 +6688,7 @@ dangerous_allow_shrink | Boolean  | Optional, whether a disk can reduce size
 id        | String   | This disk's UUID
 pci_slot  | String   | This disk's PCI slot
 size      | Number   | Size in MiB (before resize)
+block_size | Number  | The disk's block size in bytes
 boot      | Boolean  | If this is the VM's boot disk
 state     | String   | Current state of disk (i.e. 'resizing')
 
@@ -6754,6 +6759,7 @@ Fetch a specific disk on a bhyve VM.
 id        | String   | This disk's UUID
 pci_slot  | String   | This disk's PCI slot
 size      | Number   | Size in MiB
+block_size | Number  | The disk's block size in bytes
 boot      | Boolean  | If this is the VM's boot disk
 state     | String   | Current state of disk
 
@@ -6820,6 +6826,7 @@ List all disk on a bhyve VM.
 id        | String   | This disk's UUID
 pci_slot  | String   | This disk's PCI slot
 size      | Number   | Size in MiB
+block_size | Number  | The disk's block size in bytes
 boot      | Boolean  | If this is the VM's boot disk
 state     | String   | Current state of disk
 
