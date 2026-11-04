@@ -887,6 +887,12 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
+## 9.23.0
+
+- New endpoint, [ConnectMachineConsole](#ConnectMachineConsole), which
+  connects a WebSocket to the serial or zone console of an instance. It is
+  disabled unless the operator sets `CLOUDAPI_CONSOLE_ACCESS`.
+
 ## 9.22.0
 
 - Added `block_size` to [CreateMachineDisk](#CreateMachineDisk) as an optional parameter.
@@ -5891,6 +5897,58 @@ UpgradeRequired  | If the WebSocket upgrade headers are missing or malformed
 It is recommended to use pre-signed URLs for authentication with this endpoint,
 as many WebSocket clients do not support sending custom HTTP headers with the
 Upgrade request.
+
+
+## ConnectMachineConsole (GET /:login/machines/:id/console)
+
+Connects a websocket to the text console of a running instance: the serial
+console for KVM and bhyve instances and the zone console for SmartOS and LX
+instances. Docker containers are not supported.
+
+Only one console session per instance can be open at a time, including any
+session an operator has open on the compute node. Sessions end after 30 minutes
+without traffic or 8 hours in total.
+
+This endpoint is disabled unless the operator has enabled console access for
+the datacenter. For RBAC the action is `connectmachineconsole`, which gives
+full interactive access to the instance console and should be granted
+accordingly.
+
+### Inputs
+
+* WebSocket upgrade headers
+
+### Returns
+
+* Upgrades to a WebSocket that carries raw console bytes in binary frames in
+  both directions. Accepts the subprotocol names `console` and `binary`. Text
+  frames from the client close the session. When the console side closes, the
+  server sends a close frame whose reason says why.
+
+### Errors
+
+For all possible errors, see [CloudAPI HTTP Responses](#cloudapi-http-responses).
+
+**Error Code**        | **Description**
+--------------------- | ---------------
+ResourceNotFound      | If `:login` or `:id` does not exist
+ConsoleAccessDisabled | If console access is not enabled in this datacenter
+MachineHasNoConsole   | If `:id` is a docker container or has an unsupported brand
+MachineStopped        | If `:id` is not running
+ConsoleBusy           | If another session is attached to the console
+ConsoleUnavailable    | If the console could not be reached
+UpgradeRequired       | If the WebSocket upgrade headers are missing or malformed
+
+### Notes
+
+All errors are returned as HTTP responses before the WebSocket upgrade.
+It is recommended to use pre-signed URLs for authentication with this endpoint,
+as many WebSocket clients do not support sending custom HTTP headers with the
+Upgrade request.
+
+### CLI Command
+
+    $ triton instance console 5e42cd1e
 
 
 ## ResizeMachine (POST /:login/machines/:id?action=resize)
