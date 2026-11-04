@@ -61,6 +61,7 @@ CLOUDAPI_THROTTLE_WHITELIST               | Array    | See "Throttles" section b
 CLOUDAPI_MULTIPLE_PUB_NETWORKS            | Boolean  | Default false. Whether machines can be provisioned with more than one public network.
 CLOUDAPI_TEST_MODE                        | Boolean  | Default false. Disable some security checks to make testing easier.
 CLOUDAPI_IGNORE_APPROVED_FOR_PROVISIONING | Boolean  | Default false. Allow provisioning for users even if they have not been given permission.
+CLOUDAPI_CONSOLE_ACCESS                   | Boolean  | Default false. Enables ConnectMachineConsole, which needs platforms with ticketed console support in vmadmd.
 CLOUDAPI_DEFAULT_CONTAINER_BRAND          | String   | Default "joyent". The default brand for a container when one is not specified.
 CLOUDAPI_DEFAULT_HVM_BRAND                | String   | Default "kvm". The default hypervisor for virtual machines.
 experimental_cloudapi_delegate_dataset    | Boolean  | Unsafe (see warning). Default false. Whether machines can be created with a delegated dataset through CloudAPI. WARNING: With this enabled, users can use zfs directly on the 'data' dataset inside of their zone, which could possibly lead to a kernel panic and/or data corruption. Note that `zfs receive` is disabled on the delegate dataset.

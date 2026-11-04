@@ -202,6 +202,12 @@
     {{#CLOUDAPI_MULTIPLE_PUB_NETWORKS}}
     "allow_multiple_public_networks": {{{CLOUDAPI_MULTIPLE_PUB_NETWORKS}}},
     {{/CLOUDAPI_MULTIPLE_PUB_NETWORKS}}
+    {{^CLOUDAPI_CONSOLE_ACCESS}}
+    "console_access_enabled": false,
+    {{/CLOUDAPI_CONSOLE_ACCESS}}
+    {{#CLOUDAPI_CONSOLE_ACCESS}}
+    "console_access_enabled": true,
+    {{/CLOUDAPI_CONSOLE_ACCESS}}
     {{#CLOUDAPI_IGNORE_APPROVED_FOR_PROVISIONING}}
     "ignore_approved_for_provisioning_flag": true,
     {{/CLOUDAPI_IGNORE_APPROVED_FOR_PROVISIONING}}
