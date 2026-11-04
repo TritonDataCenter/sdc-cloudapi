@@ -887,6 +887,12 @@ Note that a `Triton-Datacenter-Name` response header was added in 9.2.0.
 
 The section describes API changes in CloudAPI versions.
 
+## 9.23.0
+
+- New endpoint, [ConnectMachineConsole](#ConnectMachineConsole), which
+  connects a WebSocket to the serial or zone console of an instance. It is
+  disabled unless the operator sets `CLOUDAPI_CONSOLE_ACCESS`.
+
 ## 9.22.0
 
 - Added `block_size` to [CreateMachineDisk](#CreateMachineDisk) as an optional parameter.
